@@ -50,28 +50,49 @@ export const FinanceCalculator = {
     const totalRevenue = cabins.reduce((acc, c) => acc + (c.today_revenue || 0), 0);
     const totalSessions = cabins.reduce((acc, c) => acc + (c.paid_sessions || 0), 0);
     
-    // Excel'deki toplam aylık sabit maliyet (1 AVM veya genel)
-    const fixedCosts = FINANCIAL_CONFIG.SABIT_MALIYETLER.KIRA_ZAFER_PLAZA + 
-                       FINANCIAL_CONFIG.SABIT_MALIYETLER.AIDAT_ZAFER_PLAZA +
-                       FINANCIAL_CONFIG.SABIT_MALIYETLER.KIRA_MAVIBAHCE + 
-                       FINANCIAL_CONFIG.SABIT_MALIYETLER.AIDAT_MAVIBAHCE;
+    // Zafer Plaza ve Mavi Bahçe için ayrı ayrı hesapla (Kabin isimlerinden çıkarım yapıyoruz)
+    const bursaKabins = cabins.filter(c => c.cabin_name.toLowerCase().includes('bursa'));
+    const izmirKabins = cabins.filter(c => c.cabin_name.toLowerCase().includes('izmir') || c.cabin_name.toLowerCase().includes('mavibah'));
 
-    const totalNetRevenue = this.calculateTotalNetRevenue(totalRevenue);
+    // Günlük ciroyu aya projeksiyon yapıyoruz (Hesaplamalar genelde aylık bazlıdır)
+    const bursaRevenueMonthly = bursaKabins.reduce((acc, c) => acc + (c.today_revenue || 0), 0) * 30;
+    const izmirRevenueMonthly = izmirKabins.reduce((acc, c) => acc + (c.today_revenue || 0), 0) * 30;
+
+    // Zafer Plaza Ciro Payı: 40k üstü %15
+    const bursaCiroPayiMonthly = bursaRevenueMonthly > FINANCIAL_CONFIG.SABIT_MALIYETLER.ZAFER_PLAZA.CIRO_ESIK 
+      ? (bursaRevenueMonthly - FINANCIAL_CONFIG.SABIT_MALIYETLER.ZAFER_PLAZA.CIRO_ESIK) * FINANCIAL_CONFIG.SABIT_MALIYETLER.ZAFER_PLAZA.CIRO_PAY_ORAN 
+      : 0;
     
-    // Basitleştirilmiş Kar: Net Gelir - (Sabit Maliyet / 30 gün) (Günlük bakılıyorsa)
-    // Eğer tüm ay ise: Net Gelir - Sabit Maliyet
-    const dailyFixedCost = fixedCosts / 30;
-    const netProfit = totalNetRevenue - (totalSessions > 0 ? dailyFixedCost : 0); // Günlük yaklaşım
+    // Mavi Bahçe Ciro Payı: 30k üstü %15
+    const izmirCiroPayiMonthly = izmirRevenueMonthly > FINANCIAL_CONFIG.SABIT_MALIYETLER.MAVIBAHCE.CIRO_ESIK 
+      ? (izmirRevenueMonthly - FINANCIAL_CONFIG.SABIT_MALIYETLER.MAVIBAHCE.CIRO_ESIK) * FINANCIAL_CONFIG.SABIT_MALIYETLER.MAVIBAHCE.CIRO_PAY_ORAN 
+      : 0;
+
+    // Sabit Maliyetler (Kira + %20 KDV + Aidat)
+    // Zafer: Kira + %20 KDV + Aidat (KDV'siz)
+    const zaferFixed = (FINANCIAL_CONFIG.SABIT_MALIYETLER.ZAFER_PLAZA.KIRA * 1.20) + FINANCIAL_CONFIG.SABIT_MALIYETLER.ZAFER_PLAZA.AIDAT;
+    // Mavi: Kira + %20 KDV + Aidat
+    const maviFixed = (FINANCIAL_CONFIG.SABIT_MALIYETLER.MAVIBAHCE.KIRA * 1.20) + FINANCIAL_CONFIG.SABIT_MALIYETLER.MAVIBAHCE.AIDAT;
+
+    const totalFixedCostsMonthly = zaferFixed + maviFixed + FINANCIAL_CONFIG.SABIT_MALIYETLER.PERSONEL;
+    const totalExtraCostsMonthly = bursaCiroPayiMonthly + izmirCiroPayiMonthly;
+    
+    // Toplam Gider (Aylık)
+    const totalCostsMonthly = totalFixedCostsMonthly + totalExtraCostsMonthly;
+
+    // Net Gelir (Aylık projeksiyon)
+    const totalNetRevenueMonthly = this.calculateTotalNetRevenue(totalRevenue) * 30;
+    const netProfitMonthly = totalNetRevenueMonthly - totalCostsMonthly;
 
     return {
-      totalRevenue,
-      totalPaidSessions: totalSessions,
-      netRevenuePerSession: totalSessions > 0 ? totalNetRevenue / totalSessions : 0,
-      totalNetRevenue,
-      fixedCosts,
-      netProfit: netProfit * (1 - FINANCIAL_CONFIG.ORANLAR.GELIR_VERGISI), // Vergiden sonra
-      breakEvenSessionsPerMonth: this.calculateBreakEvenSessions(fixedCosts, 240), // 240 Excel'deki sabit net gelir/oturum
-      isProfitable: netProfit > 0
+      totalRevenue: totalRevenue * 30, // Projeksiyon
+      totalPaidSessions: totalSessions * 30,
+      netRevenuePerSession: totalSessions > 0 ? (totalNetRevenueMonthly / (totalSessions * 30)) : 0,
+      totalNetRevenue: totalNetRevenueMonthly,
+      fixedCosts: totalFixedCostsMonthly,
+      netProfit: netProfitMonthly * (1 - FINANCIAL_CONFIG.ORANLAR.GELIR_VERGISI),
+      breakEvenSessionsPerMonth: Math.round(totalCostsMonthly / 240), // 240 TL net gelir/oturum baz alındı
+      isProfitable: netProfitMonthly > 0
     };
   }
 };

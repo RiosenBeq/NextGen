@@ -3,11 +3,19 @@
  */
 export const FINANCIAL_CONFIG = {
   SABIT_MALIYETLER: {
-    KIRA_ZAFER_PLAZA: 40000,
-    AIDAT_ZAFER_PLAZA: 5000,
-    KIRA_MAVIBAHCE: 35000,
-    AIDAT_MAVIBAHCE: 4500,
-    PERSONEL: 8000, // Örnek değer
+    ZAFER_PLAZA: {
+      KIRA: 40000,
+      AIDAT: 7500, // KDV eklenmiyor
+      CIRO_ESIK: 40000,
+      CIRO_PAY_ORAN: 0.15
+    },
+    MAVIBAHCE: {
+      KIRA: 30000,
+      AIDAT: 1100,
+      CIRO_ESIK: 30000,
+      CIRO_PAY_ORAN: 0.15
+    },
+    PERSONEL: 8000,
   },
   ORANLAR: {
     KDV: 0.20,
@@ -15,6 +23,6 @@ export const FINANCIAL_CONFIG = {
     GELIR_VERGISI: 0.20
   },
   BIRIM_FIYAT: {
-    OTURUM_NET: 240 // KDV ve Komisyon sonrası net gelir
+    OTURUM_NET: 240
   }
 };

@@ -4,7 +4,7 @@
  * sonrasında kabin güncel verilerini çeker.
  */
 
-const BASE_URL = 'https://kabinrapor.com/api'
+const BASE_URL = 'https://osessensin.com/api'
 
 export interface CabinData {
   id: number

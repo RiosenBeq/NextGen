@@ -2,41 +2,41 @@
 
 @layer base {
   :root {
-    --background: #f8fafc; /* Light slate background */
-    --foreground: #0f172a; /* Dark slate text */
+    --background: #020617; /* Deepest Navy/Black */
+    --foreground: #f8fafc;
     
-    --card: #ffffff;
-    --card-foreground: #0f172a;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
     
-    --popover: #ffffff;
-    --popover-foreground: #0f172a;
+    --popover: #0f172a;
+    --popover-foreground: #f8fafc;
     
-    --primary: #0f172a;
-    --primary-foreground: #f8fafc;
+    --primary: #f8fafc;
+    --primary-foreground: #020617;
     
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
     
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
     
-    --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
     
-    --destructive: #ef4444;
+    --destructive: #7f1d1d;
     --destructive-foreground: #f8fafc;
     
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #94a3b8;
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #334155;
     
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Elite Accents */
-    --elite-emerald: #059669; /* Slightly darker for contrast on light */
-    --elite-indigo: #4f46e5;
-    --elite-rose: #e11d48;
-    --elite-cyan: #0891b2;
+    /* Elite Glowing Accents */
+    --elite-emerald: #10b981;
+    --elite-indigo: #6366f1;
+    --elite-rose: #f43f5e;
+    --elite-cyan: #06b6d4;
   }
 }
 
@@ -56,17 +56,18 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* Subtle dot grid — minimalist */
+/* Deep Space Aesthetic with Grid & Glows */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse at center, black, transparent 70%);
+    radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at center, black, transparent 80%);
   pointer-events: none;
   z-index: -1;
 }
@@ -76,113 +77,85 @@ body::after {
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(at 0% 0%, rgba(5, 150, 105, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(79, 70, 229, 0.03) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(8, 145, 178, 0.02) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(244, 63, 94, 0.03) 0px, transparent 50%);
   pointer-events: none;
   z-index: -2;
 }
 
-/* Cards — lighter, more visible */
+/* Premium Dark Cards */
 .premium-card {
-  @apply rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)];
+  @apply rounded-3xl border border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-500 hover:border-white/10 hover:bg-slate-900/60 hover:shadow-[0_8px_48px_rgba(0,0,0,0.6)];
 }
 
 .glass-panel {
-  @apply bg-white/60 backdrop-blur-xl border border-slate-200;
+  @apply bg-slate-900/60 backdrop-blur-2xl border border-white/5;
 }
 
 .heading-elite {
-  @apply font-black tracking-tighter text-slate-800 drop-shadow-sm;
-  background: linear-gradient(to bottom right, #0f172a 40%, rgba(15,23,42,0.65));
+  @apply font-black tracking-tighter text-white drop-shadow-xl;
+  background: linear-gradient(to bottom right, #ffffff 40%, rgba(255,255,255,0.6) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .elite-input {
-  @apply w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300 transition-all;
+  @apply w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all;
 }
 
 .elite-button-primary {
-  @apply px-6 py-3 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all shadow-md;
+  @apply px-8 py-4 bg-white text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-zinc-200 active:scale-[0.97] transition-all shadow-xl;
 }
 
 .elite-button-secondary {
-  @apply px-6 py-3 bg-slate-100 border border-slate-200 text-slate-700 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all;
+  @apply px-8 py-4 bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-white/10 active:scale-[0.97] transition-all;
 }
 
 .elite-badge {
-  @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 bg-slate-50 text-slate-700;
+  @apply px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-zinc-300;
 }
 
-/* Custom Scrollbar */
+/* Overlap & Grid Fixes */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+/* Custom Scrollbar Lux */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Animations */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+/* Animations Lux */
+@keyframes aurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+.animate-aurora {
+  background: linear-gradient(-45deg, #020617, #0f172a, #10b98110, #6366f110);
+  background-size: 400% 400%;
+  animation: aurora 15s ease infinite;
 }
 
-/* Safe Area (iPhone notch / bottom bar) */
-.safe-area-pb {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-}
-
-/* ======== MOBILE RESPONSIVE ======== */
-
-/* Global mobile padding & font adjustments */
-@media (max-width: 768px) {
-  .premium-card {
-    @apply rounded-xl;
-  }
-  
-  table {
-    font-size: 0.7rem;
-  }
-  
-  th, td {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    padding-top: 0.75rem !important;
-    padding-bottom: 0.75rem !important;
-  }
-
-  h1 {
-    font-size: 2rem !important;
-    line-height: 1 !important;
-  }
-
-  h2 {
-    font-size: 1.1rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.75rem !important;
-  }
-
-  .premium-card {
-    @apply rounded-lg;
+/* Mobile Adjustments for Overlaps */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
   }
 }
 

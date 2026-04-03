@@ -147,18 +147,34 @@ export class KabinRaporService {
     const isAuth = await this.ensureAuth()
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
-    try {
-      const response = await fetchWithTimeout(`${BASE_URL}/dashboard-totals-by-range`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId, range })
-      })
-      
-      if (!response.ok) throw new Error('API Error')
-      return await response.json()
-    } catch {
-      return { range, total_sessions: 0, total_paid_sessions: 0, total_revenue: 0, status: 0, start_date: '', end_date: '' }
+    const fetchRange = async (r: string) => {
+      try {
+        const response = await fetchWithTimeout(`${BASE_URL}/dashboard-totals-by-range`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId, range: r })
+        })
+        if (!response.ok) return null
+        return await response.json()
+      } catch {
+        return null
+      }
     }
+
+    let result = await fetchRange(range)
+
+    // FALLBACK LOGIC: If 'Bu Hafta' or 'Tüm Zamanlar' is 0, try alternatives
+    if (!result || result.total_revenue === 0) {
+      if (range === 'Bu Hafta') {
+        result = await fetchRange('Son 7 Gün')
+      } else if (range === 'Tüm Zamanlar') {
+        result = await fetchRange('Tüm Dönemler') || await fetchRange('Hepsi')
+      } else if (range === 'Son 30 Gün') {
+        result = await fetchRange('Bu Ay')
+      }
+    }
+
+    return result || { range, total_sessions: 0, total_paid_sessions: 0, total_revenue: 0, status: 0, start_date: '', end_date: '' }
   }
 
   /**

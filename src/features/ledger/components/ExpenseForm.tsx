@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DocumentUploader from '@/features/documents/components/DocumentUploader';
 import { uploadDocument } from '@/features/documents/actions';
 import { createAuditLog } from '@/lib/audit';
+import { cn } from '@/lib/utils';
 
 interface Props {
   locations: any[];
@@ -77,14 +78,14 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="premium-card p-8 border-slate-200 max-w-4xl bg-white shadow-xl"
+          className="premium-card p-10 border-white/10 max-w-4xl bg-slate-900 shadow-[0_0_80px_rgba(0,0,0,0.6)]"
         >
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-              {initialData ? <Edit className="text-rose-500" size={20} /> : <Receipt className="text-rose-500" size={20} />}
-              {initialData ? 'Operasyonel Gider Güncelleme' : 'Operasyonel Gider Girişi'}
+          <div className="flex justify-between items-center mb-10">
+            <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tighter">
+              {initialData ? <Edit className="text-rose-500" size={24} /> : <Receipt className="text-rose-500" size={24} />}
+              {initialData ? 'Gider Güncelle' : 'Yeni Gider Kaydı'}
             </h3>
-            <button onClick={handleClose} type="button" className="text-[10px] p-2 rounded-xl bg-slate-100 font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"><X size={14}/></button>
+            <button onClick={handleClose} type="button" className="p-3 rounded-2xl bg-white/5 border border-white/5 text-zinc-500 hover:text-white hover:bg-white/10 transition-all"><X size={18}/></button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -94,15 +95,15 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center py-10"
+                className="text-center py-12"
               >
-                <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-500/10">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-400" />
                 </div>
-                <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Gider Kaydedildi!</h4>
-                <p className="text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">Bu gidere ait faturayı veya dekontu şimdi ekleyebilirsiniz.</p>
+                <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-3">Gelen Evrak Kaydedildi!</h4>
+                <p className="text-[10px] font-black text-zinc-500 mb-10 uppercase tracking-[0.4em] leading-relaxed">Gider kaydı başarılı. Dilerseniz bu işleme ait <br/> faturayı hemen sisteme yükleyebilirsiniz.</p>
                 
-                <div className="flex justify-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <DocumentUploader 
                     relatedType="expense" 
                     relatedId={createdExpenseId} 
@@ -110,9 +111,9 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                   />
                   <button 
                     onClick={handleClose}
-                    className="elite-button-secondary"
+                    className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
                   >
-                    Fatura Yok / Sonra
+                    BİTTİ / SONRA EKLE
                   </button>
                 </div>
               </motion.div>
@@ -123,80 +124,83 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onSubmit={handleSubmit(onSubmit)} 
-                className="space-y-6"
+                className="space-y-8"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="space-y-2 lg:col-span-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gider Açıklaması</label>
-                    <input {...register('description')} className="elite-input bg-white border-slate-200 text-slate-900" placeholder="Örn: Elektrik Faturası, Sigorta vs." required />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="space-y-3 lg:col-span-2">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Harcama / Gider Açıklaması</label>
+                    <input {...register('description')} className="elite-input" placeholder="Örn: Elektrik, Personel Yemek, Kira vs." required />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><User size={12}/> Kim Ödedi?</label>
-                    <select {...register('paidBy')} className="elite-input bg-white text-slate-900 border-slate-200" defaultValue="Ortak Hesap">
-                      <option value="Ortak Hesap">Ortak Hesap</option>
-                      <option value="Okan">Okan</option>
-                      <option value="Talha">Talha</option>
-                      <option value="Furkan">Furkan</option>
-                      <option value="Alp">Alp</option>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-2"><User size={12}/> Kim Ödedi?</label>
+                    <select {...register('paidBy')} className="elite-input" defaultValue="Ortak Hesap">
+                      <option value="Ortak Hesap" className="bg-slate-900">Ortak Hesap</option>
+                      <option value="Okan" className="bg-slate-900">Okan</option>
+                      <option value="Talha" className="bg-slate-900">Talha</option>
+                      <option value="Furkan" className="bg-slate-900">Furkan</option>
+                      <option value="Alp" className="bg-slate-900">Alp</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tutar (₺)</label>
-                    <input type="number" step="0.01" {...register('amount')} className="elite-input bg-white border-slate-200 text-slate-900" placeholder="0.00" required />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Net Tutar (₺)</label>
+                    <input type="number" step="0.01" {...register('amount')} className="elite-input" placeholder="0.00" required />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategori</label>
-                    <select {...register('type')} className="elite-input bg-white border-slate-200 text-slate-900">
-                      <option value="FATURA">Fatura / Tüketim</option>
-                      <option value="MAAS">Maaş / Personel</option>
-                      <option value="KİRA">Kira / Aidat</option>
-                      <option value="PAZARLAMA">Reklam / Pazarlama</option>
-                      <option value="BAKIM">Bakım / Onarım</option>
-                      <option value="DİĞER">Diğer</option>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Kategori</label>
+                    <select {...register('type')} className="elite-input">
+                      <option value="FATURA" className="bg-slate-900">Fatura / Tüketim</option>
+                      <option value="MAAS" className="bg-slate-900">Maaş / Personel</option>
+                      <option value="KİRA" className="bg-slate-900">Kira / Aidat</option>
+                      <option value="PAZARLAMA" className="bg-slate-900">Reklam / Pazarlama</option>
+                      <option value="BAKIM" className="bg-slate-900">Bakım / Onarım</option>
+                      <option value="DİĞER" className="bg-slate-900">Diğer</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lokasyon</label>
-                    <select {...register('locationId')} className="elite-input bg-white border-slate-200 text-slate-900">
-                      <option value="">Genel / Merkez</option>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Şube / Lokasyon</label>
+                    <select {...register('locationId')} className="elite-input">
+                      <option value="" className="bg-slate-900">Genel / Merkez</option>
                       {locations.map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.name}</option>
+                        <option key={loc.id} value={loc.id} className="bg-slate-900">{loc.name}</option>
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resmiyet</label>
-                    <select {...register('isOfficial')} className="elite-input bg-white border-slate-200 text-slate-900" defaultValue={initialData ? initialData.isOfficial.toString() : "false"}>
-                      <option value="true">Resmi (Faturalı)</option>
-                      <option value="false">Resmi Olmayan</option>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Resmi Kayıt</label>
+                    <select {...register('isOfficial')} className="elite-input" defaultValue={initialData ? initialData.isOfficial.toString() : "false"}>
+                      <option value="true" className="bg-slate-900">Vergi Usül Kanunu (Resmi)</option>
+                      <option value="false" className="bg-slate-900">Kayıt Dışı / KDV'siz</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                    <Paperclip size={12}/> Fatura / Belge (Opsiyonel)
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                    <Paperclip size={12}/> Ek Dosya / Fatura Görüntüsü
                   </label>
-                  <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-dashed border-slate-200 hover:border-slate-300 transition-colors">
+                  <div className="flex items-center gap-6 bg-white/[0.02] p-8 rounded-3xl border border-dashed border-white/10 hover:border-emerald-500/30 transition-all group/file">
                     <input 
                       type="file" 
                       {...register('invoiceFile')} 
-                      className="text-[10px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer w-full"
+                      className="text-[10px] font-black text-zinc-500 file:mr-6 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-white file:text-slate-950 hover:file:bg-zinc-200 cursor-pointer w-full"
                     />
                   </div>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase">PNG, JPG veya PDF yükleyebilirsiniz.</p>
+                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest">DESTEKLENEN: JPG, PNG, PDF (MAX 5MB)</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="elite-button-primary w-full py-4 flex items-center justify-center gap-2 mt-4 shadow-lg"
+                  className={cn(
+                    "elite-button-primary w-full py-5 flex items-center justify-center gap-3 mt-6 text-sm",
+                    isSubmitting && "opacity-50 cursor-not-allowed"
+                  )}
                 >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? <Edit size={18} /> : <Plus size={18} />)}
-                  {initialData ? 'GÜNCELLE' : 'GİDERİ KAYDET'}
+                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : (initialData ? <Edit size={20} /> : <Plus size={20} />)}
+                  {initialData ? 'GÜNCELLEMEYİ KAYDET' : 'GİDER KAYDINI TAMAMLA'}
                 </button>
               </motion.form>
             )}

@@ -7,7 +7,6 @@ import { Loader2, Plus, Receipt, User, CheckCircle2, X, Edit, Paperclip } from '
 import { motion, AnimatePresence } from 'framer-motion';
 import DocumentUploader from '@/features/documents/components/DocumentUploader';
 import { uploadDocument } from '@/features/documents/actions';
-import { createAuditLog } from '@/lib/audit';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -43,9 +42,6 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
         formData.append('relatedId', result.record.id);
         
         const uploadResult = await uploadDocument(formData);
-        if (uploadResult.success) {
-          await createAuditLog('CREATE', 'Document', result.record.id, { fileName: data.invoiceFile[0].name });
-        }
       }
 
       if (!initialData) {

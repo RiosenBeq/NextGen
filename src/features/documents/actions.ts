@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
+import { createAuditLog } from '@/lib/audit';
 
 export async function uploadDocument(formData: FormData) {
   try {
@@ -47,6 +48,11 @@ export async function uploadDocument(formData: FormData) {
       });
 
     if (dbError) throw dbError;
+
+    await createAuditLog('CREATE', 'Document', relatedId, { 
+      fileName: file.name,
+      fileType: relatedType 
+    });
 
     revalidatePath('/expenses');
     revalidatePath('/gelir-gider');

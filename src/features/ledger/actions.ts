@@ -142,6 +142,14 @@ export async function addInvestment(data: any) {
       });
 
     if (error) throw error;
+
+    // We don't have the generated record easily from insert without select
+    // but the ID prefix is inv_ + uuid which we can pre-generate or extract
+    await createAuditLog('CREATE', 'Investment', 'new', { 
+      description: data.description, 
+      amount: data.amount 
+    });
+
     revalidatePath('/investments');
     revalidatePath('/expenses');
     revalidatePath('/');
@@ -167,6 +175,12 @@ export async function updateInvestment(id: string, data: any) {
       .eq('id', id);
 
     if (error) throw error;
+
+    await createAuditLog('UPDATE', 'Investment', id, { 
+      description: data.description, 
+      amount: data.amount 
+    });
+
     revalidatePath('/investments');
     revalidatePath('/expenses');
     revalidatePath('/');
@@ -182,6 +196,8 @@ export async function deleteInvestment(id: string) {
     const { error } = await supabase.from('Investment').delete().eq('id', id);
     if (error) throw error;
     
+    await createAuditLog('DELETE', 'Investment', id);
+
     revalidatePath('/investments');
     revalidatePath('/expenses');
     revalidatePath('/');

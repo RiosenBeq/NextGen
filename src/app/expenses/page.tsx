@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
-import { CreditCard, ArrowDownRight } from 'lucide-react';
+import { TrendingDown, PiggyBank, Wallet, Plus, ArrowDownRight, CreditCard } from 'lucide-react';
+import * as motion from "framer-motion/client";
 
 export const metadata = {
   title: 'Giderler & Yatırımlar - NextGenBox',
@@ -21,6 +22,7 @@ interface Expense {
   amountWithoutVat: number;
   amountWithVat: number;
   location?: Location | null;
+  createdAt: string;
 }
 
 interface Investment {
@@ -32,18 +34,17 @@ interface Investment {
   totalAmount: number;
   notes?: string;
   location?: Location | null;
+  createdAt: string;
 }
 
 export default async function ExpensesPage() {
   const supabase = await createClient();
 
-  // Prisma: prisma.expense.findMany({ include: { location: true }, orderBy: { createdAt: 'desc' } })
   const { data: expensesData } = await supabase
     .from('Expense')
     .select('*, location:Location(*)')
     .order('createdAt', { ascending: false });
 
-  // Prisma: prisma.investment.findMany({ include: { location: true }, orderBy: { createdAt: 'desc' } })
   const { data: investmentsData } = await supabase
     .from('Investment')
     .select('*, location:Location(*)')
@@ -52,93 +53,166 @@ export default async function ExpensesPage() {
   const expenses = (expensesData || []) as Expense[];
   const investments = (investmentsData || []) as Investment[];
 
+  const totalExpense = expenses.reduce((sum, exp) => sum + (exp.amountWithVat || 0), 0);
+  const totalInvestment = investments.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="border-b pb-4">
-        <h1 className="text-3xl font-black tracking-tight text-gray-900">Gider ve Yatırım İzleme</h1>
-        <p className="mt-1 text-sm font-medium text-gray-500">
-          Sisteme entegre tüm operasyonel (aylık/tek seferlik) masrafların ve ilk yatırım harcamalarının takibi.
-        </p>
-      </div>
+    <div className="p-10 space-y-12 max-w-[1600px] mx-auto min-h-screen">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2"
+          >
+            <span className="w-8 h-[2px] bg-rose-500 rounded-full"></span>
+            <span className="text-[10px] font-black tracking-[0.3em] text-rose-500 uppercase">
+              Financial Outflow
+            </span>
+          </motion.div>
+          <h1 className="text-5xl font-black tracking-tighter heading-elite leading-tight">
+            Gider ve Yatırım<br/>Yönetimi
+          </h1>
+        </div>
 
-      <div className="bg-white border text-gray-900 border-gray-200 rounded-2xl shadow-sm overflow-hidden min-h-64 mb-8">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
-            <ArrowDownRight className="w-5 h-5" />
+        <div className="flex gap-4">
+          <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-white/5 shadow-2xl">
+            <div className="pr-6">
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">TOPLAM GİDER</p>
+              <p className="text-2xl font-black text-white">₺{totalExpense.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="pl-6 flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                  <TrendingDown className="w-5 h-5 text-rose-500" />
+               </div>
+            </div>
           </div>
-          <h2 className="text-xl font-bold">Kayıtlı Giderler (Expenses)</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600">
-              <tr>
-                <th className="px-6 py-4">Gider Adı</th>
-                <th className="px-6 py-4">Lokasyon</th>
-                <th className="px-6 py-4">Frekans / Ay</th>
-                <th className="px-6 py-4 text-center">Resmi? (KDV)</th>
-                <th className="px-6 py-4 text-right">Tutar (KDV Hariç)</th>
-                <th className="px-6 py-4 text-right text-red-600 font-bold">Toplam Çıkış</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {expenses.map((exp: Expense) => (
-                <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{exp.description}</td>
-                  <td className="px-6 py-4">
-                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-semibold">
-                      {exp.location?.name || 'Tüm AVM\'ler Ortak'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-medium">
-                    {exp.type?.toUpperCase()} {exp.month ? `(${exp.month})` : ''}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {exp.isOfficial ? <span className="text-blue-600 font-bold">EVET</span> : <span className="text-gray-400">HAYIR</span>}
-                  </td>
-                  <td className="px-6 py-4 text-right font-mono">₺{exp.amountWithoutVat?.toLocaleString('tr-TR')}</td>
-                  <td className="px-6 py-4 text-right font-mono text-red-600 font-semibold">₺{exp.amountWithVat?.toLocaleString('tr-TR')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <div className="bg-white border text-gray-900 border-gray-200 rounded-2xl shadow-sm overflow-hidden min-h-64">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
-            <CreditCard className="w-5 h-5" />
+          <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-white/5 shadow-2xl bg-gradient-to-br from-zinc-900 to-black">
+            <div className="pr-6">
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">TOPLAM YATIRIM (CAPEX)</p>
+              <p className="text-2xl font-black text-emerald-400">₺{totalInvestment.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="pl-6 flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <PiggyBank className="w-5 h-5 text-emerald-500" />
+               </div>
+            </div>
           </div>
-          <h2 className="text-xl font-bold">İlk Yatırımlar (CAPEX)</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600">
-              <tr>
-                <th className="px-6 py-4">Kalem</th>
-                <th className="px-6 py-4">Lokasyon</th>
-                <th className="px-6 py-4">Para Birimi / Net</th>
-                <th className="px-6 py-4">KDV / Not</th>
-                <th className="px-6 py-4 text-right text-orange-600 font-bold">Toplam TL Maliyeti</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {investments.map((inv: Investment) => (
-                <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{inv.description}</td>
-                  <td className="px-6 py-4 text-gray-600">{inv.location?.name}</td>
-                  <td className="px-6 py-4 font-mono font-medium">
-                    {inv.amountWithoutVat?.toLocaleString('tr-TR')} {inv.currency}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
-                    KDV: ₺{inv.vatAmount} <br/> {inv.notes}
-                  </td>
-                  <td className="px-6 py-4 text-right font-mono text-orange-600 font-semibold">₺{inv.totalAmount?.toLocaleString('tr-TR')}</td>
+      </header>
+
+      <div className="space-y-12">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="premium-card overflow-hidden"
+        >
+          <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+              <ArrowDownRight className="w-5 h-5 text-rose-500" />
+            </div>
+            <div>
+              <h3 className="font-black text-white tracking-tight leading-none mb-1">Operasyonel Giderler</h3>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Aylık ve Tek Seferlik Harcamalar</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/[0.01]">
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Gider Adı</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Lokasyon</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Tip / Frekans</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-center">Resmi</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-right text-rose-500">Toplam Çıkış</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-white/[0.03]">
+                {expenses.map((exp, idx) => (
+                  <tr key={exp.id} className="group hover:bg-white/[0.02] transition-colors">
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors uppercase tracking-tight">{exp.description}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="text-[10px] font-black px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-zinc-400 uppercase">
+                        {exp.location?.name || 'GENEL'}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-zinc-300 uppercase">{exp.type}</span>
+                        {exp.month && <span className="text-[10px] text-zinc-500 font-medium">{exp.month}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <span className={`text-[10px] font-black ${exp.isOfficial ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                        {exp.isOfficial ? 'EVET' : 'HAYIR'}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-right font-mono text-sm font-black text-white">
+                      ₺{exp.amountWithVat?.toLocaleString('tr-TR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.section>
+
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="premium-card overflow-hidden"
+        >
+          <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-emerald-500" />
+            </div>
+            <div>
+              <h3 className="font-black text-white tracking-tight leading-none mb-1">Yatırım Harcamaları (CAPEX)</h3>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">İlk Kurulum ve Demirbaş Alımları</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/[0.01]">
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Kalem</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Lokasyon</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Brüt Tutar</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-right text-emerald-500">Toplam TL</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.03]">
+                {investments.map((inv, idx) => (
+                  <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{inv.description}</span>
+                        {inv.notes && <span className="text-[10px] text-zinc-500 font-medium">{inv.notes}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        {inv.location?.name}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 font-mono text-xs text-zinc-400">
+                      {inv.amountWithoutVat?.toLocaleString('tr-TR')} {inv.currency}
+                    </td>
+                    <td className="px-8 py-6 text-right font-mono text-sm font-black text-emerald-400">
+                      ₺{inv.totalAmount?.toLocaleString('tr-TR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.section>
       </div>
     </div>
   );

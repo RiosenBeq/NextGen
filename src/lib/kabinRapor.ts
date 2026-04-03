@@ -162,15 +162,18 @@ export class KabinRaporService {
     }
 
     let result = await fetchRange(range)
+    const normalizedRange = range.trim();
 
-    // FALLBACK LOGIC: If 'Bu Hafta' or 'Tüm Zamanlar' is 0, try alternatives
+    // FALLBACK LOGIC: If range fetch fails or is 0, try synonyms or larger ranges
     if (!result || result.total_revenue === 0) {
-      if (range === 'Bu Hafta') {
+      if (normalizedRange === 'Bu Hafta') {
         result = await fetchRange('Son 7 Gün')
-      } else if (range === 'Tüm Zamanlar') {
-        result = await fetchRange('Tüm Dönemler') || await fetchRange('Hepsi')
-      } else if (range === 'Son 30 Gün') {
+      } else if (normalizedRange === 'Tüm Zamanlar') {
+        result = await fetchRange('Tüm Dönemler') || await fetchRange('Hepsi') || await fetchRange('All')
+      } else if (normalizedRange === 'Son 30 Gün') {
         result = await fetchRange('Bu Ay')
+      } else if (normalizedRange === 'Bu Yıl') {
+        result = await fetchRange('Son 365 Gün') || await fetchRange('2026') || await fetchRange('Bu Sene')
       }
     }
 

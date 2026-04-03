@@ -83,6 +83,7 @@ export default async function DashboardPage() {
   const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
 
   const allTimeTotal = liveTotals ? liveTotals['Tüm Zamanlar'] : null;
+  const thisYearTotal = liveTotals ? liveTotals['Bu Yıl'] : null;
   const thisMonthTotal = liveTotals ? liveTotals['Bu Ay'] : null;
   const todayTotal = liveTotals ? liveTotals['Bugün'] : null;
 
@@ -96,8 +97,8 @@ export default async function DashboardPage() {
       icon: TrendingUp, 
       color: "text-emerald-400", 
       bg: "bg-emerald-500/10",
-      trend: "+12.4%",
-      trendValue: todayTotal ? `Bugün: ₺${todayTotal.total_revenue.toLocaleString('tr-TR')}` : 'Canlı Veri',
+      trend: thisYearTotal ? `Yıllık: ₺${thisYearTotal.total_revenue.toLocaleString('tr-TR')}` : 'Canlı Veri',
+      trendValue: todayTotal ? `Bugün: ₺${todayTotal.total_revenue.toLocaleString('tr-TR')}` : 'Mevcut',
       positive: true
     },
     { 
@@ -106,28 +107,28 @@ export default async function DashboardPage() {
       icon: Activity, 
       color: "text-indigo-400", 
       bg: "bg-indigo-500/10",
-      trend: "Conversion Rate",
+      trend: "Performance",
       trendValue: thisMonthTotal ? `Bu Ay: ${thisMonthTotal.total_paid_sessions.toLocaleString('tr-TR')} Seans` : 'Canlı Veri',
       positive: true
     },
     { 
       label: "OPERATIONAL COST", 
-      value: `₺${totalManualCommission.toLocaleString('tr-TR')}`, 
+      value: `₺${totalManualCommission.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
       icon: CreditCard, 
       color: "text-rose-400", 
       bg: "bg-rose-500/10",
-      trend: "Total Comms",
-      trendValue: "Geçmiş Kayıtlar",
+      trend: "Inc. KDV",
+      trendValue: "Kayıtlı Giderler",
       positive: false
     },
     { 
       label: "NET CASH FLOW", 
-      value: `₺${totalManualNetCash.toLocaleString('tr-TR')}`, 
+      value: `₺${totalManualNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
       icon: Wallet, 
       color: totalManualNetCash >= 0 ? "text-emerald-400" : "text-rose-400", 
       bg: totalManualNetCash >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10",
-      trend: `%${totalManualRevenue > 0 ? (totalManualNetCash / totalManualRevenue * 100).toFixed(1) : 0}`,
-      trendValue: "Kayıtlı Veri",
+      trend: `%${totalManualRevenue > 0 ? (totalManualNetCash / totalManualRevenue * 100).toFixed(1) : 0} Margin`,
+      trendValue: "Net Profitability",
       positive: totalManualNetCash >= 0
     },
   ];

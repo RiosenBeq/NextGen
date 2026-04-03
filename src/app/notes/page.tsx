@@ -1,39 +1,55 @@
-import { createClient } from '@/utils/supabase/server';
+import { getNotes } from '@/features/notes/actions';
+import NoteList from '@/features/notes/components/NoteList';
+import * as motion from "framer-motion/client";
+import { StickyNote, MessageSquareText } from 'lucide-react';
 
-export default async function Notes() {
-  const supabase = await createClient();
-  const { data: notes } = await supabase.from("notes").select();
+export const metadata = {
+  title: 'Notlar & Dökümanlar - NextGenBox',
+  robots: 'noindex, nofollow',
+};
+
+export const dynamic = 'force-dynamic';
+
+export default async function NotesPage() {
+  const notes = await getNotes();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-zinc-950 text-white font-sans">
-      <div className="max-w-2xl w-full p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm shadow-2xl">
-        <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-          Supabase Notes
-        </h1>
-        
+    <div className="p-10 space-y-12 max-w-[1600px] mx-auto min-h-screen">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-4">
-          {notes && notes.length > 0 ? (
-            notes.map((note: any) => (
-              <div 
-                key={note.id} 
-                className="p-4 rounded-xl border border-zinc-800 bg-zinc-900 hover:border-emerald-500/50 transition-all duration-300"
-              >
-                <p className="text-zinc-300">{note.title}</p>
-              </div>
-            ))
-          ) : (
-            <div className="p-8 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-              <p>No notes found. Have you run the SQL script in Supabase Dashboard?</p>
-            </div>
-          )}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2"
+          >
+            <span className="w-8 h-[2px] bg-indigo-500 rounded-full" />
+            <span className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase">Executive Knowledge Base</span>
+          </motion.div>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter heading-elite leading-tight">
+            Sistem Notları &<br/>Ortak Ajanda
+          </h1>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-zinc-800">
-          <pre className="text-xs p-4 bg-black rounded-lg overflow-auto max-h-60 text-emerald-500/80">
-            {JSON.stringify(notes, null, 2)}
-          </pre>
+        <div className="flex gap-4">
+           <div className="premium-card px-8 py-5 flex items-center gap-4 bg-slate-50/50 border-slate-200">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                 <MessageSquareText className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AKSESİBİLİTE</p>
+                 <p className="text-xl font-black text-slate-800 tracking-tighter">{notes.length} Aktif Not</p>
+              </div>
+           </div>
         </div>
-      </div>
+      </header>
+
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <NoteList initialNotes={notes} />
+      </motion.section>
     </div>
   );
 }

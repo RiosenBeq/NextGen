@@ -80,18 +80,17 @@ export default async function ExpensesPage() {
         </div>
 
         <div className="flex gap-4 shrink-0">
-          <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-white/5 shadow-2xl">
+          <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-slate-200 shadow-sm border-slate-200">
             <div className="pr-6">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">TOPLAM GİDER</p>
-              <p className="text-2xl font-black text-white">₺{totalExpense.toLocaleString('tr-TR')}</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">TOPLAM GİDER</p>
+              <p className="text-2xl font-black text-slate-900">₺{totalExpense.toLocaleString('tr-TR')}</p>
             </div>
             <div className="pl-6 flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+               <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
                   <TrendingDown className="w-5 h-5 text-rose-500" />
                </div>
             </div>
           </div>
-
         </div>
       </header>
 

@@ -67,14 +67,14 @@ export default async function InvestmentsPage() {
         </div>
 
         <div className="flex gap-4 shrink-0">
-          <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-white/5 shadow-2xl bg-gradient-to-br from-zinc-900 to-black">
+          <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-slate-200 shadow-sm bg-white border-slate-200">
             <div className="pr-6">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">TOPLAM HARCAMA (TL BAZLI)</p>
-              <p className="text-2xl font-black text-emerald-400">₺{totalInvestment.toLocaleString('tr-TR')}</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">TOPLAM HARCAMA (TL BAZLI)</p>
+              <p className="text-2xl font-black text-emerald-600">₺{totalInvestment.toLocaleString('tr-TR')}</p>
             </div>
             <div className="pl-6 flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <PiggyBank className="w-5 h-5 text-emerald-500" />
+               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                  <PiggyBank className="w-5 h-5 text-emerald-600" />
                </div>
             </div>
           </div>

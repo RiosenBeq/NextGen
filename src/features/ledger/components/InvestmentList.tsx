@@ -54,33 +54,33 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
       animate={{ opacity: 1, y: 0 }}
       className="premium-card overflow-hidden"
     >
-      <div className="p-8 border-b border-white/5 bg-white/[0.02] flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+      <div className="p-8 border-b border-slate-100 bg-slate-50/30 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-            <PiggyBank className="w-5 h-5 text-emerald-500" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <PiggyBank className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <h3 className="font-black text-white tracking-tight leading-none mb-1">Yatırım (CAPEX) Kalemleri</h3>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Ayrıntılı Liste</p>
+            <h3 className="font-black text-slate-900 tracking-tight leading-none mb-1">Yatırım (CAPEX) Kalemleri</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ayrıntılı Liste</p>
           </div>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
               placeholder="Yatırım Ara..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-[#1a1a22] border border-white/10 rounded-xl text-xs text-white focus:border-white/20 outline-none w-48"
+              className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-slate-300 outline-none w-48 shadow-sm"
             />
           </div>
           <select 
             value={filterLocation} 
             onChange={(e) => setFilterLocation(e.target.value)}
-            className="px-4 py-2 bg-[#1a1a22] border border-white/10 rounded-xl text-xs font-black text-zinc-400 uppercase tracking-widest outline-none"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-widest outline-none shadow-sm"
           >
             <option value="ALL">Tüm Lokasyonlar</option>
             {locations.map((loc) => (
@@ -93,38 +93,38 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#1a1a22]/50">
-              <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5">Yatırım Kalemi</th>
-              <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5">Lokasyon</th>
-              <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5">Notlar</th>
-              <th className="px-8 py-5 text-[10px] font-black text-emerald-500/50 uppercase tracking-widest border-b border-white/5 text-right">Tutar</th>
-              <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5 text-center">İşlem</th>
+            <tr className="bg-slate-50/50">
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100">Yatırım Kalemi</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100">Lokasyon</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100">Notlar</th>
+              <th className="px-8 py-5 text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-slate-100 text-right">Tutar</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 text-center">İşlem</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.03]">
+          <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-8 py-12 text-center text-zinc-500 text-sm font-bold uppercase tracking-widest">
+                <td colSpan={5} className="px-8 py-12 text-center text-slate-400 text-sm font-bold uppercase tracking-widest">
                   Yatırım kalemi bulunamadı
                 </td>
               </tr>
             ) : null}
             {filtered.map((inv) => (
-              <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
+              <tr key={inv.id} className="group hover:bg-slate-50 transition-colors">
                 <td className="px-8 py-5">
-                  <p className="text-sm font-black text-zinc-300 group-hover:text-white transition-colors tracking-tight">{inv.description}</p>
+                  <p className="text-sm font-black text-slate-700 group-hover:text-slate-950 transition-colors tracking-tight">{inv.description}</p>
                 </td>
                 <td className="px-8 py-5">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{inv.location?.name || 'BELİRTİLMEDİ'}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{inv.location?.name || 'BELİRTİLMEDİ'}</span>
                 </td>
                 <td className="px-8 py-5">
-                  <p className="text-xs text-zinc-500">{inv.notes || '—'}</p>
+                  <p className="text-xs text-slate-500 font-medium">{inv.notes || '—'}</p>
                 </td>
-                <td className="px-8 py-5 text-right font-mono text-sm font-black text-emerald-400">
+                <td className="px-8 py-5 text-right font-mono text-sm font-black text-emerald-600">
                   <div className="flex flex-col items-end">
                     <span>₺{inv.totalAmount?.toLocaleString('tr-TR')}</span>
                     {inv.currency !== 'TL' && (
-                      <span className="text-[10px] text-zinc-600">({inv.amountWithoutVat?.toLocaleString('tr-TR')} {inv.currency})</span>
+                      <span className="text-[10px] text-slate-400">({inv.amountWithoutVat?.toLocaleString('tr-TR')} {inv.currency})</span>
                     )}
                   </div>
                 </td>
@@ -132,14 +132,14 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
                   <div className="flex items-center justify-center gap-2">
                     <button 
                       onClick={() => setEditingInvestment(inv)}
-                      className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-indigo-500/20 hover:text-indigo-400 transition-colors"
+                      className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                       <Edit2 size={14} />
                     </button>
                     <button 
                       onClick={() => handleDelete(inv.id)}
                       disabled={deletingInvestmentId === inv.id}
-                      className={`p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-rose-500/20 hover:text-rose-400 transition-colors ${deletingInvestmentId === inv.id ? 'opacity-50' : ''}`}
+                      className={`p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all ${deletingInvestmentId === inv.id ? 'opacity-50' : ''}`}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -153,19 +153,17 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
 
       {/* Edit Modal */}
       {editingInvestment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl no-scrollbar">
-            <div className="bg-[#111116] rounded-3xl p-6 border border-white/10 shadow-2xl">
-                <InvestmentForm 
-                  locations={locations} 
-                  initialData={{
-                    ...editingInvestment, 
-                    amount: editingInvestment.amountWithoutVat,
-                    locationId: editingInvestment.locationId || ''
-                  }} 
-                  onClose={() => setEditingInvestment(null)} 
-                />
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg shadow-2xl">
+            <InvestmentForm 
+              locations={locations} 
+              initialData={{
+                ...editingInvestment, 
+                amount: editingInvestment.amountWithoutVat,
+                locationId: editingInvestment.locationId || ''
+              }} 
+              onClose={() => setEditingInvestment(null)} 
+            />
           </div>
         </div>
       )}

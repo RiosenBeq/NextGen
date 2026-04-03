@@ -38,7 +38,7 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 export async function addExpense(data: any) {
   try {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data: record, error } = await supabase
       .from('Expense')
       .insert({
         id: `exp_${crypto.randomUUID()}`,
@@ -49,12 +49,15 @@ export async function addExpense(data: any) {
         amountWithVat: data.amount, // VAT calculation can be added here
         isOfficial: data.isOfficial || false,
         month: data.month || null,
-      });
+        paidBy: data.paidBy || 'Ortak Hesap',
+      })
+      .select()
+      .single();
 
     if (error) throw error;
     revalidatePath('/expenses');
     revalidatePath('/');
-    return { success: true };
+    return { success: true, record };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

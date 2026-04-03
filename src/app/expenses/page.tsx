@@ -4,6 +4,7 @@ import * as motion from "framer-motion/client";
 import { getActiveLocations } from '@/features/ledger/actions';
 import { ExpenseForm } from '@/features/ledger/components/ExpenseForm';
 import { InvestmentForm } from '@/features/ledger/components/InvestmentForm';
+import ExpenseList from '@/features/ledger/components/ExpenseList';
 
 export const metadata = {
   title: 'Giderler & Yatırımlar - NextGenBox',
@@ -27,6 +28,7 @@ interface Expense {
   amountWithoutVat: number;
   amountWithVat: number;
   location?: Location | null;
+  paidBy?: string;
   createdAt: string;
 }
 
@@ -56,8 +58,14 @@ export default async function ExpensesPage() {
     .select('*, location:Location(*)')
     .order('createdAt', { ascending: false });
 
+  const { data: documentsData } = await supabase
+    .from('Document')
+    .select('*')
+    .eq('relatedType', 'expense');
+
   const expenses = (expensesData || []) as Expense[];
   const investments = (investmentsData || []) as Investment[];
+  const documents = documentsData || [];
 
   const totalExpense = expenses.reduce((sum, exp) => sum + (exp.amountWithVat || 0), 0);
   const totalInvestment = investments.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
@@ -116,63 +124,7 @@ export default async function ExpensesPage() {
       </header>
 
       <div className="space-y-12">
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="premium-card overflow-hidden"
-        >
-          <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-              <ArrowDownRight className="w-5 h-5 text-rose-500" />
-            </div>
-            <div>
-              <h3 className="font-black text-white tracking-tight leading-none mb-1">Operasyonel Giderler</h3>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Aylık ve Tek Seferlik Harcamalar</p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white/[0.01]">
-                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Gider Adı</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Lokasyon</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5">Tip / Frekans</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-center">Resmi</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-right text-rose-500">Toplam Çıkış</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.03]">
-                {expenses.map((exp, idx) => (
-                  <tr key={exp.id} className="group hover:bg-white/[0.02] transition-colors">
-                    <td className="px-8 py-6">
-                      <p className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors uppercase tracking-tight">{exp.description}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="text-[10px] font-black px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-zinc-400 uppercase">
-                        {exp.location?.name || 'GENEL'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-zinc-300 uppercase">{exp.type}</span>
-                        {exp.month && <span className="text-[10px] text-zinc-500 font-medium">{exp.month}</span>}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span className={`text-[10px] font-black ${exp.isOfficial ? 'text-emerald-400' : 'text-zinc-600'}`}>
-                        {exp.isOfficial ? 'EVET' : 'HAYIR'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-right font-mono text-sm font-black text-white">
-                      ₺{exp.amountWithVat?.toLocaleString('tr-TR')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.section>
+        <ExpenseList initialExpenses={expenses} documents={documents} />
 
         <motion.section 
           initial={{ opacity: 0, y: 20 }}

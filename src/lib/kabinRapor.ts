@@ -57,6 +57,19 @@ export type DateRange = 'Bugün' | 'Dün' | 'Bu Hafta' | 'Bu Ay' | 'Son 7 Gün' 
 
 const ALL_RANGES: DateRange[] = ['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay', 'Son 7 Gün', 'Son 30 Gün', 'Tüm Zamanlar']
 
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 8000) {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal })
+    clearTimeout(id)
+    return response
+  } catch (error) {
+    clearTimeout(id)
+    throw error
+  }
+}
+
 export class KabinRaporService {
   private firmId: number | null = null
   private userId: number | null = null
@@ -66,11 +79,11 @@ export class KabinRaporService {
    */
   async login(phone: string, password: string): Promise<boolean> {
     try {
-      const response = await fetch(`${BASE_URL}/cabin-user-control`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/cabin-user-control`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password })
-      })
+      }, 5000)
       const data = await response.json()
 
       if (data.success && data.user) {
@@ -104,19 +117,26 @@ export class KabinRaporService {
     const isAuth = await this.ensureAuth()
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
-    const response = await fetch(`${BASE_URL}/get-cabins-by-firm`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId })
-    })
+    try {
+      const response = await fetchWithTimeout(`${BASE_URL}/get-cabins-by-firm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId })
+      })
+      
+      if (!response.ok) return []
 
-    const data = await response.json() as CabinData[]
+      const data = await response.json() as CabinData[]
 
-    return data.map(cabin => ({
-      ...cabin,
-      avg_revenue_per_session: cabin.paid_sessions > 0 ? cabin.today_revenue / cabin.paid_sessions : 0,
-      conversion_rate: cabin.incoming_customer_count > 0 ? (cabin.paid_sessions / cabin.incoming_customer_count) * 100 : 0
-    }))
+      return data.map(cabin => ({
+        ...cabin,
+        avg_revenue_per_session: cabin.paid_sessions > 0 ? cabin.today_revenue / cabin.paid_sessions : 0,
+        conversion_rate: cabin.incoming_customer_count > 0 ? (cabin.paid_sessions / cabin.incoming_customer_count) * 100 : 0
+      }))
+    } catch (e) {
+      console.error('getCabins timeout/error:', e)
+      return []
+    }
   }
 
   /**
@@ -127,13 +147,18 @@ export class KabinRaporService {
     const isAuth = await this.ensureAuth()
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
-    const response = await fetch(`${BASE_URL}/dashboard-totals-by-range`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId, range })
-    })
-
-    return await response.json()
+    try {
+      const response = await fetchWithTimeout(`${BASE_URL}/dashboard-totals-by-range`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId, range })
+      })
+      
+      if (!response.ok) throw new Error('API Error')
+      return await response.json()
+    } catch {
+      return { range, total_sessions: 0, total_paid_sessions: 0, total_revenue: 0, status: 0, start_date: '', end_date: '' }
+    }
   }
 
   /**
@@ -166,7 +191,7 @@ export class KabinRaporService {
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
     try {
-      const response = await fetch(`${BASE_URL}/dashboard-cabins-by-range`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/dashboard-cabins-by-range`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId, range })
@@ -190,13 +215,17 @@ export class KabinRaporService {
     const isAuth = await this.ensureAuth()
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
-    const response = await fetch(`${BASE_URL}/dashboard-last7-graph`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId })
-    })
-
-    return await response.json()
+    try {
+      const response = await fetchWithTimeout(`${BASE_URL}/dashboard-last7-graph`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId })
+      })
+      if (!response.ok) return []
+      return await response.json()
+    } catch {
+      return []
+    }
   }
 
   /**
@@ -211,7 +240,7 @@ export class KabinRaporService {
       const body: any = { firm_id: this.firmId, user_id: this.userId, limit }
       if (cabinId) body.cabin_id = cabinId
 
-      const response = await fetch(`${BASE_URL}/get-session-logs`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/get-session-logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)

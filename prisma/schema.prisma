@@ -1,0 +1,63 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SystemParameter {
+  id    String @id @default(cuid())
+  key   String @unique // e.g. SESSION_VAT_PERCENTAGE, COMMISSION_PERCENTAGE, ALP_SHARE_PERCENTAGE
+  value Float
+}
+
+model Location {
+  id               String               @id @default(cuid())
+  name             String
+  fixedRent        Float
+  duesAmount       Float
+  rentVatRate      Float
+  isActive         Boolean              @default(true)
+  performances     MonthlyPerformance[]
+  expenses         Expense[]
+  investments      Investment[]
+}
+
+model MonthlyPerformance {
+  id                 String   @id @default(cuid())
+  locationId         String
+  location           Location @relation(fields: [locationId], references: [id])
+  month              DateTime // First day of the month
+  sessionCount       Float    
+  extraExpenseAmount Float    @default(0)
+  extraExpenseNotes  String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  locationId  String?   // Can be global or local
+  location    Location? @relation(fields: [locationId], references: [id])
+  description String
+  type        String    // "MONTHLY", "ONE_TIME"
+  amount      Float
+  date        DateTime
+
+  createdAt   DateTime @default(now())
+}
+
+model Investment {
+  id           String   @id @default(cuid())
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+  description  String
+  hardwareCost Float
+  vatAmount    Float
+  date         DateTime
+
+  createdAt DateTime @default(now())
+}

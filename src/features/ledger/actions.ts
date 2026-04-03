@@ -40,6 +40,10 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 export async function addExpense(data: any) {
   try {
     const supabase = await createClient();
+    const vatRate = parseFloat(data.vatRate) || 0;
+    const amountWithoutVat = parseFloat(data.amount) || 0;
+    const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
+
     const { data: record, error } = await supabase
       .from('Expense')
       .insert({
@@ -47,11 +51,13 @@ export async function addExpense(data: any) {
         locationId: data.locationId || null,
         description: data.description,
         type: data.type,
-        amountWithoutVat: data.amount,
-        amountWithVat: data.amount, // VAT calculation can be added here
-        isOfficial: data.isOfficial || false,
+        amountWithoutVat: amountWithoutVat,
+        amountWithVat: amountWithVat,
+        vatRate: vatRate,
+        isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
+        categoryId: data.categoryId || null,
       })
       .select()
       .single();
@@ -60,7 +66,7 @@ export async function addExpense(data: any) {
 
     await createAuditLog('CREATE', 'Expense', record.id, { 
       description: data.description, 
-      amount: data.amount,
+      amount: amountWithVat,
       locationId: data.locationId 
     });
 
@@ -69,6 +75,7 @@ export async function addExpense(data: any) {
     revalidatePath('/gelir-gider');
     return { success: true, record };
   } catch (error: any) {
+    console.error("Add Expense Error:", error);
     return { success: false, error: error.message };
   }
 }
@@ -76,15 +83,20 @@ export async function addExpense(data: any) {
 export async function updateExpense(id: string, data: any) {
   try {
     const supabase = await createClient();
+    const vatRate = parseFloat(data.vatRate) || 0;
+    const amountWithoutVat = parseFloat(data.amount) || 0;
+    const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
+
     const { data: record, error } = await supabase
       .from('Expense')
       .update({
         locationId: data.locationId || null,
         description: data.description,
         type: data.type,
-        amountWithoutVat: data.amount,
-        amountWithVat: data.amount,
-        isOfficial: data.isOfficial || false,
+        amountWithoutVat: amountWithoutVat,
+        amountWithVat: amountWithVat,
+        vatRate: vatRate,
+        isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
         categoryId: data.categoryId || null,
@@ -97,7 +109,7 @@ export async function updateExpense(id: string, data: any) {
 
     await createAuditLog('UPDATE', 'Expense', id, { 
       description: data.description, 
-      amount: data.amount 
+      amount: amountWithVat 
     });
 
     revalidatePath('/expenses');
@@ -105,9 +117,11 @@ export async function updateExpense(id: string, data: any) {
     revalidatePath('/gelir-gider');
     return { success: true, record };
   } catch (error: any) {
+    console.error("Update Expense Error:", error);
     return { success: false, error: error.message };
   }
 }
+
 
 export async function deleteExpense(id: string) {
   try {

@@ -53,9 +53,9 @@ export interface CabinSessionLog {
   [key: string]: any
 }
 
-export type DateRange = 'Bugün' | 'Dün' | 'Bu Hafta' | 'Bu Ay' | 'Son 7 Gün' | 'Son 30 Gün' | 'Tüm Zamanlar'
+export type DateRange = 'Bugün' | 'Dün' | 'Bu Hafta' | 'Bu Ay' | 'Son 7 Gün' | 'Son 30 Gün' | 'Bu Yıl' | 'Tüm Zamanlar'
 
-const ALL_RANGES: DateRange[] = ['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay', 'Son 7 Gün', 'Son 30 Gün', 'Tüm Zamanlar']
+const ALL_RANGES: DateRange[] = ['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay', 'Son 7 Gün', 'Son 30 Gün', 'Bu Yıl', 'Tüm Zamanlar']
 
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 8000) {
   const controller = new AbortController()

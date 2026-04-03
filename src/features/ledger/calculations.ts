@@ -6,6 +6,7 @@ export interface CalculationParams {
   duesAmount: number;
   revenueShareRate: number; // Ciro Payı %
   investmentAmount?: number; // Toplam yatırım (ROI için)
+  defaultVatRate?: number; // 20% by default
 }
 
 export interface CalculationResult {
@@ -13,27 +14,31 @@ export interface CalculationResult {
   totalCommission: number;
   iyzicoCommission: number;
   nayaxCommission: number;
-  revenueShare: number; // Kirayı aşan ciro payı
-  totalAvmExpense: number; // Sabit kira + Aidat + Kirayı aşan ciro payı
+  revenueShare: number; 
+  totalAvmExpense: number; 
   totalExpense: number;
   netCash: number;
   okanShare: number;
   talhaShare: number;
   furkanShare: number;
   alpShare: number;
-  // Strategic Metrics
-  breakEvenSessions: number;     // Kaç seansta kafa kafaya?
-  profitMargin: number;          // Kar marjı (%)
-  roiPercentage?: number;        // Yatırımın ne kadarı geri döndü (Aylık bazda %)
+  breakEvenSessions: number;
+  profitMargin: number;
+  roiPercentage?: number;
   isProfitable: boolean;
 }
 
+/**
+ * Calculates monthly cash flow including commissions, AVM expenses, and operational costs.
+ * AS PER USER REQUEST: Session revenue (e.g., 300 TL) is treated as GROSS (no KDV deduction from revenue).
+ * Expenses however SHOULD include KDV where applicable.
+ */
 export function calculateMonthlyCashFlow(
   sessionCount: number,
-  extraExpense: number,
+  extraExpenseAmountWithVat: number,
   params: CalculationParams
 ): CalculationResult {
-  // 1. Brüt Gelir 
+  // 1. Brüt Gelir (300 TL / seans - KDV düşülmez)
   const grossRevenue = sessionCount * params.sessionPrice;
 
   // 2. Komisyonlar — iyzico %2 + Nayax %2 = %4 (Brüt ciro üzerinden)
@@ -41,23 +46,23 @@ export function calculateMonthlyCashFlow(
   const nayaxCommission = grossRevenue * (params.nayaxCommissionRate / 100);
   const totalCommission = iyzicoCommission + nayaxCommission;
 
-  // 3. AVM Gideri — (AVM'lere Kira + Aidat. Eğer ki ciro payı kirayı geçerse, o zaman aradaki farkı da revenue share olarak öderiz, veya 'Max(Kira, Ciro * Pay)')
+  // 3. AVM Gideri — Max(Sabit Kira, Ciro * Pay) Mantığı
   const calculatedRevenueShare = grossRevenue * (params.revenueShareRate / 100);
   const revenueShare = calculatedRevenueShare > params.fixedRent 
     ? calculatedRevenueShare - params.fixedRent
     : 0;
 
-  // 4. Toplam AVM Gideri (Sabit Kira + Aidat + Kirayı Aşan Kısım Varsa O)
+  // 4. Toplam AVM Gideri (Sabit Kira + Aidat + Kirayı Aşan Kısım)
   const totalAvmExpense = params.fixedRent + params.duesAmount + revenueShare;
 
-  // 5. Toplam Giderler (AVM + Komisyon + Ek masraf)
-  const totalExpense = totalCommission + totalAvmExpense + extraExpense;
+  // 5. Toplam Giderler (AVM + Komisyon + Ek masraflar - KDV DAHİL)
+  const totalExpense = totalCommission + totalAvmExpense + extraExpenseAmountWithVat;
 
-  // 6. Net Nakit Akış = Brüt Gelir - Tüm Giderler
+  // 6. Net Nakit Akış = Brüt Gelir - Tüm Giderler (KDV Dahil Giderler)
   const netCash = grossRevenue - totalExpense;
 
   // 7. Kar Paylaşımı (4 Hissedar × %25)
-  const shareRate = 25 / 100;
+  const shareRate = 0.25;
   const okanShare = netCash * shareRate;
   const talhaShare = netCash * shareRate;
   const furkanShare = netCash * shareRate;
@@ -66,17 +71,14 @@ export function calculateMonthlyCashFlow(
   // 8. Stratejik Metrikler
   const isProfitable = netCash > 0;
   
-  // Break-even: Sabit giderler / oturum başına net gelir
-  // Net gelir/oturum = (Fiyat - Komisyonlar) = 300 * (1 - 0.04) = 288 TL
+  // Break-even: Sabit giderler / (Birim Fiyat - Brüt Komisyonlar)
   const fixedCosts = params.fixedRent + params.duesAmount;
-  const netRevenuePerSession = params.sessionPrice > 0
-    ? params.sessionPrice * (1 - (params.iyzicoCommissionRate + params.nayaxCommissionRate) / 100)
-    : 0;
+  const netRevenuePerSession = params.sessionPrice * (1 - (params.iyzicoCommissionRate + params.nayaxCommissionRate) / 100);
+  
   const breakEvenSessions = netRevenuePerSession > 0 
     ? Math.ceil(fixedCosts / netRevenuePerSession) 
     : 0;
   
-  // Kâr marjı = Net Nakit / Brüt Gelir
   const profitMargin = grossRevenue > 0 ? (netCash / grossRevenue) * 100 : 0;
   
   const roiPercentage = (params.investmentAmount && params.investmentAmount > 0)
@@ -102,3 +104,4 @@ export function calculateMonthlyCashFlow(
     isProfitable,
   };
 }
+

@@ -1,4 +1,4 @@
-import prisma from '@/lib/db';
+import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 
 export const metadata = {
@@ -8,10 +8,13 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ReportsPage() {
-  const performances = await prisma.monthlyPerformance.findMany({
-    include: { location: true },
-    orderBy: { month: 'desc' }
-  });
+  const supabase = await createClient();
+
+  // Prisma: prisma.monthlyPerformance.findMany({ include: { location: true }, orderBy: { month: 'desc' } })
+  const { data: performances } = await supabase
+    .from('MonthlyPerformance')
+    .select('*, location:Location(*)')
+    .order('month', { ascending: false });
 
   // MVP Mock parameters since SystemParameter isn't fully seeded yet.
   const DEFAULT_PARAMS = {
@@ -22,7 +25,7 @@ export default async function ReportsPage() {
     ngbShareRate: 50,
   };
 
-  const processedData = performances.map((perf: any) => {
+  const processedData = (performances || []).map((perf: any) => {
     const calc = calculateMonthlyCashFlow(
       perf.sessionCount, 
       perf.extraExpenseAmount, 
@@ -34,9 +37,11 @@ export default async function ReportsPage() {
       }
     );
 
+    const perfDate = new Date(perf.month);
+
     return {
       id: perf.id,
-      month: perf.month.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' }),
+      month: perfDate.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' }),
       locationName: perf.location.name,
       sessionCount: perf.sessionCount,
       grossRevenue: calc.grossRevenue,

@@ -1,22 +1,27 @@
 'use server'
 
 import { revalidatePath } from 'next/cache';
-import prisma from '@/lib/db';
+import { createClient } from '@/utils/supabase/server';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput } from './schema';
 
 export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   try {
+    const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
 
-    const record = await prisma.monthlyPerformance.create({
-      data: {
+    const { data: record, error } = await supabase
+      .from('MonthlyPerformance')
+      .insert({
         locationId: validatedData.locationId,
-        month: new Date(validatedData.month),
+        month: new Date(validatedData.month).toISOString(),
         sessionCount: validatedData.sessionCount,
         extraExpenseAmount: validatedData.extraExpenseAmount || 0,
         extraExpenseNotes: validatedData.extraExpenseNotes,
-      }
-    });
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     revalidatePath('/performance');
     revalidatePath('/dashboard');
@@ -30,10 +35,15 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
 export async function getActiveLocations() {
   try {
-    return await prisma.location.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-    });
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('Location')
+      .select('*')
+      .eq('isActive', true)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error("Error fetching locations:", error);
     return [];
@@ -42,9 +52,15 @@ export async function getActiveLocations() {
 
 export async function getSystemParameters() {
   try {
-    const params = await prisma.systemParameter.findMany();
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('SystemParameter')
+      .select('key, value');
+
+    if (error) throw error;
+
     const map: Record<string, number> = {};
-    for (const p of params) {
+    for (const p of (data || [])) {
       map[p.key] = p.value;
     }
     return map;

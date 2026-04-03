@@ -11,17 +11,17 @@
 * **Language:** TypeScript (Strict Mode). Static typing is non-negotiable. Explicit interfaces and types are required end-to-end; the `any` type is strictly prohibited.
 * **Styling & UI:** Tailwind CSS for modular utility-first styling. I maintain a single source of truth for design tokens. NO complex custom CSS architectures unless strictly necessary.
 * **Form & Validation Management:** `react-hook-form` paired with `zod`. Client-side validation guarantees safe payload delivery, while identical `zod` schemas secure Server Actions.
-* **Database & ORM:** PostgreSQL alongside Prisma or Drizzle ORM. Type-safe database access must be optimized for complex analytical queries required by financial reporting.
+* **Database & Auth:** Supabase (PostgreSQL). Utilization of Supabase Auth for identity management and Supabase Client/SSR for type-safe data access. Prisma may still be used for complex schema management or migrations if specifically required.
 
 ## 3. Application Architecture
 * **Component Modularity:** Colocation by feature. Structure code logically (e.g., `features/invoices`, `features/reports`) instead of monolithic, deeply nested `components` or `utils` folders. 
 * **State Management:** Prioritize Server State over Client State. Use URL search parameters (`nuqs` or `URLSearchParams`) for shareable state (filters, sorting, pagination). Avoid global client-side stores (like Redux) unless interaction density makes it absolutely mandatory.
-* **Data Flow & Mutation:** Enforce unidirectional data flow. Data mutations are strictly handled via Next.js Server Actions with proper `revalidatePath` or `revalidateTag` cache invalidation logic.
+* **Data Flow & Mutation:** Enforce unidirectional data flow. Data mutations are strictly handled via Next.js Server Actions using the Supabase Server Client with proper `revalidatePath` or `revalidateTag` cache invalidation logic.
 * **Error Boundaries & Suspense:** Implement granular `<ErrorBoundary>` to catch failures without crashing the whole application. Use `<Suspense>` boundaries with skeleton fallbacks to ensure fast initial page loads while heavy financial computations resolve.
 
 ## 4. Data Handling & Security
 * **Excel Data Interpretation:** Robust sanitization pipelines. Mismatched or erratic Excel financial rows must be cleansed via deterministic mappers and validated through rigorous `zod` schema constraints before database insertion.
-* **Relational Integrity:** Strict foreign-key enforcing to prevent orphan financial records. Balance ledgers and summaries scale smoothly via robust aggregations.
+* **Relational Integrity:** Strict foreign-key enforcing to prevent orphan financial records. Balance ledgers and summaries scale smoothly via robust aggregations. Use Row Level Security (RLS) on all Supabase tables to enforce data isolation and security.
 * **Graceful Degradation:** Financial anomalies (e.g., missing metadata or unresolved references) are surfaced with descriptive warning UI states rather than producing silent failures or internal server errors.
 
 ## 5. Code Quality & Standards

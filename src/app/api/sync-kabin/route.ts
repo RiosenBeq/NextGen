@@ -1,66 +1,61 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
+import { createClient } from '@/utils/supabase/server'
 import { kabinRapor } from '@/lib/kabinRapor'
 
-// Option to use Edge runtime or Node. Using Node due to Prisma requirements.
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    const supabase = await createClient()
+    
     // 1. Fetch live data from original API
     const cabins = await kabinRapor.getCabins()
     const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
     
     // 2. Loop through cabins and update/insert into our Database
-    for (const cabin of cabins) {
+    for (const cabin of (cabins || [])) {
       // Upsert Cabin Information
-      const dbCabin = await prisma.cabin.upsert({
-        where: { cabinId: cabin.id },
-        update: {
-          cabinName: cabin.cabin_name,
-          cabinLocation: cabin.cabin_location,
-          cabinPrice: cabin.cabin_price,
-          macAddresses: cabin.mac_addresses,
-          // updatedAt will auto-update
-        },
-        create: {
+      const { data: dbCabin, error: cabinError } = await supabase
+        .from('Cabin')
+        .upsert({
           cabinId: cabin.id,
           firmId: cabin.firm_id,
           cabinName: cabin.cabin_name,
           cabinLocation: cabin.cabin_location,
           cabinPrice: cabin.cabin_price,
-          startDate: cabin.start_date ? new Date(cabin.start_date) : null,
           macAddresses: cabin.mac_addresses,
-        }
-      })
+          startDate: cabin.start_date ? new Date(cabin.start_date).toISOString() : null,
+          updatedAt: new Date().toISOString(),
+        }, { onConflict: 'cabinId' })
+        .select()
+        .single();
+
+      if (cabinError) {
+        console.error(`Error upserting cabin ${cabin.id}:`, cabinError);
+        continue;
+      }
 
       // Upsert Today's Statistics for this Cabin
-      await prisma.cabinDailyStat.upsert({
-        where: {
-          cabinId_date: {
-            cabinId: dbCabin.id,
-            date: today
-          }
-        },
-        update: {
-          todayRevenue: cabin.today_revenue,
-          paidSessions: cabin.paid_sessions,
-          incomingCustomer: cabin.incoming_customer_count
-        },
-        create: {
+      const { error: statError } = await supabase
+        .from('CabinDailyStat')
+        .upsert({
           cabinId: dbCabin.id,
           date: today,
           todayRevenue: cabin.today_revenue,
           paidSessions: cabin.paid_sessions,
-          incomingCustomer: cabin.incoming_customer_count
-        }
-      })
+          incomingCustomer: cabin.incoming_customer_count,
+          updatedAt: new Date().toISOString(),
+        }, { onConflict: 'cabinId,date' });
+
+      if (statError) {
+        console.error(`Error upserting stats for cabin ${cabin.id}:`, statError);
+      }
     }
 
     return NextResponse.json({ 
       success: true, 
       message: 'Kabin data successfully synced.',
-      syncedCount: cabins.length 
+      syncedCount: cabins?.length || 0
     })
     
   } catch (error: any) {

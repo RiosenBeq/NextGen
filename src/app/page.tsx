@@ -1,4 +1,4 @@
-import prisma from '@/lib/db';
+import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { TrendingUp, CreditCard, Wallet, Activity } from 'lucide-react';
 
@@ -9,10 +9,13 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const performances = await prisma.monthlyPerformance.findMany({
-    include: { location: true },
-    orderBy: { month: 'desc' }
-  });
+  const supabase = await createClient();
+
+  // Prisma: prisma.monthlyPerformance.findMany({ include: { location: true }, orderBy: { month: 'desc' } })
+  const { data: performances } = await supabase
+    .from('MonthlyPerformance')
+    .select('*, location:Location(*)')
+    .order('month', { ascending: false });
 
   const DEFAULT_PARAMS = {
     sessionPrice: 300,
@@ -27,21 +30,23 @@ export default async function DashboardPage() {
   let totalCommission = 0;
   let recentSessions = 0;
 
-  for (const perf of performances) {
-    const calc = calculateMonthlyCashFlow(
-      perf.sessionCount,
-      perf.extraExpenseAmount,
-      {
-        ...DEFAULT_PARAMS,
-        fixedRent: perf.location.fixedRent,
-        duesAmount: perf.location.duesAmount,
-        rentKdvRate: perf.location.rentVatRate,
-      }
-    );
-    totalRevenue += calc.grossRevenue;
-    totalNetCash += calc.netCash;
-    totalCommission += calc.totalCommission;
-    recentSessions += perf.sessionCount;
+  if (performances) {
+    for (const perf of performances) {
+      const calc = calculateMonthlyCashFlow(
+        perf.sessionCount,
+        perf.extraExpenseAmount,
+        {
+          ...DEFAULT_PARAMS,
+          fixedRent: perf.location.fixedRent,
+          duesAmount: perf.location.duesAmount,
+          rentKdvRate: perf.location.rentVatRate,
+        }
+      );
+      totalRevenue += calc.grossRevenue;
+      totalNetCash += calc.netCash;
+      totalCommission += calc.totalCommission;
+      recentSessions += perf.sessionCount;
+    }
   }
 
   return (
@@ -49,7 +54,7 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-gray-900">Finansal Özet (YTD)</h1>
-          <p className="mt-1 text-sm font-medium text-gray-500">Tüm AVM'lerin kümülatif nakit durumu ve hesaplamaları.</p>
+          <p className="mt-1 text-sm font-medium text-gray-500">Tüm AVM\'ler kümülatif nakit durumu ve hesaplamaları.</p>
         </div>
         <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>

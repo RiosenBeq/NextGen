@@ -1,6 +1,5 @@
-import prisma from '@/lib/db';
+import { createClient } from '@/utils/supabase/server';
 import { CreditCard, ArrowDownRight } from 'lucide-react';
-import { Expense, Investment, Location } from '@prisma/client';
 
 export const metadata = {
   title: 'Giderler & Yatırımlar - NextGenBox',
@@ -8,19 +7,50 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-type ExpenseWithLocation = Expense & { location: Location | null };
-type InvestmentWithLocation = Investment & { location: Location };
+interface Location {
+  id: string;
+  name: string;
+}
+
+interface Expense {
+  id: string;
+  description: string;
+  type: string;
+  month?: string;
+  isOfficial: boolean;
+  amountWithoutVat: number;
+  amountWithVat: number;
+  location?: Location | null;
+}
+
+interface Investment {
+  id: string;
+  description: string;
+  currency: string;
+  amountWithoutVat: number;
+  vatAmount: number;
+  totalAmount: number;
+  notes?: string;
+  location?: Location | null;
+}
 
 export default async function ExpensesPage() {
-  const expenses = (await prisma.expense.findMany({
-    include: { location: true },
-    orderBy: { createdAt: 'desc' }
-  })) as any[];
+  const supabase = await createClient();
 
-  const investments = (await prisma.investment.findMany({
-    include: { location: true },
-    orderBy: { createdAt: 'desc' }
-  })) as any[];
+  // Prisma: prisma.expense.findMany({ include: { location: true }, orderBy: { createdAt: 'desc' } })
+  const { data: expensesData } = await supabase
+    .from('Expense')
+    .select('*, location:Location(*)')
+    .order('createdAt', { ascending: false });
+
+  // Prisma: prisma.investment.findMany({ include: { location: true }, orderBy: { createdAt: 'desc' } })
+  const { data: investmentsData } = await supabase
+    .from('Investment')
+    .select('*, location:Location(*)')
+    .order('createdAt', { ascending: false });
+
+  const expenses = (expensesData || []) as Expense[];
+  const investments = (investmentsData || []) as Investment[];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -51,7 +81,7 @@ export default async function ExpensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {expenses.map((exp: any) => (
+              {expenses.map((exp: Expense) => (
                 <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{exp.description}</td>
                   <td className="px-6 py-4">
@@ -60,7 +90,7 @@ export default async function ExpensesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium">
-                    {exp.type.toUpperCase()} {exp.month ? `(${exp.month})` : ''}
+                    {exp.type?.toUpperCase()} {exp.month ? `(${exp.month})` : ''}
                   </td>
                   <td className="px-6 py-4 text-center">
                     {exp.isOfficial ? <span className="text-blue-600 font-bold">EVET</span> : <span className="text-gray-400">HAYIR</span>}
@@ -93,7 +123,7 @@ export default async function ExpensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {investments.map((inv: any) => (
+              {investments.map((inv: Investment) => (
                 <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{inv.description}</td>
                   <td className="px-6 py-4 text-gray-600">{inv.location?.name}</td>

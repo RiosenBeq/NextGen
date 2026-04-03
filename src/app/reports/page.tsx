@@ -7,11 +7,13 @@ import * as motion from "framer-motion/client";
 import { createClient } from '@/utils/supabase/client';
 import { getSystemParameters } from '@/features/ledger/actions';
 import { cn } from '@/lib/utils';
+import { kabinRapor } from '@/lib/kabinRapor';
 
 export default function ReportsPage() {
   const [data, setData] = useState<{
     processedData: any[];
     totals: any;
+    liveTotals?: any;
   } | null>(null);
 
   useEffect(() => {
@@ -19,6 +21,14 @@ export default function ReportsPage() {
       const supabase = createClient();
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
+
+      // Fetch Live Data
+      let liveData = null;
+      try {
+        liveData = await kabinRapor.getDashboardTotals('Tüm Zamanlar');
+      } catch (e) {
+        console.error("Live data fetch failed on reports:", e);
+      }
 
       const { data: performances } = await supabase
         .from('MonthlyPerformance')
@@ -39,7 +49,8 @@ export default function ReportsPage() {
           sessionCount: perf.sessionCount,
           grossRevenue: calc.grossRevenue,
           totalAvmExpense: calc.totalAvmExpense,
-          totalCommission: calc.totalCommission,
+          iyzico: calc.iyzicoCommission,
+          nayax: calc.nayaxCommission,
           extraExpense: perf.extraExpenseAmount || 0,
           netCash: calc.netCash,
           shares: { ok: calc.okanShare, tl: calc.talhaShare, fk: calc.furkanShare, al: calc.alpShare }
@@ -49,10 +60,11 @@ export default function ReportsPage() {
       setData({
         processedData,
         totals: {
-          revenue: processedData.reduce((s, r) => s + r.grossRevenue, 0),
-          profit: processedData.reduce((s, r) => s + r.netCash, 0),
-          sessions: processedData.reduce((s, r) => s + r.sessionCount, 0),
-        }
+          revenue: processedData.reduce((s: number, r: any) => s + r.grossRevenue, 0),
+          profit: processedData.reduce((s: number, r: any) => s + r.netCash, 0),
+          sessions: processedData.reduce((s: number, r: any) => s + r.sessionCount, 0),
+        },
+        liveTotals: liveData
       });
     }
     fetchData();
@@ -115,7 +127,8 @@ export default function ReportsPage() {
                   <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-center">İşlem</th>
                   <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">Brüt (KDV+)</th>
                   <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">AVM Kesinti</th>
-                  <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">Sanal Pos (%4)</th>
+                  <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">iyzico (%2)</th>
+                  <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">Nayax (%2)</th>
                   <th className="px-8 py-5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest border-b border-white/[0.04] text-right">Reel Net</th>
                 </tr>
               </thead>
@@ -141,8 +154,11 @@ export default function ReportsPage() {
                     <td className="px-6 py-6 text-right text-sm font-medium text-rose-500/60">
                       ₺{row.totalAvmExpense.toLocaleString('tr-TR')}
                     </td>
-                    <td className="px-6 py-6 text-right text-sm font-medium text-rose-500/60">
-                      ₺{row.totalCommission.toLocaleString('tr-TR')}
+                    <td className="px-6 py-6 text-right text-sm font-medium text-rose-500/60 font-mono">
+                      ₺{row.iyzico.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
+                    </td>
+                    <td className="px-6 py-6 text-right text-sm font-medium text-indigo-500/60 font-mono">
+                      ₺{row.nayax.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
                     </td>
                     <td className="px-8 py-6 text-right">
                       <span className="text-base font-bold text-emerald-400 italic">

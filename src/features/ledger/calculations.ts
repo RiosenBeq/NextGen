@@ -52,8 +52,9 @@ export function calculateMonthlyCashFlow(
     ? calculatedRevenueShare - params.fixedRent
     : 0;
 
-  // 4. Toplam AVM Gideri (Sabit Kira + Aidat + Kirayı Aşan Kısım)
-  const totalAvmExpense = params.fixedRent + params.duesAmount + revenueShare;
+  // 4. Toplam AVM Gideri (Ham Kira + %20 KDV + Aidat + Kirayı Aşan Ciro Payı)
+  const fixedRentWithVat = params.fixedRent * 1.20;
+  const totalAvmExpense = fixedRentWithVat + params.duesAmount + revenueShare;
 
   // 5. Toplam Giderler (AVM + Komisyon + Ek masraflar - KDV DAHİL)
   const totalExpense = totalCommission + totalAvmExpense + extraExpenseAmountWithVat;
@@ -71,9 +72,9 @@ export function calculateMonthlyCashFlow(
   // 8. Stratejik Metrikler
   const isProfitable = netCash > 0;
   
-  // Break-even: Sabit giderler / (Birim Fiyat - Brüt Komisyonlar)
-  const fixedCosts = params.fixedRent + params.duesAmount;
-  const netRevenuePerSession = params.sessionPrice * (1 - (params.iyzicoCommissionRate + params.nayaxCommissionRate) / 100);
+  // Break-even: Sabit giderler (KDV Dahil Kira + Aidat) / (Oturum Başı Net Gelir)
+  const fixedCosts = (params.fixedRent * 1.20) + params.duesAmount;
+  const netRevenuePerSession = params.sessionPrice * 0.96; // 300 - 4% (2% Nayax + 2% iyzico)
   
   const breakEvenSessions = netRevenuePerSession > 0 
     ? Math.ceil(fixedCosts / netRevenuePerSession) 

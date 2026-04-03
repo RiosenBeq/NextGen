@@ -4,9 +4,11 @@ import { use, useEffect, useState } from 'react';
 import { calculateMonthlyCashFlow, CalculationResult } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
-import { TrendingUp, TrendingDown, Target, Calculator, BarChart3, Percent, ArrowUpRight, ArrowDownRight, Zap, Target as TargetIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Calculator, BarChart3, Percent, ArrowUpRight, ArrowDownRight, Zap, Target as TargetIcon, CreditCard } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
+
+import { kabinRapor } from '@/lib/kabinRapor';
 
 export default function FinansalTablo() {
   const [data, setData] = useState<{
@@ -16,6 +18,7 @@ export default function FinansalTablo() {
     scenarios: any[];
     params: any;
     breakEven: any;
+    liveData: any;
   } | null>(null);
 
   useEffect(() => {
@@ -23,7 +26,14 @@ export default function FinansalTablo() {
       const supabase = createClient();
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
-      const kdvRate = params['VAT_RATE'] || 20;
+      
+      // Fetch Live Data
+      let liveData = null;
+      try {
+        liveData = await kabinRapor.getComprehensiveData('Bu Yıl');
+      } catch (e) {
+        console.error("Live data fetch failed:", e);
+      }
 
       const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
       const { data: performances } = await supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: true });
@@ -57,21 +67,30 @@ export default function FinansalTablo() {
         }
       }
 
-      const totalGross = Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalGrossRevenue, 0);
-      const totalNetCash = Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalNetCash, 0);
-      const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + loc.fixedRent + loc.duesAmount, 0);
-      const netRevenuePerSession = sessionPrice / (1 + kdvRate / 100) * (1 - 4 / 100);
+      // Merge Live Data into summaries if missing or for comparison
+      const totalGross = liveData?.allTimeTotals?.total_revenue || Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalGrossRevenue, 0);
+      const totalSessions = liveData?.allTimeTotals?.total_paid_sessions || Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalSessions, 0);
+
+      const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
+      const netRevenuePerSession = sessionPrice * 0.96; // 300 - 4%
+      
       const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
 
       const scenarios = [200, 370, 500, 750, 1000, 1500].map(sessions => {
-        const monthlyNetRevenue = sessions * netRevenuePerSession;
-        const monthlyProfit = monthlyNetRevenue - monthlyFixedTotal;
+        // Use full calculation engine for scenarios to ensure AVM Payı is deducted
+        const mockCalc = calculateMonthlyCashFlow(sessions, 0, {
+          sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
+          fixedRent: (locations?.[0]?.fixedRent || 40000), 
+          duesAmount: (locations?.[0]?.duesAmount || 6000),
+          revenueShareRate: 15
+        });
+
         return {
           sessions,
-          monthlyNet: monthlyNetRevenue,
-          monthlyProfit,
-          yearlyProfit: monthlyProfit * 12,
-          monthlyPerPartner: (monthlyProfit) / 4,
+          monthlyNet: sessions * netRevenuePerSession,
+          monthlyProfit: mockCalc.netCash,
+          yearlyProfit: mockCalc.netCash * 12,
+          monthlyPerPartner: mockCalc.okanShare, // Uses the engine's /4 split (already has AVM Payı deducted)
         };
       });
 
@@ -80,13 +99,15 @@ export default function FinansalTablo() {
         avmSummaries,
         totals: {
           gross: totalGross,
-          net: totalNetCash,
+          sessions: totalSessions,
+          net: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalNetCash, 0),
           commission: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalCommission, 0),
           avmExpense: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalAvmExpense, 0),
         },
         scenarios,
         params: { sessionPrice, netRevenuePerSession },
-        breakEven: { total: breakEvenTotal, perAvm: Math.ceil(breakEvenTotal / (locations?.length || 1)) }
+        breakEven: { total: breakEvenTotal, perAvm: Math.ceil(breakEvenTotal / (locations?.length || 1)) },
+        liveData
       });
     }
     fetchData();
@@ -124,26 +145,36 @@ export default function FinansalTablo() {
       </header>
 
       {/* KPI Overlays */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {[
           { label: "TOPLAM CİRO", value: data.totals.gross, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-          { label: "KOMİSYONLAR (%4)", value: data.totals.commission, icon: Percent, color: "text-rose-400", bg: "bg-rose-500/10" },
+          { label: "iyzico (%2)", value: data.totals.commission / 2, icon: Percent, color: "text-rose-400", bg: "bg-rose-500/10", subtitle: "Anlık Kesinti" },
+          { label: "Nayax (%2)", value: data.totals.commission / 2, icon: CreditCard, color: "text-indigo-400", bg: "bg-indigo-500/10", subtitle: "Sonradan Fatura" },
           { label: "AVM GİDERLERİ", value: data.totals.avmExpense, icon: TrendingDown, color: "text-amber-400", bg: "bg-amber-500/10" },
           { label: "REEL KAZANÇ", value: data.totals.net, icon: BarChart3, color: data.totals.net >= 0 ? "text-indigo-400" : "text-rose-400", bg: data.totals.net >= 0 ? "bg-indigo-500/10" : "bg-rose-500/10" },
         ].map((kpi, idx) => (
           <motion.div
             key={kpi.label}
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-            className="premium-card p-8 group relative overflow-hidden"
+            className="premium-card p-6 group relative overflow-hidden flex flex-col justify-between min-h-[140px]"
           >
             <div className={`absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity`}>
                <kpi.icon size={80} />
             </div>
-            <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center mb-6`}>
-              <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+            <div className="flex justify-between items-start mb-4">
+               <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
+                 <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+               </div>
+               {'subtitle' in kpi && (
+                 <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest px-2 py-0.5 rounded border border-white/5 bg-white/5">
+                   {kpi.subtitle}
+                 </span>
+               )}
             </div>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{kpi.label}</p>
-            <h2 className="text-2xl font-bold tracking-tight text-white italic">₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
+            <div>
+               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{kpi.label}</p>
+               <h2 className="text-xl font-bold tracking-tight text-white italic whitespace-nowrap">₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
+            </div>
           </motion.div>
         ))}
       </section>
@@ -164,16 +195,16 @@ export default function FinansalTablo() {
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b border-white/[0.04]">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Kira</span>
-                  <span className="font-bold text-white">₺{loc.fixedRent.toLocaleString('tr-TR')}</span>
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide text-rose-400">Kira (+%20 KDV)</span>
+                  <span className="font-bold text-white">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/[0.04]">
                   <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Aidat</span>
                   <span className="font-bold text-white">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center pt-4">
-                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Aylık Sabit Toplam</span>
-                  <span className="text-xl font-bold text-white italic">₺{(loc.fixedRent + loc.duesAmount).toLocaleString('tr-TR')}</span>
+                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Aylık Sabit Toplam (Brüt)</span>
+                  <span className="text-xl font-bold text-white italic">₺{((loc.fixedRent * 1.20) + loc.duesAmount).toLocaleString('tr-TR')}</span>
                 </div>
               </div>
             </motion.div>

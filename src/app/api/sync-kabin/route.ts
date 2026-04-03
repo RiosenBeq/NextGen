@@ -8,13 +8,18 @@ export async function GET() {
   try {
     const supabase = await createClient()
     
-    // 1. Fetch live data from original API
-    const cabins = await kabinRapor.getCabins()
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    // 1. Fetch live data — all ranges in parallel
+    const [cabins, todayTotals, thisMonthTotals, allTimeTotals] = await Promise.all([
+      kabinRapor.getCabins(),
+      kabinRapor.getDashboardTotals('Bugün'),
+      kabinRapor.getDashboardTotals('Bu Ay'),
+      kabinRapor.getDashboardTotals('Tüm Zamanlar'),
+    ])
+
+    const today = new Date().toISOString().split('T')[0]
     
-    // 2. Loop through cabins and update/insert into our Database
+    // 2. Loop through cabins and upsert
     for (const cabin of (cabins || [])) {
-      // Upsert Cabin Information
       const { data: dbCabin, error: cabinError } = await supabase
         .from('Cabin')
         .upsert({
@@ -35,7 +40,7 @@ export async function GET() {
         continue;
       }
 
-      // Upsert Today's Statistics for this Cabin
+      // Daily stats upsert
       const { error: statError } = await supabase
         .from('CabinDailyStat')
         .upsert({
@@ -44,6 +49,8 @@ export async function GET() {
           todayRevenue: cabin.today_revenue,
           paidSessions: cabin.paid_sessions,
           incomingCustomer: cabin.incoming_customer_count,
+          avgRevenuePerSession: cabin.avg_revenue_per_session || 0,
+          conversionRate: cabin.conversion_rate || 0,
           updatedAt: new Date().toISOString(),
         }, { onConflict: 'cabinId,date' });
 
@@ -52,10 +59,22 @@ export async function GET() {
       }
     }
 
+    // 3. Store aggregate totals
+    const aggregatePayload = {
+      date: today,
+      todayRevenue: todayTotals?.total_revenue || 0,
+      todaySessions: todayTotals?.total_paid_sessions || 0,
+      monthRevenue: thisMonthTotals?.total_revenue || 0,
+      monthSessions: thisMonthTotals?.total_paid_sessions || 0,
+      allTimeRevenue: allTimeTotals?.total_revenue || 0,
+      allTimeSessions: allTimeTotals?.total_paid_sessions || 0,
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: 'Kabin data successfully synced.',
-      syncedCount: cabins?.length || 0
+      syncedCount: cabins?.length || 0,
+      aggregates: aggregatePayload,
     })
     
   } catch (error: any) {

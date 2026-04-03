@@ -52,7 +52,7 @@ export function calculateMonthlyCashFlow(
   // 3. Net Gelir (KDV Hariç)
   const netRevenue = grossRevenue - collectedKdv;
 
-  // 4. Komisyonlar (iyzico+nayax)
+  // 4. Komisyonlar — iyzico %2 + Nayax %2 = %4 (Brüt ciro üzerinden)
   const iyzicoCommission = grossRevenue * (params.iyzicoCommissionRate / 100);
   const nayaxCommission = grossRevenue * (params.nayaxCommissionRate / 100);
   const totalCommission = iyzicoCommission + nayaxCommission;
@@ -64,24 +64,25 @@ export function calculateMonthlyCashFlow(
     : 0;
   const actualRentVatPayment = rawRentVat - rentVatWithholding;
 
-  // 6. Ciro Payı (Revenue Share)
+  // 6. AVM Ciro Payı — Brüt ciro eşiği aştığında, aşan kısım × %15
   const revenueShare = grossRevenue > params.revenueThreshold 
     ? (grossRevenue - params.revenueThreshold) * (params.revenueShareRate / 100)
     : 0;
 
-  // 7. Sabit Giderler (Seans bağımsız: Kira + Aidat + Ödenen KDV)
+  // 7. Sabit Giderler (Seans bağımsız: Kira + Aidat + Kira KDV)
   const fixedCosts = params.fixedRent + params.duesAmount + actualRentVatPayment;
 
-  // 8. Toplam AVM Gideri
+  // 8. Toplam AVM Gideri (sabit + ciro payı)
   const totalAvmExpense = fixedCosts + revenueShare;
 
-  // 9. Toplam Giderler
+  // 9. Toplam Giderler (AVM + Komisyon + Ek masraf)
   const totalExpense = totalCommission + totalAvmExpense + extraExpense;
 
-  // 10. Net Nakit
+  // 10. Net Nakit Akış = Brüt Gelir - Tüm Giderler
+  // Not: Bu brüt cirodan tüm çıkışları düşer. KDV devlete ayrıca ödenir.
   const netCash = grossRevenue - totalExpense;
 
-  // 11. Kar Paylaşımı (4 Hissedar %25)
+  // 11. Kar Paylaşımı (4 Hissedar × %25)
   const shareRate = 25 / 100;
   const okanShare = netCash * shareRate;
   const talhaShare = netCash * shareRate;
@@ -90,8 +91,18 @@ export function calculateMonthlyCashFlow(
 
   // 12. Stratejik Metrikler
   const isProfitable = netCash > 0;
-  const breakEvenSessions = Math.ceil(totalExpense / params.sessionPrice);
-  const profitMargin = netRevenue > 0 ? (netCash / netRevenue) * 100 : 0;
+  
+  // Break-even: Sabit giderler / oturum başına net gelir
+  // Net gelir/oturum = (Fiyat - KDV - Komisyon) = 300 / 1.20 * (1 - 0.04) = 240 TL
+  const netRevenuePerSession = params.sessionPrice > 0
+    ? (params.sessionPrice / (1 + params.kdvRate / 100)) * (1 - (params.iyzicoCommissionRate + params.nayaxCommissionRate) / 100)
+    : 0;
+  const breakEvenSessions = netRevenuePerSession > 0 
+    ? Math.ceil(fixedCosts / netRevenuePerSession) 
+    : 0;
+  
+  // Kâr marjı = Net Nakit / Brüt Gelir
+  const profitMargin = grossRevenue > 0 ? (netCash / grossRevenue) * 100 : 0;
   
   const roiPercentage = (params.investmentAmount && params.investmentAmount > 0)
     ? (netCash / params.investmentAmount) * 100
@@ -120,4 +131,19 @@ export function calculateMonthlyCashFlow(
     roiPercentage,
     isProfitable,
   };
+}
+
+/**
+ * Yıllık net kâr hesaplaması (Kurumlar Vergisi %22 dahil)
+ * Zarar durumunda vergi = 0
+ */
+export function calculateYearlyNetProfit(
+  monthlyResults: CalculationResult[],
+  corpTaxRate: number = 22
+): { yearlyGrossProfit: number; corpTax: number; yearlyNetProfit: number; perPartner: number } {
+  const yearlyGrossProfit = monthlyResults.reduce((sum, r) => sum + r.netCash, 0);
+  const corpTax = yearlyGrossProfit > 0 ? yearlyGrossProfit * (corpTaxRate / 100) : 0;
+  const yearlyNetProfit = yearlyGrossProfit - corpTax;
+  const perPartner = yearlyNetProfit / 4;
+  return { yearlyGrossProfit, corpTax, yearlyNetProfit, perPartner };
 }

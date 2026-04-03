@@ -5,6 +5,7 @@ import * as motion from "framer-motion/client";
 
 export const metadata = {
   title: 'Sistem Parametreleri - NextGenBox',
+  robots: 'noindex, nofollow',
 };
 
 export const dynamic = 'force-dynamic';

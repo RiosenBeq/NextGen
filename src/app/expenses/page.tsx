@@ -7,6 +7,7 @@ import { InvestmentForm } from '@/features/ledger/components/InvestmentForm';
 
 export const metadata = {
   title: 'Giderler & Yatırımlar - NextGenBox',
+  robots: 'noindex, nofollow',
 };
 
 export const dynamic = 'force-dynamic';

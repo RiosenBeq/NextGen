@@ -2,41 +2,41 @@
 
 @layer base {
   :root {
-    --background: #09090b; /* Zinc-950 */
-    --foreground: #fafafa; /* Zinc-50 */
+    --background: #111116;
+    --foreground: #fafafa;
     
-    --card: #09090b;
+    --card: #1a1a22;
     --card-foreground: #fafafa;
     
-    --popover: #09090b;
+    --popover: #1a1a22;
     --popover-foreground: #fafafa;
     
     --primary: #fafafa;
-    --primary-foreground: #18181b; /* Zinc-900 */
+    --primary-foreground: #1a1a22;
     
-    --secondary: #27272a; /* Zinc-800 */
+    --secondary: #2a2a35;
     --secondary-foreground: #fafafa;
     
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa; /* Zinc-400 */
+    --muted: #2a2a35;
+    --muted-foreground: #a1a1aa;
     
-    --accent: #27272a;
+    --accent: #2a2a35;
     --accent-foreground: #fafafa;
     
     --destructive: #7f1d1d;
     --destructive-foreground: #fafafa;
     
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #d4d4d8; /* Zinc-300 */
+    --border: #2a2a35;
+    --input: #2a2a35;
+    --ring: #d4d4d8;
     
     --radius: 0.75rem;
 
     /* Elite Accents */
     --elite-emerald: #10b981;
-    --elite-indigo: #6366f1;
-    --elite-rose: #f43f5e;
-    --elite-cyan: #06b6d4;
+    --elite-indigo: #818cf8;
+    --elite-rose: #fb7185;
+    --elite-cyan: #22d3ee;
   }
 }
 
@@ -58,15 +58,15 @@ body {
   min-height: 100vh;
 }
 
-/* Linear/Stripe Inspired Background Grid & Gradients */
+/* Subtle dot grid — lighter */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
-  background-size: 24px 24px;
-  mask-image: radial-gradient(ellipse at center, black, transparent 80%);
+    radial-gradient(circle at 2px 2px, rgba(255,255,255,0.04) 1px, transparent 0);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at center, black, transparent 70%);
   pointer-events: none;
   z-index: -1;
 }
@@ -76,39 +76,40 @@ body::after {
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(9, 9, 11, 1) 0px, transparent 100%);
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(129, 140, 248, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(34, 211, 238, 0.03) 0px, transparent 50%);
   pointer-events: none;
   z-index: -2;
 }
 
+/* Cards — lighter, more visible */
 .premium-card {
-  @apply rounded-2xl border border-white/5 bg-zinc-900/40 backdrop-blur-md shadow-2xl transition-all duration-300 hover:border-white/10 hover:bg-zinc-900/60;
+  @apply rounded-2xl border border-white/[0.08] bg-[#1a1a22]/80 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-white/15 hover:bg-[#1e1e28]/90;
 }
 
 .glass-panel {
-  @apply bg-zinc-900/20 backdrop-blur-xl border border-white/5;
+  @apply bg-[#1a1a22]/60 backdrop-blur-xl border border-white/[0.08];
 }
 
 .heading-elite {
   @apply font-black tracking-tighter text-white drop-shadow-sm;
-  background: linear-gradient(to bottom right, #fff 30%, rgba(255,255,255,0.5));
+  background: linear-gradient(to bottom right, #fff 40%, rgba(255,255,255,0.65));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .elite-input {
-  @apply w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all;
+  @apply w-full bg-[#1a1a22]/80 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/15 focus:border-white/20 transition-all;
 }
 
 .elite-button-primary {
-  @apply px-6 py-3 bg-white text-zinc-950 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-zinc-200 active:scale-[0.98] transition-all;
+  @apply px-6 py-3 bg-white text-zinc-950 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-zinc-100 active:scale-[0.98] transition-all shadow-lg;
 }
 
 .elite-button-secondary {
-  @apply px-6 py-3 bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/10 active:scale-[0.98] transition-all;
+  @apply px-6 py-3 bg-white/[0.08] border border-white/10 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/15 active:scale-[0.98] transition-all;
 }
 
 .elite-badge {
@@ -123,11 +124,11 @@ body::after {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Animations */
@@ -139,4 +140,70 @@ body::after {
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+/* Safe Area (iPhone notch / bottom bar) */
+.safe-area-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* ======== MOBILE RESPONSIVE ======== */
+
+/* Global mobile padding & font adjustments */
+@media (max-width: 768px) {
+  .premium-card {
+    @apply rounded-xl;
+  }
+  
+  table {
+    font-size: 0.7rem;
+  }
+  
+  th, td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  h1 {
+    font-size: 2rem !important;
+    line-height: 1 !important;
+  }
+
+  h2 {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.75rem !important;
+  }
+
+  .premium-card {
+    @apply rounded-lg;
+  }
+}
+
+/* Touch friendly scroll */
+@media (hover: none) {
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Prevent text selection on interactive elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Tap highlight removal for mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
 }

@@ -14,13 +14,13 @@ export default function FinancialSimulator({ defaultParams }: Props) {
 
   const simulation = useMemo(() => {
     return calculateMonthlyCashFlow(sessions, 0, {
-      sessionPrice: defaultParams.sessionPrice || 350,
+      sessionPrice: defaultParams.sessionPrice || 300,
       iyzicoCommissionRate: 2,
       nayaxCommissionRate: 2,
-      fixedRent: defaultParams.fixedRent || 15000,
-      duesAmount: defaultParams.duesAmount || 2000,
+      fixedRent: defaultParams.fixedRent || 40000,
+      duesAmount: defaultParams.duesAmount || 6000,
       revenueShareRate: defaultParams.revenueShareRate || 15,
-      investmentAmount: defaultParams.investmentAmount || 150000,
+      investmentAmount: defaultParams.investmentAmount || 250000,
     });
   }, [sessions, defaultParams]);
 
@@ -32,14 +32,14 @@ export default function FinancialSimulator({ defaultParams }: Props) {
 
       <header className="flex justify-between items-start mb-12 relative z-10">
         <div>
-          <h3 className="text-2xl font-black text-white tracking-tighter mb-1 flex items-center gap-3">
+          <h3 className="text-2xl font-black text-white tracking-tighter mb-1 flex items-center gap-3 italic">
              <Calculator className="text-emerald-500 w-6 h-6" />
-             Strategic Projeksiyon
+             Stratejik Projeksiyon
           </h3>
           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Hacim ve Ortaklık Simülatörü</p>
         </div>
         <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-           Live simulation
+           Canlı Simülasyon
         </div>
       </header>
 
@@ -68,6 +68,7 @@ export default function FinancialSimulator({ defaultParams }: Props) {
 
           <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 space-y-6">
              <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Ortaklık Paylaşım Projeksiyonu (%25)</h4>
+             <p className="text-[8px] text-zinc-600 italic -mt-4">AVM Payı ve tüm giderler düşülmüş net tutardır.</p>
              <div className="grid grid-cols-2 gap-4">
                 {[
                   { name: 'OKAN', amount: simulation.okanShare },
@@ -93,7 +94,7 @@ export default function FinancialSimulator({ defaultParams }: Props) {
                  </p>
                  <div className="flex items-center gap-2 text-emerald-500">
                     <TrendingUp className="w-3 h-3" />
-                    <span className="text-[10px] font-black">PROFITABLE</span>
+                    <span className="text-[10px] font-black">{simulation.netCash > 0 ? "KARLI" : "ZARAR"}</span>
                  </div>
               </div>
            </div>
@@ -104,23 +105,23 @@ export default function FinancialSimulator({ defaultParams }: Props) {
                  <p className="text-3xl font-black text-white tracking-tighter">
                     %{simulation.profitMargin.toFixed(1)}
                  </p>
-                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1 block">Efficiency index</span>
+                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1 block">Karlılık Endeksi</span>
               </div>
            </div>
 
            <div className="p-8 rounded-3xl bg-zinc-900/50 border border-white/5 flex flex-col justify-between hover:border-white/20 transition-all">
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Break-even Sessions</span>
+              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Başa Baş Seans Sayısı</span>
               <div>
                  <p className="text-3xl font-black text-white tracking-tighter">
-                   {simulation.breakEvenSessions}
+                    {simulation.breakEvenSessions}
                  </p>
-                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1 block">Target to clear</span>
+                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1 block">Hedeflenen Seans</span>
               </div>
            </div>
 
            <div className="p-8 rounded-3xl bg-emerald-500 flex flex-col justify-between shadow-[0_0_40px_rgba(16,185,129,0.15)] group/cta cursor-pointer">
-              <span className="text-[10px] font-black text-black uppercase tracking-widest mb-4">Yatırım Geri Dönüşü</span>
-              <div className="flex items-end justify-between">
+              <span className="text-[10px] font-black text-black uppercase tracking-widest mb-4">Yatırım Geri Dönüşü (ROI)</span>
+               <div className="flex items-end justify-between">
                  <p className="text-3xl font-black text-black tracking-tighter italic">
                     %{simulation.roiPercentage?.toFixed(1) || '0.0'}
                  </p>
@@ -133,7 +134,6 @@ export default function FinancialSimulator({ defaultParams }: Props) {
   );
 }
 
-// Minimal cn implementation to avoid import complexity if utils is not available for this specific component
 function cn(...classes: any[]) {
   return classes.filter(Boolean).join(' ');
 }

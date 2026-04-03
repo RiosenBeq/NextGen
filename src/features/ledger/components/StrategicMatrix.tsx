@@ -47,17 +47,17 @@ export default function StrategicMatrix({ insights }: { insights: Insight[] }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col justify-between min-h-[80px]">
               <div className="flex items-center gap-2 text-zinc-400 mb-1">
                 <Target className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-bold uppercase tracking-wider">Başa Baş</span>
               </div>
-              <div className="text-xl font-black text-white">
-                {loc.breakEvenSessions} <span className="text-xs text-zinc-500 font-medium">seans/ay</span>
+              <div className="text-xl font-black text-white whitespace-nowrap">
+                {loc.breakEvenSessions} <span className="text-[10px] text-zinc-500 font-medium">seans/ay</span>
               </div>
             </div>
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col justify-between min-h-[80px]">
               <div className="flex items-center gap-2 text-zinc-400 mb-1">
                 <BarChart3 className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-bold uppercase tracking-wider">Kar Marjı</span>

@@ -121,7 +121,7 @@ export default function FinansalTablo() {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/10">Projected Yield</span>
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/10">Tahmini Verimlilik</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-white flex items-center gap-3">
              <TargetIcon className="w-8 h-8 text-zinc-500" />
@@ -182,7 +182,7 @@ export default function FinansalTablo() {
       {/* Fixed Expenses per AVM */}
       <section className="space-y-6">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold text-white tracking-tight">Lokasyon Bazlı Sabit Giderler</h2>
+          <h2 className="text-lg font-bold text-white tracking-tight text-zinc-400">Lokasyon Bazlı Sabit Giderler</h2>
           <div className="flex-1 h-[1px] bg-white/[0.04]" />
         </div>
 
@@ -215,7 +215,7 @@ export default function FinansalTablo() {
       {/* Scenario Table */}
       <section className="space-y-6">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold text-white tracking-tight italic">Senaryo Analizi & Projeksiyon</h2>
+          <h2 className="text-lg font-bold text-white tracking-tight italic text-zinc-400">Senaryo Analizi & Projeksiyon</h2>
           <div className="flex-1 h-[1px] bg-white/[0.04]" />
         </div>
 

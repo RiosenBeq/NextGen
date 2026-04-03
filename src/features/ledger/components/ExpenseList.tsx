@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownRight, Search, FileText, User, MoreVertical, Edit2, Trash2, Calendar, Tag, Percent } from 'lucide-react';
 import DocumentViewer from '@/features/documents/components/DocumentViewer';
-import { ExpenseForm } from './ExpenseForm';
+import ExpenseForm from './ExpenseForm';
 import { deleteExpense } from '../actions';
 import { cn } from '@/lib/utils';
 
@@ -123,12 +123,12 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
           <thead>
             <tr className="bg-white/[0.01]">
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Tarih / Açıklama</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Şube</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Ödeyen</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Resmi Durum</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Belge</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-right">KDV</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-rose-400 uppercase tracking-widest border-b border-white/[0.05] text-right">Tutar (Brüt)</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Kategori / Şube</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Ödemeyi Yapan</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Tür</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Ekli Belge</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-right">Vergi (KDV)</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-rose-400 uppercase tracking-widest border-b border-white/[0.05] text-right">Toplam Tutar</th>
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">İşlem</th>
             </tr>
           </thead>

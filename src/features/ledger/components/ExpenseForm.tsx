@@ -60,14 +60,14 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="premium-card p-8 border-emerald-500/20 max-w-4xl"
+          className="premium-card p-8 border-slate-200 max-w-4xl bg-white shadow-xl"
         >
           <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-black text-white flex items-center gap-2">
-              {initialData ? <Edit className="text-emerald-500" size={20} /> : <Receipt className="text-emerald-500" size={20} />}
+            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              {initialData ? <Edit className="text-rose-500" size={20} /> : <Receipt className="text-rose-500" size={20} />}
               {initialData ? 'Operasyonel Gider Güncelleme' : 'Operasyonel Gider Girişi'}
             </h3>
-            <button onClick={handleClose} type="button" className="text-[10px] p-2 rounded-xl bg-white/5 font-black text-zinc-400 hover:text-white uppercase tracking-widest transition-colors"><X size={14}/></button>
+            <button onClick={handleClose} type="button" className="text-[10px] p-2 rounded-xl bg-slate-100 font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"><X size={14}/></button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -79,11 +79,11 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="text-center py-10"
               >
-                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                 </div>
-                <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Gider Kaydedildi!</h4>
-                <p className="text-xs font-bold text-zinc-500 mb-8 uppercase tracking-widest">Bu gidere ait faturayı veya dekontu şimdi ekleyebilirsiniz.</p>
+                <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Gider Kaydedildi!</h4>
+                <p className="text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">Bu gidere ait faturayı veya dekontu şimdi ekleyebilirsiniz.</p>
                 
                 <div className="flex justify-center gap-4">
                   <DocumentUploader 
@@ -110,12 +110,12 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-2 lg:col-span-2">
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Gider Açıklaması</label>
-                    <input {...register('description')} className="elite-input" placeholder="Örn: Elektrik Faturası, Sigorta vs." required />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gider Açıklaması</label>
+                    <input {...register('description')} className="elite-input bg-white border-slate-200 text-slate-900" placeholder="Örn: Elektrik Faturası, Sigorta vs." required />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1"><User size={12}/> Kim Ödedi?</label>
-                    <select {...register('paidBy')} className="elite-input bg-[#1a1a22] text-white" defaultValue="Ortak Hesap">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><User size={12}/> Kim Ödedi?</label>
+                    <select {...register('paidBy')} className="elite-input bg-white text-slate-900 border-slate-200" defaultValue="Ortak Hesap">
                       <option value="Ortak Hesap">Ortak Hesap</option>
                       <option value="Okan">Okan</option>
                       <option value="Berk">Berk</option>
@@ -126,12 +126,12 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Tutar (₺)</label>
-                    <input type="number" step="0.01" {...register('amount')} className="elite-input" placeholder="0.00" required />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tutar (₺)</label>
+                    <input type="number" step="0.01" {...register('amount')} className="elite-input bg-white border-slate-200 text-slate-900" placeholder="0.00" required />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Kategori</label>
-                    <select {...register('type')} className="elite-input bg-[#1a1a22]">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategori</label>
+                    <select {...register('type')} className="elite-input bg-white border-slate-200 text-slate-900">
                       <option value="FATURA">Fatura / Tüketim</option>
                       <option value="MAAS">Maaş / Personel</option>
                       <option value="KİRA">Kira / Aidat</option>
@@ -141,8 +141,8 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Lokasyon</label>
-                    <select {...register('locationId')} className="elite-input bg-[#1a1a22]">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lokasyon</label>
+                    <select {...register('locationId')} className="elite-input bg-white border-slate-200 text-slate-900">
                       <option value="">Genel / Merkez</option>
                       {locations.map(loc => (
                         <option key={loc.id} value={loc.id}>{loc.name}</option>
@@ -150,8 +150,8 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Resmiyet</label>
-                    <select {...register('isOfficial')} className="elite-input bg-[#1a1a22]" defaultValue={initialData ? initialData.isOfficial.toString() : "false"}>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resmiyet</label>
+                    <select {...register('isOfficial')} className="elite-input bg-white border-slate-200 text-slate-900" defaultValue={initialData ? initialData.isOfficial.toString() : "false"}>
                       <option value="true">Resmi (Faturalı)</option>
                       <option value="false">Resmi Olmayan</option>
                     </select>
@@ -161,7 +161,7 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="elite-button-primary w-full py-4 flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+                  className="elite-button-primary w-full py-4 flex items-center justify-center gap-2 mt-4 shadow-lg"
                 >
                   {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? <Edit size={18} /> : <Plus size={18} />)}
                   {initialData ? 'GÜNCELLE' : 'İLERİ: FATURA YÜKLE'}

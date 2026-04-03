@@ -1,20 +1,26 @@
 import prisma from '@/lib/db';
 import { CreditCard, ArrowDownRight } from 'lucide-react';
+import { Expense, Investment, Location } from '@prisma/client';
 
 export const metadata = {
   title: 'Giderler & Yatırımlar - NextGenBox',
 };
 
-export default async function ExpensesPage() {
-  const expenses = await prisma.expense.findMany({
-    include: { location: true },
-    orderBy: { createdAt: 'desc' }
-  });
+export const dynamic = 'force-dynamic';
 
-  const investments = await prisma.investment.findMany({
+type ExpenseWithLocation = Expense & { location: Location | null };
+type InvestmentWithLocation = Investment & { location: Location };
+
+export default async function ExpensesPage() {
+  const expenses = (await prisma.expense.findMany({
     include: { location: true },
     orderBy: { createdAt: 'desc' }
-  });
+  })) as any[];
+
+  const investments = (await prisma.investment.findMany({
+    include: { location: true },
+    orderBy: { createdAt: 'desc' }
+  })) as any[];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -45,7 +51,7 @@ export default async function ExpensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {expenses.map(exp => (
+              {expenses.map((exp: any) => (
                 <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{exp.description}</td>
                   <td className="px-6 py-4">
@@ -59,8 +65,8 @@ export default async function ExpensesPage() {
                   <td className="px-6 py-4 text-center">
                     {exp.isOfficial ? <span className="text-blue-600 font-bold">EVET</span> : <span className="text-gray-400">HAYIR</span>}
                   </td>
-                  <td className="px-6 py-4 text-right font-mono">₺{exp.amountWithoutVat.toLocaleString('tr-TR')}</td>
-                  <td className="px-6 py-4 text-right font-mono text-red-600 font-semibold">₺{exp.amountWithVat.toLocaleString('tr-TR')}</td>
+                  <td className="px-6 py-4 text-right font-mono">₺{exp.amountWithoutVat?.toLocaleString('tr-TR')}</td>
+                  <td className="px-6 py-4 text-right font-mono text-red-600 font-semibold">₺{exp.amountWithVat?.toLocaleString('tr-TR')}</td>
                 </tr>
               ))}
             </tbody>
@@ -87,17 +93,17 @@ export default async function ExpensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {investments.map(inv => (
+              {investments.map((inv: any) => (
                 <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{inv.description}</td>
-                  <td className="px-6 py-4 text-gray-600">{inv.location.name}</td>
+                  <td className="px-6 py-4 text-gray-600">{inv.location?.name}</td>
                   <td className="px-6 py-4 font-mono font-medium">
-                    {inv.amountWithoutVat.toLocaleString('tr-TR')} {inv.currency}
+                    {inv.amountWithoutVat?.toLocaleString('tr-TR')} {inv.currency}
                   </td>
                   <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
                     KDV: ₺{inv.vatAmount} <br/> {inv.notes}
                   </td>
-                  <td className="px-6 py-4 text-right font-mono text-orange-600 font-semibold">₺{inv.totalAmount.toLocaleString('tr-TR')}</td>
+                  <td className="px-6 py-4 text-right font-mono text-orange-600 font-semibold">₺{inv.totalAmount?.toLocaleString('tr-TR')}</td>
                 </tr>
               ))}
             </tbody>

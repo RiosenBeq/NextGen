@@ -5,6 +5,8 @@ export const metadata = {
   title: 'Nakit Akış Raporu - NextGenBox',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReportsPage() {
   const performances = await prisma.monthlyPerformance.findMany({
     include: { location: true },
@@ -20,7 +22,7 @@ export default async function ReportsPage() {
     ngbShareRate: 50,
   };
 
-  const processedData = performances.map(perf => {
+  const processedData = performances.map((perf: any) => {
     const calc = calculateMonthlyCashFlow(
       perf.sessionCount, 
       perf.extraExpenseAmount, 
@@ -74,7 +76,7 @@ export default async function ReportsPage() {
                   </td>
                 </tr>
               )}
-              {processedData.map(row => (
+              {processedData.map((row: any) => (
                 <tr key={row.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">
                     <div className="flex flex-col">

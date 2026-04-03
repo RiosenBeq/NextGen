@@ -5,6 +5,8 @@ export const metadata = {
   title: 'Aylık Performans Girişi - NextGenBox',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function PerformancePage() {
   const locations = await getActiveLocations();
 
@@ -15,7 +17,7 @@ export default async function PerformancePage() {
         <p className="mt-4 text-sm text-gray-600">Kabinrapor.com üzerindeki aylık oturum değerlerini girerek sistem üzerinde net kâr ve komisyon hesaplamalarını tetikleyin.</p>
       </div>
 
-      <MonthlyPerformanceForm locations={locations.map(l => ({ id: l.id, name: l.name }))} />
+      <MonthlyPerformanceForm locations={locations.map((l: any) => ({ id: l.id, name: l.name }))} />
     </div>
   );
 }

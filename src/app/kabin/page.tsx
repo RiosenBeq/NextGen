@@ -2,7 +2,20 @@ import { kabinRapor, CabinData } from '@/lib/kabinRapor'
 import Link from 'next/link'
 
 // Revalidate 0 forces dynamic server rendering for 'anlık' (live) data fetching
-export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
+interface DashboardTotals {
+  total_revenue: number;
+  total_paid_sessions: number;
+}
+
+interface ChartData {
+  series: {
+    date: string;
+    revenue: number;
+    sessions: number;
+  }[];
+}
 
 export default async function KabinDashboard(props: {
   searchParams: Promise<{ location?: string; search?: string }>
@@ -11,24 +24,27 @@ export default async function KabinDashboard(props: {
   const selectedLocation = searchParams.location || 'all'
   const searchQuery = (searchParams.search || '').toLowerCase()
 
-  let todayTotal: any
+  let todayTotal: DashboardTotals | null = null
   let cabins: CabinData[] = []
-  let chartData: any
+  let chartData: ChartData | null = null
   let errorMsg = null
 
   try {
-    [todayTotal, cabins, chartData] = await Promise.all([
+    const [totals, fetchedCabins, fetchedChart] = await Promise.all([
       kabinRapor.getDashboardTotals('Bugün'),
       kabinRapor.getCabins(),
       kabinRapor.getLast7Graph()
     ])
+    todayTotal = totals as DashboardTotals
+    cabins = fetchedCabins as CabinData[]
+    chartData = fetchedChart as ChartData
   } catch (error: any) {
     errorMsg = 'Kabin Rapor servisinden veri alınamadı. Lütfen giriş bilgilerini kontrol edin.'
     console.error(error)
   }
 
   // Filtering Logic
-  let filteredCabins = cabins ? cabins.filter(cabin => {
+  let filteredCabins = cabins ? cabins.filter((cabin: CabinData) => {
     const matchesLocation = 
       selectedLocation === 'all' || 
       (selectedLocation === 'bursa' && cabin.cabin_name.toLowerCase().includes('bursa')) ||
@@ -43,8 +59,8 @@ export default async function KabinDashboard(props: {
   }) : [];
 
   // Recalculate stats for filtered view
-  const filteredRevenue = filteredCabins.reduce((acc, curr) => acc + (curr.today_revenue || 0), 0);
-  const filteredSessions = filteredCabins.reduce((acc, curr) => acc + (curr.paid_sessions || 0), 0);
+  const filteredRevenue = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.today_revenue || 0), 0);
+  const filteredSessions = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.paid_sessions || 0), 0);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -149,7 +165,7 @@ export default async function KabinDashboard(props: {
               </div>
               <div className="mt-8">
                 <div className="flex -space-x-4">
-                  {filteredCabins.slice(0, 5).map((c, i) => (
+                  {filteredCabins.slice(0, 5).map((c: CabinData, i: number) => (
                     <div key={i} className="w-10 h-10 rounded-full bg-slate-100 border-4 border-white flex items-center justify-center font-bold text-[10px] text-gray-500 shadow-sm">
                       {c.cabin_name.charAt(0)}
                     </div>

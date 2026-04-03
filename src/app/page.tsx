@@ -6,6 +6,8 @@ export const metadata = {
   title: 'Özet (Dashboard) - NextGenBox',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const performances = await prisma.monthlyPerformance.findMany({
     include: { location: true },

@@ -57,7 +57,53 @@ export async function addExpense(data: any) {
     if (error) throw error;
     revalidatePath('/expenses');
     revalidatePath('/');
+    revalidatePath('/gelir-gider');
     return { success: true, record };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateExpense(id: string, data: any) {
+  try {
+    const supabase = await createClient();
+    const { data: record, error } = await supabase
+      .from('Expense')
+      .update({
+        locationId: data.locationId || null,
+        description: data.description,
+        type: data.type,
+        amountWithoutVat: data.amount,
+        amountWithVat: data.amount,
+        isOfficial: data.isOfficial || false,
+        month: data.month || null,
+        paidBy: data.paidBy || 'Ortak Hesap',
+        categoryId: data.categoryId || null,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    revalidatePath('/expenses');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    return { success: true, record };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteExpense(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('Expense').delete().eq('id', id);
+    if (error) throw error;
+    
+    revalidatePath('/expenses');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -79,6 +125,47 @@ export async function addInvestment(data: any) {
       });
 
     if (error) throw error;
+    revalidatePath('/investments');
+    revalidatePath('/expenses');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateInvestment(id: string, data: any) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from('Investment')
+      .update({
+        locationId: data.locationId,
+        description: data.description,
+        currency: data.currency || 'TL',
+        amountWithoutVat: data.amount,
+        totalAmount: data.amount,
+        notes: data.notes || '',
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    revalidatePath('/investments');
+    revalidatePath('/expenses');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteInvestment(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('Investment').delete().eq('id', id);
+    if (error) throw error;
+    
+    revalidatePath('/investments');
     revalidatePath('/expenses');
     revalidatePath('/');
     return { success: true };
@@ -139,15 +226,11 @@ export async function getLocationInsights() {
 
       const calc = calculateMonthlyCashFlow(avgSessions, avgExtraExpense, {
         sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
-        kdvRate: params['VAT_RATE'] || 20,
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent,
         duesAmount: loc.duesAmount,
-        rentKdvRate: loc.rentVatRate,
         revenueShareRate: loc.revenueShareRate || 0,
-        revenueThreshold: loc.revenueThreshold || 0,
-        applyRentVat: true,
         investmentAmount: totalInvestment,
       });
 
@@ -155,15 +238,11 @@ export async function getLocationInsights() {
       loc.performances.forEach((perf: any) => {
         const pCalc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount, {
            sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
-           kdvRate: params['VAT_RATE'] || 20,
            iyzicoCommissionRate: 2,
            nayaxCommissionRate: 2,
            fixedRent: loc.fixedRent,
            duesAmount: loc.duesAmount,
-           rentKdvRate: loc.rentVatRate,
            revenueShareRate: loc.revenueShareRate || 0,
-           revenueThreshold: loc.revenueThreshold || 0,
-           applyRentVat: true,
         });
         cumulativeNetCash += pCalc.netCash;
       });
@@ -228,5 +307,25 @@ export async function getSystemParameters() {
   } catch (error) {
     console.error("Error fetching params:", error);
     return {};
+  }
+}
+
+export async function updateSystemParameter(key: string, value: number) {
+  try {
+    const supabase = await createClient();
+    // Use upsert to create or update the parameter automatically
+    const { error } = await supabase
+      .from('SystemParameter')
+      .upsert({ key, value }, { onConflict: 'key' });
+
+    if (error) throw error;
+    revalidatePath('/settings');
+    revalidatePath('/');
+    revalidatePath('/finans');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/investments');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }

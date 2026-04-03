@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
-import { calculateMonthlyCashFlow, calculateYearlyNetProfit, CalculationResult } from '@/features/ledger/calculations';
+import { calculateMonthlyCashFlow, CalculationResult } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
 import { 
@@ -89,13 +89,10 @@ export default async function GelirGiderPage(props: {
       if (filterLocation !== 'all' && loc.id !== filterLocation) continue;
 
       const calc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount || 0, {
-        sessionPrice, kdvRate,
+        sessionPrice,
         iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
-        rentKdvRate: loc.rentVatRate,
         revenueShareRate: loc.revenueShareRate || 15,
-        revenueThreshold: loc.revenueThreshold || 0,
-        applyRentVat: true,
       });
 
       allCalcResults.push(calc);
@@ -138,10 +135,7 @@ export default async function GelirGiderPage(props: {
   const totalRevenueShare = monthlyEntries.reduce((s, e) => s + e.revenueShare, 0);
   const otherExpenseTotal = filteredExpenses.reduce((s, e) => s + (e.amountWithVat || 0), 0);
 
-  // Vergi hesabı
-  const yearlyCalc = calculateYearlyNetProfit(allCalcResults, params['CORP_TAX_RATE'] || 22);
-
-  // Kategori bazlı gider dağılımı
+  // All taxes are removed  // Kategori bazlı gider dağılımı
   const categoryTotals: Record<string, number> = {};
   for (const exp of filteredExpenses) {
     const cat = exp.category || 'other';

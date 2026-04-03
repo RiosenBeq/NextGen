@@ -1,5 +1,6 @@
-import { getActiveLocations } from '@/features/ledger/actions';
+import { getActiveLocations, getSystemParameters } from '@/features/ledger/actions';
 import { LocationSettingsForm } from '@/features/ledger/components/LocationSettingsForm';
+import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
 import { Settings, ShieldCheck, Database, HelpCircle } from 'lucide-react';
 import * as motion from "framer-motion/client";
 
@@ -12,6 +13,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const locations = await getActiveLocations();
+  const parameters = await getSystemParameters();
 
   return (
     <div className="p-10 space-y-12 max-w-[1600px] mx-auto min-h-screen">
@@ -72,6 +74,14 @@ export default async function SettingsPage() {
         </div>
 
         <div className="xl:col-span-8 space-y-8 pb-20">
+          <SystemParametersForm parameters={parameters} />
+          
+          <div className="flex items-center gap-4 py-4">
+             <div className="flex-1 h-[1px] bg-white/5" />
+             <h2 className="text-sm font-black text-white/40 tracking-widest uppercase">LOKASYON BAZLI PARAMETRELER</h2>
+             <div className="flex-1 h-[1px] bg-white/5" />
+          </div>
+
           {locations.map((loc) => (
             <LocationSettingsForm key={loc.id} location={loc} />
           ))}

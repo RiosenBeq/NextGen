@@ -60,15 +60,11 @@ export default async function DashboardPage() {
         perf.extraExpenseAmount,
         {
           sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
-          kdvRate: paramMap['VAT_RATE'] || 20,
           iyzicoCommissionRate: 2,
           nayaxCommissionRate: 2,
           fixedRent: perf.location.fixedRent,
           duesAmount: perf.location.duesAmount,
-          rentKdvRate: perf.location.rentVatRate,
           revenueShareRate: perf.location.revenueShareRate || 0,
-          revenueThreshold: perf.location.revenueThreshold || 0,
-          applyRentVat: true,
         }
       );
 

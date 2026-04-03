@@ -2,33 +2,50 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { addInvestment } from '../actions';
-import { Loader2, Plus, Wallet } from 'lucide-react';
+import { addInvestment, updateInvestment } from '../actions';
+import { Loader2, Plus, Wallet, X, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Props {
   locations: any[];
+  initialData?: any;
+  onClose?: () => void;
 }
 
-export function InvestmentForm({ locations }: Props) {
+export function InvestmentForm({ locations, initialData, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!!initialData);
 
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: initialData || {}
+  });
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-    const result = await addInvestment(data);
-    if (result.success) {
+    let result;
+    if (initialData?.id) {
+      result = await updateInvestment(initialData.id, data);
+    } else {
+      result = await addInvestment(data);
+    }
+
+    if (result.success && !initialData) {
       reset();
       setShowForm(false);
+    } else if (result.success && initialData) {
+      if (onClose) onClose();
     }
     setIsSubmitting(false);
   };
 
+  const handleClose = () => {
+    if (onClose) onClose();
+    else setShowForm(false);
+  };
+
   return (
     <div className="space-y-4">
-      {!showForm ? (
+      {!showForm && !initialData ? (
         <button 
           onClick={() => setShowForm(true)}
           className="elite-button-secondary flex items-center gap-2"
@@ -44,10 +61,10 @@ export function InvestmentForm({ locations }: Props) {
         >
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xl font-black text-white flex items-center gap-2">
-              <Wallet className="text-indigo-400" size={20} />
-              Yatırım & Demirbaş Girişi
+              {initialData ? <Edit className="text-indigo-400" size={20} /> : <Wallet className="text-indigo-400" size={20} />}
+              {initialData ? 'Yatırım Güncelleme' : 'Yatırım & Demirbaş Girişi'}
             </h3>
-            <button onClick={() => setShowForm(false)} className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-widest">Vazgeç</button>
+            <button onClick={handleClose} type="button" className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-widest">Vazgeç</button>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -91,8 +108,8 @@ export function InvestmentForm({ locations }: Props) {
               disabled={isSubmitting}
               className="elite-button-secondary w-full py-4 flex items-center justify-center gap-2 border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus size={16} />}
-              YATIRIMI KAYDET
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (initialData ? <Edit size={16} /> : <Plus size={16} />)}
+              {initialData ? 'YATIRIMI GÜNCELLE' : 'YATIRIMI KAYDET'}
             </button>
           </form>
         </motion.div>

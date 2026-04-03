@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowDownRight, Search, FileText, User } from 'lucide-react';
+import { ArrowDownRight, Search, FileText, User, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import DocumentViewer from '@/features/documents/components/DocumentViewer';
+import { ExpenseForm } from './ExpenseForm';
+import { deleteExpense } from '../actions';
 
 interface Expense {
   id: string;
@@ -12,7 +14,7 @@ interface Expense {
   month?: string;
   isOfficial: boolean;
   amountWithVat: number;
-  location?: { name: string } | null;
+  location?: { id: string, name: string } | null;
   paidBy?: string;
   documents?: any[]; // if fetched
 }
@@ -20,12 +22,15 @@ interface Expense {
 interface Props {
   initialExpenses: Expense[];
   documents: any[]; // all documents related to expenses
+  locations: any[];
 }
 
-export default function ExpenseList({ initialExpenses, documents }: Props) {
+export default function ExpenseList({ initialExpenses, documents, locations }: Props) {
   const [filterType, setFilterType] = useState('ALL');
   const [filterPaidBy, setFilterPaidBy] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
 
   // Map documents to expenses
   const expenseMap = initialExpenses.map((exp) => {
@@ -42,6 +47,14 @@ export default function ExpenseList({ initialExpenses, documents }: Props) {
     if (searchQuery && !exp.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Bu gideri silmek istediğinize emin misiniz? Fatura kalıcı olarak silinecektir.")) {
+      setDeletingExpenseId(id);
+      await deleteExpense(id);
+      setDeletingExpenseId(null);
+    }
+  };
 
   const filteredTotal = filtered.reduce((acc, curr) => acc + (curr.amountWithVat || 0), 0);
 
@@ -118,6 +131,7 @@ export default function ExpenseList({ initialExpenses, documents }: Props) {
               <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5">Kim Ödedi?</th>
               <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5 text-center">Fatura/Belge</th>
               <th className="px-8 py-5 text-[10px] font-black text-rose-500/50 uppercase tracking-widest border-b border-white/5 text-right">Tutar</th>
+              <th className="px-8 py-5 text-[10px] font-black text-zinc-600 uppercase tracking-widest border-b border-white/5 text-center">İşlem</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
@@ -158,11 +172,45 @@ export default function ExpenseList({ initialExpenses, documents }: Props) {
                 <td className="px-8 py-5 text-right font-mono text-sm font-black text-rose-400">
                   ₺{exp.amountWithVat?.toLocaleString('tr-TR')}
                 </td>
+                <td className="px-8 py-5 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => setEditingExpense(exp)}
+                      className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-colors"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(exp.id)}
+                      disabled={deletingExpenseId === exp.id}
+                      className={`p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-rose-500/20 hover:text-rose-400 transition-colors ${deletingExpenseId === exp.id ? 'opacity-50' : ''}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Edit Modal */}
+      {editingExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl no-scrollbar">
+            <ExpenseForm 
+              locations={locations} 
+              initialData={{
+                ...editingExpense, 
+                amount: editingExpense.amountWithVat, // Map for initial values match
+                locationId: editingExpense.location?.id || ''
+              }} 
+              onClose={() => setEditingExpense(null)} 
+            />
+          </div>
+        </div>
+      )}
     </motion.section>
   );
 }

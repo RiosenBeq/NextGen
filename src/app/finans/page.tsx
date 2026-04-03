@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
-import { calculateMonthlyCashFlow, calculateYearlyNetProfit, CalculationResult } from '@/features/ledger/calculations';
+import { calculateMonthlyCashFlow, CalculationResult } from '@/features/ledger/calculations';
 import { getLocationInsights, getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
 import { TrendingUp, TrendingDown, Target, Calculator, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -40,7 +40,6 @@ export default async function FinansalTablo() {
     monthlyResults: CalculationResult[];
     fixedRent: number;
     duesAmount: number;
-    rentKdv: number;
   }> = {};
 
   if (performances && locations) {
@@ -53,15 +52,11 @@ export default async function FinansalTablo() {
         perf.extraExpenseAmount || 0,
         {
           sessionPrice,
-          kdvRate,
           iyzicoCommissionRate: 2,
           nayaxCommissionRate: 2,
           fixedRent: loc.fixedRent,
           duesAmount: loc.duesAmount,
-          rentKdvRate: loc.rentVatRate,
           revenueShareRate: loc.revenueShareRate || 15,
-          revenueThreshold: loc.revenueThreshold || 0,
-          applyRentVat: true,
         }
       );
 
@@ -77,7 +72,6 @@ export default async function FinansalTablo() {
           monthlyResults: [],
           fixedRent: loc.fixedRent,
           duesAmount: loc.duesAmount,
-          rentKdv: loc.fixedRent * (loc.rentVatRate / 100),
         };
       }
 
@@ -92,7 +86,6 @@ export default async function FinansalTablo() {
   }
 
   const allResults = Object.values(avmSummaries).flatMap(a => a.monthlyResults);
-  const yearlyCalc = calculateYearlyNetProfit(allResults, params['CORP_TAX_RATE'] || 22);
 
   // Genel toplamlar
   const totalGross = Object.values(avmSummaries).reduce((s, a) => s + a.totalGrossRevenue, 0);
@@ -103,9 +96,7 @@ export default async function FinansalTablo() {
   const totalNetCash = Object.values(avmSummaries).reduce((s, a) => s + a.totalNetCash, 0);
 
   // Toplam aylık sabit gider
-  const monthlyFixedTotal = (locations || []).reduce((s, loc) => {
-    return s + loc.fixedRent + loc.duesAmount + (loc.fixedRent * (loc.rentVatRate / 100));
-  }, 0);
+  const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + loc.fixedRent + loc.duesAmount, 0);
 
   // Net gelir / oturum (Excel: 240 TL)
   const netRevenuePerSession = sessionPrice / (1 + kdvRate / 100) * (1 - 4 / 100);
@@ -118,18 +109,14 @@ export default async function FinansalTablo() {
     const monthlyNetRevenue = sessions * netRevenuePerSession;
     const monthlyProfit = monthlyNetRevenue - monthlyFixedTotal;
     const yearlyProfit = monthlyProfit * 12;
-    const yearlyTax = yearlyProfit > 0 ? yearlyProfit * 0.22 : 0;
-    const yearlyNet = yearlyProfit - yearlyTax;
     return {
       sessions,
       perAvm: Math.round(perAvm),
       monthlyNet: monthlyNetRevenue,
       monthlyProfit,
       yearlyProfit,
-      yearlyTax,
-      yearlyNet,
-      perPartner: yearlyNet / 4,
-      monthlyPerPartner: (yearlyNet / 4) / 12,
+      perPartner: yearlyProfit / 4,
+      monthlyPerPartner: (yearlyProfit / 4) / 12,
     };
   });
 
@@ -218,20 +205,16 @@ export default async function FinansalTablo() {
                   <span className="font-black text-white">₺{avm.fixedRent.toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-white/5">
-                  <span className="text-xs font-bold text-zinc-400">Kira KDV (%20)</span>
-                  <span className="font-black text-white">₺{avm.rentKdv.toLocaleString('tr-TR')}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-white/5">
                   <span className="text-xs font-bold text-zinc-400">Aidat</span>
                   <span className="font-black text-white">₺{avm.duesAmount.toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-white/5">
-                  <span className="text-xs font-bold text-zinc-400">Ciro Payı (%15 eşik üstü)</span>
+                  <span className="text-xs font-bold text-zinc-400">Ciro Payı (Kirayı Aşan Kısım)</span>
                   <span className="font-black text-amber-400">₺{avm.totalRevenueShare.toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center py-4 mt-2 border-t-2 border-dashed border-white/10">
                   <span className="text-sm font-black text-white">AYLIK SABİT TOPLAM</span>
-                  <span className="text-lg font-black text-indigo-400">₺{(avm.fixedRent + avm.duesAmount + avm.rentKdv).toLocaleString('tr-TR')}</span>
+                  <span className="text-lg font-black text-indigo-400">₺{(avm.fixedRent + avm.duesAmount).toLocaleString('tr-TR')}</span>
                 </div>
               </div>
             </motion.div>
@@ -249,16 +232,12 @@ export default async function FinansalTablo() {
                   <span className="font-black text-white">₺{loc.fixedRent.toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-white/5">
-                  <span className="text-xs font-bold text-zinc-400">Kira KDV (%{loc.rentVatRate})</span>
-                  <span className="font-black text-white">₺{(loc.fixedRent * loc.rentVatRate / 100).toLocaleString('tr-TR')}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-white/5">
                   <span className="text-xs font-bold text-zinc-400">Aidat</span>
                   <span className="font-black text-white">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
                 </div>
                 <div className="flex justify-between items-center py-4 mt-2 border-t-2 border-dashed border-white/10">
                   <span className="text-sm font-black text-white">AYLIK SABİT</span>
-                  <span className="text-lg font-black text-indigo-400">₺{(loc.fixedRent + loc.duesAmount + loc.fixedRent * loc.rentVatRate / 100).toLocaleString('tr-TR')}</span>
+                  <span className="text-lg font-black text-indigo-400">₺{(loc.fixedRent + loc.duesAmount).toLocaleString('tr-TR')}</span>
                 </div>
               </div>
             </motion.div>
@@ -271,42 +250,7 @@ export default async function FinansalTablo() {
         </div>
       </section>
 
-      {/* Yıllık Vergi & Net Kâr */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-black text-white tracking-widest uppercase italic bg-zinc-900 border-l-4 border-emerald-500 px-6 py-2">Yıllık Vergi & Net Kâr</h2>
-          <div className="flex-1 h-[1px] bg-white/5" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="premium-card p-8">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Yıllık Brüt Kâr</p>
-            <p className={`text-3xl font-black ${yearlyCalc.yearlyGrossProfit >= 0 ? 'text-white' : 'text-rose-400'}`}>
-              ₺{yearlyCalc.yearlyGrossProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-            </p>
-          </div>
-          <div className="premium-card p-8">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Kurumlar Vergisi (%22)</p>
-            <p className="text-3xl font-black text-amber-400">
-              ₺{yearlyCalc.corpTax.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-            </p>
-            <p className="text-[9px] text-zinc-600 mt-1">{yearlyCalc.corpTax === 0 ? 'Zarar: vergi yok' : 'Kâr × %22'}</p>
-          </div>
-          <div className="premium-card p-8">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">NET KÂR (Vergi Sonrası)</p>
-            <p className={`text-3xl font-black ${yearlyCalc.yearlyNetProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              ₺{yearlyCalc.yearlyNetProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-            </p>
-          </div>
-          <div className="premium-card p-8 bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/10">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Ortak Başına (Yıllık)</p>
-            <p className={`text-3xl font-black ${yearlyCalc.perPartner >= 0 ? 'text-indigo-400' : 'text-rose-400'}`}>
-              ₺{yearlyCalc.perPartner.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-            </p>
-            <p className="text-[9px] text-zinc-600 mt-1">4 ortak × %25</p>
-          </div>
-        </div>
-      </section>
+      {/* Net Kâr Bölümü Silindi (Kullanılmıyor) */}
 
       {/* Senaryo Tablosu */}
       <section className="space-y-6">
@@ -318,8 +262,8 @@ export default async function FinansalTablo() {
         <div className="premium-card overflow-hidden bg-zinc-950">
           <div className="p-6 border-b border-white/5 bg-white/[0.02]">
             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-              Aylık oturum sayısına göre: gelir, gider, yıllık kâr/zarar — Kurumlar Vergisi %22 dahil.
-              Komisyonlar: iyzico %2 + Nayax %2 = %4 brüt cirodan. AVM %15 ciro payı eşik üstü.
+              Aylık oturum sayısına göre: gelir, gider, kâr. (Tüm resmi vergiler hariç Reel Nakit Tablosu).
+              Komisyonlar: iyzico %2 + Nayax %2 = %4 brüt cirodan. AVM Ciro payı: Kira tutarını geçerse üstü ödenir.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -330,9 +274,7 @@ export default async function FinansalTablo() {
                   <th className="px-4 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-center">AVM Başına</th>
                   <th className="px-4 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-right">Aylık Net Gelir</th>
                   <th className="px-4 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-right">Aylık Kâr/Zarar</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 text-right">Yıllık Kâr/Zarar</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-amber-500 uppercase tracking-widest border-b border-white/5 text-right">Kurumlar Vergisi</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-emerald-400 uppercase tracking-widest border-b border-white/5 text-right">Yıllık Net Kâr</th>
+                  <th className="px-4 py-5 text-[10px] font-black text-emerald-400 uppercase tracking-widest border-b border-white/5 text-right">Yıllık Kâr</th>
                   <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-white/5 text-right">Aylık/Kişi</th>
                 </tr>
               </thead>
@@ -349,12 +291,6 @@ export default async function FinansalTablo() {
                       </td>
                       <td className={`px-4 py-5 text-right font-mono text-sm font-bold ${s.yearlyProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                         ₺{s.yearlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                      </td>
-                      <td className="px-4 py-5 text-right font-mono text-sm text-amber-400">
-                        ₺{s.yearlyTax.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                      </td>
-                      <td className={`px-4 py-5 text-right font-mono text-sm font-black ${s.yearlyNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        ₺{s.yearlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
                       </td>
                       <td className={`px-6 py-5 text-right font-mono text-sm font-black ${s.monthlyPerPartner >= 0 ? 'text-indigo-400' : 'text-rose-400'}`}>
                         ₺{s.monthlyPerPartner.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}

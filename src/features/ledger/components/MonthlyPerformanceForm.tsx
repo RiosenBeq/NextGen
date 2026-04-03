@@ -42,15 +42,11 @@ export function MonthlyPerformanceForm({ locations }: Props) {
       watchedValues.extraExpenseAmount || 0,
       {
         sessionPrice: 300, // Shared defaults
-        kdvRate: 20,
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 0,
         duesAmount: loc.duesAmount || 0,
-        rentKdvRate: loc.rentVatRate || 20,
         revenueShareRate: loc.revenueShareRate || 0,
-        revenueThreshold: loc.revenueThreshold || 0,
-        applyRentVat: true,
       }
     );
   }, [watchedValues, locations]);

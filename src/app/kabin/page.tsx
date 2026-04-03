@@ -27,6 +27,7 @@ export default async function KabinDashboard(props: {
   const sortBy = searchParams.sortBy || 'revenue'
 
   let cabins: CabinData[] = []
+  let cabinRangeStats: any[] = []
   let selectedTotals: DashboardTotal | null = null
   let allTimeTotals: DashboardTotal | null = null
   let thisMonthTotals: DashboardTotal | null = null
@@ -44,6 +45,7 @@ export default async function KabinDashboard(props: {
     thisWeekTotals = data.thisWeekTotals
     yesterdayTotals = data.yesterdayTotals
     last7Graph = data.last7Graph
+    cabinRangeStats = data.cabinRangeStats || []
   } catch (error: any) {
     errorMsg = 'Kabin Rapor servisinden veri alınamadı.'
     console.error(error)
@@ -64,18 +66,33 @@ export default async function KabinDashboard(props: {
     return matchesLocation && matchesSearch;
   });
 
+  // Merge the range stats directly into cabins for perfect synchronization
+  let syncedCabins = filteredCabins.map(cabin => {
+    if (selectedRange === 'Bugün') return cabin;
+    const rangeStat = cabinRangeStats.find(s => s.cabin_id === cabin.id || s.cabin_id === cabin.firm_id);
+    if (!rangeStat) return cabin;
+    return {
+      ...cabin,
+      today_revenue: rangeStat.revenue || 0,
+      paid_sessions: rangeStat.sessions || 0,
+      incoming_customer_count: rangeStat.customers || 0,
+      avg_revenue_per_session: rangeStat.sessions > 0 ? (rangeStat.revenue || 0) / rangeStat.sessions : 0,
+      conversion_rate: rangeStat.customers > 0 ? (rangeStat.sessions / rangeStat.customers) * 100 : 0
+    }
+  });
+
   // Sorting
-  filteredCabins.sort((a, b) => {
+  syncedCabins.sort((a, b) => {
     if (sortBy === 'revenue') return (b.today_revenue || 0) - (a.today_revenue || 0);
     if (sortBy === 'sessions') return (b.paid_sessions || 0) - (a.paid_sessions || 0);
     if (sortBy === 'conversion') return (b.conversion_rate || 0) - (a.conversion_rate || 0);
     return a.cabin_name.localeCompare(b.cabin_name);
   });
 
-  // Stats from filtered cabins (today, or selected range from getCabins)
-  const filteredRevenue = filteredCabins.reduce((acc, curr) => acc + (curr.today_revenue || 0), 0);
-  const filteredSessions = filteredCabins.reduce((acc, curr) => acc + (curr.paid_sessions || 0), 0);
-  const filteredCustomers = filteredCabins.reduce((acc, curr) => acc + (curr.incoming_customer_count || 0), 0);
+  // Stats from synced cabins
+  const filteredRevenue = syncedCabins.reduce((acc, curr) => acc + (curr.today_revenue || 0), 0);
+  const filteredSessions = syncedCabins.reduce((acc, curr) => acc + (curr.paid_sessions || 0), 0);
+  const filteredCustomers = syncedCabins.reduce((acc, curr) => acc + (curr.incoming_customer_count || 0), 0);
   const avgRevenuePerSession = filteredSessions > 0 ? filteredRevenue / filteredSessions : 0;
   const overallConversion = filteredCustomers > 0 ? (filteredSessions / filteredCustomers) * 100 : 0;
 
@@ -168,25 +185,7 @@ export default async function KabinDashboard(props: {
                 >{range.toUpperCase()}</Link>
               ))}
             </div>
-
-            <div className="glass-panel p-1.5 flex gap-1 rounded-2xl">
-              {[
-                { id: 'revenue', label: 'CİRO' },
-                { id: 'sessions', label: 'SEANS' },
-                { id: 'conversion', label: 'DÖNÜŞÜM' },
-                { id: 'name', label: 'İSİM' },
-              ].map((it) => (
-                <Link key={it.id}
-                  href={`/kabin?location=${selectedLocation}&range=${selectedRange}&search=${searchQuery}&sortBy=${it.id}`}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-[10px] font-black tracking-widest text-center border transition-all",
-                    sortBy === it.id ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-white/5 border-transparent text-zinc-500 hover:text-white"
-                  )}
-                >{it.label}</Link>
-              ))}
-            </div>
           </section>
-
           {/* Search */}
           <div className="relative group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-emerald-500 transition-colors" size={20} />
@@ -290,16 +289,16 @@ export default async function KabinDashboard(props: {
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
                 <Monitor size={14} /> AKTİF TERMİNALLER
               </p>
-              <p className="text-3xl md:text-4xl font-black text-white tracking-tighter">{filteredCabins.length}</p>
+              <p className="text-3xl md:text-4xl font-black text-white tracking-tighter">{syncedCabins.length}</p>
               <div className="flex -space-x-2 mt-4">
-                {filteredCabins.slice(0, 6).map((c, i) => (
+                {syncedCabins.slice(0, 6).map((c, i) => (
                   <div key={i} className="w-8 h-8 rounded-lg bg-zinc-900 border-2 border-zinc-950 flex items-center justify-center text-[9px] font-black text-white shadow-xl">
                     {c.cabin_name.charAt(0)}
                   </div>
                 ))}
-                {filteredCabins.length > 6 && (
+                {syncedCabins.length > 6 && (
                   <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-[9px] font-black text-white border-2 border-zinc-950">
-                    +{filteredCabins.length - 6}
+                    +{syncedCabins.length - 6}
                   </div>
                 )}
               </div>
@@ -373,12 +372,12 @@ export default async function KabinDashboard(props: {
                 <h2 className="text-lg font-black text-white tracking-widest uppercase italic bg-zinc-900 border-l-4 border-white/20 px-4 py-2">Kabin Bazlı Detay</h2>
                 <div className="flex-1 h-[1px] bg-white/5" />
               </div>
-              <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{filteredCabins.length} terminaller</span>
+              <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{syncedCabins.length} terminaller</span>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-              {filteredCabins.map((cabin: CabinData, index: number) => {
-                const isTopEarner = index === 0 && filteredCabins.length > 1;
+              {syncedCabins.map((cabin: CabinData, index: number) => {
+                const isTopEarner = index === 0 && syncedCabins.length > 1;
                 return (
                   <motion.div
                     key={cabin.id}
@@ -444,7 +443,7 @@ export default async function KabinDashboard(props: {
                       <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${filteredRevenue > 0 ? Math.min((cabin.today_revenue / filteredRevenue) * 100 * filteredCabins.length, 100) : 0}%` }}
+                          animate={{ width: `${filteredRevenue > 0 ? Math.min((cabin.today_revenue / filteredRevenue) * 100 * syncedCabins.length, 100) : 0}%` }}
                           transition={{ duration: 0.8, delay: index * 0.05 }}
                           className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full"
                         />
@@ -464,7 +463,7 @@ export default async function KabinDashboard(props: {
                 );
               })}
 
-              {filteredCabins.length === 0 && (
+              {syncedCabins.length === 0 && (
                 <div className="col-span-full py-40 border-2 border-dashed border-white/5 rounded-[4rem] text-center opacity-30">
                   <Search size={64} className="mx-auto mb-6 text-zinc-600" />
                   <p className="text-xl font-black uppercase tracking-widest">EŞLEŞEN KABİN BULUNAMADI</p>

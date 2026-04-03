@@ -2,40 +2,53 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { addExpense } from '../actions';
-import { Loader2, Plus, Receipt, User, CheckCircle2, X } from 'lucide-react';
+import { addExpense, updateExpense } from '../actions';
+import { Loader2, Plus, Receipt, User, CheckCircle2, X, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DocumentUploader from '@/features/documents/components/DocumentUploader';
 
 interface Props {
   locations: any[];
+  initialData?: any;
+  onClose?: () => void;
 }
 
-export function ExpenseForm({ locations }: Props) {
+export function ExpenseForm({ locations, initialData, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!!initialData);
   const [createdExpenseId, setCreatedExpenseId] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: initialData || {}
+  });
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-    const result = await addExpense(data);
-    if (result.success && result.record) {
+    let result;
+    if (initialData?.id) {
+      result = await updateExpense(initialData.id, data);
+    } else {
+      result = await addExpense(data);
+    }
+
+    if (result.success && result.record && !initialData) {
       setCreatedExpenseId(result.record.id);
       reset();
+    } else if (result.success && initialData) {
+      if (onClose) onClose();
     }
     setIsSubmitting(false);
   };
 
   const handleClose = () => {
-    setShowForm(false);
+    if (onClose) onClose();
+    else setShowForm(false);
     setTimeout(() => setCreatedExpenseId(null), 300); // Give time for animation
   };
 
   return (
     <div className="space-y-4">
-      {!showForm ? (
+      {!showForm && !initialData ? (
         <button 
           onClick={() => setShowForm(true)}
           className="elite-button-primary flex items-center gap-2"
@@ -51,14 +64,14 @@ export function ExpenseForm({ locations }: Props) {
         >
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xl font-black text-white flex items-center gap-2">
-              <Receipt className="text-emerald-500" size={20} />
-              Operasyonel Gider Girişi
+              {initialData ? <Edit className="text-emerald-500" size={20} /> : <Receipt className="text-emerald-500" size={20} />}
+              {initialData ? 'Operasyonel Gider Güncelleme' : 'Operasyonel Gider Girişi'}
             </h3>
-            <button onClick={handleClose} className="text-[10px] p-2 rounded-xl bg-white/5 font-black text-zinc-400 hover:text-white uppercase tracking-widest transition-colors"><X size={14}/></button>
+            <button onClick={handleClose} type="button" className="text-[10px] p-2 rounded-xl bg-white/5 font-black text-zinc-400 hover:text-white uppercase tracking-widest transition-colors"><X size={14}/></button>
           </div>
 
           <AnimatePresence mode="wait">
-            {createdExpenseId ? (
+            {createdExpenseId && !initialData ? (
               <motion.div 
                 key="step2"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -138,7 +151,7 @@ export function ExpenseForm({ locations }: Props) {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Resmiyet</label>
-                    <select {...register('isOfficial')} className="elite-input bg-[#1a1a22]">
+                    <select {...register('isOfficial')} className="elite-input bg-[#1a1a22]" defaultValue={initialData ? initialData.isOfficial.toString() : "false"}>
                       <option value="true">Resmi (Faturalı)</option>
                       <option value="false">Resmi Olmayan</option>
                     </select>
@@ -150,8 +163,8 @@ export function ExpenseForm({ locations }: Props) {
                   disabled={isSubmitting}
                   className="elite-button-primary w-full py-4 flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
                 >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus size={18} />}
-                  İLERİ: FATURA YÜKLE
+                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? <Edit size={18} /> : <Plus size={18} />)}
+                  {initialData ? 'GÜNCELLE' : 'İLERİ: FATURA YÜKLE'}
                 </button>
               </motion.form>
             )}

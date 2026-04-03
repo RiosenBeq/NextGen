@@ -15,15 +15,11 @@ export default function FinancialSimulator({ defaultParams }: Props) {
   const simulation = useMemo(() => {
     return calculateMonthlyCashFlow(sessions, 0, {
       sessionPrice: defaultParams.sessionPrice || 350,
-      kdvRate: defaultParams.kdvRate || 20,
       iyzicoCommissionRate: 2,
       nayaxCommissionRate: 2,
       fixedRent: defaultParams.fixedRent || 15000,
       duesAmount: defaultParams.duesAmount || 2000,
-      rentKdvRate: 20,
-      revenueShareRate: defaultParams.revenueShareRate || 5,
-      revenueThreshold: defaultParams.revenueThreshold || 20000,
-      applyRentVat: true,
+      revenueShareRate: defaultParams.revenueShareRate || 15,
       investmentAmount: defaultParams.investmentAmount || 150000,
     });
   }, [sessions, defaultParams]);

@@ -1,6 +1,9 @@
 import { createClient } from '@/utils/supabase/server';
-import { TrendingDown, PiggyBank, Wallet, Plus, ArrowDownRight, CreditCard } from 'lucide-react';
+import { TrendingDown, PiggyBank, ArrowDownRight, CreditCard } from 'lucide-react';
 import * as motion from "framer-motion/client";
+import { getActiveLocations } from '@/features/ledger/actions';
+import { ExpenseForm } from '@/features/ledger/components/ExpenseForm';
+import { InvestmentForm } from '@/features/ledger/components/InvestmentForm';
 
 export const metadata = {
   title: 'Giderler & Yatırımlar - NextGenBox',
@@ -8,6 +11,7 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
+// ... interfaces ...
 interface Location {
   id: string;
   name: string;
@@ -39,6 +43,7 @@ interface Investment {
 
 export default async function ExpensesPage() {
   const supabase = await createClient();
+  const locations = await getActiveLocations();
 
   const { data: expensesData } = await supabase
     .from('Expense')
@@ -58,24 +63,31 @@ export default async function ExpensesPage() {
 
   return (
     <div className="p-10 space-y-12 max-w-[1600px] mx-auto min-h-screen">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2"
-          >
-            <span className="w-8 h-[2px] bg-rose-500 rounded-full"></span>
-            <span className="text-[10px] font-black tracking-[0.3em] text-rose-500 uppercase">
-              Financial Outflow
-            </span>
-          </motion.div>
-          <h1 className="text-5xl font-black tracking-tighter heading-elite leading-tight">
-            Gider ve Yatırım<br/>Yönetimi
-          </h1>
+      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-12">
+        <div className="space-y-6 flex-1">
+          <div className="space-y-2">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2"
+            >
+              <span className="w-8 h-[2px] bg-rose-500 rounded-full"></span>
+              <span className="text-[10px] font-black tracking-[0.3em] text-rose-500 uppercase">
+                Financial Outflow
+              </span>
+            </motion.div>
+            <h1 className="text-5xl font-black tracking-tighter heading-elite leading-tight">
+              Gider ve Yatırım<br/>Yönetimi
+            </h1>
+          </div>
+          
+          <div className="flex flex-wrap gap-4 pt-4">
+            <ExpenseForm locations={locations} />
+            <InvestmentForm locations={locations} />
+          </div>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 shrink-0">
           <div className="premium-card px-8 py-5 flex items-center gap-6 divide-x divide-white/5 shadow-2xl">
             <div className="pr-6">
               <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">TOPLAM GİDER</p>

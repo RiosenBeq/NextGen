@@ -2,54 +2,41 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #020617;
-    --card: #ffffff;
-    --card-foreground: #020617;
-    --popover: #ffffff;
-    --popover-foreground: #020617;
-    --primary: #0f172a;
-    --primary-foreground: #f8fafc;
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
-    --destructive: #ef4444;
-    --destructive-foreground: #f8fafc;
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #020617;
+    --background: #09090b; /* Zinc-950 */
+    --foreground: #fafafa; /* Zinc-50 */
+    
+    --card: #09090b;
+    --card-foreground: #fafafa;
+    
+    --popover: #09090b;
+    --popover-foreground: #fafafa;
+    
+    --primary: #fafafa;
+    --primary-foreground: #18181b; /* Zinc-900 */
+    
+    --secondary: #27272a; /* Zinc-800 */
+    --secondary-foreground: #fafafa;
+    
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa; /* Zinc-400 */
+    
+    --accent: #27272a;
+    --accent-foreground: #fafafa;
+    
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fafafa;
+    
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #d4d4d8; /* Zinc-300 */
+    
     --radius: 0.75rem;
 
-    /* Custom Elite Colors */
+    /* Elite Accents */
     --elite-emerald: #10b981;
-    --elite-cyan: #06b6d4;
     --elite-indigo: #6366f1;
-    --elite-gold: #fbbf24;
-  }
-
-  .dark {
-    --background: #020617;
-    --foreground: #f8fafc;
-    --card: #09090b;
-    --card-foreground: #f8fafc;
-    --popover: #09090b;
-    --popover-foreground: #f8fafc;
-    --primary: #f8fafc;
-    --primary-foreground: #020617;
-    --secondary: #1e293b;
-    --secondary-foreground: #f8fafc;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #f8fafc;
-    --destructive: #7f1d1d;
-    --destructive-foreground: #f8fafc;
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #cbd5e1;
+    --elite-rose: #f43f5e;
+    --elite-cyan: #06b6d4;
   }
 }
 
@@ -57,55 +44,75 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-elite-emerald: var(--elite-emerald);
-  --color-elite-cyan: var(--elite-cyan);
   --color-elite-indigo: var(--elite-indigo);
-  --color-elite-gold: var(--elite-gold);
+  --color-elite-rose: var(--elite-rose);
+  --color-elite-cyan: var(--elite-cyan);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
-  overflow-x: hidden;
+  min-height: 100vh;
 }
 
-/* Premium Mesh Gradient Background */
+/* Linear/Stripe Inspired Background Grid & Gradients */
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(251, 191, 36, 0.05) 0px, transparent 50%);
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at center, black, transparent 80%);
   pointer-events: none;
   z-index: -1;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.dark .glass {
-  background: rgba(9, 9, 11, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(9, 9, 11, 1) 0px, transparent 100%);
+  pointer-events: none;
+  z-index: -2;
 }
 
 .premium-card {
-  @apply rounded-2xl border border-white/10 shadow-xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm hover:translate-y-[-4px] transition-all duration-300;
+  @apply rounded-2xl border border-white/5 bg-zinc-900/40 backdrop-blur-md shadow-2xl transition-all duration-300 hover:border-white/10 hover:bg-zinc-900/60;
+}
+
+.glass-panel {
+  @apply bg-zinc-900/20 backdrop-blur-xl border border-white/5;
 }
 
 .heading-elite {
-  @apply font-black tracking-tight bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent;
+  @apply font-black tracking-tighter text-white drop-shadow-sm;
+  background: linear-gradient(to bottom right, #fff 30%, rgba(255,255,255,0.5));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.elite-input {
+  @apply w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all;
+}
+
+.elite-button-primary {
+  @apply px-6 py-3 bg-white text-zinc-950 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-zinc-200 active:scale-[0.98] transition-all;
+}
+
+.elite-button-secondary {
+  @apply px-6 py-3 bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/10 active:scale-[0.98] transition-all;
+}
+
+.elite-badge {
+  @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border;
 }
 
 /* Custom Scrollbar */
@@ -116,9 +123,20 @@ body::before {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
-.dark ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }

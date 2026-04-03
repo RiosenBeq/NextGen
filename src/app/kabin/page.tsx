@@ -1,7 +1,20 @@
 import { kabinRapor, CabinData } from '@/lib/kabinRapor'
 import Link from 'next/link'
+import * as motion from "framer-motion/client";
+import { 
+  Activity, 
+  Search, 
+  MapPin, 
+  TrendingUp, 
+  Users, 
+  ShieldCheck, 
+  AlertCircle,
+  Timer,
+  ChevronRight,
+  Monitor
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// Revalidate 0 forces dynamic server rendering for 'anlık' (live) data fetching
 export const dynamic = 'force-dynamic'
 
 interface DashboardTotals {
@@ -28,21 +41,17 @@ export default async function KabinDashboard(props: {
 
   let totalStats: DashboardTotals | null = null
   let cabins: CabinData[] = []
-  let chartData: ChartData | null = null
   let errorMsg = null
 
   try {
-    // Ensure we fetch DIRECTLY from the service for real-time data
-    const [totals, fetchedCabins, fetchedChart] = await Promise.all([
+    const [totals, fetchedCabins] = await Promise.all([
       kabinRapor.getDashboardTotals(selectedRange),
-      kabinRapor.getCabins(),
-      kabinRapor.getLast7Graph()
+      kabinRapor.getCabins()
     ])
     totalStats = totals as DashboardTotals
     cabins = fetchedCabins as CabinData[]
-    chartData = fetchedChart as ChartData
   } catch (error: any) {
-    errorMsg = 'Kabin Rapor servisinden veri alınamadı. Lütfen giriş bilgilerini kontrol edin.'
+    errorMsg = 'Kabin Rapor servisinden veri alınamadı.'
     console.error(error)
   }
 
@@ -68,252 +77,288 @@ export default async function KabinDashboard(props: {
     return a.cabin_name.localeCompare(b.cabin_name);
   });
 
-  // Calculate stats for filtered view
   const filteredRevenue = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.today_revenue || 0), 0);
   const filteredSessions = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.paid_sessions || 0), 0);
-  const filteredCustomers = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.incoming_customer_count || 0), 0);
-  
   const avgRevenuePerSession = filteredSessions > 0 ? filteredRevenue / filteredSessions : 0;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+    <div className="p-10 space-y-12 max-w-[1600px] mx-auto min-h-screen">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">
-            Kabin Rapor <span className="text-blue-600">Canlı İzleme</span>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2"
+          >
+            <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
+            <span className="text-[10px] font-black tracking-[0.3em] text-emerald-500 uppercase">
+              Live Monitoring System
+            </span>
+          </motion.div>
+          <h1 className="text-5xl font-black tracking-tighter heading-elite leading-tight">
+            Kabin Rapor<br/>Canlı Dashboard
           </h1>
-          <p className="text-slate-500 mt-2 font-medium max-w-xl">
-            OsesSensin sisteminden alınan anlık ciro ve durum bilgileri. Detaylı filtreleme ve istatistiklerle verimli analiz yapın.
-          </p>
         </div>
-        <div className="flex items-center gap-3 text-sm text-emerald-600 font-bold bg-emerald-50 px-5 py-2.5 rounded-2xl border border-emerald-100 md:self-end shadow-sm">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </span>
-          Veri Bağlantısı Aktif
+
+        <div className="flex items-center gap-4">
+           {errorMsg ? (
+             <div className="px-6 py-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center gap-3">
+                <AlertCircle size={18} />
+                <span className="text-xs font-black uppercase tracking-widest">Bağlantı Kesildi</span>
+             </div>
+           ) : (
+             <div className="px-6 py-3 rounded-2xl glass-panel flex items-center gap-4 shadow-xl">
+               <div className="flex flex-col">
+                 <span className="text-[10px] font-bold text-zinc-500 uppercase">Status</span>
+                 <span className="text-sm font-black text-emerald-400">DATA STREAMING</span>
+               </div>
+               <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+             </div>
+           )}
         </div>
-      </div>
+      </header>
 
       {errorMsg ? (
-        <div className="bg-white border-2 border-red-100 rounded-[3rem] p-16 text-center shadow-2xl shadow-red-500/5 max-w-2xl mx-auto my-12">
-          <div className="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
-            <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="premium-card p-16 text-center max-w-2xl mx-auto py-24 border-rose-500/10"
+        >
+          <div className="w-24 h-24 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-8">
+             <AlertCircle className="text-rose-500" size={48} strokeWidth={1.5} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-4">Veri Bağlantı Kesintisi</h2>
-          <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+          <h2 className="text-3xl font-black text-white mb-4 tracking-tighter">API Bağlantı Hatası</h2>
+          <p className="text-zinc-500 font-bold mb-10 leading-relaxed uppercase text-[10px] tracking-[0.2em]">
             {errorMsg}
           </p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/20"
+          <Link 
+            href="/kabin"
+            className="elite-button-primary inline-flex py-4 px-12"
           >
-            Sistemi Yenile
-          </button>
-        </div>
+            SİSTEMİ YENİDEN YÜKLE
+          </Link>
+        </motion.div>
       ) : (
-        <>
-          {/* Advanced Filtering UI */}
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-2 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/20">
-              <div className="flex p-1 bg-gray-50 rounded-3xl w-full md:w-auto overflow-x-auto no-scrollbar">
-                {[
-                  { id: 'all', label: 'Tüm Lokasyonlar' },
-                  { id: 'bursa', label: 'Bursa' },
-                  { id: 'izmir', label: 'İzmir' }
-                ].map((loc) => (
-                  <Link
-                    key={loc.id}
-                    href={`/kabin?location=${loc.id}&range=${selectedRange}&search=${searchQuery}&sortBy=${sortBy}`}
-                    scroll={false}
-                    className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                      selectedLocation === loc.id 
-                      ? 'bg-white text-blue-600 shadow-md transform scale-105' 
-                      : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    {loc.label}
-                  </Link>
-                ))}
-              </div>
+        <div className="space-y-12">
+          {/* Controls & Filters */}
+          <section className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+             <div className="xl:col-span-8 space-y-8">
+                <div className="flex flex-wrap items-center gap-6">
+                   <div className="glass-panel p-1.5 flex gap-1 rounded-2xl">
+                      {[
+                        { id: 'all', label: 'TÜMÜ' },
+                        { id: 'bursa', label: 'BURSA' },
+                        { id: 'izmir', label: 'İZMİR' }
+                      ].map((loc) => {
+                        const isActive = selectedLocation === loc.id;
+                        return (
+                          <Link
+                            key={loc.id}
+                            href={`/kabin?location=${loc.id}&range=${selectedRange}&search=${searchQuery}&sortBy=${sortBy}`}
+                            className={cn(
+                              "px-8 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all",
+                              isActive 
+                                ? "bg-white text-zinc-950 shadow-2xl scale-105" 
+                                : "text-zinc-500 hover:text-white"
+                            )}
+                          >
+                            {loc.label}
+                          </Link>
+                        );
+                      })}
+                   </div>
 
-              <div className="relative w-full md:w-96 px-4 md:px-0 pr-4">
-                <form action="/kabin" method="GET" className="relative">
-                  <input type="hidden" name="location" value={selectedLocation} />
-                  <input type="hidden" name="range" value={selectedRange} />
-                  <input type="hidden" name="sortBy" value={sortBy} />
-                  <input 
-                    type="text" 
-                    name="search"
-                    defaultValue={searchQuery}
-                    placeholder="Kabin veya lokasyon ara..."
-                    className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-blue-100 transition-all outline-none text-gray-900 placeholder:text-gray-400"
-                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </form>
-              </div>
-            </div>
-
-            {/* Range and Sort Filters */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex p-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto no-scrollbar">
-                {['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay'].map((range) => (
-                  <Link
-                    key={range}
-                    href={`/kabin?location=${selectedLocation}&range=${range}&search=${searchQuery}&sortBy=${sortBy}`}
-                    scroll={false}
-                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
-                      selectedRange === range 
-                      ? 'bg-slate-900 text-white shadow-lg' 
-                      : 'text-gray-400 hover:bg-gray-50'
-                    }`}
-                  >
-                    {range}
-                  </Link>
-                ))}
-              </div>
-
-              <div className="flex p-1 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                <span className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest self-center border-r border-gray-100 mr-1">Sırala:</span>
-                {[
-                  { id: 'name', label: 'İsim' },
-                  { id: 'revenue', label: 'Ciro' },
-                  { id: 'sessions', label: 'Seans' }
-                ].map((sort) => (
-                  <Link
-                    key={sort.id}
-                    href={`/kabin?location=${selectedLocation}&range=${selectedRange}&search=${searchQuery}&sortBy=${sort.id}`}
-                    scroll={false}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                      sortBy === sort.id 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-400 hover:bg-gray-50'
-                    }`}
-                  >
-                    {sort.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Ciro Kartı */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-gray-900/10 text-white relative overflow-hidden group">
-              <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-              <h3 className="text-slate-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px]">{selectedRange} Toplam Ciro</h3>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black tracking-tighter">
-                  ₺{filteredRevenue.toLocaleString('tr-TR')}
-                </span>
-              </div>
-              <div className="mt-6">
-                <div className="inline-flex bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl text-xs font-bold text-slate-300 border border-white/5">
-                  {filteredSessions} Ücretli Seans
+                   <div className="glass-panel p-1.5 flex gap-1 rounded-2xl">
+                    {['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay'].map((range) => {
+                      const isActive = selectedRange === range;
+                      return (
+                        <Link
+                          key={range}
+                          href={`/kabin?location=${selectedLocation}&range=${range}&search=${searchQuery}&sortBy=${sortBy}`}
+                          className={cn(
+                            "px-6 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all",
+                            isActive 
+                              ? "bg-zinc-800 text-emerald-400" 
+                              : "text-zinc-500 hover:text-white"
+                          )}
+                        >
+                          {range.toUpperCase()}
+                        </Link>
+                      );
+                    })}
+                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Ortalama Gelir */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col justify-between group hover:border-emerald-100 transition-all">
-              <div>
-                <h3 className="text-gray-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px] group-hover:text-emerald-500 transition-colors">Ort. Seans Geliri</h3>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-black text-gray-900">
-                    ₺{Math.round(avgRevenuePerSession).toLocaleString('tr-TR')}
-                  </span>
-                  <span className="text-gray-400 font-bold text-sm">/seans</span>
+                <div className="relative group">
+                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                   <form action="/kabin" method="GET">
+                      <input type="hidden" name="location" value={selectedLocation} />
+                      <input type="hidden" name="range" value={selectedRange} />
+                      <input type="hidden" name="sortBy" value={sortBy} />
+                      <input 
+                        type="text" 
+                        name="search"
+                        defaultValue={searchQuery}
+                        placeholder="KABİN ADI VEYA LOKASYON İLE ARA..."
+                        className="w-full elite-input pl-16 py-6 bg-zinc-900/50 border-white/5 focus:border-white/10"
+                      />
+                   </form>
                 </div>
-              </div>
-              <div className="mt-6">
-                <div className={`h-1.5 w-full bg-gray-50 rounded-full overflow-hidden`}>
-                  <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${Math.min((avgRevenuePerSession / 500) * 100, 100)}%` }}></div>
-                </div>
-              </div>
-            </div>
+             </div>
 
-            {/* Kabin Sayısı */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col justify-between group hover:border-slate-800 transition-all">
-              <div>
-                <h3 className="text-gray-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px]">Aktif Terminaller</h3>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-black text-gray-900">
-                    {filteredCabins.length}
-                  </span>
-                  <span className="text-gray-400 font-bold text-sm">Kabin</span>
+             <div className="xl:col-span-4 glass-panel p-6 rounded-[2rem] space-y-6">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-2">İstatistikleri Sırala</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { id: 'name', label: 'İSİM' },
+                    { id: 'revenue', label: 'CİRO' },
+                    { id: 'sessions', label: 'SEANS' }
+                  ].map((it) => (
+                    <Link
+                      key={it.id}
+                      href={`/kabin?location=${selectedLocation}&range=${selectedRange}&search=${searchQuery}&sortBy=${it.id}`}
+                      className={cn(
+                        "py-3 rounded-xl text-[10px] font-black tracking-widest text-center border transition-all",
+                        sortBy === it.id 
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                          : "bg-white/5 border-transparent text-zinc-500 hover:text-white"
+                      )}
+                    >
+                      {it.label}
+                    </Link>
+                  ))}
                 </div>
-              </div>
-              <div className="mt-6 flex -space-x-3">
-                {filteredCabins.slice(0, 4).map((c: CabinData, i: number) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center font-bold text-[8px] text-gray-500 shadow-sm group-hover:bg-slate-800 group-hover:text-white transition-colors">
-                    {c.cabin_name.charAt(0)}
-                  </div>
-                ))}
-                {filteredCabins.length > 4 && (
-                  <div className="w-8 h-8 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center font-bold text-[8px] text-white shadow-sm">
-                    +{filteredCabins.length - 4}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+             </div>
+          </section>
 
-          {/* Individual Cabins List */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {filteredCabins.map((cabin: CabinData) => (
-              <div key={cabin.id} className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/40 transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <svg className="w-24 h-24 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
-                  </svg>
+          {/* Aggregate Stats */}
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <div className="premium-card p-10 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black relative group overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
+                   <TrendingUp size={120} strokeWidth={1} />
                 </div>
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-[0.1em] mb-3">
-                      {cabin.cabin_name.includes('Bursa') ? 'Bursa' : 'İzmir'} Lokasyonu
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                   {selectedRange.toUpperCase()} BRÜT CİRO
+                </p>
+                <div className="flex items-end gap-3 mb-6">
+                   <span className="text-5xl font-black text-white tracking-tighter">₺{filteredRevenue.toLocaleString('tr-TR')}</span>
+                   <span className="text-zinc-500 font-bold mb-2 uppercase text-[10px]">Toplam</span>
+                </div>
+                <div className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/5 w-fit text-[10px] font-black tracking-widest text-zinc-400">
+                   {filteredSessions} ÜCRETLİ SEANS
+                </div>
+             </div>
+
+             <div className="premium-card p-10 bg-zinc-950 border-white/5 relative overflow-hidden group">
+                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                   <Monitor size={14} />
+                   AKTİF TERMİNALLER
+                </p>
+                <div className="flex items-end gap-3 mb-8">
+                   <span className="text-5xl font-black text-white tracking-tighter">{filteredCabins.length}</span>
+                   <span className="text-zinc-500 font-bold mb-2 uppercase text-[10px]">Birim</span>
+                </div>
+                <div className="flex -space-x-3">
+                   {filteredCabins.slice(0, 5).map((c, i) => (
+                      <div key={i} className="w-10 h-10 rounded-xl bg-zinc-900 border-2 border-zinc-950 flex items-center justify-center text-[10px] font-black text-white shadow-xl">
+                        {c.cabin_name.charAt(0)}
+                      </div>
+                   ))}
+                   {filteredCabins.length > 5 && (
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center text-[10px] font-black text-white border-2 border-zinc-950 shadow-xl">
+                        +{filteredCabins.length - 5}
+                      </div>
+                   )}
+                </div>
+             </div>
+
+             <div className="premium-card p-10 bg-zinc-950 border-white/5 relative overflow-hidden group">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                   <Timer size={14} />
+                   ORTALAMA SEANS DEĞERİ
+                </p>
+                <div className="flex items-end gap-3 mb-6">
+                   <span className="text-5xl font-black text-white tracking-tighter">₺{Math.round(avgRevenuePerSession).toLocaleString('tr-TR')}</span>
+                   <span className="text-zinc-500 font-bold mb-2 uppercase text-[10px]">/ 15 DK</span>
+                </div>
+                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                   <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${Math.min((avgRevenuePerSession / 500) * 100, 100)}%` }}
+                     className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
+                   />
+                </div>
+             </div>
+          </section>
+
+          {/* Cabin Grid */}
+          <section className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-8 pb-20">
+             {filteredCabins.map((cabin: CabinData, index: number) => (
+               <motion.div 
+                 key={cabin.id}
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: index * 0.05 }}
+                 className="premium-card p-10 hover:border-emerald-500/20 group relative overflow-hidden"
+               >
+                 <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-10 transition-all pointer-events-none">
+                    <Monitor size={180} />
+                 </div>
+
+                 <div className="flex justify-between items-start mb-10 relative z-10">
+                    <div className="space-y-3">
+                       <span className="px-4 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-black tracking-widest uppercase">
+                          {cabin.cabin_name.includes('Bursa') ? 'Bursa' : 'İzmir'}
+                       </span>
+                       <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-tight">{cabin.cabin_name}</h2>
+                       <div className="flex items-center gap-2 text-zinc-500">
+                          <MapPin size={12} className="text-zinc-700" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{cabin.cabin_location}</span>
+                       </div>
                     </div>
-                    <h2 className="text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase">{cabin.cabin_name}</h2>
-                    <p className="text-gray-400 font-medium text-sm mt-1">{cabin.cabin_location}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{selectedRange} Ciro</div>
-                    <div className="text-3xl font-black text-emerald-600">₺{cabin.today_revenue?.toLocaleString('tr-TR')}</div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-gray-50">
-                  <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Seans</div>
-                    <div className="text-lg font-black text-gray-900">{cabin.paid_sessions}</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Müşteri</div>
-                    <div className="text-lg font-black text-gray-900">{cabin.incoming_customer_count}</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Ort. Gelir</div>
-                    <div className="text-lg font-black text-gray-900">₺{Math.round(cabin.avg_revenue_per_session || 0)}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {(!filteredCabins || filteredCabins.length === 0) && (
-              <div className="lg:col-span-2 bg-gray-50 rounded-[2rem] p-16 text-center">
-                <div className="text-4xl mb-4">🔍</div>
-                <div className="text-gray-400 font-black text-xl uppercase tracking-widest">Sonuç Bulunamadı</div>
-                <p className="text-gray-400 mt-2 font-medium">Arama kriterlerinizi veya filtrelerinizi değiştirmeyi deneyin.</p>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+                    <div className="text-right">
+                       <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-1">CIRO</p>
+                       <p className="text-3xl font-black text-white">₺{cabin.today_revenue?.toLocaleString('tr-TR')}</p>
+                    </div>
+                 </div>
 
+                 <div className="grid grid-cols-3 gap-4 pt-8 border-t border-white/5 relative z-10">
+                    <div className="space-y-1">
+                       <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">SEANS</p>
+                       <p className="text-xl font-black text-white">{cabin.paid_sessions}</p>
+                    </div>
+                    <div className="space-y-1">
+                       <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">MÜŞTERİ</p>
+                       <p className="text-xl font-black text-white">{cabin.incoming_customer_count}</p>
+                    </div>
+                    <div className="space-y-1">
+                       <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">VERİMLİLİK</p>
+                       <p className="text-xl font-black text-emerald-400">%{Math.round(((cabin.paid_sessions || 0) / 40) * 100)}</p>
+                    </div>
+                 </div>
+
+                 <div className="mt-8 pt-6 border-t border-white/[0.02] flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                       REALTIME UPDATE
+                    </span>
+                    <ChevronRight size={16} className="text-zinc-700" />
+                 </div>
+               </motion.div>
+             ))}
+
+             {filteredCabins.length === 0 && (
+               <div className="col-span-full py-40 border-2 border-dashed border-white/5 rounded-[4rem] text-center opacity-30">
+                  <Search size={64} className="mx-auto mb-6 text-zinc-600" />
+                  <p className="text-xl font-black uppercase tracking-widest">EŞLEŞEN KABİN BULUNAMADI</p>
+                  <p className="text-xs font-bold mt-2">Arama kriterlerini veya filtreleri değiştirin.</p>
+               </div>
+             )}
+          </section>
+        </div>
+      )}
     </div>
   )
 }

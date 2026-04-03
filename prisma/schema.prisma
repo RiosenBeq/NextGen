@@ -1,7 +1,7 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url      = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 generator client {
@@ -20,6 +20,8 @@ model Location {
   fixedRent        Float
   duesAmount       Float
   rentVatRate      Float
+  revenueShareRate Float                @default(0) // Ciro Payı %
+  revenueThreshold Float                @default(0) // Ciro Eşiği (TL)
   isActive         Boolean              @default(true)
   performances     MonthlyPerformance[]
   expenses         Expense[]

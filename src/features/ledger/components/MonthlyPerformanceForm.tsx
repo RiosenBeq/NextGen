@@ -43,9 +43,8 @@ export function MonthlyPerformanceForm({ locations }: Props) {
       {
         sessionPrice: 300, // Shared defaults
         kdvRate: 20,
-        totalCommissionRate: 4,
-        alpShareRate: 50,
-        ngbShareRate: 50,
+        iyzicoCommissionRate: 2,
+        nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 0,
         duesAmount: loc.duesAmount || 0,
         rentKdvRate: loc.rentVatRate || 20,
@@ -209,22 +208,19 @@ export function MonthlyPerformanceForm({ locations }: Props) {
                 </div>
 
                 <div className="pt-6 border-t border-white/5">
-                   <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-4">Pay Analizi</p>
+                   <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-4">Pay Analizi (%25)</p>
                    <div className="space-y-4">
-                      <div className="flex justify-between items-end">
-                        <span className="text-[10px] font-bold text-zinc-400">Partner (Alp %50)</span>
-                        <span className="text-sm font-black text-white">₺{livePreview.alpShare.toLocaleString('tr-TR')}</span>
-                      </div>
-                      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="w-1/2 h-full bg-emerald-500" />
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <span className="text-[10px] font-bold text-zinc-400">NextGenBox (%50)</span>
-                        <span className="text-sm font-black text-white">₺{livePreview.ngbShare.toLocaleString('tr-TR')}</span>
-                      </div>
-                      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="w-1/2 h-full bg-indigo-500" />
-                      </div>
+                      {[
+                        { name: 'OKAN', amount: livePreview.okanShare },
+                        { name: 'TALHA', amount: livePreview.talhaShare },
+                        { name: 'FURKAN', amount: livePreview.furkanShare },
+                        { name: 'ALP', amount: livePreview.alpShare },
+                      ].map((partner) => (
+                        <div key={partner.name} className="flex justify-between items-end">
+                          <span className="text-[10px] font-bold text-zinc-400">{partner.name}</span>
+                          <span className="text-sm font-black text-white italic">₺{partner.amount.toLocaleString('tr-TR')}</span>
+                        </div>
+                      ))}
                    </div>
                 </div>
               </div>

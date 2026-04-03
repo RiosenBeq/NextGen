@@ -195,7 +195,6 @@ export default async function DashboardPage() {
               defaultParams={{
                 sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 350,
                 kdvRate: paramMap['VAT_RATE'] || 20,
-                totalCommissionRate: paramMap['COMMISSION_RATE'] || 4,
                 investmentAmount: insights[0]?.totalInvestment || 250000,
               }} 
             />

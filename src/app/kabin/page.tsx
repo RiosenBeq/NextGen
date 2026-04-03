@@ -18,24 +18,27 @@ interface ChartData {
 }
 
 export default async function KabinDashboard(props: {
-  searchParams: Promise<{ location?: string; search?: string }>
+  searchParams: Promise<{ location?: string; search?: string; range?: string; sortBy?: string }>
 }) {
   const searchParams = await props.searchParams
   const selectedLocation = searchParams.location || 'all'
   const searchQuery = (searchParams.search || '').toLowerCase()
+  const selectedRange = searchParams.range || 'Bugün'
+  const sortBy = searchParams.sortBy || 'name'
 
-  let todayTotal: DashboardTotals | null = null
+  let totalStats: DashboardTotals | null = null
   let cabins: CabinData[] = []
   let chartData: ChartData | null = null
   let errorMsg = null
 
   try {
+    // Ensure we fetch DIRECTLY from the service for real-time data
     const [totals, fetchedCabins, fetchedChart] = await Promise.all([
-      kabinRapor.getDashboardTotals('Bugün'),
+      kabinRapor.getDashboardTotals(selectedRange),
       kabinRapor.getCabins(),
       kabinRapor.getLast7Graph()
     ])
-    todayTotal = totals as DashboardTotals
+    totalStats = totals as DashboardTotals
     cabins = fetchedCabins as CabinData[]
     chartData = fetchedChart as ChartData
   } catch (error: any) {
@@ -58,9 +61,19 @@ export default async function KabinDashboard(props: {
     return matchesLocation && matchesSearch;
   }) : [];
 
-  // Recalculate stats for filtered view
+  // Sorting Logic
+  filteredCabins.sort((a, b) => {
+    if (sortBy === 'revenue') return (b.today_revenue || 0) - (a.today_revenue || 0);
+    if (sortBy === 'sessions') return (b.paid_sessions || 0) - (a.paid_sessions || 0);
+    return a.cabin_name.localeCompare(b.cabin_name);
+  });
+
+  // Calculate stats for filtered view
   const filteredRevenue = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.today_revenue || 0), 0);
   const filteredSessions = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.paid_sessions || 0), 0);
+  const filteredCustomers = filteredCabins.reduce((acc: number, curr: CabinData) => acc + (curr.incoming_customer_count || 0), 0);
+  
+  const avgRevenuePerSession = filteredSessions > 0 ? filteredRevenue / filteredSessions : 0;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -72,7 +85,7 @@ export default async function KabinDashboard(props: {
             Kabin Rapor <span className="text-blue-600">Canlı İzleme</span>
           </h1>
           <p className="text-slate-500 mt-2 font-medium max-w-xl">
-            OsesSensin sisteminden alınan anlık ciro ve durum bilgileri. Lokasyon bazlı filtreleme ile verimli analiz yapın.
+            OsesSensin sisteminden alınan anlık ciro ve durum bilgileri. Detaylı filtreleme ve istatistiklerle verimli analiz yapın.
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm text-emerald-600 font-bold bg-emerald-50 px-5 py-2.5 rounded-2xl border border-emerald-100 md:self-end shadow-sm">
@@ -92,118 +105,148 @@ export default async function KabinDashboard(props: {
       ) : (
         <>
           {/* Advanced Filtering UI */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-2 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/20">
-            <div className="flex p-1 bg-gray-50 rounded-3xl w-full md:w-auto">
-              {[
-                { id: 'all', label: 'Tüm Lokasyonlar' },
-                { id: 'bursa', label: 'Bursa (Zafer Plaza)' },
-                { id: 'izmir', label: 'İzmir (Mavibahçe)' }
-              ].map((loc) => (
-                <Link
-                  key={loc.id}
-                  href={`/kabin?location=${loc.id}${searchQuery ? `&search=${searchQuery}` : ''}`}
-                  className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
-                    selectedLocation === loc.id 
-                    ? 'bg-white text-blue-600 shadow-md transform scale-105' 
-                    : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  {loc.label}
-                </Link>
-              ))}
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-2 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/20">
+              <div className="flex p-1 bg-gray-50 rounded-3xl w-full md:w-auto overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'all', label: 'Tüm Lokasyonlar' },
+                  { id: 'bursa', label: 'Bursa' },
+                  { id: 'izmir', label: 'İzmir' }
+                ].map((loc) => (
+                  <Link
+                    key={loc.id}
+                    href={`/kabin?location=${loc.id}&range=${selectedRange}&search=${searchQuery}&sortBy=${sortBy}`}
+                    scroll={false}
+                    className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+                      selectedLocation === loc.id 
+                      ? 'bg-white text-blue-600 shadow-md transform scale-105' 
+                      : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    {loc.label}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="relative w-full md:w-96 px-4 md:px-0 pr-4">
+                <form action="/kabin" method="GET" className="relative">
+                  <input type="hidden" name="location" value={selectedLocation} />
+                  <input type="hidden" name="range" value={selectedRange} />
+                  <input type="hidden" name="sortBy" value={sortBy} />
+                  <input 
+                    type="text" 
+                    name="search"
+                    defaultValue={searchQuery}
+                    placeholder="Kabin veya lokasyon ara..."
+                    className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-blue-100 transition-all outline-none text-gray-900 placeholder:text-gray-400"
+                  />
+                  <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </form>
+              </div>
             </div>
 
-            <div className="relative w-full md:w-96 px-4 md:px-0 pr-4">
-              <form action="/kabin" method="GET" className="relative">
-                <input type="hidden" name="location" value={selectedLocation} />
-                <input 
-                  type="text" 
-                  name="search"
-                  defaultValue={searchQuery}
-                  placeholder="Kabin veya lokasyon ara..."
-                  className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-blue-100 transition-all outline-none text-gray-900 placeholder:text-gray-400"
-                />
-                <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </form>
+            {/* Range and Sort Filters */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex p-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto no-scrollbar">
+                {['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay'].map((range) => (
+                  <Link
+                    key={range}
+                    href={`/kabin?location=${selectedLocation}&range=${range}&search=${searchQuery}&sortBy=${sortBy}`}
+                    scroll={false}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                      selectedRange === range 
+                      ? 'bg-slate-900 text-white shadow-lg' 
+                      : 'text-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    {range}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="flex p-1 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <span className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest self-center border-r border-gray-100 mr-1">Sırala:</span>
+                {[
+                  { id: 'name', label: 'İsim' },
+                  { id: 'revenue', label: 'Ciro' },
+                  { id: 'sessions', label: 'Seans' }
+                ].map((sort) => (
+                  <Link
+                    key={sort.id}
+                    href={`/kabin?location=${selectedLocation}&range=${selectedRange}&search=${searchQuery}&sortBy=${sort.id}`}
+                    scroll={false}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      sortBy === sort.id 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    {sort.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Ciro Kartı */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2.5rem] p-10 shadow-2xl shadow-gray-900/10 text-white relative overflow-hidden group">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-gray-900/10 text-white relative overflow-hidden group">
               <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-              <h3 className="text-slate-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px]">Filtrelenmiş Hasılat</h3>
+              <h3 className="text-slate-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px]">{selectedRange} Toplam Ciro</h3>
               <div className="flex items-baseline gap-3">
-                <span className="text-6xl font-black tracking-tighter">
+                <span className="text-4xl font-black tracking-tighter">
                   ₺{filteredRevenue.toLocaleString('tr-TR')}
                 </span>
               </div>
-              <div className="mt-8 flex items-center justify-between">
-                <div className="bg-white/5 backdrop-blur-xl px-5 py-2.5 rounded-2xl text-sm font-bold text-slate-300 border border-white/5">
+              <div className="mt-6">
+                <div className="inline-flex bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl text-xs font-bold text-slate-300 border border-white/5">
                   {filteredSessions} Ücretli Seans
                 </div>
-                {selectedLocation !== 'all' && (
-                  <div className="text-[10px] uppercase font-black tracking-widest text-blue-400">
-                    Sadece {selectedLocation === 'bursa' ? 'Bursa' : 'İzmir'}
-                  </div>
-                )}
+              </div>
+            </div>
+
+            {/* Ortalama Gelir */}
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col justify-between group hover:border-emerald-100 transition-all">
+              <div>
+                <h3 className="text-gray-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px] group-hover:text-emerald-500 transition-colors">Ort. Seans Geliri</h3>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black text-gray-900">
+                    ₺{Math.round(avgRevenuePerSession).toLocaleString('tr-TR')}
+                  </span>
+                  <span className="text-gray-400 font-bold text-sm">/seans</span>
+                </div>
+              </div>
+              <div className="mt-6">
+                <div className={`h-1.5 w-full bg-gray-50 rounded-full overflow-hidden`}>
+                  <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${Math.min((avgRevenuePerSession / 500) * 100, 100)}%` }}></div>
+                </div>
               </div>
             </div>
 
             {/* Kabin Sayısı */}
-            <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 flex flex-col justify-between group hover:border-blue-100 transition-all">
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col justify-between group hover:border-slate-800 transition-all">
               <div>
-                <h3 className="text-gray-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px] group-hover:text-blue-400 transition-colors">Terminaller</h3>
+                <h3 className="text-gray-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px]">Aktif Terminaller</h3>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-6xl font-black text-gray-900 group-hover:scale-105 transition-transform">
+                  <span className="text-4xl font-black text-gray-900">
                     {filteredCabins.length}
                   </span>
-                  <span className="text-gray-400 font-bold text-lg">Aktif</span>
+                  <span className="text-gray-400 font-bold text-sm">Kabin</span>
                 </div>
               </div>
-              <div className="mt-8">
-                <div className="flex -space-x-4">
-                  {filteredCabins.slice(0, 5).map((c: CabinData, i: number) => (
-                    <div key={i} className="w-10 h-10 rounded-full bg-slate-100 border-4 border-white flex items-center justify-center font-bold text-[10px] text-gray-500 shadow-sm">
-                      {c.cabin_name.charAt(0)}
-                    </div>
-                  ))}
-                  {filteredCabins.length > 5 && (
-                    <div className="w-10 h-10 rounded-full bg-blue-600 border-4 border-white flex items-center justify-center font-bold text-[10px] text-white shadow-sm">
-                      +{filteredCabins.length - 5}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Son 7 Günlük Toplam */}
-            <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 flex flex-col justify-between overflow-hidden relative group">
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
-              <div>
-                <h3 className="text-gray-400 font-black mb-4 uppercase tracking-[0.2em] text-[10px]">Haftalık Trend</h3>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-6xl font-black text-slate-800 tracking-tighter">
-                    ₺{chartData?.series?.reduce((acc: number, curr: any) => acc + (curr.revenue || 0), 0).toLocaleString('tr-TR') || 0}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-8 flex justify-between items-end">
-                <div className="space-y-1">
-                  <div className="text-xs font-bold text-gray-400 uppercase">Toplam Seans</div>
-                  <div className="text-lg font-black text-slate-900">{chartData?.series?.reduce((acc: number, curr: any) => acc + (curr.sessions || 0), 0) || 0}</div>
-                </div>
-                <div className="w-24 h-12 flex items-end gap-1 pb-1">
-                  {chartData?.series?.slice(-7).map((d: any, i: number) => (
-                    <div 
-                      key={i} 
-                      className="flex-1 bg-blue-100 rounded-t-sm group-hover:bg-blue-600 transition-all duration-500" 
-                      style={{ height: `${(d.revenue / 20000) * 100}%`, minHeight: '4px' }}
-                    ></div>
-                  ))}
-                </div>
+              <div className="mt-6 flex -space-x-3">
+                {filteredCabins.slice(0, 4).map((c: CabinData, i: number) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center font-bold text-[8px] text-gray-500 shadow-sm group-hover:bg-slate-800 group-hover:text-white transition-colors">
+                    {c.cabin_name.charAt(0)}
+                  </div>
+                ))}
+                {filteredCabins.length > 4 && (
+                  <div className="w-8 h-8 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center font-bold text-[8px] text-white shadow-sm">
+                    +{filteredCabins.length - 4}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -222,27 +265,27 @@ export default async function KabinDashboard(props: {
                     <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-[0.1em] mb-3">
                       {cabin.cabin_name.includes('Bursa') ? 'Bursa' : 'İzmir'} Lokasyonu
                     </div>
-                    <h2 className="text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{cabin.cabin_name}</h2>
+                    <h2 className="text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase">{cabin.cabin_name}</h2>
                     <p className="text-gray-400 font-medium text-sm mt-1">{cabin.cabin_location}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Bugünkü Ciro</div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{selectedRange} Ciro</div>
                     <div className="text-3xl font-black text-emerald-600">₺{cabin.today_revenue?.toLocaleString('tr-TR')}</div>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-50">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-gray-50">
                   <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Ücretli Seans</div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Seans</div>
                     <div className="text-lg font-black text-gray-900">{cabin.paid_sessions}</div>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Gelen Müşteri</div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Müşteri</div>
                     <div className="text-lg font-black text-gray-900">{cabin.incoming_customer_count}</div>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Kabin Ücreti</div>
-                    <div className="text-lg font-black text-gray-900">₺{cabin.cabin_price}</div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase mb-1">Ort. Gelir</div>
+                    <div className="text-lg font-black text-gray-900">₺{Math.round(cabin.avg_revenue_per_session || 0)}</div>
                   </div>
                 </div>
               </div>

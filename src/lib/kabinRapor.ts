@@ -4,7 +4,7 @@
  * sonrasında kabin güncel verilerini çeker.
  */
 
-const BASE_URL = 'https://osessensin.com/api'
+const BASE_URL = 'https://kabinrapor.com/api'
 
 export interface CabinData {
   id: number
@@ -17,6 +17,8 @@ export interface CabinData {
   paid_sessions: number
   today_revenue: number
   incoming_customer_count: number
+  avg_revenue_per_session?: number // Calculated
+  conversion_rate?: number // Calculated
   [key: string]: any
 }
 
@@ -72,7 +74,7 @@ export class KabinRaporService {
   }
 
   /**
-   * Retrieves all cabins for the firm
+   * Retrieves all cabins for the firm and calculates extra metrics
    */
   async getCabins(): Promise<CabinData[]> {
     const isAuth = await this.ensureAuth()
@@ -84,16 +86,24 @@ export class KabinRaporService {
       body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId })
     })
     
-    return await response.json()
+    const data = await response.json() as CabinData[]
+    
+    // Enrich data with extra stats
+    return data.map(cabin => ({
+      ...cabin,
+      avg_revenue_per_session: cabin.paid_sessions > 0 ? cabin.today_revenue / cabin.paid_sessions : 0,
+      conversion_rate: cabin.incoming_customer_count > 0 ? (cabin.paid_sessions / cabin.incoming_customer_count) * 100 : 0
+    }))
   }
 
   /**
-   * Retrieves dashboard totals (for Today, default)
+   * Retrieves dashboard totals (for specified range)
    */
   async getDashboardTotals(range: string = 'Bugün'): Promise<DashboardTotal> {
     const isAuth = await this.ensureAuth()
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
+    // Valid ranges: 'Bugün', 'Dün', 'Bu Hafta', 'Bu Ay', 'Son 7 Gün', 'Son 30 Gün'
     const response = await fetch(`${BASE_URL}/dashboard-totals-by-range`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

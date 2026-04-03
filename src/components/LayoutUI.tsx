@@ -12,6 +12,7 @@ export function Sidebar() {
 
   const links = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/finans", label: "Finansal Tablo", icon: FileText },
     { href: "/performance", label: "Performans Girişi", icon: PlusCircle },
     { href: "/reports", label: "Nakit Akış Raporu", icon: FileText },
     { href: "/expenses", label: "Giderler ve Yatırım", icon: FileText },

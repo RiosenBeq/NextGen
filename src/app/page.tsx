@@ -22,9 +22,9 @@ export default async function DashboardPage() {
   const insights = await getLocationInsights();
 
   // Fetch Live Data from kabinrapor.com
-  let liveTotals: any = null;
+  let liveData: any = null;
   try {
-    liveTotals = await kabinRapor.getAllRangeTotals();
+    liveData = await kabinRapor.getComprehensiveData('Tüm Zamanlar');
   } catch (error) {
     console.error("Failed to fetch live kabin data on dashboard:", error);
   }
@@ -82,13 +82,13 @@ export default async function DashboardPage() {
   const chartEntries = Object.entries(monthlyTotals).slice(-6);
   const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
 
-  const allTimeTotal = liveTotals ? liveTotals['Tüm Zamanlar'] : null;
-  const thisYearTotal = liveTotals ? liveTotals['Bu Yıl'] : null;
-  const thisMonthTotal = liveTotals ? liveTotals['Bu Ay'] : null;
-  const todayTotal = liveTotals ? liveTotals['Bugün'] : null;
+  const allTimeTotal = liveData?.allTimeTotals;
+  const citySplit = liveData?.citySplit;
+  const thisMonthTotal = liveData?.thisMonthTotals;
+  const todayTotal = liveData?.yesterdayTotals || liveData?.selectedRangeTotals;
 
   const displayRevenue = allTimeTotal ? allTimeTotal.total_revenue : totalManualRevenue;
-  const displaySessions = allTimeTotal ? allTimeTotal.total_paid_sessions : (performances?.reduce((acc, p) => acc + p.sessionCount, 0) || 0);
+  const displaySessions = allTimeTotal ? allTimeTotal.total_paid_sessions : (performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0);
 
   const kpis = [
     { 
@@ -97,8 +97,8 @@ export default async function DashboardPage() {
       icon: TrendingUp, 
       color: "text-emerald-400", 
       bg: "bg-emerald-500/10",
-      trend: thisYearTotal ? `Yıllık: ₺${thisYearTotal.total_revenue.toLocaleString('tr-TR')}` : 'Canlı Veri',
-      trendValue: todayTotal ? `Bugün: ₺${todayTotal.total_revenue.toLocaleString('tr-TR')}` : 'Mevcut',
+      trend: citySplit ? `Bursa: ₺${citySplit.cities.Bursa.revenue.toLocaleString('tr-TR')}` : 'Canlı Veri',
+      trendValue: citySplit ? `İzmir: ₺${citySplit.cities.İzmir.revenue.toLocaleString('tr-TR')}` : 'Mevcut',
       positive: true
     },
     { 
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
       icon: Activity, 
       color: "text-indigo-400", 
       bg: "bg-indigo-500/10",
-      trend: "Performance",
+      trend: "Cumulative",
       trendValue: thisMonthTotal ? `Bu Ay: ${thisMonthTotal.total_paid_sessions.toLocaleString('tr-TR')} Seans` : 'Canlı Veri',
       positive: true
     },
@@ -153,10 +153,10 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-4">
           <Link href="/kabin" className="px-6 py-3.5 rounded-2xl glass-panel group transition-all hover:bg-white/[0.04]">
             <div className="flex items-center gap-4">
-               <div className={cn("w-2.5 h-2.5 rounded-full", liveTotals ? "bg-emerald-500 shadow-[0_0_10px_rgba(52,199,89,0.5)]" : "bg-amber-500")} />
+               <div className={cn("w-2.5 h-2.5 rounded-full", liveData ? "bg-emerald-500 shadow-[0_0_10px_rgba(52,199,89,0.5)]" : "bg-amber-500")} />
                <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">System Status</span>
-                  <span className="text-sm font-bold text-white tracking-tight uppercase">{liveTotals ? "Active Connect" : "Manual Sync"}</span>
+                  <span className="text-sm font-bold text-white tracking-tight uppercase">{liveData ? "Active Connect" : "Manual Sync"}</span>
                </div>
             </div>
           </Link>

@@ -169,7 +169,7 @@ export class KabinRaporService {
       if (normalizedRange === 'Bu Hafta') {
         result = await fetchRange('Son 7 Gün')
       } else if (normalizedRange === 'Tüm Zamanlar') {
-        result = await fetchRange('Tüm Dönemler') || await fetchRange('Hepsi') || await fetchRange('All')
+        result = await fetchRange('Bu Yıl') || await fetchRange('Son 365 Gün')
       } else if (normalizedRange === 'Son 30 Gün') {
         result = await fetchRange('Bu Ay')
       } else if (normalizedRange === 'Bu Yıl') {
@@ -273,6 +273,66 @@ export class KabinRaporService {
   }
 
   /**
+   * Retrieves dashboard totals with city-based separation (Bursa vs Izmir)
+   * If range is 'Tüm Zamanlar', it defaults to 'Bu Yıl' as per request.
+   */
+  async getCitySplittedData(range: DateRange = 'Bugün') {
+    const isAuth = await this.ensureAuth()
+    if (!isAuth) throw new Error('Not authenticated to KabinRapor')
+
+    // Override: "Tüm Zamanlar" now means "Bu Yıl"
+    const effectiveRange = range === 'Tüm Zamanlar' ? 'Bu Yıl' : range;
+
+    try {
+      const cabins = await this.getCabins();
+      const cabinStats = await this.getCabinStatsByRange(effectiveRange as DateRange);
+
+      const split = {
+        Bursa: { revenue: 0, sessions: 0, count: 0 },
+        İzmir: { revenue: 0, sessions: 0, count: 0 },
+        Diğer: { revenue: 0, sessions: 0, count: 0 }
+      };
+
+      // Helper to map location to city
+      const mapCity = (loc: string) => {
+        if (loc.toLowerCase().includes('zafer')) return 'Bursa';
+        if (loc.toLowerCase().includes('mavi')) return 'İzmir';
+        return 'Diğer';
+      };
+
+      // Enrich split with cabin stats
+      cabinStats.forEach(stat => {
+        const cabin = cabins.find(c => c.id === stat.cabin_id || c.cabin_name === stat.cabin_name);
+        const city = cabin ? mapCity(cabin.cabin_location) : 'Diğer';
+        
+        split[city].revenue += stat.revenue;
+        split[city].sessions += stat.sessions;
+        split[city].count += 1;
+      });
+
+      // If cabinStats empty, try to at least group cabins by location
+      if (cabinStats.length === 0) {
+        cabins.forEach(c => {
+          const city = mapCity(c.cabin_location);
+          split[city].revenue += c.today_revenue;
+          split[city].sessions += c.paid_sessions;
+          split[city].count += 1;
+        });
+      }
+
+      return {
+        range: effectiveRange,
+        cities: split,
+        total_revenue: Object.values(split).reduce((acc, c) => acc + c.revenue, 0),
+        total_sessions: Object.values(split).reduce((acc, c) => acc + c.sessions, 0)
+      };
+    } catch (e) {
+      console.error('getCitySplittedData error:', e);
+      return null;
+    }
+  }
+
+  /**
    * Comprehensive data fetch — pulls everything available in parallel
    */
   async getComprehensiveData(selectedRange: DateRange = 'Bugün') {
@@ -288,6 +348,7 @@ export class KabinRaporService {
       yesterdayTotals,
       last7Graph,
       cabinRangeStats,
+      citySplit
     ] = await Promise.all([
       this.getCabins(),
       this.getDashboardTotals(selectedRange),
@@ -297,17 +358,19 @@ export class KabinRaporService {
       this.getDashboardTotals('Dün'),
       this.getLast7Graph(),
       this.getCabinStatsByRange(selectedRange),
+      this.getCitySplittedData(selectedRange)
     ])
 
     return {
       cabins,
       selectedRangeTotals,
-      allTimeTotals,
+      allTimeTotals, // Note: getDashboardTotals already has fallback/override logic
       thisMonthTotals,
       thisWeekTotals,
       yesterdayTotals,
       last7Graph,
       cabinRangeStats,
+      citySplit
     }
   }
 }

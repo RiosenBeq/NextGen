@@ -17,6 +17,7 @@ interface Expense {
   vatRate: number;
   amountWithoutVat: number;
   amountWithVat: number;
+  attachmentUrl?: string | null;
   location?: { id: string, name: string } | null;
   paidBy?: string;
   documents?: any[];
@@ -124,7 +125,8 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Tarih / Açıklama</th>
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Şube</th>
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05]">Ödeyen</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Resmi / Belge</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Resmi Durum</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">Belge</th>
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-right">KDV</th>
               <th className="px-8 py-5 text-[10px] font-bold text-rose-400 uppercase tracking-widest border-b border-white/[0.05] text-right">Tutar (Brüt)</th>
               <th className="px-8 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.05] text-center">İşlem</th>
@@ -172,10 +174,22 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                     )}>
                       {exp.isOfficial ? 'RESMİ' : 'GAYRİ RESMİ'}
                     </span>
-                    {exp.documents && exp.documents.length > 0 ? (
-                      <DocumentViewer documents={exp.documents} />
-                    ) : null}
                   </div>
+                </td>
+                <td className="px-8 py-6 text-center">
+                   {exp.attachmentUrl ? (
+                     <a 
+                       href={exp.attachmentUrl} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all group"
+                     >
+                        <FileText size={14} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">FATURA</span>
+                     </a>
+                   ) : (
+                     <span className="text-[10px] font-bold text-zinc-700 tracking-widest uppercase">YOK</span>
+                   )}
                 </td>
                 <td className="px-8 py-6 text-right">
                    <div className="flex flex-col items-end gap-1">

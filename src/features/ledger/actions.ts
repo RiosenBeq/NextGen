@@ -58,6 +58,7 @@ export async function addExpense(data: any) {
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
         categoryId: data.categoryId || null,
+        attachmentUrl: data.attachmentUrl || null,
       })
       .select()
       .single();
@@ -100,6 +101,7 @@ export async function updateExpense(id: string, data: any) {
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
         categoryId: data.categoryId || null,
+        attachmentUrl: data.attachmentUrl || null,
       })
       .eq('id', id)
       .select()
@@ -118,6 +120,32 @@ export async function updateExpense(id: string, data: any) {
     return { success: true, record };
   } catch (error: any) {
     console.error("Update Expense Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function uploadExpenseAttachment(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const file = formData.get('file') as File;
+    if (!file) return { success: false, error: 'Dosya seçilmedi' };
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `expenses/${fileName}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+
+    return { success: true, publicUrl };
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 }

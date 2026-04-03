@@ -2,12 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { addExpense, updateExpense } from '../actions';
-import { Loader2, Plus, Receipt, User, CheckCircle2, X, Edit, Paperclip, Calculator } from 'lucide-react';
+import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
+import { Loader2, Plus, Receipt, User, CheckCircle2, X, Edit, Paperclip, Calculator, Image as ImageIcon, Trash2, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import DocumentUploader from '@/features/documents/components/DocumentUploader';
-import { uploadDocument } from '@/features/documents/actions';
 import { cn } from '@/lib/utils';
+import { compressImage } from '@/lib/image-utils';
 
 interface Props {
   locations: any[];
@@ -19,8 +18,11 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(!!initialData);
   const [createdExpenseId, setCreatedExpenseId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(initialData?.attachmentUrl || null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const { register, handleSubmit, reset, control } = useForm({
+  const { register, handleSubmit, reset, control, setValue } = useForm({
     defaultValues: initialData ? {
       ...initialData,
       vatRate: initialData.vatRate?.toString() || "0",
@@ -28,7 +30,8 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
     } : {
       vatRate: "20",
       isOfficial: "true",
-      paidBy: "Ortak Hesap"
+      paidBy: "Ortak Hesap",
+      type: "FATURA"
     }
   });
 
@@ -40,27 +43,66 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
     return amount * (1 + vatRate / 100);
   }, [watchedValues.amount, watchedValues.vatRate]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    setValue('invoiceFile', null);
+  };
+
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
+    let attachmentUrl = initialData?.attachmentUrl || null;
+
+    // Handle File Upload with Compression
+    if (selectedFile) {
+      setIsCompressing(true);
+      try {
+        const compressedBlob = await compressImage(selectedFile, 1200, 0.7);
+        const compressedFile = new File([compressedBlob], selectedFile.name, { type: 'image/jpeg' });
+        
+        const formData = new FormData();
+        formData.append('file', compressedFile);
+        
+        const uploadResult = await uploadExpenseAttachment(formData);
+        if (uploadResult.success) {
+          attachmentUrl = uploadResult.publicUrl;
+        }
+      } catch (err) {
+        console.error("Compression/Upload Error:", err);
+      } finally {
+        setIsCompressing(false);
+      }
+    } else if (filePreview === null) {
+      attachmentUrl = null; // Map explicitly removed
+    }
+
+    const payload = { ...data, attachmentUrl };
+    
     let result;
     if (initialData?.id) {
-      result = await updateExpense(initialData.id, data);
+      result = await updateExpense(initialData.id, payload);
     } else {
-      result = await addExpense(data);
+      result = await addExpense(payload);
     }
 
     if (result.success && result.record) {
-      if (data.invoiceFile && data.invoiceFile[0]) {
-        const formData = new FormData();
-        formData.append('file', data.invoiceFile[0]);
-        formData.append('relatedType', 'expense');
-        formData.append('relatedId', result.record.id);
-        await uploadDocument(formData);
-      }
-
       if (!initialData) {
         setCreatedExpenseId(result.record.id);
         reset();
+        setSelectedFile(null);
+        setFilePreview(null);
       } else if (onClose) {
         onClose();
       }
@@ -71,7 +113,11 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
   const handleClose = () => {
     if (onClose) onClose();
     else setShowForm(false);
-    setTimeout(() => setCreatedExpenseId(null), 300);
+    setTimeout(() => {
+      setCreatedExpenseId(null);
+      setSelectedFile(null);
+      setFilePreview(null);
+    }, 300);
   };
 
   return (
@@ -113,21 +159,14 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                   <CheckCircle2 className="w-10 h-10 text-emerald-400" />
                 </div>
                 <h4 className="text-3xl font-bold text-white tracking-tight mb-3 uppercase">Başarıyla Kaydedildi!</h4>
-                <p className="text-xs text-zinc-500 mb-10 font-medium leading-relaxed">Gider kaydı sisteme işlendi. Belge veya fatura görselini <br/> hemen eklemek ister misiniz?</p>
+                <p className="text-xs text-zinc-500 mb-10 font-medium leading-relaxed">Gider kaydı sisteme işlendi.</p>
                 
-                <div className="flex flex-col sm:flex-row justify-center gap-4">
-                  <DocumentUploader 
-                    relatedType="expense" 
-                    relatedId={createdExpenseId} 
-                    onUploadComplete={handleClose} 
-                  />
-                  <button 
-                    onClick={handleClose}
-                    className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
-                  >
-                    SONRA EKLE
-                  </button>
-                </div>
+                <button 
+                  onClick={handleClose}
+                  className="px-8 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all"
+                >
+                  TAMAMLA
+                </button>
               </motion.div>
             ) : (
               <motion.form 
@@ -215,25 +254,55 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                     <Paperclip size={12}/> Belge / Fatura (Opsiyonel)
                   </label>
-                  <div className="flex items-center gap-6 bg-white/[0.01] p-6 rounded-2xl border border-dashed border-white/10 hover:border-rose-500/30 transition-all cursor-pointer">
-                    <input 
-                      type="file" 
-                      {...register('invoiceFile')} 
-                      className="text-[10px] font-bold text-zinc-500 h-full w-full cursor-pointer file:cursor-pointer file:mr-6 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-white file:text-black hover:file:bg-zinc-200"
-                    />
-                  </div>
+                  
+                  {!filePreview ? (
+                    <div className="group relative flex flex-col items-center justify-center bg-white/[0.01] p-10 rounded-2xl border border-dashed border-white/10 hover:border-rose-500/30 transition-all cursor-pointer">
+                      <ImageIcon className="w-8 h-8 text-zinc-700 group-hover:text-rose-500/50 mb-3 transition-colors" />
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Fatura Görseli Yükle</p>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative group rounded-2xl overflow-hidden border border-white/10 bg-zinc-900 flex items-center justify-center aspect-[16/9] max-h-48">
+                       <img src={filePreview} alt="Invoice Preview" className="h-full w-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                       <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm">
+                          <button 
+                            type="button" 
+                            onClick={removeFile}
+                            className="p-3 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-all"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                          <a 
+                            href={filePreview} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-3 rounded-full bg-indigo-500 text-white hover:bg-indigo-600 transition-all"
+                          >
+                            <Download size={20} />
+                          </a>
+                       </div>
+                       <div className="absolute top-4 left-4">
+                          <span className="px-3 py-1 bg-black/60 rounded-lg text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md">Görsel Seçildi</span>
+                       </div>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isCompressing}
                   className={cn(
                     "elite-button-primary w-full py-5 flex items-center justify-center gap-3 mt-6 text-sm font-bold",
-                    isSubmitting && "opacity-50 cursor-not-allowed"
+                    (isSubmitting || isCompressing) && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? <Edit size={18} /> : <Plus size={18} />)}
-                  {initialData ? 'GÜNCELLEMEYİ KAYDET' : 'GİDER KAYDINI TAMAMLA'}
+                  {isSubmitting || isCompressing ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? <Edit size={18} /> : <Plus size={18} />)}
+                  {isCompressing ? 'GÖRSEL SIKIŞTIRILIYOR...' : (isSubmitting ? 'KAYDEDİLİYOR...' : (initialData ? 'GÜNCELLEMEYİ KAYDET' : 'GİDER KAYDINI TAMAMLA'))}
                 </button>
               </motion.form>
             )}

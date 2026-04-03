@@ -2,41 +2,41 @@
 
 @layer base {
   :root {
-    --background: #020617; /* Deepest Navy/Black */
-    --foreground: #f8fafc;
+    --background: #08090d;
+    --foreground: #f2f2f7;
     
-    --card: #0f172a;
-    --card-foreground: #f8fafc;
+    --card: #15161c;
+    --card-foreground: #f2f2f7;
     
-    --popover: #0f172a;
-    --popover-foreground: #f8fafc;
+    --popover: #15161c;
+    --popover-foreground: #f2f2f7;
     
-    --primary: #f8fafc;
-    --primary-foreground: #020617;
+    --primary: #ffffff;
+    --primary-foreground: #08090d;
     
-    --secondary: #1e293b;
-    --secondary-foreground: #f8fafc;
+    --secondary: #24252d;
+    --secondary-foreground: #f2f2f7;
     
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
+    --muted: #24252d;
+    --muted-foreground: #8e8e93;
     
-    --accent: #1e293b;
-    --accent-foreground: #f8fafc;
+    --accent: #24252d;
+    --accent-foreground: #ffffff;
     
-    --destructive: #7f1d1d;
-    --destructive-foreground: #f8fafc;
+    --destructive: #ff453a;
+    --destructive-foreground: #ffffff;
     
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #334155;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.04);
+    --ring: rgba(255, 255, 255, 0.2);
     
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    /* Elite Glowing Accents */
-    --elite-emerald: #10b981;
-    --elite-indigo: #6366f1;
-    --elite-rose: #f43f5e;
-    --elite-cyan: #06b6d4;
+    /* Sophisticated Accents */
+    --elite-emerald: #34c759;
+    --elite-indigo: #5e5ce6;
+    --elite-rose: #ff375f;
+    --elite-cyan: #64d2ff;
   }
 }
 
@@ -52,22 +52,22 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
+  letter-spacing: -0.011em;
 }
 
-/* Deep Space Aesthetic with Grid & Glows */
+/* Refined Deep Space Aesthetic */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(ellipse at center, black, transparent 80%);
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 0.5px, transparent 0);
+  background-size: 32px 32px;
   pointer-events: none;
   z-index: -1;
 }
@@ -77,106 +77,93 @@ body::after {
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(244, 63, 94, 0.03) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(52, 199, 89, 0.03) 0px, transparent 40%),
+    radial-gradient(at 100% 0%, rgba(94, 92, 230, 0.03) 0px, transparent 40%);
   pointer-events: none;
   z-index: -2;
 }
 
-/* Premium Dark Cards */
+/* High-End Enterprise Cards */
 .premium-card {
-  @apply rounded-3xl border border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-500 hover:border-white/10 hover:bg-slate-900/60 hover:shadow-[0_8px_48px_rgba(0,0,0,0.6)];
+  @apply rounded-[2rem] border border-white/[0.06] bg-[#15161c]/60 backdrop-blur-3xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:border-white/[0.12] hover:bg-[#15161c]/80;
 }
 
 .glass-panel {
-  @apply bg-slate-900/60 backdrop-blur-2xl border border-white/5;
+  @apply bg-black/40 backdrop-blur-3xl border border-white/[0.06];
 }
 
 .heading-elite {
-  @apply font-black tracking-tighter text-white drop-shadow-xl;
-  background: linear-gradient(to bottom right, #ffffff 40%, rgba(255,255,255,0.6) 100%);
+  @apply font-bold tracking-tight text-white;
+  background: linear-gradient(to bottom, #ffffff, #a1a1aa);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .elite-input {
-  @apply w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all;
+  @apply w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/[0.06] transition-all;
 }
 
 .elite-button-primary {
-  @apply px-8 py-4 bg-white text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-zinc-200 active:scale-[0.97] transition-all shadow-xl;
+  @apply px-8 py-3.5 bg-white text-black font-bold text-sm rounded-2xl hover:bg-[#f2f2f7] active:scale-[0.98] transition-all shadow-lg;
 }
 
 .elite-button-secondary {
-  @apply px-8 py-4 bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-white/10 active:scale-[0.97] transition-all;
+  @apply px-8 py-3.5 bg-white/[0.05] border border-white/[0.08] text-white font-bold text-sm rounded-2xl hover:bg-white/[0.08] active:scale-[0.98] transition-all;
 }
 
 .elite-badge {
-  @apply px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-zinc-300;
+  @apply px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/[0.08] bg-white/[0.03] text-zinc-400;
 }
 
-/* Overlap & Grid Fixes */
+/* Professional Layout Grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
-/* Custom Scrollbar Lux */
+/* Custom Scrollbar - Minimalist */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* Animations Lux */
-@keyframes aurora {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* Micro-animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-aurora {
-  background: linear-gradient(-45deg, #020617, #0f172a, #10b98110, #6366f110);
-  background-size: 400% 400%;
-  animation: aurora 15s ease infinite;
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Mobile Adjustments for Overlaps */
-@media (max-width: 1024px) {
+/* Mobile Responsiveness Fine-tuning */
+@media (max-width: 768px) {
   .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Touch friendly scroll */
-@media (hover: none) {
-  .custom-scrollbar {
-    -webkit-overflow-scrolling: touch;
+    gap: 1rem;
   }
   
-  ::-webkit-scrollbar {
-    display: none;
+  .premium-card {
+    @apply rounded-3xl p-6;
   }
 }
 
-/* Prevent text selection on interactive elements */
 .no-select {
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* Tap highlight removal for mobile */
 * {
   -webkit-tap-highlight-color: transparent;
 }

@@ -52,6 +52,8 @@ model Expense {
   vatRate          Float     @default(0)
   amountWithVat    Float
   month            String?   // YYYY-MM for one-time tracking
+  paidBy           String    @default("Ortak Hesap")
+  categoryId       String?
 
   createdAt        DateTime  @default(now())
 }
@@ -109,4 +111,24 @@ model Note {
   color     String   @default("zinc") // To store tag/color info
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // CREATE, UPDATE, DELETE
+  entity    String   // Expense, Investment, etc.
+  entityId  String
+  details   String?  // JSON string
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  fileUrl     String
+  fileName    String?
+  relatedType String   // expense, investment
+  relatedId   String
+  uploadedAt  DateTime @default(now())
 }

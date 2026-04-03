@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput } from './schema';
+import { createAuditLog } from '@/lib/audit';
+import prisma from '@/lib/db';
 
 export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   try {
@@ -55,6 +57,13 @@ export async function addExpense(data: any) {
       .single();
 
     if (error) throw error;
+
+    await createAuditLog('CREATE', 'Expense', record.id, { 
+      description: data.description, 
+      amount: data.amount,
+      locationId: data.locationId 
+    });
+
     revalidatePath('/expenses');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
@@ -85,6 +94,12 @@ export async function updateExpense(id: string, data: any) {
       .single();
 
     if (error) throw error;
+
+    await createAuditLog('UPDATE', 'Expense', id, { 
+      description: data.description, 
+      amount: data.amount 
+    });
+
     revalidatePath('/expenses');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
@@ -100,6 +115,8 @@ export async function deleteExpense(id: string) {
     const { error } = await supabase.from('Expense').delete().eq('id', id);
     if (error) throw error;
     
+    await createAuditLog('DELETE', 'Expense', id);
+
     revalidatePath('/expenses');
     revalidatePath('/');
     revalidatePath('/gelir-gider');

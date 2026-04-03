@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { addExpense, updateExpense } from '../actions';
-import { Loader2, Plus, Receipt, User, CheckCircle2, X, Edit } from 'lucide-react';
+import { Loader2, Plus, Receipt, User, CheckCircle2, X, Edit, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DocumentUploader from '@/features/documents/components/DocumentUploader';
+import { uploadDocument } from '@/features/documents/actions';
+import { createAuditLog } from '@/lib/audit';
 
 interface Props {
   locations: any[];
@@ -31,11 +33,26 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
       result = await addExpense(data);
     }
 
-    if (result.success && result.record && !initialData) {
-      setCreatedExpenseId(result.record.id);
-      reset();
-    } else if (result.success && initialData) {
-      if (onClose) onClose();
+    if (result.success && result.record) {
+      // Handle file upload if present
+      if (data.invoiceFile && data.invoiceFile[0]) {
+        const formData = new FormData();
+        formData.append('file', data.invoiceFile[0]);
+        formData.append('relatedType', 'expense');
+        formData.append('relatedId', result.record.id);
+        
+        const uploadResult = await uploadDocument(formData);
+        if (uploadResult.success) {
+          await createAuditLog('CREATE', 'Document', result.record.id, { fileName: data.invoiceFile[0].name });
+        }
+      }
+
+      if (!initialData) {
+        setCreatedExpenseId(result.record.id);
+        reset();
+      } else if (onClose) {
+        onClose();
+      }
     }
     setIsSubmitting(false);
   };
@@ -118,8 +135,9 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                     <select {...register('paidBy')} className="elite-input bg-white text-slate-900 border-slate-200" defaultValue="Ortak Hesap">
                       <option value="Ortak Hesap">Ortak Hesap</option>
                       <option value="Okan">Okan</option>
-                      <option value="Berk">Berk</option>
-                      <option value="Diğer Ortak">Diğer</option>
+                      <option value="Talha">Talha</option>
+                      <option value="Furkan">Furkan</option>
+                      <option value="Alp">Alp</option>
                     </select>
                   </div>
                 </div>
@@ -158,13 +176,27 @@ export function ExpenseForm({ locations, initialData, onClose }: Props) {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Paperclip size={12}/> Fatura / Belge (Opsiyonel)
+                  </label>
+                  <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-dashed border-slate-200 hover:border-slate-300 transition-colors">
+                    <input 
+                      type="file" 
+                      {...register('invoiceFile')} 
+                      className="text-[10px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer w-full"
+                    />
+                  </div>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase">PNG, JPG veya PDF yükleyebilirsiniz.</p>
+                </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="elite-button-primary w-full py-4 flex items-center justify-center gap-2 mt-4 shadow-lg"
                 >
                   {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? <Edit size={18} /> : <Plus size={18} />)}
-                  {initialData ? 'GÜNCELLE' : 'İLERİ: FATURA YÜKLE'}
+                  {initialData ? 'GÜNCELLE' : 'GİDERİ KAYDET'}
                 </button>
               </motion.form>
             )}

@@ -39,25 +39,32 @@ model MonthlyPerformance {
 }
 
 model Expense {
-  id          String    @id @default(cuid())
-  locationId  String?   // Can be global or local
-  location    Location? @relation(fields: [locationId], references: [id])
-  description String
-  type        String    // "MONTHLY", "ONE_TIME"
-  amount      Float
-  date        DateTime
+  id               String    @id @default(cuid())
+  locationId       String?   // Can be global (null) or local
+  location         Location? @relation(fields: [locationId], references: [id])
+  description      String
+  type             String    // "aylık" or "tek sefer"
+  amountWithoutVat Float
+  isOfficial       Boolean   @default(false)
+  vatRate          Float     @default(0)
+  amountWithVat    Float
+  month            String?   // YYYY-MM for one-time tracking
 
-  createdAt   DateTime @default(now())
+  createdAt        DateTime  @default(now())
 }
 
 model Investment {
-  id           String   @id @default(cuid())
-  locationId   String
-  location     Location @relation(fields: [locationId], references: [id])
-  description  String
-  hardwareCost Float
-  vatAmount    Float
-  date         DateTime
+  id               String   @id @default(cuid())
+  locationId       String
+  location         Location @relation(fields: [locationId], references: [id])
+  description      String
+  currency         String   @default("TL")
+  amountWithoutVat Float
+  paymentType      String   @default("Nakit")
+  vatAmount        Float    @default(0)
+  totalAmount      Float
+  shareLogic       String?
+  notes            String?  
 
-  createdAt DateTime @default(now())
+  createdAt        DateTime @default(now())
 }

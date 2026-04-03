@@ -15,6 +15,7 @@ export function Sidebar() {
     { href: "/performance", label: "Performans Girişi", icon: PlusCircle },
     { href: "/reports", label: "Nakit Akış Raporu", icon: FileText },
     { href: "/expenses", label: "Giderler ve Yatırım", icon: FileText },
+    { href: "/kabin", label: "Kabin Rapor", icon: LayoutDashboard },
     { href: "/settings", label: "Parametreler", icon: Settings },
   ];
 

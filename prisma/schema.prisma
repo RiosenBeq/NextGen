@@ -1,6 +1,7 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -67,4 +68,34 @@ model Investment {
   notes            String?  
 
   createdAt        DateTime @default(now())
+}
+
+model Cabin {
+  id                 String             @id @default(cuid())
+  cabinId            Int                @unique // Original ID from osessensin API
+  firmId             Int                
+  cabinName          String
+  cabinLocation      String
+  cabinPrice         Float
+  startDate          DateTime?
+  macAddresses       String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  
+  dailyStats         CabinDailyStat[]
+}
+
+model CabinDailyStat {
+  id                 String   @id @default(cuid())
+  cabinId            String
+  cabin              Cabin    @relation(fields: [cabinId], references: [id])
+  date               String   // YYYY-MM-DD
+  todayRevenue       Float
+  paidSessions       Int
+  incomingCustomer   Int
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([cabinId, date])
 }

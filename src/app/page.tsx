@@ -68,7 +68,7 @@ export default async function DashboardPage() {
           nayaxCommissionRate: 2,
           fixedRent: perf.location.fixedRent,
           duesAmount: perf.location.duesAmount,
-          revenueShareRate: perf.location.revenueShareRate || 0,
+          revenueShareRate: perf.location.revenueShareRate || 15,
         }
       );
 
@@ -98,53 +98,60 @@ export default async function DashboardPage() {
     ? allTimeTotal.total_paid_sessions 
     : (performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0);
 
-  // Truer Global Net Cash Flow
-  // KabinRapor All-Time Revenue - Base 4% Commission - Total AVM Expenses (from db) - Total Investment (from db)
+  // Total Investment (ayrı gösterilir, nakit akışından düşülmez)
   const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
   const globalCommission = displayAllTimeRevenue * 0.04;
-  
-  // Manual AVM Expenses = NetCash is derived from Brüt - Commission - AVm Expense. So AVM Expense = Brüt - Commission - NetCash.
-  // Instead of recalculating, we know totalManualCommission includes generic 4% + AVM revenue share. 
-  // Let's just use the differential logic: 
+
+  // AVM Expenses: Kira(+KDV) + Aidat per month per location
   const totalManualAvmExpense = performances?.reduce((acc, perf) => {
     return acc + (perf.location.fixedRent * 1.20) + perf.location.duesAmount;
   }, 0) || 0;
-  
-  const trueGlobalNetCash = displayAllTimeRevenue - globalCommission - totalManualAvmExpense - totalInvestment;
-  const totalGlobalOperationalExpense = globalCommission + totalManualAvmExpense;
+
+  // Expense table: recurring + one-time expenses
+  const totalRecurringExpenses = (expensesData || [])
+    .filter((e: any) => e.type === 'RECURRING')
+    .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
+  const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
+  const totalOneTimeExpenses = (expensesData || [])
+    .filter((e: any) => e.type !== 'RECURRING')
+    .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
+
+  const totalGlobalOperationalExpense = globalCommission + totalManualAvmExpense + (totalRecurringExpenses * Math.max(allMonthCount, 1)) + totalOneTimeExpenses;
+  // Net nakit akışı: Gelir - Operasyonel Giderler (yatırım dahil değil, Excel Nakit_Akis ile uyumlu)
+  const trueGlobalNetCash = displayAllTimeRevenue - totalGlobalOperationalExpense;
 
   const kpis = [
-    { 
-      label: "Toplam Ciro", 
+    {
+      label: "Toplam Ciro",
       sublabel: "Canlı Senkron",
-      value: `₺${displayAllTimeRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
-      icon: TrendingUp, 
+      value: `₺${displayAllTimeRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
+      icon: TrendingUp,
       trend: allTimeTotal ? "API Güncel" : "Manuel Kayıt",
       iconColor: "text-emerald-600",
       iconBg: "bg-emerald-50 border-emerald-100",
       cardClass: "stat-card-green",
       positive: true
     },
-    { 
-      label: "Toplam Gider", 
-      sublabel: "KDV + Komisyon + AVM",
-      value: `₺${totalGlobalOperationalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
-      icon: CreditCard, 
+    {
+      label: "Toplam Gider",
+      sublabel: "Komisyon + AVM + Diğer",
+      value: `₺${totalGlobalOperationalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
+      icon: CreditCard,
       iconColor: "text-red-600",
       iconBg: "bg-red-50 border-red-100",
       cardClass: "stat-card-red",
       trend: "Tüm Zamanlar",
       positive: false
     },
-    { 
-      label: "Net Nakit Akışı", 
-      sublabel: "Yatırım & Tüm Giderler Sonrası",
-      value: `₺${trueGlobalNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
-      icon: Wallet, 
+    {
+      label: "Net Nakit Akışı",
+      sublabel: "Tüm Operasyonel Giderler Sonrası",
+      value: `₺${trueGlobalNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
+      icon: Wallet,
       iconColor: trueGlobalNetCash >= 0 ? "text-blue-600" : "text-amber-600",
       iconBg: trueGlobalNetCash >= 0 ? "bg-blue-50 border-blue-100" : "bg-amber-50 border-amber-100",
       cardClass: trueGlobalNetCash >= 0 ? "stat-card-blue" : "stat-card-amber",
-      trend: `Yatırım: -₺${totalInvestment.toLocaleString('tr-TR')}`,
+      trend: `Yatırım: ₺${totalInvestment.toLocaleString('tr-TR')}`,
       positive: trueGlobalNetCash >= 0
     },
   ];

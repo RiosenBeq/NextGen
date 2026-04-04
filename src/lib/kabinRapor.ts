@@ -106,8 +106,13 @@ export class KabinRaporService {
   private async ensureAuth() {
     if (this.firmId && this.userId) return true
 
-    const phone = process.env.KABIN_PHONE || '5314288189'
-    const password = process.env.KABIN_PASSWORD || 'A18864'
+    const phone = process.env.KABIN_PHONE
+    const password = process.env.KABIN_PASSWORD
+
+    if (!phone || !password) {
+      console.error('KabinRapor: KABIN_PHONE ve KABIN_PASSWORD env değişkenleri tanımlanmalıdır.')
+      return false
+    }
 
     return await this.login(phone, password)
   }
@@ -347,6 +352,7 @@ export class KabinRaporService {
         const isAuth = await this.ensureAuth()
         if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
+        // Fetch cabins once, then reuse for citySplit to avoid duplicate API call
         const [
           cabins,
           selectedRangeTotals,
@@ -356,7 +362,6 @@ export class KabinRaporService {
           yesterdayTotals,
           last7Graph,
           cabinRangeStats,
-          citySplit
         ] = await Promise.all([
           this.getCabins(),
           this.getDashboardTotals(selectedRange),
@@ -366,8 +371,42 @@ export class KabinRaporService {
           this.getDashboardTotals('Dün'),
           this.getLast7Graph(),
           this.getCabinStatsByRange(selectedRange),
-          this.getCitySplittedData(selectedRange)
         ])
+
+        // Build city split from already-fetched cabins (no extra API call)
+        const effectiveRange = selectedRange === 'Tüm Zamanlar' ? 'Bu Yıl' : selectedRange;
+        const split = {
+          Bursa: { revenue: 0, sessions: 0, count: 0 },
+          İzmir: { revenue: 0, sessions: 0, count: 0 },
+          Diğer: { revenue: 0, sessions: 0, count: 0 }
+        };
+        const mapCity = (loc: string) => {
+          if (loc.toLowerCase().includes('zafer')) return 'Bursa';
+          if (loc.toLowerCase().includes('mavi')) return 'İzmir';
+          return 'Diğer';
+        };
+        if (cabinRangeStats.length > 0) {
+          cabinRangeStats.forEach((stat: any) => {
+            const cabin = cabins.find(c => c.id === stat.cabin_id || c.cabin_name === stat.cabin_name);
+            const city = cabin ? mapCity(cabin.cabin_location) : 'Diğer';
+            split[city].revenue += stat.revenue;
+            split[city].sessions += stat.sessions;
+            split[city].count += 1;
+          });
+        } else {
+          cabins.forEach(c => {
+            const city = mapCity(c.cabin_location);
+            split[city].revenue += c.today_revenue;
+            split[city].sessions += c.paid_sessions;
+            split[city].count += 1;
+          });
+        }
+        const citySplit = {
+          range: effectiveRange,
+          cities: split,
+          total_revenue: Object.values(split).reduce((acc, c) => acc + c.revenue, 0),
+          total_sessions: Object.values(split).reduce((acc, c) => acc + c.sessions, 0)
+        };
 
         return {
           cabins,

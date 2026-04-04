@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
 import { compressImage } from '@/lib/image-utils';
-import { Loader2, Upload, X, FileText, Image as ImageIcon, Receipt, Calendar, MapPin, Tag, Percent } from 'lucide-react';
+import { Loader2, Upload, X, FileText, Image as ImageIcon, Receipt, Calendar, MapPin, Tag, Percent, ChevronDown, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -74,7 +74,8 @@ export default function ExpenseForm({
         
         const uploadResult = await uploadExpenseAttachment(uploadFormData);
         if (!uploadResult.success || !uploadResult.publicUrl) {
-          throw new Error(uploadResult.error || 'Dosya yükleme hatası');
+          // MORE ROBUST ERROR MESSAGE AS REQUESTED
+          throw new Error(uploadResult.error || 'Dosya yükleme hatası. Supabase "documents" bucket ayarlarını kontrol edin.');
         }
         attachmentUrl = uploadResult.publicUrl;
       }
@@ -91,13 +92,11 @@ export default function ExpenseForm({
 
       if (!result.success) throw new Error(result.error);
 
-      alert(initialData?.id ? 'Gider güncellendi.' : 'Gider başarıyla eklendi.');
-      
       if (onClose) {
         onClose();
-        window.location.reload();
+        // Use standard navigation to refresh state instead of full reload if possible
+        window.location.reload(); 
       } else {
-        // Reset only if creating new
         setFormData({
           description: '',
           amount: '',
@@ -122,115 +121,136 @@ export default function ExpenseForm({
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="premium-card p-8 bg-zinc-950/40 border-white/5"
+      className="premium-card p-6 md:p-10 bg-zinc-950/40 border-white/5 shadow-2xl relative overflow-hidden"
     >
-      <header className="flex items-center gap-4 mb-10">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-          <Receipt className="w-6 h-6 text-indigo-400" />
+      {/* Decorative Gradient Overlay */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] pointer-events-none" />
+
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
+        <div className="flex items-center gap-5">
+           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+             <Receipt className="w-7 h-7 text-white" />
+           </div>
+           <div>
+             <h2 className="text-2xl font-black text-white tracking-tight italic">Gider Sisteme Kaydet</h2>
+             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mt-1">Harclama Verisi & Fatura Arşivi</p>
+           </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-black text-white tracking-tight italic">Gider Kaydı</h2>
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Yeni harcama ve fatura girişi</p>
-        </div>
+        
+        {onClose && (
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all">
+            <X size={20} />
+          </button>
+        )}
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <form onSubmit={handleSubmit} className="space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Description */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Tag size={12} className="text-zinc-600" />
-              Açıklama *
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+              <Tag size={12} className="text-indigo-400" />
+              Açıklama / Harcama Kalemi *
             </label>
             <input
               type="text"
               required
-              placeholder="Örn: Elektrik faturası, Temizlik malzemeleri..."
-              className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
+              placeholder="Örn: Ege Perla Elektrik, Ofis Malzemeleri..."
+              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
           {/* Amount and VAT */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <span className="text-zinc-600 text-xs">₺</span>
-                Tutar (Net) *
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                <span className="text-emerald-400 font-black">₺</span>
+                Net Tutar *
               </label>
               <input
                 type="number"
                 step="0.01"
                 required
                 placeholder="0.00"
-                className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-all font-mono font-bold"
+                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-mono font-bold"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <Percent size={12} className="text-zinc-600" />
-                KDV (%)
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                <Percent size={12} className="text-indigo-400" />
+                KDV Oranı
               </label>
-              <select
-                className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium appearance-none"
-                value={formData.vatRate}
-                onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
-              >
-                <option value="0" className="bg-zinc-900">%0</option>
-                <option value="10" className="bg-zinc-900">%10</option>
-                <option value="20" className="bg-zinc-900">%20</option>
-              </select>
+              <div className="relative group">
+                <select
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold appearance-none cursor-pointer"
+                  value={formData.vatRate}
+                  onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
+                >
+                  <option value="0" className="bg-zinc-900">%0 (KDV'siz)</option>
+                  <option value="10" className="bg-zinc-900">%10 (Hizmet)</option>
+                  <option value="20" className="bg-zinc-900">%20 (Standart)</option>
+                </select>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600 group-hover:text-indigo-400 transition-colors">
+                   <ChevronDown size={14} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Location */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <MapPin size={12} className="text-zinc-600" />
-              Lokasyon *
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+              <MapPin size={12} className="text-indigo-400" />
+              Şube / Lokasyon Seçimi *
             </label>
-            <select
-              required
-              className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium appearance-none"
-              value={formData.locationId}
-              onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-            >
-              <option value="" className="bg-zinc-900">Seçiniz...</option>
-              {locations.map(loc => (
-                <option key={loc.id} value={loc.id} className="bg-zinc-900">{loc.name}</option>
-              ))}
-            </select>
+            <div className="relative group">
+              <select
+                required
+                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold appearance-none cursor-pointer"
+                value={formData.locationId}
+                onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+              >
+                <option value="" className="bg-zinc-900">Şube Seçiniz...</option>
+                {locations.map(loc => (
+                  <option key={loc.id} value={loc.id} className="bg-zinc-900">{loc.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600 group-hover:text-indigo-400 transition-colors">
+                 <ChevronDown size={14} />
+              </div>
+            </div>
           </div>
 
           {/* Date */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Calendar size={12} className="text-zinc-600" />
-              Tarih
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+              <Calendar size={12} className="text-indigo-400" />
+              İşlem Tarihi
             </label>
             <input
               type="date"
-              className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
+              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold cursor-pointer"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             />
           </div>
         </div>
 
-        {/* File Upload Section */}
-        <div className="pt-4">
-          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-4">
-             Fatura / Belge Eki (Opsiyonel)
+        {/* File Upload Section - MOBILE FRIENDLY BIG BUTTON */}
+        <div className="pt-6">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block mb-4">
+             Fatura veya Makbuz Eki (PDF / Görsel)
           </label>
           
           <div 
              onClick={() => fileInputRef.current?.click()}
              className={cn(
-               "relative group cursor-pointer border-2 border-dashed rounded-3xl p-8 transition-all flex flex-col items-center justify-center gap-4 overflow-hidden min-h-[140px]",
-               previewUrl || file ? "border-indigo-500/30 bg-indigo-500/5" : "border-white/5 bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.02]"
+               "relative group cursor-pointer border-2 border-dashed rounded-[2.5rem] p-10 transition-all flex flex-col items-center justify-center gap-5 overflow-hidden",
+               previewUrl || file ? "border-emerald-500/30 bg-emerald-500/5" : "border-white/10 bg-white/[0.01] hover:border-indigo-500/30 hover:bg-white/[0.03]"
              )}
           >
             <input
@@ -245,31 +265,42 @@ export default function ExpenseForm({
               {previewUrl ? (
                 <motion.div 
                   key="preview"
-                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-                  className="relative w-full max-w-[200px] h-[120px] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+                  initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                  className="relative w-full max-w-[280px] aspect-video rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/10"
                 >
                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ImageIcon className="text-white w-6 h-6" />
+                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ImageIcon className="text-white w-8 h-8 mb-2" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">GÖRSELİ DEĞİŞTİR</span>
                    </div>
                 </motion.div>
               ) : file && isPdf ? (
                 <motion.div 
                    key="pdf"
-                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                   className="flex flex-col items-center gap-3 text-emerald-400"
+                   initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                   className="flex flex-col items-center gap-4 text-emerald-400"
                 >
-                   <FileText size={48} className="drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
-                   <span className="text-xs font-bold uppercase tracking-widest max-w-[200px] truncate">{file.name}</span>
+                   <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                      <FileText size={40} className="drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                   </div>
+                   <div className="text-center">
+                     <p className="text-xs font-black uppercase tracking-widest max-w-[250px] truncate mb-1">{file.name}</p>
+                     <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">PDF DÖKÜMANI HAZIR</p>
+                   </div>
                 </motion.div>
               ) : (
                 <motion.div 
                    key="empty"
                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                   className="flex flex-col items-center gap-2 text-zinc-500 group-hover:text-zinc-300 transition-colors"
+                   className="flex flex-col items-center gap-4 text-zinc-500 group-hover:text-indigo-400 transition-all"
                 >
-                   <Upload size={32} />
-                   <span className="text-xs font-bold uppercase tracking-widest">Dosya Seç (PDF, JPG, PNG)</span>
+                   <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-110 group-hover:shadow-2xl transition-all">
+                      <Upload size={32} />
+                   </div>
+                   <div className="text-center">
+                      <span className="text-xs font-black uppercase tracking-widest block mb-2">BELGE YÜKLE VEYA FOTOĞRAF ÇEK</span>
+                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.2em]">MAX 10MB • PDF, JPG, PNG</span>
+                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -282,33 +313,42 @@ export default function ExpenseForm({
                   setFile(null);
                   setPreviewUrl(null);
                 }}
-                className="absolute top-4 right-4 p-2 rounded-xl bg-black/60 text-white hover:bg-rose-500 transition-colors z-20"
+                className="absolute top-6 right-6 p-3 rounded-2xl bg-black/80 text-white hover:bg-rose-500 transition-all z-20 shadow-xl border border-white/10"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             )}
           </div>
         </div>
 
         {/* Submit */}
-        <div className="pt-6">
+        <div className="pt-8">
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-2xl py-4 font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(79,70,229,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-3xl py-5 font-black uppercase tracking-[0.3em] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_20px_50px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden relative"
           >
+            <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
             {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
               <>
-                <Upload size={18} />
-                Gideri Sisteme Kaydet
+                <ShieldCheck size={20} className="text-indigo-200" />
+                Gideri Finansal Arşive Kaydet
               </>
             )}
           </button>
-          <p className="text-center text-[10px] text-zinc-600 mt-4 font-medium italic">
-            * İşlem yaptığınızda tüm ortaklar bilgilendirilir.
-          </p>
+          
+          <div className="mt-6 flex items-center justify-center gap-8">
+             <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest italic">Şifreli Bağlantı</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest italic">Yedekli Kayıt</span>
+             </div>
+          </div>
         </div>
       </form>
     </motion.div>

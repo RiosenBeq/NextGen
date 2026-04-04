@@ -22,10 +22,10 @@ export default function ReportsPage() {
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
 
-      // Fetch Live Data
-      let liveData = null;
+      // Fetch Live Data for current month
+      let liveData: any = null;
       try {
-        liveData = await kabinRapor.getDashboardTotals('Tüm Zamanlar');
+        liveData = await kabinRapor.getComprehensiveData('Bu Ay');
       } catch (e) {
         console.error("Live data fetch failed on reports:", e);
       }
@@ -35,8 +35,26 @@ export default function ReportsPage() {
         .select('*, location:Location(*)')
         .order('month', { ascending: false });
 
+      const currentMonthId = new Date().toISOString().slice(0, 7);
+      
       const processedData = (performances || []).map((perf: any) => {
-        const calc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount, {
+        const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
+        const isCurrentMonth = perfMonthId === currentMonthId;
+        
+        let sessions = perf.sessionCount;
+        let isLive = false;
+
+        // Sync with Live Data if it's the current month and live data available
+        if (isCurrentMonth && liveData?.citySplit?.cities) {
+          const cityName = perf.location.name.split(' ')[0]; // E.g., 'Bursa' from 'Bursa Zafer Plaza'
+          const cityData = liveData.citySplit.cities[cityName];
+          if (cityData) {
+            sessions = cityData.sessions;
+            isLive = true;
+          }
+        }
+
+        const calc = calculateMonthlyCashFlow(sessions, perf.extraExpenseAmount, {
           sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
           fixedRent: perf.location.fixedRent, duesAmount: perf.location.duesAmount,
           revenueShareRate: perf.location.revenueShareRate || 0,
@@ -46,13 +64,14 @@ export default function ReportsPage() {
           id: perf.id,
           month: new Date(perf.month).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' }),
           locationName: perf.location.name,
-          sessionCount: perf.sessionCount,
+          sessionCount: sessions,
           grossRevenue: calc.grossRevenue,
           totalAvmExpense: calc.totalAvmExpense,
           iyzico: calc.iyzicoCommission,
           nayax: calc.nayaxCommission,
           extraExpense: perf.extraExpenseAmount || 0,
           netCash: calc.netCash,
+          isLive,
           shares: { ok: calc.okanShare, tl: calc.talhaShare, fk: calc.furkanShare, al: calc.alpShare }
         };
       });
@@ -64,7 +83,7 @@ export default function ReportsPage() {
           profit: processedData.reduce((s: number, r: any) => s + r.netCash, 0),
           sessions: processedData.reduce((s: number, r: any) => s + r.sessionCount, 0),
         },
-        liveTotals: liveData
+        liveTotals: liveData?.selectedRangeTotals
       });
     }
     fetchData();

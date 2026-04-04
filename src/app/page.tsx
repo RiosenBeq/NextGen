@@ -87,27 +87,28 @@ export default async function DashboardPage() {
   const thisMonthTotal = liveData?.thisMonthTotals;
   const todayTotal = liveData?.yesterdayTotals || liveData?.selectedRangeTotals;
 
-  const displayRevenue = allTimeTotal ? allTimeTotal.total_revenue : totalManualRevenue;
-  const displaySessions = allTimeTotal ? allTimeTotal.total_paid_sessions : (performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0);
+  // Prioritize Current Month for primary 'CANLI' cards as per data-accuracy goal
+  const displayMonthlyRevenue = thisMonthTotal ? thisMonthTotal.total_revenue : totalManualRevenue;
+  const displayTotalSessions = allTimeTotal ? allTimeTotal.total_paid_sessions : (performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0);
 
   const kpis = [
     { 
-      label: "TOPLAM CİRO (CANLI)", 
-      value: `₺${displayRevenue.toLocaleString('tr-TR')}`, 
+      label: "BU AY CİRO (CANLI)", 
+      value: `₺${displayMonthlyRevenue.toLocaleString('tr-TR')}`, 
       icon: TrendingUp, 
       color: "text-emerald-400", 
       bg: "bg-emerald-500/10",
       trend: citySplit ? `Bursa: ₺${citySplit.cities.Bursa.revenue.toLocaleString('tr-TR')}` : 'Canlı Veri',
-      trendValue: citySplit ? `İzmir: ₺${citySplit.cities.İzmir.revenue.toLocaleString('tr-TR')}` : 'Güncel',
+      trendValue: citySplit ? `İzmir: ₺${citySplit.cities.İzmir.revenue.toLocaleString('tr-TR')}` : 'Nisan 2026',
       positive: true
     },
     { 
-      label: "TOPLAM OTURUM", 
-      value: displaySessions.toLocaleString('tr-TR'), 
+      label: "TOPLAM SEANS", 
+      value: displayTotalSessions.toLocaleString('tr-TR'), 
       icon: Activity, 
       color: "text-indigo-400", 
       bg: "bg-indigo-500/10",
-      trend: "Kümülatif",
+      trend: "Kümülatif (Yıllık)",
       trendValue: thisMonthTotal ? `Bu Ay: ${thisMonthTotal.total_paid_sessions.toLocaleString('tr-TR')} Seans` : 'Canlı Veri',
       positive: true
     },

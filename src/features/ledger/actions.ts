@@ -128,17 +128,32 @@ export async function uploadExpenseAttachment(formData: FormData) {
   try {
     const supabase = await createClient();
     const file = formData.get('file') as File;
-    if (!file) return { success: false, error: 'Dosya seçilmedi' };
+    if (!file) return { success: false, error: 'Dosya seçilmedi veya geçersiz format.' };
 
-    const fileExt = file.name.split('.').pop();
+    // Standardize file extension and path
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'unknown';
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `expenses/${fileName}`;
 
+    // Upload with standard retry logic and error capture
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('documents')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("Supabase Storage Error:", uploadError);
+      // Heuristic: If error is 'Storage bucket not found', bucket needs creation
+      if (uploadError.message.includes('bucket not found')) {
+        return { 
+          success: false, 
+          error: 'Sistem hatası: "documents" depolama alanı (bucket) mevcut değil. Lütfen yönetici ile iletişime geçin.' 
+        };
+      }
+      throw uploadError;
+    }
 
     const { data: { publicUrl } } = supabase.storage
       .from('documents')
@@ -146,7 +161,8 @@ export async function uploadExpenseAttachment(formData: FormData) {
 
     return { success: true, publicUrl };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error("Upload Logic Error:", error);
+    return { success: false, error: `Yükleme hatası: ${error.message}` };
   }
 }
 

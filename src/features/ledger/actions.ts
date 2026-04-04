@@ -167,16 +167,17 @@ export async function uploadExpenseAttachment(formData: FormData) {
 
     if (uploadError) {
       console.error("Supabase Storage Error:", uploadError);
-      if (uploadError.message?.includes('bucket not found') || uploadError.message?.includes('Bucket not found')) {
+      const msg = uploadError.message?.toLowerCase() || '';
+      if (msg.includes('bucket not found')) {
         return { 
           success: false, 
-          error: 'Depolama alanı bulunamadı. Supabase "documents" bucket kontrolü gerekli.' 
+          error: 'HATA: Supabase üzerinde "documents" isimli bir Storage Bucket bulunamadı. Lütfen Supabase panelinden bu bucket\'ı oluşturun ve "public" erişime açın.' 
         };
       }
-      if (uploadError.message?.includes('security policy') || uploadError.message?.includes('Unauthorized')) {
+      if (msg.includes('security policy') || msg.includes('unauthorized') || msg.includes('new row violates row-level security')) {
         return { 
           success: false, 
-          error: 'Depolama izni reddedildi. Supabase RLS politikası kontrol edilmeli.' 
+          error: 'HATA: "documents" bucket\'ı için yazma izni (RLS Policy) bulunamadı. Lütfen Supabase panelinden anonim kullanıcılar için INSERT/SELECT izinlerini tanımlayın.' 
         };
       }
       throw uploadError;

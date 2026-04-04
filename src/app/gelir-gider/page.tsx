@@ -86,7 +86,11 @@ export default function GelirGiderPage(props: {
           const [y, m] = perf.month.split('T')[0].split('-');
           const perfMonthStr = `${y}-${m}`;
           
-          const calc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount || 0, {
+          const recurringExpensesTotal = (expenses || [])
+            .filter(e => e.type === 'RECURRING' && (!e.locationId || e.locationId === loc.id))
+            .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+          
+          const calc = calculateMonthlyCashFlow(perf.sessionCount, (perf.extraExpenseAmount || 0) + recurringExpensesTotal, {
             sessionPrice,
             iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
             fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
@@ -119,7 +123,11 @@ export default function GelirGiderPage(props: {
            if (!matchingLoc) continue;
 
            const liveSessions = cityData.sessions;
-           const calc = calculateMonthlyCashFlow(liveSessions, 0, {
+           const recurringExpensesTotal = (expenses || [])
+             .filter(e => e.type === 'RECURRING' && (!e.locationId || e.locationId === matchingLoc.id))
+             .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+
+           const calc = calculateMonthlyCashFlow(liveSessions, recurringExpensesTotal, {
              sessionPrice,
              iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
              fixedRent: matchingLoc.fixedRent, duesAmount: matchingLoc.duesAmount,
@@ -157,9 +165,17 @@ export default function GelirGiderPage(props: {
       });
 
       const filteredExpenses = (expenses || []).filter(exp => {
-        if (filterCategory !== 'all' && exp.category !== filterCategory) return false;
-        if (filterMonth && exp.month && exp.month !== filterMonth) return false;
+        const isRecurring = exp.type === 'RECURRING';
+        if (filterCategory !== 'all' && exp.categoryId !== filterCategory) return false;
         if (filterLocation !== 'all' && exp.locationId !== filterLocation) return false;
+        
+        // If a month is selected:
+        // - ONE_TIME must match the selected month.
+        // - RECURRING always shows because it's active every month.
+        if (filterMonth && !isRecurring) {
+           const expMonth = exp.month ? (exp.month.includes('T') ? exp.month.split('T')[0].slice(0, 7) : exp.month.slice(0, 7)) : '';
+           if (expMonth !== filterMonth) return false;
+        }
         return true;
       });
 
@@ -188,17 +204,31 @@ export default function GelirGiderPage(props: {
       // Rent and AVM fees are manually typed, they cannot be fetched from Kabin Rapor
       const avmExpenseAndRevShare = filteredMonthlyEntries.reduce((s, e) => s + e.avmExpense + e.revenueShare, 0);
       
-      const userExpenses = filteredExpenses.reduce((s, e) => s + (e.amountWithVat || 0), 0);
-      const calculatedTotalExpense = trueCommission + avmExpenseAndRevShare + userExpenses;
+      const isAllTime = !filterMonth;
+      const allMonthsVisible = Array.from(new Set(monthlyEntries.map(e => e.monthId)));
+      const activeMonthsCount = isAllTime ? allMonthsVisible.length : 1;
+      
+      const recurringDeductionTotal = (expenses || [])
+        .filter(e => e.type === 'RECURRING')
+        .reduce((s, e) => s + (e.amountWithVat || 0), 0) * (activeMonthsCount || 1);
 
+      const oneTimeExpensesTotal = filteredExpenses
+        .filter(e => e.type !== 'RECURRING')
+        .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+
+      // Top header totals updated
+      const totalExpenseSum = trueCommission + avmExpenseAndRevShare + oneTimeExpensesTotal + recurringDeductionTotal;
+      // Wait, if "All Time", we show the "Listing" of recurring expenses once in the list, 
+      // but in the total, they should ideally represent the sum of all months.
+      
       setData({
         locations: locations || [],
         monthlyEntries: filteredMonthlyEntries,
         filteredExpenses,
         totals: {
           gross:      trueGross,
-          expense:    calculatedTotalExpense,
-          net:        trueGross - calculatedTotalExpense,
+          expense:    totalExpenseSum,
+          net:        trueGross - totalExpenseSum,
           sessions:   trueSessions,
           commission: trueCommission,
           revShare:   filteredMonthlyEntries.reduce((s, e) => s + e.revenueShare, 0),

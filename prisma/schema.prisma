@@ -48,7 +48,7 @@ model Expense {
   locationId       String?   // Can be global (null) or local
   location         Location? @relation(fields: [locationId], references: [id])
   description      String
-  type             String    // "aylık" or "tek sefer"
+  type             String    // "RECURRING" or "ONE_TIME"
   amountWithoutVat Float
   isOfficial       Boolean   @default(false)
   vatRate          Float     @default(0)

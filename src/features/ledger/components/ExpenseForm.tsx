@@ -10,9 +10,19 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-const EXPENSE_TYPES = [
-  'Operasyonel', 'Kira', 'Faturalar', 'Bakım/Onarım',
-  'Pazarlama', 'Ekipman', 'Personel', 'Diğer'
+const EXPENSE_CATEGORIES = [
+  { id: 'rent', label: 'Kira' },
+  { id: 'utilities', label: 'Faturalar' },
+  { id: 'maintenance', label: 'Bakım/Onarım' },
+  { id: 'marketing', label: 'Pazarlama' },
+  { id: 'equipment', label: 'Ekipman' },
+  { id: 'operational', label: 'Operasyonel' },
+  { id: 'other', label: 'Diğer' },
+];
+
+const PAYMENT_FREQUENCIES = [
+  { id: 'ONE_TIME', label: 'Tek Seferlik (Bakım, Alım vb.)' },
+  { id: 'RECURRING', label: 'Tekrarlayan (Kira, İnternet vb.)' },
 ];
 
 export default function ExpenseForm({ 
@@ -34,9 +44,10 @@ export default function ExpenseForm({
 
   const [formData, setFormData] = useState({
     description: initialData?.description || '',
-    amount: initialData?.amount || '',
+    amount: initialData?.amountWithoutVat?.toString() || initialData?.amount?.toString() || '',
     vatRate: initialData?.vatRate?.toString() || '20',
-    type: initialData?.type || 'Operasyonel',
+    type: initialData?.type || 'ONE_TIME',
+    categoryId: initialData?.categoryId || 'operational',
     locationId: initialData?.locationId || '',
     date: initialData?.date 
       ? new Date(initialData.date).toISOString().split('T')[0] 
@@ -120,6 +131,7 @@ export default function ExpenseForm({
         ...formData,
         locationId: formData.locationId === '' ? null : formData.locationId,
         attachmentUrl,
+        categoryId: formData.categoryId,
         month: new Date(formData.date).toISOString()
       };
 
@@ -137,7 +149,8 @@ export default function ExpenseForm({
           description: '',
           amount: '',
           vatRate: '20',
-          type: 'Operasyonel',
+          type: 'ONE_TIME',
+          categoryId: 'operational',
           locationId: '',
           date: new Date().toISOString().split('T')[0]
         });
@@ -207,7 +220,48 @@ export default function ExpenseForm({
           />
         </div>
 
-        {/* Row 2: Amount + VAT */}
+        {/* Row 2: Category + Payment Type */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Calendar size={12} className="text-slate-400" />
+              Ödeme Tipi *
+            </label>
+            <div className="relative">
+              <select
+                required
+                className="elite-input appearance-none cursor-pointer pr-8"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              >
+                {PAYMENT_FREQUENCIES.map(f => (
+                  <option key={f.id} value={f.id}>{f.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Tag size={12} className="text-slate-400" />
+              Kategori
+            </label>
+            <div className="relative">
+              <select
+                className="elite-input appearance-none cursor-pointer pr-8"
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              >
+                {EXPENSE_CATEGORIES.map(c => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Amount + VAT */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
@@ -255,46 +309,24 @@ export default function ExpenseForm({
           </div>
         )}
 
-        {/* Row 3: Location + Type */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <MapPin size={12} className="text-slate-400" />
-              Şube / Lokasyon *
-            </label>
-            <div className="relative">
-              <select
-                required
-                className="elite-input appearance-none cursor-pointer pr-8"
-                value={formData.locationId}
-                onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-              >
-                <option value="">Şube Seçin...</option>
-                {locations.map(loc => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <Tag size={12} className="text-slate-400" />
-              Gider Türü
-            </label>
-            <div className="relative">
-              <select
-                className="elite-input appearance-none cursor-pointer pr-8"
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              >
-                {EXPENSE_TYPES.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
+        {/* Location Selector */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+            <MapPin size={12} className="text-slate-400" />
+            Şube / Lokasyon (Genel için boş bırakın)
+          </label>
+          <div className="relative">
+            <select
+              className="elite-input appearance-none cursor-pointer pr-8"
+              value={formData.locationId}
+              onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+            >
+              <option value="">Genel Gider</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
         </div>
 

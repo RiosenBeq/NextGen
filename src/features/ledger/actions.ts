@@ -128,28 +128,55 @@ export async function uploadExpenseAttachment(formData: FormData) {
   try {
     const supabase = await createClient();
     const file = formData.get('file') as File;
-    if (!file) return { success: false, error: 'Dosya seçilmedi veya geçersiz format.' };
+    if (!file) return { success: false, error: 'Dosya seçilmedi.' };
 
-    // Standardize file extension and path
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'unknown';
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 15) {
+      return { success: false, error: `Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum 15MB yüklenebilir.` };
+    }
+
+    // Determine the correct MIME type
+    const allowedTypes: Record<string, string> = {
+      'application/pdf': 'pdf',
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+
+    const mimeType = file.type || 'application/octet-stream';
+    const ext = allowedTypes[mimeType] ?? file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+
+    if (!allowedTypes[mimeType]) {
+      return { 
+        success: false, 
+        error: `Desteklenmeyen dosya türü: ${mimeType}. Yalnızca PDF, JPG, PNG kabul edilmektedir.` 
+      };
+    }
+
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `expenses/${fileName}`;
 
-    // Upload with standard retry logic and error capture
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: mimeType,  // ← Explicitly set content type
       });
 
     if (uploadError) {
       console.error("Supabase Storage Error:", uploadError);
-      // Heuristic: If error is 'Storage bucket not found', bucket needs creation
-      if (uploadError.message.includes('bucket not found')) {
+      if (uploadError.message?.includes('bucket not found') || uploadError.message?.includes('Bucket not found')) {
         return { 
           success: false, 
-          error: 'Sistem hatası: "documents" depolama alanı (bucket) mevcut değil. Lütfen yönetici ile iletişime geçin.' 
+          error: 'Depolama alanı bulunamadı. Supabase "documents" bucket kontrolü gerekli.' 
+        };
+      }
+      if (uploadError.message?.includes('security policy') || uploadError.message?.includes('Unauthorized')) {
+        return { 
+          success: false, 
+          error: 'Depolama izni reddedildi. Supabase RLS politikası kontrol edilmeli.' 
         };
       }
       throw uploadError;
@@ -161,7 +188,7 @@ export async function uploadExpenseAttachment(formData: FormData) {
 
     return { success: true, publicUrl };
   } catch (error: any) {
-    console.error("Upload Logic Error:", error);
+    console.error("Upload Error:", error);
     return { success: false, error: `Yükleme hatası: ${error.message}` };
   }
 }
@@ -367,14 +394,17 @@ export async function getLocationInsights() {
 export async function getActiveLocations() {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
+    const { data: locations, error } = await supabase
       .from('Location')
-      .select('*')
+      .select('*, investments:Investment(*)')
       .eq('isActive', true)
       .order('name', { ascending: true });
 
     if (error) throw error;
-    return data;
+    return (locations || []).map(loc => ({
+      ...loc,
+      totalInvestment: loc.investments ? loc.investments.reduce((acc: number, inv: any) => acc + (inv.totalAmount || 0), 0) : 0
+    }));
   } catch (error) {
     console.error("Error fetching locations:", error);
     return [];

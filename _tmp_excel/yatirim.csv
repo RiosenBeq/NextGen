@@ -1,0 +1,22 @@
+  NextGenBox  ·  Yatırım & Maliyet,Unnamed: 1,Unnamed: 2,Unnamed: 3,Unnamed: 4,Unnamed: 5,Unnamed: 6,Unnamed: 7,Unnamed: 8,Unnamed: 9
+,,,,,,,,,
+Kalem,AVM,"Tutar
+(Döviz)","Para
+Birimi","Tutar
+(TL, KDV Hariç)","KDV
+Durumu","KDV
+Tutarı","Toplam
+(KDV Dahil)",Pay,Not
+BURSA ZAFER PLAZA,,,,,,,,,
+Karaoke Box Ünitesi,Bursa Zafer Plaza,7500,USD,328125,Nakit,0,328125,50/50,KDV'siz nakit alındı
+Nakliye → Depo,Bursa Zafer Plaza,,TL,6000,Nakit,0,6000,50/50,KDV'siz nakit alındı
+Nakliye Depo → Bursa,Bursa Zafer Plaza,,TL,15000,Nakit,0,15000,50/50,KDV'siz nakit alındı
+Bursa Toplam,,,,349125,,0,349125,,
+,,,,,,,,,
+MAVİBAHÇE (İZMİR),,,,,,,,,
+Karaoke Box Ünitesi,Mavibahçe,9500,USD,415625,Nakit,43750,459375,,9.500 USD — Hızla Kirala üzerinden alındı
+Taşıma+Kurulum+Nakliye,Mavibahçe,,TL,32000,Nakit,0,32000,,İzmir komple
+İzmir Toplam,,,,447625,,43750,491375,,
+,,,,,,,,,
+GENEL TOPLAM,,,,,,,,,
+GENEL TOPLAM,,,,796750,,43750,840500,,

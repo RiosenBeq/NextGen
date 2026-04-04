@@ -1,19 +1,18 @@
 "use client";
 
-import { use, useEffect, useState } from 'react';
-import { calculateMonthlyCashFlow, CalculationResult } from '@/features/ledger/calculations';
+import { useEffect, useState } from 'react';
+import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
 import { 
-  TrendingUp, TrendingDown, Target, Calculator, BarChart3, Percent, 
-  ArrowUpRight, ArrowDownRight, Zap, Target as TargetIcon, CreditCard, Calendar 
+  TrendingUp, TrendingDown, BarChart3, Percent, 
+  Zap, CreditCard, Calendar, Target, RefreshCw
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
-import { RefreshCw } from 'lucide-react';
 
 export default function FinansalTablo() {
-  const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [data, setData] = useState<{
     locations: any[];
     avmSummaries: any;
@@ -21,7 +20,6 @@ export default function FinansalTablo() {
     scenarios: any[];
     params: any;
     breakEven: any;
-    isSyncing: boolean;
   } | null>(null);
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -31,9 +29,7 @@ export default function FinansalTablo() {
     try {
       const res = await fetch('/api/sync-kabin');
       const result = await res.json();
-      if (result.success) {
-        window.location.reload();
-      }
+      if (result.success) window.location.reload();
     } catch (e) {
       console.error("Sync failed:", e);
     } finally {
@@ -84,7 +80,6 @@ export default function FinansalTablo() {
           avmSummaries[loc.id].totalNetCash += calc.netCash;
         }
       }
-      }
 
       const totalGross = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalGrossRevenue, 0);
       const totalSessions = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalSessions, 0);
@@ -93,7 +88,6 @@ export default function FinansalTablo() {
 
       const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
       const netRevenuePerSession = sessionPrice * 0.96; 
-      
       const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
 
       const scenarios = [200, 370, 500, 750, 1000, 1500].map(sessions => {
@@ -103,7 +97,6 @@ export default function FinansalTablo() {
           duesAmount: (locations?.[0]?.duesAmount || 6000),
           revenueShareRate: 15
         });
-
         return {
           sessions,
           monthlyNet: sessions * netRevenuePerSession,
@@ -112,9 +105,6 @@ export default function FinansalTablo() {
           monthlyPerPartner: mockCalc.okanShare,
         };
       });
-
-      const uniqueMonths = Array.from(new Set(performances?.map(p => new Date(p.month).toISOString().slice(0, 7)) || [])).sort().reverse();
-      if (!uniqueMonths.includes(new Date().toISOString().slice(0, 7))) uniqueMonths.unshift(new Date().toISOString().slice(0, 7));
 
       setData({
         locations: locations || [],
@@ -127,131 +117,121 @@ export default function FinansalTablo() {
           iyzico: totalIyzico,
           nayax: totalNayax,
           avmExpense: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0),
-          uniqueMonths
         },
         scenarios,
         params: { sessionPrice, netRevenuePerSession },
         breakEven: { total: breakEvenTotal, perAvm: Math.ceil(breakEvenTotal / (locations?.length || 1)) },
-        isSyncing: false
       });
     }
     fetchData();
   }, [filterMonth]);
 
-  if (!data) return <div className="h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" /></div>;
+  if (!data) return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="flex items-center gap-3">
+        <div className="w-6 h-6 rounded-full border-2 border-blue-200 border-t-blue-500 animate-spin" />
+        <span className="text-sm text-slate-500">Veriler yükleniyor...</span>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-6 md:p-10 space-y-12 max-w-[1400px] mx-auto min-h-screen animate-fade-in">
+    <div className="page-wrapper space-y-8 animate-fade-in">
+
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-3 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20">Tahmini Verimlilik</span>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">KabinRapor Senkronize</span>
-            </div>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
+              Tahmini Verimlilik
+            </span>
+            <span className="live-dot text-[9px]">Senkronize</span>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white flex items-center gap-3">
-             <TargetIcon className="w-8 h-8 text-zinc-500" />
-             Finansal Analiz
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+            <Target className="w-6 h-6 text-slate-400" />
+            Finansal Analiz
           </h1>
-          <p className="text-sm text-zinc-500 font-medium max-w-lg">
+          <p className="text-sm text-slate-500 mt-1">
             Karlılık senaryoları, başabaş noktası analizleri ve lokasyon bazlı sabit gider dökümü.
           </p>
         </div>
 
-        <div className="flex gap-4 flex-wrap items-center">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Calendar className="w-4 h-4 text-indigo-400 group-focus-within:text-white transition-colors" />
-            </div>
+        <div className="flex gap-3 items-center flex-wrap">
+          <div className="relative">
+            <Calendar className="absolute left-3 inset-y-0 my-auto w-4 h-4 text-blue-500" />
             <input 
               type="month" 
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm font-bold text-white outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all cursor-pointer appearance-none"
-              style={{ colorScheme: 'dark' }}
+              className="elite-input pl-9 w-44 text-xs cursor-pointer"
             />
           </div>
-          <div className="premium-card px-6 py-3.5 bg-white/[0.02] border-white/5">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Bilet Fiyatı</p>
-            <p className="text-xl font-bold text-white italic">₺{data.params.sessionPrice}</p>
+          <div className="premium-card px-4 py-2.5 flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Bilet Fiyatı</span>
+            <span className="text-sm font-bold text-slate-900">₺{data.params.sessionPrice}</span>
           </div>
-          
           <button 
             onClick={triggerSync}
             disabled={isSyncing}
-            className="premium-card p-3.5 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20 transition-all group flex items-center gap-2"
-            title="KabinRapor'dan Güncel Verileri Çek"
+            className="elite-button-secondary flex items-center gap-2 text-xs"
           >
-            <RefreshCw className={cn("w-4 h-4 text-indigo-400 group-hover:rotate-180 transition-transform duration-700", isSyncing && "animate-spin")} />
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pr-1">Senkronize Et</span>
+            <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+            Senkronize Et
           </button>
         </div>
       </header>
 
-      {/* KPI Overlays */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      {/* KPI Cards */}
+      <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: "TOPLAM CİRO", value: data.totals.gross, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-          { label: "iyzico (%2)", value: data.totals.iyzico, icon: Percent, color: "text-rose-400", bg: "bg-rose-500/10", subtitle: "Anlık Kesinti" },
-          { label: "Nayax (%2)", value: data.totals.nayax, icon: CreditCard, color: "text-indigo-400", bg: "bg-indigo-500/10", subtitle: "Sonradan Fatura" },
-          { label: "AVM GİDERLERİ", value: data.totals.avmExpense, icon: TrendingDown, color: "text-amber-400", bg: "bg-amber-500/10" },
-          { label: "REEL KAZANÇ", value: data.totals.net, icon: BarChart3, color: data.totals.net >= 0 ? "text-indigo-400" : "text-rose-400", bg: data.totals.net >= 0 ? "bg-indigo-500/10" : "bg-rose-500/10" },
+          { label: "Toplam Ciro", value: data.totals.gross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
+          { label: "iyzico (%2)", value: data.totals.iyzico, icon: Percent, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
+          { label: "Nayax (%2)", value: data.totals.nayax, icon: CreditCard, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
+          { label: "AVM Gideri", value: data.totals.avmExpense, icon: TrendingDown, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
+          { label: "Reel Kazanç", value: data.totals.net, icon: BarChart3, cardClass: data.totals.net >= 0 ? "stat-card-green" : "stat-card-red", iconColor: data.totals.net >= 0 ? "text-emerald-600" : "text-red-600", iconBg: data.totals.net >= 0 ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200" },
         ].map((kpi, idx) => (
           <motion.div
             key={kpi.label}
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-            className="premium-card p-6 group relative overflow-hidden flex flex-col justify-between min-h-[140px]"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+            className={cn("premium-card p-5 border", kpi.cardClass)}
           >
-            <div className={`absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity`}>
-               <kpi.icon size={80} />
+            <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center mb-3", kpi.iconBg)}>
+              <kpi.icon className={cn("w-4 h-4", kpi.iconColor)} />
             </div>
-            <div className="flex justify-between items-start mb-4">
-               <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
-                 <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
-               </div>
-               {'subtitle' in kpi && (
-                 <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest px-2 py-0.5 rounded border border-white/5 bg-white/5">
-                   {kpi.subtitle}
-                 </span>
-               )}
-            </div>
-            <div>
-               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{kpi.label}</p>
-               <h2 className="text-xl font-bold tracking-tight text-white italic whitespace-nowrap">₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
-            </div>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{kpi.label}</p>
+            <h2 className="text-lg font-bold text-slate-900">₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
           </motion.div>
         ))}
       </section>
 
       {/* Fixed Expenses per AVM */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold text-white tracking-tight text-zinc-400">Lokasyon Bazlı Sabit Giderler</h2>
-          <div className="flex-1 h-[1px] bg-white/[0.04]" />
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Lokasyon Bazlı Sabit Giderler</h2>
+          <div className="flex-1 section-divider" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {data.locations.map((loc) => (
-            <motion.div key={loc.id} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="premium-card p-8 bg-zinc-950/50">
-              <h3 className="text-sm font-bold text-zinc-200 mb-8 uppercase tracking-widest flex items-center gap-2">
-                 <Zap className="w-4 h-4 text-indigo-500" />
+            <motion.div key={loc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="premium-card p-5">
+              <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
+                 <Zap className="w-4 h-4 text-blue-500" />
                  {loc.name}
               </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-white/[0.04]">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide text-rose-400">Kira (+%20 KDV)</span>
-                  <span className="font-bold text-white">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                  <span className="text-xs font-medium text-slate-500">Kira (+%20 KDV)</span>
+                  <span className="font-semibold text-slate-900">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/[0.04]">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Aidat</span>
-                  <span className="font-bold text-white">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
+                <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                  <span className="text-xs font-medium text-slate-500">Aidat</span>
+                  <span className="font-semibold text-slate-900">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
                 </div>
-                <div className="flex justify-between items-center pt-4">
-                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Aylık Sabit Toplam (Brüt)</span>
-                  <span className="text-xl font-bold text-white italic">₺{((loc.fixedRent * 1.20) + loc.duesAmount).toLocaleString('tr-TR')}</span>
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Aylık Toplam</span>
+                  <span className="text-lg font-bold text-slate-900">₺{((loc.fixedRent * 1.20) + loc.duesAmount).toLocaleString('tr-TR')}</span>
                 </div>
               </div>
             </motion.div>
@@ -260,42 +240,42 @@ export default function FinansalTablo() {
       </section>
 
       {/* Scenario Table */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold text-white tracking-tight italic text-zinc-400">Senaryo Analizi & Projeksiyon</h2>
-          <div className="flex-1 h-[1px] bg-white/[0.04]" />
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Senaryo Analizi & Projeksiyon</h2>
+          <div className="flex-1 section-divider" />
         </div>
 
         <div className="premium-card overflow-hidden">
-          <div className="p-6 border-b border-white/[0.04] bg-white/[0.01]">
-            <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest leading-relaxed">
-              Tüm resmi vergiler hariç Reel Nakit Tablosu. Başabaş noktası: <span className="text-amber-500 font-bold">{data.breakEven.total} oturum/ay</span>.
-              AVM başına günlük <span className="text-indigo-400 font-bold">~{Math.ceil(data.breakEven.perAvm / 30)} seans</span> gereklidir.
+          <div className="p-5 border-b border-slate-100 bg-slate-50">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Tüm resmi vergiler hariç reel nakit tablosu. Başabaş noktası: <strong className="text-amber-600">{data.breakEven.total} oturum/ay</strong>.
+              AVM başına günlük <strong className="text-blue-600">~{Math.ceil(data.breakEven.perAvm / 30)} seans</strong> gereklidir.
             </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="data-table">
               <thead>
-                <tr className="bg-white/[0.02]">
-                  <th className="px-6 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04]">Aylık Oturum</th>
-                  <th className="px-4 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-center">AVM Başına</th>
-                  <th className="px-4 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">Aylık Net Gelir</th>
-                  <th className="px-4 py-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/[0.04] text-right">Aylık Kâr/Zarar</th>
-                  <th className="px-6 py-5 text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-b border-white/[0.04] text-right">Kişi Başı / Ay</th>
+                <tr>
+                  <th>Aylık Oturum</th>
+                  <th className="text-center">AVM Başına</th>
+                  <th className="text-right">Aylık Net Gelir</th>
+                  <th className="text-right">Aylık Kâr/Zarar</th>
+                  <th className="text-right">Kişi Başı / Ay</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.02]">
+              <tbody>
                 {data.scenarios.map((s: any) => {
                   const isBreakEven = Math.abs(s.sessions - data.breakEven.total) < 30;
                   return (
-                    <tr key={s.sessions} className={cn("group hover:bg-white/[0.01] transition-colors", isBreakEven && "bg-amber-500/[0.02] border-l border-amber-500")}>
-                      <td className="px-6 py-5 font-bold text-zinc-200">{s.sessions}</td>
-                      <td className="px-4 py-5 text-center text-zinc-500 text-xs font-bold">{Math.round(s.sessions/data.locations.length)}</td>
-                      <td className="px-4 py-5 text-right font-medium text-zinc-400 text-sm">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</td>
-                      <td className={cn("px-4 py-5 text-right font-bold text-sm", s.monthlyProfit >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                    <tr key={s.sessions} className={cn(isBreakEven && "bg-amber-50")}>
+                      <td className="font-semibold text-slate-900">{s.sessions}</td>
+                      <td className="text-center text-slate-500 font-medium">{Math.round(s.sessions / data.locations.length)}</td>
+                      <td className="text-right font-medium text-slate-700">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</td>
+                      <td className={cn("text-right font-bold", s.monthlyProfit >= 0 ? 'text-emerald-700' : 'text-red-600')}>
                         ₺{s.monthlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
                       </td>
-                      <td className={cn("px-6 py-5 text-right font-bold text-sm italic", s.monthlyPerPartner >= 0 ? 'text-indigo-400' : 'text-rose-400')}>
+                      <td className={cn("text-right font-bold", s.monthlyPerPartner >= 0 ? 'text-blue-700' : 'text-red-600')}>
                         ₺{s.monthlyPerPartner.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
                       </td>
                     </tr>
@@ -306,28 +286,29 @@ export default function FinansalTablo() {
           </div>
         </div>
       </section>
-      {/* System Documentation / Q&A Section */}
-      <section className="space-y-6 pt-10">
-        <div className="flex items-center gap-4">
-           <h2 className="text-lg font-black text-white uppercase tracking-[0.2em] italic">Parametre Bilgi Merkezi</h2>
-           <div className="flex-1 h-[1px] bg-white/[0.04]" />
+
+      {/* FAQ Section */}
+      <section className="space-y-4 pb-8">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Parametre Bilgi Merkezi</h2>
+          <div className="flex-1 section-divider" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            {[
              { q: "Sistem cirosu nasıl hesaplanır?", a: "Seans başına brüt ücret (şu an ₺300) üzerinden KDV düşülmeden hesaplanır. KabinRapor senkronizasyonu her 5 dakikada bir güncellenir." },
              { q: "Kesintiler (iyzico/Nayax) nedir?", a: "Pos ve ödeme sistemleri komisyonlarıdır. iyzico %2 anlık olarak banka hesabından düşerken, Nayax %2 aylık olarak ayrıca fatura edilir." },
              { q: "AVM kira ve ciro payı modeli nedir?", a: "Sözleşmeli kira tutarı (Ham Kira + %20 KDV) ve aidata ek olarak, cironun belirli bir yüzdesini aşarsa 'Ciro Payı' devreye girer." },
              { q: "Bütün giderlere KDV dahil mi?", a: "Evet, bu tablodaki tüm giderler (Kira, Aidat, Komisyon ve Ek Masraflar) KDV dahil reel ödeme tutarlarını yansıtır." },
            ].map((item, idx) => (
-             <div key={idx} className="premium-card p-8 bg-white/[0.01] border-white/5 group hover:bg-white/[0.02] transition-all">
-                <div className="flex gap-4">
-                   <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20 group-hover:scale-110 transition-transform">
-                      <span className="text-[10px] font-black text-indigo-400">Q</span>
+             <div key={idx} className="premium-card p-5 hover:shadow-md transition-all group">
+                <div className="flex gap-3">
+                   <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                      <span className="text-[10px] font-bold text-blue-600">Q</span>
                    </div>
-                   <div className="space-y-3">
-                      <h4 className="text-sm font-black text-white italic tracking-tight">{item.q}</h4>
-                      <p className="text-xs text-zinc-500 leading-relaxed font-medium">{item.a}</p>
+                   <div className="space-y-2">
+                      <h4 className="text-sm font-bold text-slate-900">{item.q}</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">{item.a}</p>
                    </div>
                 </div>
              </div>
@@ -337,4 +318,3 @@ export default function FinansalTablo() {
     </div>
   );
 }
-

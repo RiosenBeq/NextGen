@@ -161,8 +161,12 @@ export class KabinRaporService {
       }
     }
 
-    let result = await fetchRange(range)
-    const normalizedRange = range.trim();
+    let normalizedRange = range.trim();
+    if (normalizedRange === 'Tüm Zamanlar') {
+      normalizedRange = 'Bu Yıl';
+    }
+
+    let result = await fetchRange(normalizedRange)
 
     // CUSTOM RANGE HANDLING: If range is "YYYY-MM", attempt to fetch or map to "Bu Ay" synonyms
     const isMonthString = /^\d{4}-\d{2}$/.test(normalizedRange);
@@ -293,7 +297,7 @@ export class KabinRaporService {
     const isAuth = await this.ensureAuth()
     if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
-    // Override: "Tüm Zamanlar" now means "Bu Yıl"
+    // Override: "Tüm Zamanlar" means "Bu Yıl" as requested by user
     const effectiveRange = range === 'Tüm Zamanlar' ? 'Bu Yıl' : range;
 
     try {

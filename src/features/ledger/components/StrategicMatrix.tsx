@@ -2,7 +2,7 @@
 
 import React from 'react';
 import * as motion from "framer-motion/client";
-import { TrendingUp, Target, BarChart3, Clock, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Target, BarChart3, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Insight {
@@ -21,80 +21,86 @@ interface Insight {
 
 export default function StrategicMatrix({ insights }: { insights: Insight[] }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {insights.map((loc, idx) => (
         <motion.div
-           key={loc.id}
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ delay: idx * 0.1 }}
-           className="premium-card p-6 group"
+          key={loc.id}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.1 }}
+          className="premium-card p-5 group"
         >
-          <div className="flex justify-between items-start mb-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-5">
             <div>
-              <h3 className="text-xl font-black tracking-tight text-white group-hover:text-emerald-400 transition-colors uppercase italic">
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
                 {loc.name}
               </h3>
-              <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-1">
-                Stratejik Performans Analizi
+              <p className="text-xs text-slate-400 mt-0.5">Stratejik Performans Analizi</p>
+            </div>
+            <span className={cn(
+              "metric-pill text-[10px]",
+              loc.isProfitable ? "metric-pill-green" : "metric-pill-red"
+            )}>
+              {loc.isProfitable ? "Kârlı" : "Eşik Altı"}
+            </span>
+          </div>
+
+          {/* Metrics */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Target className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Başa Baş</span>
+              </div>
+              <p className="text-xl font-bold text-slate-900">
+                {loc.breakEvenSessions}{' '}
+                <span className="text-xs text-slate-400 font-medium">seans/ay</span>
               </p>
             </div>
-            <div className={cn(
-              "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
-              loc.isProfitable ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400" : "border-rose-500/20 bg-rose-500/10 text-rose-400"
-            )}>
-              {loc.isProfitable ? "Karlı" : "Eşik Altı"}
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Kâr Marjı</span>
+              </div>
+              <p className="text-xl font-bold text-slate-900">%{loc.profitMargin.toFixed(1)}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col justify-between min-h-[80px]">
-              <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                <Target className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Başa Baş</span>
+          {/* ROI Progress */}
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Yatırım Geri Dönüşü
+                </span>
               </div>
-              <div className="text-xl font-black text-white whitespace-nowrap">
-                {loc.breakEvenSessions} <span className="text-[10px] text-zinc-500 font-medium">seans/ay</span>
-              </div>
+              <span className={cn(
+                "text-sm font-bold",
+                loc.paybackProgress >= 50 ? "text-emerald-600" : "text-blue-600"
+              )}>
+                %{loc.paybackProgress.toFixed(1)}
+              </span>
             </div>
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col justify-between min-h-[80px]">
-              <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                <BarChart3 className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Kar Marjı</span>
-              </div>
-              <div className="text-xl font-black text-white">
-                %{loc.profitMargin.toFixed(1)}
-              </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${loc.paybackProgress}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400"
+              />
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Yatırım Geri Dönüşü (ROI)</span>
-                </div>
-                <span className="text-sm font-black text-emerald-400">%{loc.paybackProgress.toFixed(1)}</span>
-              </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${loc.paybackProgress}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-white/5">
-              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tahmini Geri Ödeme</div>
-              <div className="flex items-center gap-2">
-                 <Zap className="w-3 h-3 text-emerald-400" />
-                 <span className="text-sm font-black text-white">
-                    {loc.estimatedPaybackMonths === Infinity ? "Hesaplanamıyor" : `${loc.estimatedPaybackMonths} Ay`}
-                 </span>
-              </div>
+          {/* Payback */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Tahmini Geri Ödeme</span>
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-sm font-bold text-slate-800">
+                {loc.estimatedPaybackMonths === Infinity ? '—' : `${loc.estimatedPaybackMonths} Ay`}
+              </span>
             </div>
           </div>
         </motion.div>

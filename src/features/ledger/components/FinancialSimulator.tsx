@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, TrendingUp, AlertCircle, ArrowRight } from 'lucide-react';
+import { Calculator, TrendingUp, ArrowRight } from 'lucide-react';
 import { calculateMonthlyCashFlow } from '../calculations';
+import { cn } from '@/lib/utils';
 
 interface Props {
   defaultParams: any;
@@ -25,30 +26,15 @@ export default function FinancialSimulator({ defaultParams }: Props) {
   }, [sessions, defaultParams]);
 
   return (
-    <div className="premium-card p-10 bg-zinc-950/50 border-emerald-500/10 relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
-        <Calculator size={140} />
-      </div>
-
-      <header className="flex justify-between items-start mb-12 relative z-10">
-        <div>
-          <h3 className="text-2xl font-black text-white tracking-tighter mb-1 flex items-center gap-3 italic">
-             <Calculator className="text-emerald-500 w-6 h-6" />
-             Stratejik Projeksiyon
-          </h3>
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Hacim ve Ortaklık Simülatörü</p>
-        </div>
-        <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-           Canlı Simülasyon
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 relative z-10">
-        <div className="space-y-10">
-          <div className="space-y-6">
-            <div className="flex justify-between items-end">
-               <label className="text-sm font-black text-white uppercase tracking-tighter italic">Aylık Beklenen Seans Sayısı</label>
-               <span className="text-3xl font-black text-emerald-400 font-mono tracking-tighter">{sessions}</span>
+    <div className="relative group">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 relative z-10">
+        
+        {/* Controls */}
+        <div className="space-y-8">
+          <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <div className="flex justify-between items-end mb-2">
+               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Hedef Seans Sayısı</label>
+               <span className="text-2xl font-bold text-blue-600">{sessions}</span>
             </div>
             <input 
               type="range" 
@@ -57,19 +43,24 @@ export default function FinancialSimulator({ defaultParams }: Props) {
               step="10"
               value={sessions}
               onChange={(e) => setSessions(parseInt(e.target.value))}
-              className="w-full h-2 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
-            <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-               <span>0 seans</span>
-               <span>1000 seans</span>
-               <span>2000 seans</span>
+            <div className="flex justify-between text-[10px] font-semibold text-slate-400">
+               <span>0</span>
+               <span>500</span>
+               <span>1000</span>
+               <span>1500</span>
+               <span>2000</span>
             </div>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 space-y-6">
-             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Ortaklık Paylaşım Projeksiyonu (%25)</h4>
-             <p className="text-[8px] text-zinc-600 italic -mt-4">AVM Payı ve tüm giderler düşülmüş net tutardır.</p>
-             <div className="grid grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-4">
+             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+               <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Kâr Paylaşımı</h4>
+               <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-semibold">%25 Hisse</span>
+             </div>
+             
+             <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                 {[
                   { name: 'OKAN', amount: simulation.okanShare },
                   { name: 'TALHA', amount: simulation.talhaShare },
@@ -77,63 +68,70 @@ export default function FinancialSimulator({ defaultParams }: Props) {
                   { name: 'ALP', amount: simulation.alpShare },
                 ].map((partner) => (
                   <div key={partner.name} className="flex flex-col gap-1">
-                    <span className="text-[9px] font-black text-zinc-600">{partner.name}</span>
-                    <span className="text-lg font-black text-white font-mono">₺{partner.amount.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span>
+                    <span className="text-[10px] font-bold text-slate-400 capitalize">{partner.name}</span>
+                    <span className="text-lg font-bold text-slate-900">₺{partner.amount.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span>
                   </div>
                 ))}
              </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-           <div className="p-8 rounded-3xl bg-zinc-900/50 border border-white/5 flex flex-col justify-between group/card hover:border-emerald-500/30 transition-all">
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Potansiyel Net Nakit</span>
+        {/* Results */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+           
+           {/* Net Cash */}
+           <div className={cn(
+             "p-5 rounded-2xl border flex flex-col justify-between transition-all",
+             simulation.netCash > 0 ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"
+           )}>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Net Nakit Akışı</span>
               <div className="space-y-1">
-                 <p className={cn("text-3xl font-black tracking-tighter", simulation.netCash > 0 ? "text-white" : "text-rose-500")}>
+                 <p className={cn("text-2xl font-bold", simulation.netCash > 0 ? "text-emerald-700" : "text-red-600")}>
                     ₺{simulation.netCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
                  </p>
-                 <div className="flex items-center gap-2 text-emerald-500">
-                    <TrendingUp className="w-3 h-3" />
-                    <span className="text-[10px] font-black">{simulation.netCash > 0 ? "KARLI" : "ZARAR"}</span>
+                 <div className={cn("flex items-center gap-1.5", simulation.netCash > 0 ? "text-emerald-600" : "text-red-600")}>
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-bold">{simulation.netCash > 0 ? "KÂR" : "ZARAR"}</span>
                  </div>
               </div>
            </div>
 
-           <div className="p-8 rounded-3xl bg-zinc-900/50 border border-white/5 flex flex-col justify-between hover:border-indigo-500/30 transition-all">
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Operasyonel Marj</span>
+           {/* Margin */}
+           <div className="p-5 rounded-2xl bg-white border border-slate-200 flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Kâr Marjı</span>
               <div>
-                 <p className="text-3xl font-black text-white tracking-tighter">
+                 <p className="text-2xl font-bold text-slate-900">
                     %{simulation.profitMargin.toFixed(1)}
                  </p>
-                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1 block">Karlılık Endeksi</span>
               </div>
            </div>
 
-           <div className="p-8 rounded-3xl bg-zinc-900/50 border border-white/5 flex flex-col justify-between hover:border-white/20 transition-all">
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Başa Baş Seans Sayısı</span>
+           {/* Break Even */}
+           <div className="p-5 rounded-2xl bg-white border border-slate-200 flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Başa Baş Noktası</span>
               <div>
-                 <p className="text-3xl font-black text-white tracking-tighter">
+                 <p className="text-2xl font-bold text-slate-900">
                     {simulation.breakEvenSessions}
                  </p>
-                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1 block">Hedeflenen Seans</span>
+                 <span className="text-[10px] text-slate-400 mt-1 block">Seans / Ay</span>
               </div>
            </div>
 
-           <div className="p-8 rounded-3xl bg-emerald-500 flex flex-col justify-between shadow-[0_0_40px_rgba(16,185,129,0.15)] group/cta cursor-pointer">
-              <span className="text-[10px] font-black text-black uppercase tracking-widest mb-4">Yatırım Geri Dönüşü (ROI)</span>
-               <div className="flex items-end justify-between">
-                 <p className="text-3xl font-black text-black tracking-tighter italic">
+           {/* ROI */}
+           <div className="p-5 rounded-2xl bg-blue-600 flex flex-col justify-between text-white shadow-md shadow-blue-200">
+              <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-3">Aylık ROI</span>
+               <div className="flex items-center justify-between">
+                 <p className="text-2xl font-bold">
                     %{simulation.roiPercentage?.toFixed(1) || '0.0'}
                  </p>
-                 <ArrowRight className="w-6 h-6 text-black group-hover:translate-x-1 transition-transform" />
+                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                   <ArrowRight className="w-4 h-4 text-white" />
+                 </div>
               </div>
            </div>
+
         </div>
       </div>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

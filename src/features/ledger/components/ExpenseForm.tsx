@@ -2,10 +2,18 @@
 
 import { useState, useRef } from 'react';
 import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
-import { compressImage } from '@/lib/image-utils';
-import { Loader2, Upload, X, FileText, Image as ImageIcon, Receipt, Calendar, MapPin, Tag, Percent, ChevronDown, ShieldCheck } from 'lucide-react';
+import { compressImage, formatFileSize } from '@/lib/image-utils';
+import { 
+  Loader2, Upload, X, FileText, Image as ImageIcon, Receipt, 
+  Calendar, MapPin, Tag, Percent, ChevronDown, CheckCircle2, AlertCircle 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+const EXPENSE_TYPES = [
+  'Operasyonel', 'Kira', 'Faturalar', 'Bakım/Onarım',
+  'Pazarlama', 'Ekipman', 'Personel', 'Diğer'
+];
 
 export default function ExpenseForm({ 
   locations, 
@@ -20,6 +28,8 @@ export default function ExpenseForm({
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPdf, setIsPdf] = useState(false);
+  const [fileError, setFileError] = useState<string>('');
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'compressing' | 'uploading' | 'done'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -28,29 +38,50 @@ export default function ExpenseForm({
     vatRate: initialData?.vatRate?.toString() || '20',
     type: initialData?.type || 'Operasyonel',
     locationId: initialData?.locationId || '',
-    date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    date: initialData?.date 
+      ? new Date(initialData.date).toISOString().split('T')[0] 
+      : new Date().toISOString().split('T')[0]
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      const isPdfFile = selectedFile.type === 'application/pdf';
-      setIsPdf(isPdfFile);
+  const amountNum = parseFloat(formData.amount) || 0;
+  const vatNum = parseFloat(formData.vatRate) || 0;
+  const totalWithVat = amountNum * (1 + vatNum / 100);
 
-      if (isPdfFile) {
-        setPreviewUrl(null);
-      } else {
-        const url = URL.createObjectURL(selectedFile);
-        setPreviewUrl(url);
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError('');
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    const allowedMimes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedMimes.includes(selectedFile.type)) {
+      setFileError(`Desteklenmeyen format: ${selectedFile.type || 'bilinmiyor'}. Lütfen PDF, JPG veya PNG yükleyin.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const sizeMB = selectedFile.size / (1024 * 1024);
+    if (sizeMB > 15) {
+      setFileError(`Dosya çok büyük (${sizeMB.toFixed(1)}MB). Maksimum 15MB yüklenebilir.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setFile(selectedFile);
+    const pdfFile = selectedFile.type === 'application/pdf';
+    setIsPdf(pdfFile);
+
+    if (!pdfFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.locationId || !formData.amount || !formData.description) {
-      alert('Lütfen tüm zorunlu alanları doldurun.');
+    if (!formData.amount || !formData.description) {
+      alert('Lütfen açıklama ve tutar alanlarını doldurun.');
       return;
     }
 
@@ -59,29 +90,35 @@ export default function ExpenseForm({
       let attachmentUrl = initialData?.attachmentUrl || '';
 
       if (file) {
-        let fileToUpload: File | Blob = file;
+        let fileToUpload: File = file;
+
+        // Compress images (not PDFs)
         if (!isPdf) {
+          setUploadStatus('compressing');
           try {
-            const compressed = await compressImage(file);
-            fileToUpload = compressed;
-          } catch (e) {
-            console.warn("Compression failed, uploading original:", e);
+            fileToUpload = await compressImage(file);
+            console.log(`Compressed: ${formatFileSize(file.size)} → ${formatFileSize(fileToUpload.size)}`);
+          } catch (compErr: any) {
+            console.warn("Compression failed, uploading original:", compErr.message);
+            fileToUpload = file;
           }
         }
         
+        setUploadStatus('uploading');
         const uploadFormData = new FormData();
         uploadFormData.append('file', fileToUpload);
         
         const uploadResult = await uploadExpenseAttachment(uploadFormData);
         if (!uploadResult.success || !uploadResult.publicUrl) {
-          // MORE ROBUST ERROR MESSAGE AS REQUESTED
-          throw new Error(uploadResult.error || 'Dosya yükleme hatası. Supabase "documents" bucket ayarlarını kontrol edin.');
+          throw new Error(uploadResult.error || 'Dosya yükleme başarısız.');
         }
         attachmentUrl = uploadResult.publicUrl;
+        setUploadStatus('done');
       }
 
       const payload = {
         ...formData,
+        locationId: formData.locationId === '' ? null : formData.locationId,
         attachmentUrl,
         month: new Date(formData.date).toISOString()
       };
@@ -94,7 +131,6 @@ export default function ExpenseForm({
 
       if (onClose) {
         onClose();
-        // Use standard navigation to refresh state instead of full reload if possible
         window.location.reload(); 
       } else {
         setFormData({
@@ -107,6 +143,7 @@ export default function ExpenseForm({
         });
         setFile(null);
         setPreviewUrl(null);
+        setUploadStatus('idle');
         window.location.reload();
       }
     } catch (err: any) {
@@ -114,243 +151,282 @@ export default function ExpenseForm({
       alert('Hata: ' + err.message);
     } finally {
       setLoading(false);
+      setUploadStatus('idle');
     }
   };
 
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="premium-card p-6 md:p-10 bg-zinc-950/40 border-white/5 shadow-2xl relative overflow-hidden"
-    >
-      {/* Decorative Gradient Overlay */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] pointer-events-none" />
+  const removeFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFile(null);
+    setPreviewUrl(null);
+    setIsPdf(false);
+    setFileError('');
+    setUploadStatus('idle');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
-        <div className="flex items-center gap-5">
-           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-             <Receipt className="w-7 h-7 text-white" />
-           </div>
-           <div>
-             <h2 className="text-2xl font-black text-white tracking-tight italic">Gider Sisteme Kaydet</h2>
-             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mt-1">Harclama Verisi & Fatura Arşivi</p>
-           </div>
+  return (
+    <div className="premium-card bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+            <Receipt className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              {initialData ? 'Gideri Düzenle' : 'Yeni Gider Ekle'}
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">Tüm * alanları zorunludur</p>
+          </div>
         </div>
-        
         {onClose && (
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all">
-            <X size={20} />
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            <X size={18} />
           </button>
         )}
-      </header>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {/* Description */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Tag size={12} className="text-indigo-400" />
-              Açıklama / Harcama Kalemi *
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        {/* Row 1: Description */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+            <Tag size={12} className="text-slate-400" />
+            Açıklama *
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="Örn: Zafer Plaza Elektrik Faturası"
+            className="elite-input"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+
+        {/* Row 2: Amount + VAT */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <span className="text-green-600 font-bold">₺</span>
+              Net Tutar *
             </label>
             <input
-              type="text"
+              type="number"
+              step="0.01"
+              min="0"
               required
-              placeholder="Örn: Ege Perla Elektrik, Ofis Malzemeleri..."
-              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="0.00"
+              className="elite-input font-mono"
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
             />
           </div>
-
-          {/* Amount and VAT */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <span className="text-emerald-400 font-black">₺</span>
-                Net Tutar *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="0.00"
-                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-mono font-bold"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              />
-            </div>
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <Percent size={12} className="text-indigo-400" />
-                KDV Oranı
-              </label>
-              <div className="relative group">
-                <select
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold appearance-none cursor-pointer"
-                  value={formData.vatRate}
-                  onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
-                >
-                  <option value="0" className="bg-zinc-900">%0 (KDV'siz)</option>
-                  <option value="10" className="bg-zinc-900">%10 (Hizmet)</option>
-                  <option value="20" className="bg-zinc-900">%20 (Standart)</option>
-                </select>
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600 group-hover:text-indigo-400 transition-colors">
-                   <ChevronDown size={14} />
-                </div>
-              </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Percent size={12} className="text-slate-400" />
+              KDV Oranı
+            </label>
+            <div className="relative">
+              <select
+                className="elite-input appearance-none cursor-pointer pr-8"
+                value={formData.vatRate}
+                onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
+              >
+                <option value="0">%0 — KDV'siz</option>
+                <option value="10">%10 — Hizmet</option>
+                <option value="20">%20 — Standart</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
           </div>
+        </div>
 
-          {/* Location */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <MapPin size={12} className="text-indigo-400" />
-              Şube / Lokasyon Seçimi *
+        {/* VAT Total Preview */}
+        {amountNum > 0 && (
+          <div className="px-4 py-3 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500">KDV Dahil Toplam:</span>
+            <span className="text-sm font-bold text-blue-700">
+              ₺{totalWithVat.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+        )}
+
+        {/* Row 3: Location + Type */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <MapPin size={12} className="text-slate-400" />
+              Şube / Lokasyon *
             </label>
-            <div className="relative group">
+            <div className="relative">
               <select
                 required
-                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold appearance-none cursor-pointer"
+                className="elite-input appearance-none cursor-pointer pr-8"
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
               >
-                <option value="" className="bg-zinc-900">Şube Seçiniz...</option>
+                <option value="">Şube Seçin...</option>
                 {locations.map(loc => (
-                  <option key={loc.id} value={loc.id} className="bg-zinc-900">{loc.name}</option>
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
                 ))}
               </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600 group-hover:text-indigo-400 transition-colors">
-                 <ChevronDown size={14} />
-              </div>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
-          {/* Date */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Calendar size={12} className="text-indigo-400" />
-              İşlem Tarihi
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Tag size={12} className="text-slate-400" />
+              Gider Türü
             </label>
-            <input
-              type="date"
-              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all font-bold cursor-pointer"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            />
+            <div className="relative">
+              <select
+                className="elite-input appearance-none cursor-pointer pr-8"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              >
+                {EXPENSE_TYPES.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
         </div>
 
-        {/* File Upload Section - MOBILE FRIENDLY BIG BUTTON */}
-        <div className="pt-6">
-          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block mb-4">
-             Fatura veya Makbuz Eki (PDF / Görsel)
+        {/* Date */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+            <Calendar size={12} className="text-slate-400" />
+            İşlem Tarihi
           </label>
-          
-          <div 
-             onClick={() => fileInputRef.current?.click()}
-             className={cn(
-               "relative group cursor-pointer border-2 border-dashed rounded-[2.5rem] p-10 transition-all flex flex-col items-center justify-center gap-5 overflow-hidden",
-               previewUrl || file ? "border-emerald-500/30 bg-emerald-500/5" : "border-white/10 bg-white/[0.01] hover:border-indigo-500/30 hover:bg-white/[0.03]"
-             )}
+          <input
+            type="date"
+            className="elite-input cursor-pointer"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+          />
+        </div>
+
+        {/* File Upload */}
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-slate-600 block">
+            Fatura / Makbuz Eki
+            <span className="ml-2 font-normal text-slate-400">PDF, JPG veya PNG (Maks. 15MB)</span>
+          </label>
+
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "relative cursor-pointer border-2 border-dashed rounded-xl p-6 transition-all flex flex-col items-center justify-center gap-3 text-center",
+              file && !fileError
+                ? "border-green-300 bg-green-50"
+                : fileError
+                ? "border-red-300 bg-red-50"
+                : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/50"
+            )}
           >
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf"
               onChange={handleFileChange}
             />
 
             <AnimatePresence mode="wait">
-              {previewUrl ? (
-                <motion.div 
+              {previewUrl && !fileError ? (
+                <motion.div
                   key="preview"
-                  initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                  className="relative w-full max-w-[280px] aspect-video rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-full max-w-[200px] aspect-video rounded-lg overflow-hidden shadow border border-green-200"
                 >
-                   <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ImageIcon className="text-white w-8 h-8 mb-2" />
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">GÖRSELİ DEĞİŞTİR</span>
-                   </div>
+                  <img src={previewUrl} alt="Önizleme" className="w-full h-full object-cover" />
                 </motion.div>
-              ) : file && isPdf ? (
-                <motion.div 
-                   key="pdf"
-                   initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                   className="flex flex-col items-center gap-4 text-emerald-400"
+              ) : file && isPdf && !fileError ? (
+                <motion.div
+                  key="pdf"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center gap-2 text-green-700"
                 >
-                   <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                      <FileText size={40} className="drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-                   </div>
-                   <div className="text-center">
-                     <p className="text-xs font-black uppercase tracking-widest max-w-[250px] truncate mb-1">{file.name}</p>
-                     <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">PDF DÖKÜMANI HAZIR</p>
-                   </div>
+                  <div className="w-14 h-14 rounded-xl bg-green-100 border border-green-200 flex items-center justify-center">
+                    <FileText size={28} className="text-green-600" />
+                  </div>
+                  <p className="text-xs font-semibold max-w-[200px] truncate">{file.name}</p>
+                  <p className="text-[10px] text-green-600">{formatFileSize(file.size)} • PDF</p>
+                </motion.div>
+              ) : fileError ? (
+                <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-2">
+                  <AlertCircle size={28} className="text-red-500" />
+                  <p className="text-xs font-semibold text-red-700 max-w-xs">{fileError}</p>
+                  <p className="text-[11px] text-red-500">Tekrar seçmek için tıklayın</p>
                 </motion.div>
               ) : (
-                <motion.div 
-                   key="empty"
-                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                   className="flex flex-col items-center gap-4 text-zinc-500 group-hover:text-indigo-400 transition-all"
-                >
-                   <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-110 group-hover:shadow-2xl transition-all">
-                      <Upload size={32} />
-                   </div>
-                   <div className="text-center">
-                      <span className="text-xs font-black uppercase tracking-widest block mb-2">BELGE YÜKLE VEYA FOTOĞRAF ÇEK</span>
-                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.2em]">MAX 10MB • PDF, JPG, PNG</span>
-                   </div>
+                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-2 text-slate-400">
+                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
+                    <Upload size={22} className="text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Dosya seçin veya sürükleyin</p>
+                    <p className="text-xs text-slate-400 mt-0.5">PDF, JPG, PNG — maks. 15MB</p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {file && (
+            {file && !fileError && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFile(null);
-                  setPreviewUrl(null);
-                }}
-                className="absolute top-6 right-6 p-3 rounded-2xl bg-black/80 text-white hover:bg-rose-500 transition-all z-20 shadow-xl border border-white/10"
+                onClick={removeFile}
+                className="absolute top-3 right-3 p-1.5 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors shadow-sm z-10"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             )}
           </div>
+
+          {/* Upload status */}
+          {uploadStatus !== 'idle' && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100">
+              {uploadStatus === 'compressing' && <Loader2 size={14} className="text-blue-500 animate-spin" />}
+              {uploadStatus === 'uploading' && <Loader2 size={14} className="text-blue-500 animate-spin" />}
+              {uploadStatus === 'done' && <CheckCircle2 size={14} className="text-green-500" />}
+              <span className="text-xs text-blue-700">
+                {uploadStatus === 'compressing' ? 'Görsel sıkıştırılıyor...' : 
+                 uploadStatus === 'uploading' ? 'Yükleniyor...' : 'Yükleme tamamlandı!'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Submit */}
-        <div className="pt-8">
+        <div className="pt-2">
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-3xl py-5 font-black uppercase tracking-[0.3em] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_20px_50px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden relative"
+            className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-[0.99] text-white rounded-xl py-3 font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
             {loading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {uploadStatus === 'compressing' ? 'Dosya Hazırlanıyor...' : 
+                 uploadStatus === 'uploading' ? 'Yükleniyor...' : 'Kaydediliyor...'}
+              </>
             ) : (
               <>
-                <ShieldCheck size={20} className="text-indigo-200" />
-                Gideri Finansal Arşive Kaydet
+                <CheckCircle2 size={17} />
+                {initialData ? 'Değişiklikleri Kaydet' : 'Gideri Kaydet'}
               </>
             )}
           </button>
-          
-          <div className="mt-6 flex items-center justify-center gap-8">
-             <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest italic">Şifreli Bağlantı</span>
-             </div>
-             <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest italic">Yedekli Kayıt</span>
-             </div>
-          </div>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

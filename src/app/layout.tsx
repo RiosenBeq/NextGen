@@ -18,13 +18,13 @@ export default function RootLayout({
   const pathname = usePathname();
 
   return (
-    <html lang="tr" className="dark">
+    <html lang="tr" suppressHydrationWarning>
       <head>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="googlebot" content="noindex, nofollow" />
         <title>NextGenBox — Financial Control</title>
       </head>
-      <body className={`${inter.className} bg-[#111116] flex h-screen overflow-hidden text-zinc-50 font-sans antialiased selection:bg-emerald-500/30`}>
+      <body suppressHydrationWarning className={`${inter.className} bg-[#F1F5F9] flex h-screen overflow-hidden text-slate-900 font-sans antialiased selection:bg-blue-200`}>
         <Sidebar />
         <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
           <Topbar />

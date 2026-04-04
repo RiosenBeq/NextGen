@@ -6,8 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput } from '../schema';
 import { addMonthlyPerformance } from '../actions';
 import { calculateMonthlyCashFlow } from '../calculations';
-import { Loader2, Plus, TrendingUp, Info } from 'lucide-react';
+import { Loader2, Plus, TrendingUp, Info, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface Props {
   locations: any[];
@@ -35,13 +36,11 @@ export function MonthlyPerformanceForm({ locations }: Props) {
     const loc = locations.find(l => l.id === watchedValues.locationId);
     if (!loc || !watchedValues.sessionCount) return null;
 
-    // We use a simplified preview calculation here or mock params if they are not passed
-    // In a real scenario, we might want to fetch system parameters for the preview too
     return calculateMonthlyCashFlow(
       watchedValues.sessionCount || 0,
       watchedValues.extraExpenseAmount || 0,
       {
-        sessionPrice: 300, // Shared defaults
+        sessionPrice: 300,
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 0,
@@ -68,15 +67,15 @@ export function MonthlyPerformanceForm({ locations }: Props) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="lg:col-span-7 premium-card p-8 lg:p-10"
+        className="lg:col-span-7 premium-card p-6 lg:p-8"
       >
-        <header className="mb-10">
-          <h2 className="text-2xl font-black text-white tracking-tighter mb-2">Performans Kaydı</h2>
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest italic">Kabinrapor verilerini sisteme aktarın</p>
+        <header className="mb-8">
+          <h2 className="text-lg font-bold text-slate-900 mb-1">Performans Kaydı</h2>
+          <p className="text-xs text-slate-400">KabinRapor verilerini sisteme aktarın</p>
         </header>
         
         <AnimatePresence>
@@ -85,9 +84,10 @@ export function MonthlyPerformanceForm({ locations }: Props) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="p-4 mb-8 bg-emerald-500/10 text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest border border-emerald-500/20"
+              className="p-3 mb-6 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold border border-emerald-200 flex items-center gap-2"
             >
-              ✓ {successMsg}
+              <CheckCircle2 size={14} />
+              {successMsg}
             </motion.div>
           )}
           {errorMsg && (
@@ -95,52 +95,52 @@ export function MonthlyPerformanceForm({ locations }: Props) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="p-4 mb-8 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-black uppercase tracking-widest border border-rose-500/20"
+              className="p-3 mb-6 bg-red-50 text-red-700 rounded-xl text-xs font-semibold border border-red-200"
             >
               ⚠ {errorMsg}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Lokasyon / AVM</label>
-              <select {...register('locationId')} className="elite-input appearance-none bg-zinc-900/80">
-                <option value="" className="bg-zinc-950">Lokasyon Seçin</option>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600">Lokasyon / AVM</label>
+              <select {...register('locationId')} className="elite-input appearance-none cursor-pointer">
+                <option value="">Lokasyon Seçin</option>
                 {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id} className="bg-zinc-950">{loc.name}</option>
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
                 ))}
               </select>
-              {errors.locationId && <p className="text-rose-500 text-[10px] font-bold uppercase tracking-tight">{errors.locationId.message as string}</p>}
+              {errors.locationId && <p className="text-red-500 text-xs">{errors.locationId.message as string}</p>}
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Dönem (Ay)</label>
-              <input type="date" {...register('month')} className="elite-input bg-zinc-900/80 [color-scheme:dark]" />
-              {errors.month && <p className="text-rose-500 text-[10px] font-bold uppercase tracking-tight">{errors.month.message as string}</p>}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600">Dönem (Ay)</label>
+              <input type="date" {...register('month')} className="elite-input cursor-pointer" />
+              {errors.month && <p className="text-red-500 text-xs">{errors.month.message as string}</p>}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Toplam Oturum Adedi</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600">Toplam Oturum Adedi</label>
             <div className="relative">
               <input
                 type="number"
                 {...register('sessionCount', { valueAsNumber: true })}
                 placeholder="0"
-                className="elite-input text-2xl font-black py-6 border-emerald-500/20 focus:border-emerald-500/40 bg-zinc-900/80"
+                className="elite-input text-xl font-bold py-4"
               />
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-emerald-500/10">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
               </div>
             </div>
-            {errors.sessionCount && <p className="text-rose-500 text-[10px] font-bold uppercase tracking-tight">{errors.sessionCount.message as string}</p>}
+            {errors.sessionCount && <p className="text-red-500 text-xs">{errors.sessionCount.message as string}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Ekstra Gider (₺)</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600">Ekstra Gider (₺)</label>
               <input
                 type="number"
                 {...register('extraExpenseAmount', { valueAsNumber: true })}
@@ -150,8 +150,8 @@ export function MonthlyPerformanceForm({ locations }: Props) {
               />
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Gider Açıklaması</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600">Gider Açıklaması</label>
               <input type="text" {...register('extraExpenseNotes')} placeholder="Örn: Kabin Tamiri" className="elite-input" />
             </div>
           </div>
@@ -159,87 +159,81 @@ export function MonthlyPerformanceForm({ locations }: Props) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="elite-button-primary w-full py-5 flex items-center justify-center gap-3 group relative overflow-hidden"
+            className="elite-button-primary w-full py-3.5 flex items-center justify-center gap-2"
           >
-            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-emerald-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-            <span className="relative z-10">Kaydı Onayla ve Gönder</span>
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Kaydı Onayla ve Gönder
           </button>
         </form>
       </motion.div>
 
       <motion.div 
-        initial={{ opacity: 0, x: 20 }}
+        initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-        className="lg:col-span-5 space-y-6"
+        transition={{ delay: 0.15 }}
+        className="lg:col-span-5 space-y-5"
       >
-        <div className="premium-card p-10 bg-gradient-to-br from-zinc-900 to-black relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-             <Info size={120} strokeWidth={1} />
-          </div>
-          
-          <h3 className="text-xl font-black text-white tracking-tighter mb-8 flex items-center gap-2">
+        {/* Live Preview */}
+        <div className="premium-card p-6 relative overflow-hidden">
+          <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Anlık Projeksiyon
           </h3>
 
-          <div className="space-y-10">
+          <div className="space-y-6">
             {livePreview ? (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-2">
-                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Tahmini Brüt Gelir</p>
-                   <p className="text-3xl font-black text-white">₺{livePreview.grossRevenue.toLocaleString('tr-TR')}</p>
+              <div className="space-y-5 animate-fade-in">
+                <div className="space-y-1">
+                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tahmini Brüt Gelir</p>
+                   <p className="text-2xl font-bold text-slate-900">₺{livePreview.grossRevenue.toLocaleString('tr-TR')}</p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Tahmini Gider</p>
-                    <p className="text-lg font-black text-white">₺{livePreview.totalExpense.toLocaleString('tr-TR')}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                    <p className="text-[9px] font-semibold text-red-500 uppercase tracking-wide mb-1">Tahmini Gider</p>
+                    <p className="text-base font-bold text-slate-900">₺{livePreview.totalExpense.toLocaleString('tr-TR')}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">Tahmini Net Kar</p>
-                    <p className="text-lg font-black text-white">₺{livePreview.netCash.toLocaleString('tr-TR')}</p>
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <p className="text-[9px] font-semibold text-emerald-600 uppercase tracking-wide mb-1">Tahmini Net</p>
+                    <p className="text-base font-bold text-slate-900">₺{livePreview.netCash.toLocaleString('tr-TR')}</p>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-white/5">
-                   <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-4">Pay Analizi (%25)</p>
-                   <div className="space-y-4">
+                <div className="pt-4 border-t border-slate-100">
+                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Pay Analizi (%25)</p>
+                   <div className="space-y-2">
                       {[
-                        { name: 'OKAN', amount: livePreview.okanShare },
-                        { name: 'TALHA', amount: livePreview.talhaShare },
-                        { name: 'FURKAN', amount: livePreview.furkanShare },
-                        { name: 'ALP', amount: livePreview.alpShare },
+                        { name: 'Okan', amount: livePreview.okanShare },
+                        { name: 'Talha', amount: livePreview.talhaShare },
+                        { name: 'Furkan', amount: livePreview.furkanShare },
+                        { name: 'Alp', amount: livePreview.alpShare },
                       ].map((partner) => (
-                        <div key={partner.name} className="flex justify-between items-end">
-                          <span className="text-[10px] font-bold text-zinc-400">{partner.name}</span>
-                          <span className="text-sm font-black text-white italic">₺{partner.amount.toLocaleString('tr-TR')}</span>
+                        <div key={partner.name} className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-slate-500">{partner.name}</span>
+                          <span className="text-sm font-bold text-slate-800">₺{partner.amount.toLocaleString('tr-TR')}</span>
                         </div>
                       ))}
                    </div>
                 </div>
               </div>
             ) : (
-              <div className="py-20 text-center space-y-4 opacity-30">
-                <div className="w-16 h-16 rounded-full border-2 border-dashed border-zinc-500 mx-auto animate-spin-slow flex items-center justify-center">
-                   <TrendingUp className="text-zinc-500" />
+              <div className="py-12 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full border-2 border-dashed border-slate-200 mx-auto flex items-center justify-center">
+                   <TrendingUp className="text-slate-300" size={20} />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest">Veri bekleniyor...</p>
+                <p className="text-xs text-slate-400">Lokasyon ve oturum sayısı girin</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="premium-card p-8 flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-             <Info className="w-5 h-5 text-indigo-400" />
+        <div className="premium-card p-5 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+             <Info className="w-4 h-4 text-blue-500" />
           </div>
-          <div>
-            <p className="text-xs font-bold text-zinc-300 leading-relaxed">
-              Hesaplamalar, lokasyon bazlı tanımlanmış <span className="text-indigo-400">Sabit Kira</span>, <span className="text-indigo-400">Aidat</span> ve <span className="text-indigo-400">Ciro Payı</span> eşiklerine göre anlık yapılmaktadır.
-            </p>
-          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Hesaplamalar, lokasyon bazlı tanımlanmış <span className="text-blue-600 font-semibold">Sabit Kira</span>, <span className="text-blue-600 font-semibold">Aidat</span> ve <span className="text-blue-600 font-semibold">Ciro Payı</span> eşiklerine göre anlık yapılmaktadır.
+          </p>
         </div>
       </motion.div>
     </div>

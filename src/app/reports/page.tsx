@@ -1,8 +1,8 @@
 "use client";
 
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
-import { TrendingUp, ArrowUpRight, ArrowDownRight, LayoutList, CalendarDays, FileText, Download, Share2, ArrowRight } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, CalendarDays, FileText, Download, ArrowRight } from 'lucide-react';
 import * as motion from "framer-motion/client";
 import { createClient } from '@/utils/supabase/client';
 import { getSystemParameters } from '@/features/ledger/actions';
@@ -23,10 +23,8 @@ export default function ReportsPage() {
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
 
-      // Fetch Locations for filtering
       const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
 
-      // Fetch Live Data for current month
       let liveData: any = null;
       try {
         liveData = await kabinRapor.getComprehensiveData('Bu Ay');
@@ -48,7 +46,6 @@ export default function ReportsPage() {
         let sessions = perf.sessionCount;
         let isLive = false;
 
-        // Sync with Live Data if it's the current month and live data available
         if (isCurrentMonth && liveData?.citySplit?.cities) {
           const cityName = perf.location.name.split(' ')[0];
           const cityData = liveData.citySplit.cities[cityName];
@@ -82,7 +79,6 @@ export default function ReportsPage() {
         };
       });
 
-      // Recalculate totals based on processed data
       const calcTotals = (rows: any[]) => ({
         revenue: rows.reduce((s, r) => s + r.grossRevenue, 0),
         profit: rows.reduce((s, r) => s + r.netCash, 0),
@@ -99,8 +95,11 @@ export default function ReportsPage() {
   }, []);
 
   if (!data) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    <div className="h-screen flex items-center justify-center">
+      <div className="flex items-center gap-3">
+        <div className="w-6 h-6 rounded-full border-2 border-blue-200 border-t-blue-500 animate-spin" />
+        <span className="text-sm text-slate-500">Veriler yükleniyor...</span>
+      </div>
     </div>
   );
 
@@ -115,138 +114,129 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 space-y-12 max-w-[1500px] mx-auto min-h-screen animate-fade-in">
+    <div className="page-wrapper space-y-8 animate-fade-in">
+
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] px-2 py-1 rounded bg-indigo-500/5 border border-indigo-500/10">Financial Archive</span>
-          </div>
-          <h1 className="text-5xl font-black tracking-tighter text-white heading-elite italic">
-             Performans Arşivi
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-2">
+            Performans Arşivi
+          </span>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+            <FileText className="w-6 h-6 text-slate-400" />
+            Nakit Akışı Raporu
           </h1>
-          <p className="text-sm text-zinc-500 font-medium max-w-xl leading-relaxed">
-            Şirketin tarihsel büyüme verileri, operasyonel marjlar ve ortaklık hakedişlerinin dökümü.
+          <p className="text-sm text-slate-500 mt-1">
+            Tarihsel büyüme verileri, operasyonel marjlar ve ortaklık hakedişleri.
           </p>
         </div>
 
-        <div className="flex gap-2 p-1 bg-white/[0.02] border border-white/5 rounded-xl">
-           <button 
-             onClick={() => setFilterLocation('all')}
-             className={cn("px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all uppercase", 
-               filterLocation === 'all' ? "bg-white text-black" : "text-zinc-500 hover:text-white")}
-           >Tümü</button>
-           {data.locations.map(loc => (
-             <button 
-                key={loc.id}
-                onClick={() => setFilterLocation(loc.id)}
-                className={cn("px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all uppercase", 
-                  filterLocation === loc.id ? "bg-white text-black" : "text-zinc-500 hover:text-white")}
-             >{loc.name.split(' ')[0]}</button>
-           ))}
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200 rounded-xl">
+          <button 
+            onClick={() => setFilterLocation('all')}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+              filterLocation === 'all' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+            )}
+          >Tümü</button>
+          {data.locations.map(loc => (
+            <button 
+              key={loc.id}
+              onClick={() => setFilterLocation(loc.id)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                filterLocation === loc.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              )}
+            >{loc.name.split(' ')[0]}</button>
+          ))}
         </div>
       </header>
 
       {/* Summary Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: "FİLTRELENMİŞ CİRO", value: currentTotals.revenue, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-500/10", tag: "ARŞİV" },
-          { label: "NET NAKİT AKIŞI", value: currentTotals.profit, icon: ArrowUpRight, color: "text-indigo-400", bg: "bg-indigo-500/10", tag: `%${currentTotals.revenue > 0 ? (currentTotals.profit / currentTotals.revenue * 100).toFixed(1) : 0} Marj` },
-          { label: "TOPLAM SEANS", value: currentTotals.sessions, icon: CalendarDays, color: "text-amber-400", bg: "bg-amber-500/10", tag: "KÜMÜLATİF" },
+          { label: "Filtrelenmiş Ciro", value: `₺${currentTotals.revenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200", tag: "Arşiv" },
+          { label: "Net Nakit Akışı", value: `₺${currentTotals.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: ArrowUpRight, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200", tag: `%${currentTotals.revenue > 0 ? (currentTotals.profit / currentTotals.revenue * 100).toFixed(1) : '0'} Marj` },
+          { label: "Toplam Seans", value: currentTotals.sessions.toLocaleString('tr-TR'), icon: CalendarDays, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200", tag: "Kümülatif" },
         ].map((kpi, idx) => (
           <motion.div
             key={kpi.label}
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-            className="premium-card p-8 group relative overflow-hidden"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.06 }}
+            className={cn("premium-card p-5 border", kpi.cardClass)}
           >
-            <div className="flex justify-between items-start mb-10">
-               <div className={`w-12 h-12 rounded-2xl ${kpi.bg} flex items-center justify-center`}>
-                 <kpi.icon className={`w-6 h-6 ${kpi.color}`} />
-               </div>
-               <span className={cn("text-[9px] font-black tracking-widest px-2 py-1 rounded-full border border-white/5 bg-white/5", kpi.color)}>
-                 {kpi.tag}
-               </span>
+            <div className="flex items-start justify-between mb-4">
+              <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center", kpi.iconBg)}>
+                <kpi.icon className={cn("w-5 h-5", kpi.iconColor)} />
+              </div>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">{kpi.tag}</span>
             </div>
-            <div>
-               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{kpi.label}</p>
-               <h2 className="text-3xl font-black tracking-tighter text-white italic">
-                 {typeof kpi.value === 'number' ? `₺${kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}` : kpi.value}
-               </h2>
-            </div>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{kpi.label}</p>
+            <h2 className="text-xl font-bold text-slate-900">{kpi.value}</h2>
           </motion.div>
         ))}
       </section>
 
-      {/* Main Content Table */}
-      <section className="pb-20">
-        <div className="premium-card overflow-hidden bg-zinc-950/40 border-white/[0.05]">
-          <div className="p-8 border-b border-white/[0.04] bg-white/[0.01] flex justify-between items-center">
-             <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-zinc-600" />
-                <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] italic">Finansal Denetim Listesi</h3>
-             </div>
-             <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                   <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Canlı Senkronize</span>
-                </div>
-                <button className="flex items-center gap-2 text-[9px] font-black text-indigo-400 uppercase tracking-widest hover:text-white transition-colors">
-                   <Download size={12} />
-                   XLSX İNDİR
-                </button>
-             </div>
+      {/* Main Table */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Finansal Denetim Listesi</h2>
+          <div className="flex-1 section-divider" />
+          <div className="flex items-center gap-2">
+            <span className="live-dot text-[9px]">Canlı Senkron</span>
           </div>
-          
+        </div>
+
+        <div className="premium-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1200px]">
+            <table className="data-table min-w-[900px]">
               <thead>
-                <tr className="bg-white/[0.02]">
-                  <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] border-b border-white/[0.06]">Ay / Dönem</th>
-                  <th className="px-6 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] border-b border-white/[0.06]">Lokasyon</th>
-                  <th className="px-6 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] border-b border-white/[0.06] text-center">Oturum</th>
-                  <th className="px-6 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] border-b border-white/[0.06] text-right">Brüt Ciro</th>
-                  <th className="px-6 py-6 text-[10px] font-black text-rose-500/50 uppercase tracking-[0.2em] border-b border-white/[0.06] text-right">Gider (KDV Dahil)</th>
-                  <th className="px-6 py-6 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] border-b border-white/[0.06] text-right text-base underline decoration-indigo-500/30">Net Nakit</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] border-b border-white/[0.06] text-center">İşlem</th>
+                <tr>
+                  <th>Dönem</th>
+                  <th>Lokasyon</th>
+                  <th className="text-center">Oturum</th>
+                  <th className="text-right">Brüt Ciro</th>
+                  <th className="text-right">Gider (KDV Dahil)</th>
+                  <th className="text-right">Net Nakit</th>
+                  <th className="text-center w-16"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.02]">
+              <tbody>
                 {filteredData.map((row: any) => (
-                  <tr key={row.id} className="group hover:bg-white/[0.02] transition-colors">
-                    <td className="px-8 py-6">
-                       <div className="flex items-center gap-3">
-                          <span className="text-sm font-black text-white italic tracking-tight">{row.month}</span>
-                          {row.isLive && (
-                             <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[8px] font-black">LIVE</span>
-                          )}
-                       </div>
+                  <tr key={row.id} className="group">
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-900 text-sm">{row.month}</span>
+                        {row.isLive && (
+                          <span className="live-dot text-[8px]">Canlı</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-6">
-                       <div className="flex flex-col">
-                          <span className="text-xs font-bold text-zinc-400">{row.locationName}</span>
-                          <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-1">Sözleşmeli Portföy</span>
-                       </div>
+                    <td>
+                      <span className="text-sm text-slate-700">{row.locationName}</span>
                     </td>
-                    <td className="px-6 py-6 text-center">
-                       <span className="text-xs font-black text-zinc-200 font-mono tracking-tighter">{row.sessionCount}</span>
+                    <td className="text-center">
+                      <span className="text-sm font-mono font-semibold text-slate-700">{row.sessionCount}</span>
                     </td>
-                    <td className="px-6 py-6 text-right">
-                       <span className="text-sm font-black text-white">₺{row.grossRevenue.toLocaleString('tr-TR')}</span>
+                    <td className="text-right">
+                      <span className="text-sm font-semibold text-slate-900">₺{row.grossRevenue.toLocaleString('tr-TR')}</span>
                     </td>
-                    <td className="px-6 py-6 text-right">
-                       <span className="text-xs font-bold text-rose-500/60">₺{(row.totalAvmExpense + row.iyzico + row.nayax + row.extraExpense).toLocaleString('tr-TR')}</span>
+                    <td className="text-right">
+                      <span className="text-sm text-red-500 font-medium">
+                        ₺{(row.totalAvmExpense + row.iyzico + row.nayax + row.extraExpense).toLocaleString('tr-TR')}
+                      </span>
                     </td>
-                    <td className="px-6 py-6 text-right">
-                       <div className={cn("text-base font-black italic tracking-tighter", row.netCash >= 0 ? "text-emerald-400" : "text-rose-500")}>
-                          ₺{row.netCash.toLocaleString('tr-TR')}
-                       </div>
+                    <td className={cn(
+                      "text-right text-sm font-bold",
+                      row.netCash >= 0 ? "text-emerald-700" : "text-red-600"
+                    )}>
+                      ₺{row.netCash.toLocaleString('tr-TR')}
                     </td>
-                    <td className="px-8 py-6">
-                       <div className="flex items-center justify-end gap-3 translate-x-2">
-                          <button className="p-2 rounded-xl bg-white/5 hover:bg-indigo-500 text-zinc-500 hover:text-white transition-all border border-white/5 opacity-40 group-hover:opacity-100">
-                             <ArrowRight size={14} />
-                          </button>
-                       </div>
+                    <td className="text-center">
+                      <button className="p-1.5 rounded-lg text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100">
+                        <ArrowRight size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}

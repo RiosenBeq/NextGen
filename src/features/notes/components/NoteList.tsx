@@ -38,43 +38,43 @@ export default function NoteList({ initialNotes }: Props) {
 
   const getCardColor = (color: string) => {
     switch (color) {
-      case 'zinc': return 'border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60';
-      case 'blue': return 'border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10';
-      case 'emerald': return 'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10';
-      case 'amber': return 'border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10';
-      case 'rose': return 'border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10';
-      default: return 'border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60';
+      case 'zinc': return 'border-slate-200 bg-white hover:bg-slate-50';
+      case 'blue': return 'border-blue-200 bg-blue-50/30 hover:bg-blue-50/80';
+      case 'emerald': return 'border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50/80';
+      case 'amber': return 'border-amber-200 bg-amber-50/30 hover:bg-amber-50/80';
+      case 'rose': return 'border-rose-200 bg-rose-50/30 hover:bg-rose-50/80';
+      default: return 'border-slate-200 bg-white hover:bg-slate-50';
     }
   };
 
   const getTextColor = (color: string) => {
     switch (color) {
-      case 'zinc': return 'text-zinc-400';
-      case 'blue': return 'text-blue-400';
-      case 'emerald': return 'text-emerald-400';
-      case 'amber': return 'text-amber-400';
-      case 'rose': return 'text-rose-400';
-      default: return 'text-zinc-400';
+      case 'zinc': return 'text-slate-600';
+      case 'blue': return 'text-blue-700';
+      case 'emerald': return 'text-emerald-700';
+      case 'amber': return 'text-amber-700';
+      case 'rose': return 'text-rose-700';
+      default: return 'text-slate-600';
     }
   };
 
   return (
-    <div className="space-y-10">
-      <div className="flex justify-between items-center bg-white/[0.02] p-6 rounded-[2rem] border border-white/5">
-        <div className="flex items-center gap-4">
-           <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center border border-white/10 shadow-inner">
-              <StickyNote size={18} className="text-zinc-400" />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center premium-card p-4 border border-slate-200">
+        <div className="flex items-center gap-3">
+           <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200 shadow-sm">
+              <StickyNote size={18} className="text-slate-500" />
            </div>
-           <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] italic">
+           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">
              Tüm Kayıtlar
            </h2>
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="bg-zinc-100 hover:bg-white text-black text-[10px] font-black tracking-widest px-8 py-4 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-95 uppercase flex items-center gap-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
         >
-          <Plus size={14} />
-          Yeni Not Oluştur
+          <Plus size={16} />
+          Yeni Not
         </button>
       </div>
 
@@ -84,9 +84,9 @@ export default function NoteList({ initialNotes }: Props) {
             <motion.div 
                initial={{ opacity: 0, scale: 0.9 }}
                animate={{ opacity: 1, scale: 1 }}
-               className="col-span-full py-32 text-center border border-dashed border-white/10 rounded-[3rem] bg-white/[0.01]"
+               className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50"
             >
-              <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Henüz bir kayıt bulunmamaktadır</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Henüz bir kayıt bulunmamaktadır</p>
             </motion.div>
           )}
 
@@ -98,47 +98,47 @@ export default function NoteList({ initialNotes }: Props) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ delay: idx * 0.03 }}
-              className={`group p-8 rounded-[2.5rem] border transition-all flex flex-col justify-between h-full relative overflow-hidden ${getCardColor(note.color)}`}
+              className={`group p-6 rounded-2xl transition-all flex flex-col justify-between h-full relative overflow-hidden shadow-sm hover:shadow-md ${getCardColor(note.color)}`}
             >
-              <div className="space-y-6 relative z-10">
-                <div className="flex justify-between items-start gap-6">
-                  <h3 className="font-black text-white tracking-tighter leading-[1.1] text-2xl italic group-hover:text-indigo-400 transition-colors">
+              <div className="space-y-4 relative z-10">
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="font-bold text-slate-800 leading-tight text-lg group-hover:text-blue-600 transition-colors">
                     {note.title}
                   </h3>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <button 
                       onClick={() => setEditingNote(note)}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-zinc-500 hover:text-white hover:bg-indigo-600 transition-all border border-white/5"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                     >
-                      <Edit2 size={16} />
+                      <Edit2 size={15} />
                     </button>
                     <button 
                       onClick={() => handleDelete(note.id)}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all border border-white/5"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
                 {note.content && (
-                  <p className="text-[13px] text-zinc-400 leading-relaxed font-medium line-clamp-6 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <p className="text-sm text-slate-500 leading-relaxed font-medium line-clamp-6">
                     {note.content}
                   </p>
                 )}
               </div>
 
-              <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                  <div className="flex items-center gap-2.5 text-[10px] font-black text-zinc-600 uppercase tracking-widest italic font-mono">
-                    <Clock size={12} className="text-zinc-700" />
+              <div className="mt-6 pt-4 border-t border-slate-200/50 flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 tracking-wider">
+                    <Clock size={12} className="text-slate-400" />
                     {new Date(note.createdAt).toLocaleDateString('tr-TR')}
                   </div>
-                  <div className={`text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border bg-black/20 ${getTextColor(note.color)} border-current/20`}>
+                  <div className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-white/50 border ${getTextColor(note.color)} border-current/20`}>
                     {note.color}
                   </div>
               </div>
 
               {/* Decorative Background Element */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.02] rounded-full -translate-y-16 translate-x-16 blur-3xl pointer-events-none group-hover:bg-white/[0.05] transition-colors" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-full -translate-y-16 translate-x-16 blur-2xl pointer-events-none group-hover:bg-white/60 transition-colors" />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -153,12 +153,12 @@ export default function NoteList({ initialNotes }: Props) {
                animate={{ opacity: 1 }}
                exit={{ opacity: 0 }}
                onClick={() => { setIsAdding(false); setEditingNote(null); }}
-               className="fixed inset-0 bg-black/60 backdrop-blur-xl"
+               className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
             <motion.div 
-               initial={{ opacity: 0, scale: 0.9, y: 20 }}
+               initial={{ opacity: 0, scale: 0.95, y: 10 }}
                animate={{ opacity: 1, scale: 1, y: 0 }}
-               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+               exit={{ opacity: 0, scale: 0.95, y: 10 }}
                className="w-full max-w-xl relative z-[101]"
             >
               <NoteForm 

@@ -238,9 +238,9 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      {/* Performance Score + Roadmap */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 premium-card p-6 flex flex-col md:flex-row items-center gap-8">
+      {/* Performance Score */}
+      <section className="grid grid-cols-1 gap-6">
+        <div className="premium-card p-6 flex flex-col md:flex-row items-center gap-8">
           <div className="relative shrink-0">
             <svg className="w-28 h-28 transform -rotate-90">
               <circle cx="56" cy="56" r="48" stroke="#E2E8F0" strokeWidth="8" fill="transparent" />
@@ -263,38 +263,14 @@ export default async function DashboardPage() {
               <ShieldCheck size={16} className="text-blue-500" />
               <h3 className="text-base font-bold text-slate-900">Performans İndeksi</h3>
             </div>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-md">
+            <p className="text-sm text-slate-500 leading-relaxed max-w-2xl">
               Sistem verimliliği <span className="text-blue-600 font-bold">%85</span> seviyesinde. 
-              iyzico/Nayax kesintileri sonrası reel getiri beklenenin üzerinde seyrediyor.
+              iyzico/Nayax kesintileri senaryosunda reel getiri hedeflenen projeksiyonların üzerinde seyrediyor.
             </p>
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-              <span className="metric-pill metric-pill-green">Optimize Edildi</span>
+            <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-4">
+              <span className="metric-pill metric-pill-green">Sistem Stabil</span>
               <span className="metric-pill metric-pill-blue">Kâr Odaklı</span>
             </div>
-          </div>
-        </div>
-
-        <div className="premium-card p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Globe size={15} className="text-slate-400" />
-              <h3 className="text-sm font-bold text-slate-800">Yol Haritası</h3>
-            </div>
-            <p className="text-xs text-slate-400 mb-5">Gelecek çeyrek stratejik hedefleri</p>
-          </div>
-          <div className="space-y-3">
-            {[
-              { label: "Ege Perla Yeni Hat", color: "bg-emerald-500", active: true },
-              { label: "Sistem Optimizasyonu v5", color: "bg-blue-500", active: true },
-              { label: "Yeni Lokasyon Arşivi", color: "bg-slate-300", active: false },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3">
-                <div className={cn("w-2 h-2 rounded-full shrink-0", item.color)} />
-                <span className={cn("text-xs font-medium", item.active ? "text-slate-700" : "text-slate-400")}>
-                  {item.label}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
       </section>

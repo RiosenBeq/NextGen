@@ -6,6 +6,8 @@
  */
 
 const BASE_URL = 'https://osessensin.com/api'
+import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 
 export interface CabinData {
   id: number
@@ -222,26 +224,12 @@ export class KabinRaporService {
    * Retrieve per-cabin detailed stats for a given range
    * Calls dashboard-cabins-by-range endpoint
    */
+  /**
+   * DISABLED: Endpoint not found (404) on osessensin.com
+   * Returns empty array to prevent console errors.
+   */
   async getCabinStatsByRange(range: DateRange = 'Bu Ay'): Promise<CabinDetailedStat[]> {
-    const isAuth = await this.ensureAuth()
-    if (!isAuth) throw new Error('Not authenticated to KabinRapor')
-
-    try {
-      const response = await fetchWithTimeout(`${BASE_URL}/dashboard-cabins-by-range`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firm_id: this.firmId, user_id: this.userId, range })
-      })
-
-      if (!response.ok) {
-        // Endpoint may not exist — fall back to enriching getCabins data
-        return []
-      }
-
-      return await response.json()
-    } catch {
-      return []
-    }
+    return [];
   }
 
   /**
@@ -351,45 +339,52 @@ export class KabinRaporService {
 
   /**
    * Comprehensive data fetch — pulls everything available in parallel
+   * Cached for 5 minutes by default to ensure "high speed"
    */
-  async getComprehensiveData(selectedRange: DateRange = 'Bugün') {
-    const isAuth = await this.ensureAuth()
-    if (!isAuth) throw new Error('Not authenticated to KabinRapor')
+  getComprehensiveData = cache(async (selectedRange: DateRange = 'Bugün') => {
+    return unstable_cache(
+      async () => {
+        const isAuth = await this.ensureAuth()
+        if (!isAuth) throw new Error('Not authenticated to KabinRapor')
 
-    const [
-      cabins,
-      selectedRangeTotals,
-      allTimeTotals,
-      thisMonthTotals,
-      thisWeekTotals,
-      yesterdayTotals,
-      last7Graph,
-      cabinRangeStats,
-      citySplit
-    ] = await Promise.all([
-      this.getCabins(),
-      this.getDashboardTotals(selectedRange),
-      this.getDashboardTotals('Tüm Zamanlar'),
-      this.getDashboardTotals('Bu Ay'),
-      this.getDashboardTotals('Bu Hafta'),
-      this.getDashboardTotals('Dün'),
-      this.getLast7Graph(),
-      this.getCabinStatsByRange(selectedRange),
-      this.getCitySplittedData(selectedRange)
-    ])
+        const [
+          cabins,
+          selectedRangeTotals,
+          allTimeTotals,
+          thisMonthTotals,
+          thisWeekTotals,
+          yesterdayTotals,
+          last7Graph,
+          cabinRangeStats,
+          citySplit
+        ] = await Promise.all([
+          this.getCabins(),
+          this.getDashboardTotals(selectedRange),
+          this.getDashboardTotals('Tüm Zamanlar'),
+          this.getDashboardTotals('Bu Ay'),
+          this.getDashboardTotals('Bu Hafta'),
+          this.getDashboardTotals('Dün'),
+          this.getLast7Graph(),
+          this.getCabinStatsByRange(selectedRange),
+          this.getCitySplittedData(selectedRange)
+        ])
 
-    return {
-      cabins,
-      selectedRangeTotals,
-      allTimeTotals, // Note: getDashboardTotals already has fallback/override logic
-      thisMonthTotals,
-      thisWeekTotals,
-      yesterdayTotals,
-      last7Graph,
-      cabinRangeStats,
-      citySplit
-    }
-  }
+        return {
+          cabins,
+          selectedRangeTotals,
+          allTimeTotals,
+          thisMonthTotals,
+          thisWeekTotals,
+          yesterdayTotals,
+          last7Graph,
+          cabinRangeStats,
+          citySplit
+        }
+      },
+      ['kabin-rapor-comprehensive', selectedRange],
+      { revalidate: 300, tags: ['kabin-rapor'] }
+    )()
+  })
 }
 
 // Singleton instance

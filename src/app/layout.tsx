@@ -36,7 +36,7 @@ export default function RootLayout({
         <Sidebar />
         <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
           <Topbar onToggleMenu={toggleMobileMenu} isOpen={mobileMenuOpen} />
-          <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-20 lg:pb-0">
+          <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-48 lg:pb-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}

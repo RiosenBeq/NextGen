@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { TrendingDown, CreditCard, Receipt, Wallet, Search, Filter } from 'lucide-react';
 import * as motion from "framer-motion/client";
 import { getActiveLocations } from '@/features/ledger/actions';
-import { ExpenseForm } from '@/features/ledger/components/ExpenseForm';
+import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import ExpenseList from '@/features/ledger/components/ExpenseList';
 
 export default function ExpensesPage() {

@@ -38,6 +38,7 @@ const navLinks = [
   { href: "/expenses", label: "Yatırımlar", icon: CreditCard, category: "Finance" },
   { href: "/kabin", label: "Kabin Verisi", icon: Database, category: "Data" },
   { href: "/notes", label: "Notlar", icon: FileText, category: "Other" },
+  { href: "/logs", label: "Sistem Logları", icon: ShieldCheck, category: "System" },
   { href: "/settings", label: "Ayarlar", icon: Settings, category: "System" },
 ];
 

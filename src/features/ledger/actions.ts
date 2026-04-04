@@ -39,9 +39,18 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
 export async function addExpense(data: any) {
   try {
+    // Input validation
+    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
+      return { success: false, error: 'Açıklama alanı zorunludur.' };
+    }
+    if (!data.type || !['ONE_TIME', 'RECURRING'].includes(data.type)) {
+      return { success: false, error: 'Geçersiz ödeme tipi.' };
+    }
+    const description = data.description.trim().slice(0, 500);
+
     const supabase = await createClient();
-    const vatRate = parseFloat(data.vatRate) || 0;
-    const amountWithoutVat = parseFloat(data.amount) || 0;
+    const vatRate = Math.max(0, Math.min(100, parseFloat(data.vatRate) || 0));
+    const amountWithoutVat = Math.max(0, parseFloat(data.amount) || 0);
     const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const { data: record, error } = await supabase
@@ -49,11 +58,11 @@ export async function addExpense(data: any) {
       .insert({
         id: `exp_${crypto.randomUUID()}`,
         locationId: data.locationId || null,
-        description: data.description,
+        description,
         type: data.type,
-        amountWithoutVat: amountWithoutVat,
-        amountWithVat: amountWithVat,
-        vatRate: vatRate,
+        amountWithoutVat,
+        amountWithVat,
+        vatRate,
         isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
@@ -216,17 +225,31 @@ export async function deleteExpense(id: string) {
 
 export async function addInvestment(data: any) {
   try {
+    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
+      return { success: false, error: 'Yatırım açıklaması zorunludur.' };
+    }
+    if (!data.locationId) {
+      return { success: false, error: 'Lokasyon seçimi zorunludur.' };
+    }
+    const amount = Math.max(0, parseFloat(data.amount) || 0);
+    if (amount <= 0) {
+      return { success: false, error: 'Geçerli bir tutar giriniz.' };
+    }
+    const description = data.description.trim().slice(0, 500);
+    const currency = ['TL', 'USD', 'EUR'].includes(data.currency) ? data.currency : 'TL';
+    const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 1000) : '';
+
     const supabase = await createClient();
     const { error } = await supabase
       .from('Investment')
       .insert({
         id: `inv_${crypto.randomUUID()}`,
         locationId: data.locationId,
-        description: data.description,
-        currency: data.currency || 'TL',
-        amountWithoutVat: data.amount,
-        totalAmount: data.amount,
-        notes: data.notes || '',
+        description,
+        currency,
+        amountWithoutVat: amount,
+        totalAmount: amount,
+        notes,
       });
 
     if (error) throw error;
@@ -249,16 +272,24 @@ export async function addInvestment(data: any) {
 
 export async function updateInvestment(id: string, data: any) {
   try {
+    if (!id || typeof id !== 'string') {
+      return { success: false, error: 'Geçersiz yatırım ID.' };
+    }
+    const amount = Math.max(0, parseFloat(data.amount) || 0);
+    const description = (data.description || '').trim().slice(0, 500);
+    const currency = ['TL', 'USD', 'EUR'].includes(data.currency) ? data.currency : 'TL';
+    const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 1000) : '';
+
     const supabase = await createClient();
     const { error } = await supabase
       .from('Investment')
       .update({
         locationId: data.locationId,
-        description: data.description,
-        currency: data.currency || 'TL',
-        amountWithoutVat: data.amount,
-        totalAmount: data.amount,
-        notes: data.notes || '',
+        description,
+        currency,
+        amountWithoutVat: amount,
+        totalAmount: amount,
+        notes,
       })
       .eq('id', id);
 
@@ -297,15 +328,24 @@ export async function deleteInvestment(id: string) {
 
 export async function updateLocationParameters(id: string, data: any) {
   try {
+    if (!id || typeof id !== 'string') {
+      return { success: false, error: 'Geçersiz lokasyon ID.' };
+    }
+    const fixedRent = Math.max(0, parseFloat(data.fixedRent) || 0);
+    const duesAmount = Math.max(0, parseFloat(data.duesAmount) || 0);
+    const revenueShareRate = Math.max(0, Math.min(100, parseFloat(data.revenueShareRate) || 0));
+    const revenueThreshold = Math.max(0, parseFloat(data.revenueThreshold) || 0);
+    const rentVatRate = Math.max(0, Math.min(100, parseFloat(data.rentVatRate) || 0));
+
     const supabase = await createClient();
     const { error } = await supabase
       .from('Location')
       .update({
-        fixedRent: data.fixedRent,
-        duesAmount: data.duesAmount,
-        revenueShareRate: data.revenueShareRate,
-        revenueThreshold: data.revenueThreshold,
-        rentVatRate: data.rentVatRate,
+        fixedRent,
+        duesAmount,
+        revenueShareRate,
+        revenueThreshold,
+        rentVatRate,
       })
       .eq('id', id);
 
@@ -446,10 +486,16 @@ export async function getKabinRaporSessions(locationId: string, monthStr: string
 
 export async function updateSystemParameter(key: string, value: number) {
   try {
+    const allowedKeys = ['SESSION_PRICE_INCL_VAT', 'VAT_RATE', 'CORP_TAX_RATE'];
+    if (!allowedKeys.includes(key)) {
+      return { success: false, error: 'Geçersiz parametre anahtarı.' };
+    }
+    const safeValue = Math.max(0, parseFloat(String(value)) || 0);
+
     const supabase = await createClient();
     const { error } = await supabase
       .from('SystemParameter')
-      .upsert({ key, value }, { onConflict: 'key' });
+      .upsert({ key, value: safeValue }, { onConflict: 'key' });
 
     if (error) throw error;
     revalidatePath('/settings');

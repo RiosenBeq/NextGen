@@ -1,12 +1,28 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { kabinRapor } from '@/lib/kabinRapor'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
+
+    // Auth check: Supabase session veya CRON_SECRET gerekli
+    const cronSecret = request.headers.get('x-cron-secret')
+    const isCron = cronSecret && cronSecret === process.env.CRON_SECRET
+
+    if (!isCron) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        // Cookie-based session yoksa, internal (same-origin) request kabul et
+        const referer = request.headers.get('referer') || ''
+        const host = request.headers.get('host') || ''
+        if (!referer.includes(host)) {
+          return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+      }
+    }
     
     // 1. Fetch live data & current locations
     const [cabins, todayTotals, thisMonthTotals, allTimeTotals, { data: locations }] = await Promise.all([

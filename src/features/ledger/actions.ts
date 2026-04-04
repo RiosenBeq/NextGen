@@ -29,11 +29,11 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
     revalidatePath('/performance');
     revalidatePath('/');
     revalidatePath('/reports');
-    
-    return { success: true, record };
+
+    return { success: true };
   } catch (error: any) {
     console.error("Hata:", error);
-    return { success: false, error: error.message || "Bilinmeyen bir hata oluştu." };
+    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
@@ -65,19 +65,20 @@ export async function addExpense(data: any) {
 
     if (error) throw error;
 
-    await createAuditLog('CREATE', 'Expense', record.id, { 
-      description: data.description, 
+    await createAuditLog('CREATE', 'Expense', record.id, {
+      description: data.description,
       amount: amountWithVat,
-      locationId: data.locationId 
+      locationId: data.locationId
     });
 
     revalidatePath('/expenses');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    return { success: true, record };
+    revalidatePath('/reports');
+    return { success: true };
   } catch (error: any) {
     console.error("Add Expense Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
@@ -109,18 +110,19 @@ export async function updateExpense(id: string, data: any) {
 
     if (error) throw error;
 
-    await createAuditLog('UPDATE', 'Expense', id, { 
-      description: data.description, 
-      amount: amountWithVat 
+    await createAuditLog('UPDATE', 'Expense', id, {
+      description: data.description,
+      amount: amountWithVat
     });
 
     revalidatePath('/expenses');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    return { success: true, record };
+    revalidatePath('/reports');
+    return { success: true };
   } catch (error: any) {
     console.error("Update Expense Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
@@ -349,7 +351,7 @@ export async function getLocationInsights() {
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent,
         duesAmount: loc.duesAmount,
-        revenueShareRate: loc.revenueShareRate || 0,
+        revenueShareRate: loc.revenueShareRate || 15,
         investmentAmount: totalInvestment,
       });
 
@@ -361,7 +363,7 @@ export async function getLocationInsights() {
            nayaxCommissionRate: 2,
            fixedRent: loc.fixedRent,
            duesAmount: loc.duesAmount,
-           revenueShareRate: loc.revenueShareRate || 0,
+           revenueShareRate: loc.revenueShareRate || 15,
         });
         cumulativeNetCash += pCalc.netCash;
       });

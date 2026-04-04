@@ -48,7 +48,7 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 0,
         duesAmount: loc.duesAmount || 0,
-        revenueShareRate: loc.revenueShareRate || 0,
+        revenueShareRate: loc.revenueShareRate || 15,
       }
     );
   }, [watchedValues, locations]);

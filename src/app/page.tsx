@@ -68,7 +68,7 @@ export default async function DashboardPage() {
           nayaxCommissionRate: 2,
           fixedRent: perf.location.fixedRent,
           duesAmount: perf.location.duesAmount,
-          revenueShareRate: perf.location.revenueShareRate || 0,
+          revenueShareRate: perf.location.revenueShareRate || 15,
         }
       );
 

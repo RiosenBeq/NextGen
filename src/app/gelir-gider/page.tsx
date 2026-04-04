@@ -54,7 +54,7 @@ export default function GelirGiderPage(props: {
       // Live Data Sync
       let liveData: any = null;
       try {
-        liveData = await kabinRapor.getComprehensiveData('Tüm Zamanlar');
+        liveData = await kabinRapor.getComprehensiveData('Bu Ay');
       } catch (e) {
         console.error("Live Sync Error:", e);
       }
@@ -225,19 +225,33 @@ export default function GelirGiderPage(props: {
         </div>
 
         {data.uniqueMonths.length > 0 && (
-          <div className="flex items-center gap-4 py-4 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-6 py-4 overflow-x-auto no-scrollbar">
              <Link
                href={`/gelir-gider?location=${filterLocation}&month=&category=${filterCategory}`}
-               className={cn("px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest whitespace-nowrap border transition-all", 
-                 !filterMonth ? 'bg-emerald-500 border-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'border-white/5 text-zinc-500 hover:border-white/20 hover:text-white')}
-             >Tüm Aylar</Link>
-             {data.uniqueMonths.slice(0, 12).map(m => (
-               <Link key={m}
-                 href={`/gelir-gider?location=${filterLocation}&month=${m}&category=${filterCategory}`}
-                 className={cn("px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest whitespace-nowrap border transition-all", 
-                   filterMonth === m ? 'bg-emerald-500 border-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'border-white/5 text-zinc-500 hover:border-white/20 hover:text-white')}
-               >{m}</Link>
-             ))}
+               className={cn("px-5 py-2.5 rounded-xl text-[10px] font-bold tracking-widest whitespace-nowrap border transition-all shadow-sm flex items-center gap-2", 
+                 !filterMonth ? 'bg-white text-black border-white shadow-emerald-500/10' : 'border-white/10 text-zinc-500 hover:border-white/20 hover:text-white')}
+             >
+               <ListFilter className="w-3 h-3" />
+               TÜM ZAMANLAR
+             </Link>
+
+             <div className="h-8 w-[1px] bg-white/5" />
+
+             <div className="relative group flex items-center">
+                <div className="absolute left-4 pointer-events-none">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-500 group-focus-within:text-white transition-colors" />
+                </div>
+                <input 
+                  type="month" 
+                  value={filterMonth}
+                  onChange={(e) => {
+                    const m = e.target.value;
+                    window.location.href = `/gelir-gider?location=${filterLocation}&month=${m}&category=${filterCategory}`;
+                  }}
+                  className="bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all cursor-pointer appearance-none min-w-[200px]"
+                  style={{ colorScheme: 'dark' }}
+                />
+             </div>
           </div>
         )}
       </header>

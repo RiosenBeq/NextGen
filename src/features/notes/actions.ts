@@ -19,14 +19,16 @@ export async function getNotes() {
 
 export async function addNote(title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
+  const id = `note_${crypto.randomUUID()}`;
+  
   const { data, error } = await supabase
     .from('Note')
-    .insert([{ title, content, color }])
+    .insert([{ id, title, content, color, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
     .select()
     .single();
 
   if (error) {
-    console.error('addNote error:', error);
+    console.error('addNote error details:', error);
     return { success: false, error: error.message };
   }
 

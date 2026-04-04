@@ -4,7 +4,10 @@ import { use, useEffect, useState } from 'react';
 import { calculateMonthlyCashFlow, CalculationResult } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
-import { TrendingUp, TrendingDown, Target, Calculator, BarChart3, Percent, ArrowUpRight, ArrowDownRight, Zap, Target as TargetIcon, CreditCard } from 'lucide-react';
+import { 
+  TrendingUp, TrendingDown, Target, Calculator, BarChart3, Percent, 
+  ArrowUpRight, ArrowDownRight, Zap, Target as TargetIcon, CreditCard, Calendar 
+} from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -187,21 +190,19 @@ export default function FinansalTablo() {
         </div>
 
         <div className="flex gap-4 flex-wrap items-center">
-          <div className="flex items-center gap-2 bg-white/[0.03] border border-white/5 p-1 rounded-xl">
-             {data.totals.uniqueMonths.slice(0, 6).map((m: string) => (
-               <button 
-                 key={m}
-                 onClick={() => setFilterMonth(m)}
-                 className={cn(
-                   "px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all uppercase whitespace-nowrap",
-                   filterMonth === m ? "bg-white text-black shadow-xl" : "text-zinc-500 hover:text-white"
-                 )}
-               >
-                 {new Date(m + '-01').toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' })}
-               </button>
-             ))}
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Calendar className="w-4 h-4 text-indigo-400 group-focus-within:text-white transition-colors" />
+            </div>
+            <input 
+              type="month" 
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm font-bold text-white outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all cursor-pointer appearance-none"
+              style={{ colorScheme: 'dark' }}
+            />
           </div>
-          <div className="premium-card px-6 py-4 bg-white/[0.02] border-white/5">
+          <div className="premium-card px-6 py-3.5 bg-white/[0.02] border-white/5">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Bilet Fiyatı</p>
             <p className="text-xl font-bold text-white italic">₺{data.params.sessionPrice}</p>
           </div>

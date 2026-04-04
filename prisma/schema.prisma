@@ -26,6 +26,7 @@ model Location {
   performances     MonthlyPerformance[]
   expenses         Expense[]
   investments      Investment[]
+  cabins           Cabin[]
 }
 
 model MonthlyPerformance {
@@ -39,6 +40,7 @@ model MonthlyPerformance {
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  lastSyncAt         DateTime? // Tracks KabinRapor auto-sync
 }
 
 model Expense {
@@ -81,6 +83,8 @@ model Cabin {
   firmId             Int                
   cabinName          String
   cabinLocation      String
+  locationId         String?            // Linked AVM Location
+  location           Location?          @relation(fields: [locationId], references: [id])
   cabinPrice         Float
   startDate          DateTime?
   macAddresses       String?

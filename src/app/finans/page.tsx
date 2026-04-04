@@ -10,8 +10,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
-
-import { kabinRapor } from '@/lib/kabinRapor';
+import { RefreshCw } from 'lucide-react';
 
 export default function FinansalTablo() {
   const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -22,26 +21,31 @@ export default function FinansalTablo() {
     scenarios: any[];
     params: any;
     breakEven: any;
-    liveData: any;
-    isLive: boolean;
+    isSyncing: boolean;
   } | null>(null);
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const triggerSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/sync-kabin');
+      const result = await res.json();
+      if (result.success) {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Sync failed:", e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
       const supabase = createClient();
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
-      
-      // Live Data Sync for the selected month (Improved to handle any filterMonth)
-      let liveData = null;
-      let isLive = false;
-      try {
-        const rangeToFetch = filterMonth || 'Bu Ay';
-        liveData = await kabinRapor.getComprehensiveData(rangeToFetch as any);
-        isLive = true;
-      } catch (e) {
-        console.error("Live data fetch failed on Finans:", e);
-      }
 
       const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
       const { data: performances } = await supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: true });
@@ -80,34 +84,6 @@ export default function FinansalTablo() {
           avmSummaries[loc.id].totalNetCash += calc.netCash;
         }
       }
-
-      // Sync with Live Data
-      if (liveData?.citySplit?.cities) {
-        for (const [cityName, cityData] of Object.entries(liveData.citySplit.cities) as any) {
-           const matchingLoc = (locations || []).find(l => l.name.toLowerCase().includes(cityName.toLowerCase()));
-           if (!matchingLoc) continue;
-
-           const liveSessions = cityData.sessions;
-           const calc = calculateMonthlyCashFlow(liveSessions, 0, {
-             sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
-             fixedRent: matchingLoc.fixedRent, duesAmount: matchingLoc.duesAmount,
-             revenueShareRate: matchingLoc.revenueShareRate || 15,
-           });
-
-           avmSummaries[matchingLoc.id] = {
-             name: matchingLoc.name,
-             totalSessions: liveSessions,
-             totalGrossRevenue: calc.grossRevenue,
-             totalCommission: calc.totalCommission,
-             totalIyzico: calc.iyzicoCommission,
-             totalNayax: calc.nayaxCommission,
-             totalRevenueShare: calc.revenueShare,
-             totalAvmExpense: calc.totalAvmExpense,
-             totalNetCash: calc.netCash,
-             fixedRent: matchingLoc.fixedRent,
-             duesAmount: matchingLoc.duesAmount,
-           };
-        }
       }
 
       const totalGross = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalGrossRevenue, 0);
@@ -156,8 +132,7 @@ export default function FinansalTablo() {
         scenarios,
         params: { sessionPrice, netRevenuePerSession },
         breakEven: { total: breakEvenTotal, perAvm: Math.ceil(breakEvenTotal / (locations?.length || 1)) },
-        liveData,
-        isLive
+        isSyncing: false
       });
     }
     fetchData();
@@ -172,12 +147,10 @@ export default function FinansalTablo() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-3 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20">Tahmini Verimlilik</span>
-            {data.isLive && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 animate-pulse">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Canlı Senkron</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">KabinRapor Senkronize</span>
+            </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-white flex items-center gap-3">
              <TargetIcon className="w-8 h-8 text-zinc-500" />
@@ -205,6 +178,16 @@ export default function FinansalTablo() {
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Bilet Fiyatı</p>
             <p className="text-xl font-bold text-white italic">₺{data.params.sessionPrice}</p>
           </div>
+          
+          <button 
+            onClick={triggerSync}
+            disabled={isSyncing}
+            className="premium-card p-3.5 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20 transition-all group flex items-center gap-2"
+            title="KabinRapor'dan Güncel Verileri Çek"
+          >
+            <RefreshCw className={cn("w-4 h-4 text-indigo-400 group-hover:rotate-180 transition-transform duration-700", isSyncing && "animate-spin")} />
+            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pr-1">Senkronize Et</span>
+          </button>
         </div>
       </header>
 

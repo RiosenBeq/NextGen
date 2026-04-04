@@ -32,21 +32,15 @@ export default function FinansalTablo() {
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
       
-      // Fetch Live Data for the selected month
+      // Live Data Sync for the selected month (Improved to handle any filterMonth)
       let liveData = null;
       let isLive = false;
       try {
-        // Find if the filter is current month
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        if (filterMonth === currentMonth) {
-          liveData = await kabinRapor.getComprehensiveData('Bu Ay');
-          isLive = true;
-        } else {
-           // For historical months, we typically rely on DB, but could fetch specific month if API supports it
-           // For now, let's stick to DB for historical
-        }
+        const rangeToFetch = filterMonth || 'Bu Ay';
+        liveData = await kabinRapor.getComprehensiveData(rangeToFetch as any);
+        isLive = true;
       } catch (e) {
-        console.error("Live data fetch failed:", e);
+        console.error("Live data fetch failed on Finans:", e);
       }
 
       const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
@@ -72,20 +66,23 @@ export default function FinansalTablo() {
               name: loc.name, totalSessions: 0, totalGrossRevenue: 0,
               totalCommission: 0, totalRevenueShare: 0, totalAvmExpense: 0,
               totalNetCash: 0, fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
+              totalIyzico: 0, totalNayax: 0,
             };
           }
 
           avmSummaries[loc.id].totalSessions += perf.sessionCount;
           avmSummaries[loc.id].totalGrossRevenue += calc.grossRevenue;
           avmSummaries[loc.id].totalCommission += calc.totalCommission;
+          avmSummaries[loc.id].totalIyzico += calc.iyzicoCommission;
+          avmSummaries[loc.id].totalNayax += calc.nayaxCommission;
           avmSummaries[loc.id].totalRevenueShare += calc.revenueShare;
           avmSummaries[loc.id].totalAvmExpense += calc.totalAvmExpense;
           avmSummaries[loc.id].totalNetCash += calc.netCash;
         }
       }
 
-      // If filtering current month and have live data, override/supplement
-      if (isLive && liveData?.citySplit?.cities) {
+      // Sync with Live Data
+      if (liveData?.citySplit?.cities) {
         for (const [cityName, cityData] of Object.entries(liveData.citySplit.cities) as any) {
            const matchingLoc = (locations || []).find(l => l.name.toLowerCase().includes(cityName.toLowerCase()));
            if (!matchingLoc) continue;
@@ -97,12 +94,13 @@ export default function FinansalTablo() {
              revenueShareRate: matchingLoc.revenueShareRate || 15,
            });
 
-           // Override summary for this location with LIVE data for current month
            avmSummaries[matchingLoc.id] = {
              name: matchingLoc.name,
              totalSessions: liveSessions,
              totalGrossRevenue: calc.grossRevenue,
              totalCommission: calc.totalCommission,
+             totalIyzico: calc.iyzicoCommission,
+             totalNayax: calc.nayaxCommission,
              totalRevenueShare: calc.revenueShare,
              totalAvmExpense: calc.totalAvmExpense,
              totalNetCash: calc.netCash,
@@ -112,11 +110,13 @@ export default function FinansalTablo() {
         }
       }
 
-      const totalGross = Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalGrossRevenue, 0);
-      const totalSessions = Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalSessions, 0);
+      const totalGross = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalGrossRevenue, 0);
+      const totalSessions = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalSessions, 0);
+      const totalIyzico = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalIyzico, 0);
+      const totalNayax = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNayax, 0);
 
       const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
-      const netRevenuePerSession = sessionPrice * 0.96; // 300 - 4%
+      const netRevenuePerSession = sessionPrice * 0.96; 
       
       const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
 
@@ -137,11 +137,8 @@ export default function FinansalTablo() {
         };
       });
 
-      // Get Unique Months for filter from performances
       const uniqueMonths = Array.from(new Set(performances?.map(p => new Date(p.month).toISOString().slice(0, 7)) || [])).sort().reverse();
-      if (!uniqueMonths.includes(new Date().toISOString().slice(0, 7))) {
-         uniqueMonths.unshift(new Date().toISOString().slice(0, 7));
-      }
+      if (!uniqueMonths.includes(new Date().toISOString().slice(0, 7))) uniqueMonths.unshift(new Date().toISOString().slice(0, 7));
 
       setData({
         locations: locations || [],
@@ -149,9 +146,11 @@ export default function FinansalTablo() {
         totals: {
           gross: totalGross,
           sessions: totalSessions,
-          net: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalNetCash, 0),
-          commission: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalCommission, 0),
-          avmExpense: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalAvmExpense, 0),
+          net: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNetCash, 0),
+          commission: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalCommission, 0),
+          iyzico: totalIyzico,
+          nayax: totalNayax,
+          avmExpense: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0),
           uniqueMonths
         },
         scenarios,
@@ -213,8 +212,8 @@ export default function FinansalTablo() {
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {[
           { label: "TOPLAM CİRO", value: data.totals.gross, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-          { label: "iyzico (%2)", value: data.totals.commission / 2, icon: Percent, color: "text-rose-400", bg: "bg-rose-500/10", subtitle: "Anlık Kesinti" },
-          { label: "Nayax (%2)", value: data.totals.commission / 2, icon: CreditCard, color: "text-indigo-400", bg: "bg-indigo-500/10", subtitle: "Sonradan Fatura" },
+          { label: "iyzico (%2)", value: data.totals.iyzico, icon: Percent, color: "text-rose-400", bg: "bg-rose-500/10", subtitle: "Anlık Kesinti" },
+          { label: "Nayax (%2)", value: data.totals.nayax, icon: CreditCard, color: "text-indigo-400", bg: "bg-indigo-500/10", subtitle: "Sonradan Fatura" },
           { label: "AVM GİDERLERİ", value: data.totals.avmExpense, icon: TrendingDown, color: "text-amber-400", bg: "bg-amber-500/10" },
           { label: "REEL KAZANÇ", value: data.totals.net, icon: BarChart3, color: data.totals.net >= 0 ? "text-indigo-400" : "text-rose-400", bg: data.totals.net >= 0 ? "bg-indigo-500/10" : "bg-rose-500/10" },
         ].map((kpi, idx) => (
@@ -322,6 +321,34 @@ export default function FinansalTablo() {
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+      {/* System Documentation / Q&A Section */}
+      <section className="space-y-6 pt-10">
+        <div className="flex items-center gap-4">
+           <h2 className="text-lg font-black text-white uppercase tracking-[0.2em] italic">Parametre Bilgi Merkezi</h2>
+           <div className="flex-1 h-[1px] bg-white/[0.04]" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+           {[
+             { q: "Sistem cirosu nasıl hesaplanır?", a: "Seans başına brüt ücret (şu an ₺300) üzerinden KDV düşülmeden hesaplanır. KabinRapor senkronizasyonu her 5 dakikada bir güncellenir." },
+             { q: "Kesintiler (iyzico/Nayax) nedir?", a: "Pos ve ödeme sistemleri komisyonlarıdır. iyzico %2 anlık olarak banka hesabından düşerken, Nayax %2 aylık olarak ayrıca fatura edilir." },
+             { q: "AVM kira ve ciro payı modeli nedir?", a: "Sözleşmeli kira tutarı (Ham Kira + %20 KDV) ve aidata ek olarak, cironun belirli bir yüzdesini aşarsa 'Ciro Payı' devreye girer." },
+             { q: "Bütün giderlere KDV dahil mi?", a: "Evet, bu tablodaki tüm giderler (Kira, Aidat, Komisyon ve Ek Masraflar) KDV dahil reel ödeme tutarlarını yansıtır." },
+           ].map((item, idx) => (
+             <div key={idx} className="premium-card p-8 bg-white/[0.01] border-white/5 group hover:bg-white/[0.02] transition-all">
+                <div className="flex gap-4">
+                   <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20 group-hover:scale-110 transition-transform">
+                      <span className="text-[10px] font-black text-indigo-400">Q</span>
+                   </div>
+                   <div className="space-y-3">
+                      <h4 className="text-sm font-black text-white italic tracking-tight">{item.q}</h4>
+                      <p className="text-xs text-zinc-500 leading-relaxed font-medium">{item.a}</p>
+                   </div>
+                </div>
+             </div>
+           ))}
         </div>
       </section>
     </div>

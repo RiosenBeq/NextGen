@@ -164,6 +164,19 @@ export class KabinRaporService {
     let result = await fetchRange(range)
     const normalizedRange = range.trim();
 
+    // CUSTOM RANGE HANDLING: If range is "YYYY-MM", attempt to fetch or map to "Bu Ay" synonyms
+    const isMonthString = /^\d{4}-\d{2}$/.test(normalizedRange);
+    if (isMonthString) {
+      const currentMonthId = new Date().toISOString().slice(0, 7);
+      if (normalizedRange === currentMonthId) {
+        result = await fetchRange('Bu Ay');
+      } else {
+        // For past months, we try to pass the string directly as it might be supported by the API 
+        // Or we fallback to the cached data if it were to exist (though here we fetch fresh)
+        result = await fetchRange(normalizedRange);
+      }
+    }
+
     // FALLBACK LOGIC: If range fetch fails or is 0, try synonyms or larger ranges
     if (!result || result.total_revenue === 0) {
       if (normalizedRange === 'Bu Hafta') {

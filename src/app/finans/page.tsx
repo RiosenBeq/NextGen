@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { kabinRapor } from '@/lib/kabinRapor';
 
 export default function FinansalTablo() {
+  const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [data, setData] = useState<{
     locations: any[];
     avmSummaries: any;
@@ -19,6 +20,7 @@ export default function FinansalTablo() {
     params: any;
     breakEven: any;
     liveData: any;
+    isLive: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -27,10 +29,19 @@ export default function FinansalTablo() {
       const params = await getSystemParameters();
       const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
       
-      // Fetch Live Data
+      // Fetch Live Data for the selected month
       let liveData = null;
+      let isLive = false;
       try {
-        liveData = await kabinRapor.getComprehensiveData('Bu Yıl');
+        // Find if the filter is current month
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        if (filterMonth === currentMonth) {
+          liveData = await kabinRapor.getComprehensiveData('Bu Ay');
+          isLive = true;
+        } else {
+           // For historical months, we typically rely on DB, but could fetch specific month if API supports it
+           // For now, let's stick to DB for historical
+        }
       } catch (e) {
         console.error("Live data fetch failed:", e);
       }
@@ -43,6 +54,9 @@ export default function FinansalTablo() {
         for (const perf of performances) {
           const loc = perf.location;
           if (!loc) continue;
+
+          const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
+          if (filterMonth && perfMonthStr !== filterMonth) continue;
 
           const calc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount || 0, {
             sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
@@ -67,9 +81,36 @@ export default function FinansalTablo() {
         }
       }
 
-      // Merge Live Data into summaries if missing or for comparison
-      const totalGross = liveData?.allTimeTotals?.total_revenue || Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalGrossRevenue, 0);
-      const totalSessions = liveData?.allTimeTotals?.total_paid_sessions || Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalSessions, 0);
+      // If filtering current month and have live data, override/supplement
+      if (isLive && liveData?.citySplit?.cities) {
+        for (const [cityName, cityData] of Object.entries(liveData.citySplit.cities) as any) {
+           const matchingLoc = (locations || []).find(l => l.name.toLowerCase().includes(cityName.toLowerCase()));
+           if (!matchingLoc) continue;
+
+           const liveSessions = cityData.sessions;
+           const calc = calculateMonthlyCashFlow(liveSessions, 0, {
+             sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
+             fixedRent: matchingLoc.fixedRent, duesAmount: matchingLoc.duesAmount,
+             revenueShareRate: matchingLoc.revenueShareRate || 15,
+           });
+
+           // Override summary for this location with LIVE data for current month
+           avmSummaries[matchingLoc.id] = {
+             name: matchingLoc.name,
+             totalSessions: liveSessions,
+             totalGrossRevenue: calc.grossRevenue,
+             totalCommission: calc.totalCommission,
+             totalRevenueShare: calc.revenueShare,
+             totalAvmExpense: calc.totalAvmExpense,
+             totalNetCash: calc.netCash,
+             fixedRent: matchingLoc.fixedRent,
+             duesAmount: matchingLoc.duesAmount,
+           };
+        }
+      }
+
+      const totalGross = Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalGrossRevenue, 0);
+      const totalSessions = Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalSessions, 0);
 
       const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
       const netRevenuePerSession = sessionPrice * 0.96; // 300 - 4%
@@ -77,7 +118,6 @@ export default function FinansalTablo() {
       const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
 
       const scenarios = [200, 370, 500, 750, 1000, 1500].map(sessions => {
-        // Use full calculation engine for scenarios to ensure AVM Payı is deducted
         const mockCalc = calculateMonthlyCashFlow(sessions, 0, {
           sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
           fixedRent: (locations?.[0]?.fixedRent || 40000), 
@@ -90,9 +130,15 @@ export default function FinansalTablo() {
           monthlyNet: sessions * netRevenuePerSession,
           monthlyProfit: mockCalc.netCash,
           yearlyProfit: mockCalc.netCash * 12,
-          monthlyPerPartner: mockCalc.okanShare, // Uses the engine's /4 split (already has AVM Payı deducted)
+          monthlyPerPartner: mockCalc.okanShare,
         };
       });
+
+      // Get Unique Months for filter from performances
+      const uniqueMonths = Array.from(new Set(performances?.map(p => new Date(p.month).toISOString().slice(0, 7)) || [])).sort().reverse();
+      if (!uniqueMonths.includes(new Date().toISOString().slice(0, 7))) {
+         uniqueMonths.unshift(new Date().toISOString().slice(0, 7));
+      }
 
       setData({
         locations: locations || [],
@@ -103,15 +149,17 @@ export default function FinansalTablo() {
           net: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalNetCash, 0),
           commission: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalCommission, 0),
           avmExpense: Object.values(avmSummaries).reduce((s: any, a: any) => s + a.totalAvmExpense, 0),
+          uniqueMonths
         },
         scenarios,
         params: { sessionPrice, netRevenuePerSession },
         breakEven: { total: breakEvenTotal, perAvm: Math.ceil(breakEvenTotal / (locations?.length || 1)) },
-        liveData
+        liveData,
+        isLive
       });
     }
     fetchData();
-  }, []);
+  }, [filterMonth]);
 
   if (!data) return <div className="h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" /></div>;
 
@@ -120,8 +168,14 @@ export default function FinansalTablo() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/10">Tahmini Verimlilik</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-3 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20">Tahmini Verimlilik</span>
+            {data.isLive && (
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Canlı Senkron</span>
+              </div>
+            )}
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-white flex items-center gap-3">
              <TargetIcon className="w-8 h-8 text-zinc-500" />
@@ -132,14 +186,24 @@ export default function FinansalTablo() {
           </p>
         </div>
 
-        <div className="flex gap-4 flex-wrap">
-          <div className="premium-card px-6 py-4 bg-white/[0.02]">
+        <div className="flex gap-4 flex-wrap items-center">
+          <div className="flex items-center gap-2 bg-white/[0.03] border border-white/5 p-1 rounded-xl">
+             {data.totals.uniqueMonths.slice(0, 6).map((m: string) => (
+               <button 
+                 key={m}
+                 onClick={() => setFilterMonth(m)}
+                 className={cn(
+                   "px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all uppercase whitespace-nowrap",
+                   filterMonth === m ? "bg-white text-black shadow-xl" : "text-zinc-500 hover:text-white"
+                 )}
+               >
+                 {new Date(m + '-01').toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' })}
+               </button>
+             ))}
+          </div>
+          <div className="premium-card px-6 py-4 bg-white/[0.02] border-white/5">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Bilet Fiyatı</p>
             <p className="text-xl font-bold text-white italic">₺{data.params.sessionPrice}</p>
-          </div>
-          <div className="premium-card px-6 py-4 bg-emerald-500/[0.02]">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Net / Oturum</p>
-            <p className="text-xl font-bold text-emerald-400 italic">₺{Math.round(data.params.netRevenuePerSession)}</p>
           </div>
         </div>
       </header>

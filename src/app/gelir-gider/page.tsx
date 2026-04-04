@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { calculateMonthlyCashFlow, CalculationResult } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
+import { kabinRapor } from '@/lib/kabinRapor';
 import * as motion from "framer-motion/client";
 import { 
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, BarChart3, 
@@ -49,17 +50,25 @@ export default function GelirGiderPage(props: {
       const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
       const { data: performances } = await supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false });
       const { data: expenses } = await supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false });
+      
+      // Live Data Sync
+      let liveData: any = null;
+      try {
+        liveData = await kabinRapor.getComprehensiveData('Tüm Zamanlar');
+      } catch (e) {
+        console.error("Live Sync Error:", e);
+      }
 
       const monthlyEntries: any[] = [];
+      
+      // Step 1: Process Database Performances
       if (performances) {
         for (const perf of performances) {
           const loc = perf.location;
           if (!loc) continue;
 
-          const perfMonth = new Date(perf.month).toISOString().slice(0, 7);
-          if (filterMonth && perfMonth !== filterMonth) continue;
-          if (filterLocation !== 'all' && loc.id !== filterLocation) continue;
-
+          const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
+          
           const calc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount || 0, {
             sessionPrice,
             iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
@@ -68,6 +77,7 @@ export default function GelirGiderPage(props: {
           });
 
           monthlyEntries.push({
+            monthId: perfMonthStr,
             month: new Date(perf.month).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' }),
             locationName: loc.name,
             locationId: loc.id,
@@ -88,9 +98,66 @@ export default function GelirGiderPage(props: {
         }
       }
 
+      // Step 2: Inject Live Data if not present in DB or for the CURRENT month
+      if (liveData?.citySplit?.cities) {
+        const currentMonthId = new Date().toISOString().slice(0, 7);
+        const cities = liveData.citySplit.cities;
+        
+        for (const [cityName, cityData] of Object.entries(cities) as any) {
+           const matchingLoc = (locations || []).find(l => l.name.toLowerCase().includes(cityName.toLowerCase()));
+           if (!matchingLoc) continue;
+
+           // Check if we already have this month in the list
+           const existingIndex = monthlyEntries.findIndex(e => e.monthId === currentMonthId && e.locationId === matchingLoc.id);
+           
+           const liveSessions = cityData.sessions;
+           const calc = calculateMonthlyCashFlow(liveSessions, 0, {
+             sessionPrice,
+             iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
+             fixedRent: matchingLoc.fixedRent, duesAmount: matchingLoc.duesAmount,
+             revenueShareRate: matchingLoc.revenueShareRate || 15,
+           });
+
+           const liveEntry = {
+             monthId: currentMonthId,
+             month: new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' }),
+             locationName: matchingLoc.name,
+             locationId: matchingLoc.id,
+             sessions: liveSessions,
+             grossRevenue: calc.grossRevenue,
+             totalExpense: calc.totalExpense,
+             netCash: calc.netCash,
+             totalCommission: calc.totalCommission,
+             revenueShare: calc.revenueShare,
+             okanShare: calc.okanShare,
+             talhaShare: calc.talhaShare,
+             furkanShare: calc.furkanShare,
+             alpShare: calc.alpShare,
+             iyzicoComm: calc.iyzicoCommission,
+             nayaxComm: calc.nayaxCommission,
+             avmExpense: calc.totalAvmExpense,
+             isLive: true
+           };
+
+           if (existingIndex > -1) {
+             monthlyEntries[existingIndex] = liveEntry; // Override with live data
+           } else {
+             monthlyEntries.unshift(liveEntry);
+           }
+        }
+      }
+
+      // Apply Page Filters
+      const filteredMonthlyEntries = monthlyEntries.filter(entry => {
+        if (filterMonth && entry.monthId !== filterMonth) return false;
+        if (filterLocation !== 'all' && entry.locationId !== filterLocation) return false;
+        return true;
+      });
+
       const filteredExpenses = (expenses || []).filter(exp => {
         if (filterCategory !== 'all' && exp.category !== filterCategory) return false;
         if (filterMonth && exp.month && exp.month !== filterMonth) return false;
+        if (filterLocation !== 'all' && exp.locationId !== filterLocation) return false;
         return true;
       });
 
@@ -102,18 +169,18 @@ export default function GelirGiderPage(props: {
 
       setData({
         locations: locations || [],
-        monthlyEntries,
+        monthlyEntries: filteredMonthlyEntries,
         filteredExpenses,
         totals: {
-          gross: monthlyEntries.reduce((s, e) => s + e.grossRevenue, 0),
-          expense: monthlyEntries.reduce((s, e) => s + e.totalExpense, 0) + filteredExpenses.reduce((s, e) => s + (e.amountWithVat || 0), 0),
-          net: monthlyEntries.reduce((s, e) => s + e.netCash, 0),
-          sessions: monthlyEntries.reduce((s, e) => s + e.sessions, 0),
-          commission: monthlyEntries.reduce((s, e) => s + e.totalCommission, 0),
-          revShare: monthlyEntries.reduce((s, e) => s + e.revenueShare, 0)
+          gross: filteredMonthlyEntries.reduce((s, e) => s + e.grossRevenue, 0),
+          expense: filteredMonthlyEntries.reduce((s, e) => s + e.totalExpense, 0) + filteredExpenses.reduce((s, e) => s + (e.amountWithVat || 0), 0),
+          net: filteredMonthlyEntries.reduce((s, e) => s + e.netCash, 0),
+          sessions: filteredMonthlyEntries.reduce((s, e) => s + e.sessions, 0),
+          commission: filteredMonthlyEntries.reduce((s, e) => s + e.totalCommission, 0),
+          revShare: filteredMonthlyEntries.reduce((s, e) => s + e.revenueShare, 0)
         },
         categoryTotals,
-        uniqueMonths: Array.from(new Set((performances || []).map(p => new Date(p.month).toISOString().slice(0, 7)))).sort().reverse()
+        uniqueMonths: Array.from(new Set(monthlyEntries.map(e => e.monthId))).sort().reverse()
       });
     }
     fetchData();

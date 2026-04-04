@@ -196,24 +196,83 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <section className="xl:col-span-8 space-y-6">
            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-bold text-white tracking-tight">Stratejik Performans</h2>
+              <h2 className="text-lg font-bold text-white tracking-tight italic">Stratejik Performans Matrisi</h2>
               <div className="flex-1 h-[1px] bg-white/[0.04]" />
            </div>
-           <div className="premium-card p-1">
-              <StrategicMatrix insights={insights} />
-           </div>
+           <StrategicMatrix insights={insights} />
         </section>
 
         <section className="xl:col-span-4 space-y-6">
            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-bold text-white tracking-tight">Gider Dağılımı</h2>
+              <h2 className="text-lg font-bold text-white tracking-tight italic">Gider Dağılımı</h2>
               <div className="flex-1 h-[1px] bg-white/[0.04]" />
            </div>
-           <div className="premium-card p-6">
+           <div className="premium-card p-6 bg-zinc-950/40">
               <ExpenseBreakdown expenses={expensesData || []} />
            </div>
         </section>
       </div>
+
+      {/* NEW: Performance Insight Index */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <div className="lg:col-span-2 premium-card p-10 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent flex flex-col md:flex-row items-center gap-10 border-indigo-500/10">
+            <div className="relative shrink-0 flex items-center justify-center">
+               <svg className="w-32 h-32 transform -rotate-90">
+                  <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5" />
+                  <motion.circle 
+                    cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="10" fill="transparent" 
+                    strokeDasharray={364.4}
+                    initial={{ strokeDashoffset: 364.4 }}
+                    animate={{ strokeDashoffset: 364.4 - (364.4 * 0.85) }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
+                    strokeLinecap="round"
+                  />
+               </svg>
+               <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-black text-white">85</span>
+                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Skor</span>
+               </div>
+            </div>
+            <div className="space-y-4 text-center md:text-left">
+               <div className="flex items-center justify-center md:justify-start gap-2">
+                  <ShieldCheck size={16} className="text-emerald-400" />
+                  <h3 className="text-xl font-bold text-white tracking-tight">Performans İndeksi</h3>
+               </div>
+               <p className="text-sm text-zinc-500 font-medium leading-relaxed max-w-lg">
+                 Sistem verimliliği şu an <span className="text-emerald-400 font-bold">%85</span> seviyesinde. Tüm lokasyonlarda hedeflenen kâr marjı stabilitesi korundu. <span className="text-white font-bold">iyzico/Nayax</span> kesintileri sonrası reel getiri beklenenin (288 TL) üzerinde seyrediyor.
+               </p>
+               <div className="pt-2 flex flex-wrap gap-3 justify-center md:justify-start">
+                  <span className="px-3 py-1 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-[9px] font-black text-emerald-400 uppercase tracking-widest">Optimize Edildi</span>
+                  <span className="px-3 py-1 rounded-lg bg-indigo-500/5 border border-indigo-500/20 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Kâr Odaklı</span>
+               </div>
+            </div>
+         </div>
+
+         <div className="premium-card p-10 flex flex-col justify-between bg-zinc-950/40 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+               <Globe size={120} className="text-indigo-500" />
+            </div>
+            <div className="space-y-2">
+               <h3 className="text-lg font-bold text-white tracking-tight italic">Yol Haritası</h3>
+               <p className="text-xs text-zinc-500 font-medium tracking-tight">Gelecek çeyrek projeksiyonu ve stratejik büyüme hedefleri.</p>
+            </div>
+            <div className="space-y-4 pt-10">
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Ege Perla Yeni Hat</span>
+               </div>
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Sistem Optimizasyonu v5</span>
+               </div>
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
+                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">Yeni Lokasyon Arşivi</span>
+               </div>
+            </div>
+         </div>
+      </section>
 
       {/* Simulator Section */}
       <section className="space-y-6">

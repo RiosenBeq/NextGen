@@ -6,8 +6,10 @@ import { LocationSettingsForm } from '@/features/ledger/components/LocationSetti
 import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
 import { Settings, ShieldCheck, Database, HelpCircle, HardDrive, MapPin, Sliders } from 'lucide-react';
 import * as motion from "framer-motion/client";
+import { SystemDocs } from '@/features/ledger/components/SystemDocs';
 
 export default function SettingsPage() {
+  const [showDocs, setShowDocs] = useState(false);
   const [data, setData] = useState<{
     locations: any[];
     parameters: Record<string, number>;
@@ -25,7 +27,9 @@ export default function SettingsPage() {
   if (!data) return <div className="h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" /></div>;
 
   return (
-    <div className="p-6 md:p-10 space-y-12 max-w-[1400px] mx-auto min-h-screen animate-fade-in">
+    <div className="p-6 md:p-10 space-y-12 max-w-[1400px] mx-auto min-h-screen animate-fade-in relative">
+      <SystemDocs isOpen={showDocs} onClose={() => setShowDocs(false)} />
+      
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
         <div className="space-y-4">
@@ -83,7 +87,10 @@ export default function SettingsPage() {
                  </div>
               </div>
 
-              <button className="w-full mt-10 py-4 px-6 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2 group">
+              <button 
+                onClick={() => setShowDocs(true)}
+                className="w-full mt-10 py-4 px-6 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
+              >
                  <HelpCircle size={14} className="group-hover:text-indigo-400 transition-colors" />
                  Sistem Dökümantasyonu
               </button>
@@ -110,7 +117,7 @@ export default function SettingsPage() {
              </div>
 
              <div className="space-y-6">
-                {data.locations.map((loc) => (
+                {data.locations.map((loc: any) => (
                   <LocationSettingsForm key={loc.id} location={loc} />
                 ))}
 
@@ -126,4 +133,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

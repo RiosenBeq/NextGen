@@ -6,9 +6,9 @@ import { revalidatePath } from 'next/cache';
 export async function getNotes() {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('notes')
+    .from('Note')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('createdAt', { ascending: false });
 
   if (error) {
     console.error('getNotes error:', error);
@@ -20,7 +20,7 @@ export async function getNotes() {
 export async function addNote(title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('notes')
+    .from('Note')
     .insert([{ title, content, color }])
     .select()
     .single();
@@ -38,7 +38,7 @@ export async function addNote(title: string, content: string = '', color: string
 export async function updateNote(id: string | number, title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('notes')
+    .from('Note')
     .update({ title, content, color })
     .eq('id', id)
     .select()
@@ -57,7 +57,7 @@ export async function updateNote(id: string | number, title: string, content: st
 export async function deleteNote(id: string | number) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('notes')
+    .from('Note')
     .delete()
     .eq('id', id);
 

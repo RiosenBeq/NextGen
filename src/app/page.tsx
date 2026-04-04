@@ -115,48 +115,37 @@ export default async function DashboardPage() {
 
   const kpis = [
     { 
-      label: "Bu Ay Ciro", 
-      sublabel: "Canlı Veri",
-      value: `₺${displayMonthlyRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
+      label: "Toplam Ciro", 
+      sublabel: "Canlı Senkron",
+      value: `₺${displayAllTimeRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
       icon: TrendingUp, 
+      trend: allTimeTotal ? "API Güncel" : "Manuel Kayıt",
       iconColor: "text-emerald-600",
       iconBg: "bg-emerald-50 border-emerald-100",
       cardClass: "stat-card-green",
-      trend: citySplit ? `Bursa: ₺${citySplit.cities.Bursa.revenue.toLocaleString('tr-TR')}` : 'Nisan 2026',
       positive: true
     },
     { 
-      label: "Toplam Seans", 
-      sublabel: "Kümülatif",
-      value: displayTotalSessions.toLocaleString('tr-TR'), 
-      icon: Activity, 
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50 border-blue-100",
-      cardClass: "stat-card-blue",
-      trend: thisMonthTotal ? `Bu Ay: ${thisMonthTotal.total_paid_sessions.toLocaleString('tr-TR')}` : 'Tüm Zamanlar',
-      positive: true
-    },
-    { 
-      label: "Operasyonel Gider", 
+      label: "Toplam Gider", 
       sublabel: "KDV + Komisyon + AVM",
       value: `₺${totalGlobalOperationalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
       icon: CreditCard, 
       iconColor: "text-red-600",
       iconBg: "bg-red-50 border-red-100",
       cardClass: "stat-card-red",
-      trend: "Tüm Zamanlar Kümülatif",
+      trend: "Tüm Zamanlar",
       positive: false
     },
     { 
       label: "Net Nakit Akışı", 
-      sublabel: "Tüm Giderler & Yatırım Sonrası",
+      sublabel: "Yatırım & Tüm Giderler Sonrası",
       value: `₺${trueGlobalNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
       icon: Wallet, 
-      iconColor: trueGlobalNetCash >= 0 ? "text-emerald-600" : "text-amber-600",
-      iconBg: trueGlobalNetCash >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100",
-      cardClass: trueGlobalNetCash >= 0 ? "stat-card-green" : "stat-card-amber",
+      iconColor: trueGlobalNetCash >= 0 ? "text-blue-600" : "text-amber-600",
+      iconBg: trueGlobalNetCash >= 0 ? "bg-blue-50 border-blue-100" : "bg-amber-50 border-amber-100",
+      cardClass: trueGlobalNetCash >= 0 ? "stat-card-blue" : "stat-card-amber",
       trend: `Yatırım: -₺${totalInvestment.toLocaleString('tr-TR')}`,
-      positive: totalManualNetCash >= 0
+      positive: trueGlobalNetCash >= 0
     },
   ];
 

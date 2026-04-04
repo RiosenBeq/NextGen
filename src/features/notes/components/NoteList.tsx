@@ -22,6 +22,7 @@ export default function NoteList({ initialNotes }: Props) {
   const [notes, setNotes] = useState(initialNotes);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setNotes(initialNotes);
@@ -58,20 +59,31 @@ export default function NoteList({ initialNotes }: Props) {
     }
   };
 
+  const filteredNotes = notes.filter(n => 
+    n.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    n.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center premium-card p-4 border border-slate-200">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center premium-card p-4 border border-slate-200">
+        <div className="flex items-center gap-3 w-full md:w-auto">
            <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200 shadow-sm">
               <StickyNote size={18} className="text-slate-500" />
            </div>
-           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">
-             Tüm Kayıtlar
-           </h2>
+           <div className="flex-1 md:w-64">
+              <input 
+                type="text" 
+                placeholder="Notlarda ara..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+              />
+           </div>
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
+          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm hover:shadow active:scale-95 flex items-center justify-center gap-2"
         >
           <Plus size={16} />
           Yeni Not
@@ -80,17 +92,17 @@ export default function NoteList({ initialNotes }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         <AnimatePresence mode="popLayout">
-          {notes.length === 0 && !isAdding && (
+          {filteredNotes.length === 0 && !isAdding && (
             <motion.div 
                initial={{ opacity: 0, scale: 0.9 }}
                animate={{ opacity: 1, scale: 1 }}
                className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50"
             >
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Henüz bir kayıt bulunmamaktadır</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Arama sonucu bulunamadı</p>
             </motion.div>
           )}
 
-          {notes.map((note, idx) => (
+          {filteredNotes.map((note, idx) => (
             <motion.div
               layout
               key={note.id}

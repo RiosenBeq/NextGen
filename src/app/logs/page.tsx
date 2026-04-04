@@ -6,9 +6,24 @@ import { Activity, Shield, Clock, HardDrive, Smartphone, Monitor, Globe, Filter 
 import * as motion from "framer-motion/client";
 import { cn } from '@/lib/utils';
 
+export function AuditLogSearch({ onSearch }: { onSearch: (val: string) => void }) {
+  return (
+    <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl focus-within:border-blue-400 focus-within:shadow-sm transition-all group">
+      <Filter className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500" />
+      <input 
+        type="text" 
+        placeholder="Loglarda ara (id, ip, detay...)"
+        onChange={(e) => onSearch(e.target.value)}
+        className="bg-transparent border-none outline-none text-sm w-64 text-slate-700 placeholder:text-slate-400"
+      />
+    </div>
+  );
+}
+
 export default function LogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
   const [filterAction, setFilterAction] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     async function fetchLogs() {
@@ -20,6 +35,13 @@ export default function LogsPage() {
 
   const filteredLogs = logs.filter(log => {
     if (filterAction !== 'ALL' && log.action !== filterAction) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchDetails = log.details ? JSON.stringify(log.details).toLowerCase().includes(q) : false;
+      const matchEntity = log.entity?.toLowerCase().includes(q);
+      const matchIp = log.ipAddress?.toLowerCase().includes(q);
+      if (!matchDetails && !matchEntity && !matchIp) return false;
+    }
     return true;
   });
 
@@ -40,19 +62,22 @@ export default function LogsPage() {
           </p>
         </div>
 
-        <div className="flex gap-1.5 bg-slate-100 border border-slate-200 p-1.5 rounded-xl">
-           {['ALL', 'CREATE', 'UPDATE', 'DELETE'].map((act) => (
-             <button 
-               key={act}
-               onClick={() => setFilterAction(act)}
-               className={cn(
-                 "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
-                 filterAction === act ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
-               )}
-             >
-               {act === 'ALL' ? 'TÜMÜ' : act === 'CREATE' ? 'Ekleme' : act === 'UPDATE' ? 'Güncelleme' : 'Silme'}
-             </button>
-           ))}
+        <div className="flex flex-col md:flex-row items-center gap-4">
+           <AuditLogSearch onSearch={setSearchQuery} />
+           <div className="flex gap-1.5 bg-slate-100 border border-slate-200 p-1.5 rounded-xl">
+              {['ALL', 'CREATE', 'UPDATE', 'DELETE'].map((act) => (
+                <button 
+                  key={act}
+                  onClick={() => setFilterAction(act)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap uppercase tracking-wider",
+                    filterAction === act ? "bg-white text-blue-600 shadow-sm border border-blue-100" : "text-slate-500 hover:text-slate-800"
+                  )}
+                >
+                  {act === 'ALL' ? 'TÜMÜ' : act === 'CREATE' ? 'Ekleme' : act === 'UPDATE' ? 'Güncelleme' : 'Silme'}
+                </button>
+              ))}
+           </div>
         </div>
       </header>
 

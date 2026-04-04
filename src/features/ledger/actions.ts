@@ -395,17 +395,8 @@ export async function getLocationInsights() {
 export async function getActiveLocations() {
   try {
     const supabase = await createClient();
-    const { data: locations, error } = await supabase
-      .from('Location')
-      .select('*, investments:Investment(*)')
-      .eq('isActive', true)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return (locations || []).map(loc => ({
-      ...loc,
-      totalInvestment: loc.investments ? loc.investments.reduce((acc: number, inv: any) => acc + (inv.totalAmount || 0), 0) : 0
-    }));
+    const { data } = await supabase.from('Location').select('*').eq('isActive', true);
+    return data || [];
   } catch (error) {
     console.error("Error fetching locations:", error);
     return [];
@@ -415,16 +406,9 @@ export async function getActiveLocations() {
 export async function getSystemParameters() {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('SystemParameter')
-      .select('key, value');
-
-    if (error) throw error;
-
-    const map: Record<string, number> = {};
-    for (const p of (data || [])) {
-      map[p.key] = p.value;
-    }
+    const { data } = await supabase.from('SystemParameter').select('*');
+    const map: Record<string, any> = {};
+    data?.forEach(p => map[p.key] = p.value);
     return map;
   } catch (error) {
     console.error("Error fetching params:", error);
@@ -432,10 +416,35 @@ export async function getSystemParameters() {
   }
 }
 
+export async function getKabinRaporSessions(locationId: string, monthStr: string) {
+  try {
+    const { kabinRapor } = await import('@/lib/kabinRapor');
+    const supabase = await createClient();
+    const { data: location } = await supabase.from('Location').select('name').eq('id', locationId).single();
+    if (!location) throw new Error('Lokasyon bulunamadı');
+
+    const cityName = location.name.split(' ')[0]; // Zafer, Mavi, vb.
+    const monthId = monthStr.slice(0, 7);
+    const currentMonthId = new Date().toISOString().slice(0, 7);
+    
+    // API: 'Bu Ay' or 'YYYY-MM'
+    const range = monthId === currentMonthId ? 'Bu Ay' : monthId;
+    const liveData = await kabinRapor.getCitySplittedData(range as any);
+    
+    if (!liveData) throw new Error('API verisi alınamadı');
+    const cityData = (liveData.cities as any)[cityName];
+    const foundSessionCount = cityData?.sessions || 0;
+    
+    return { success: true, sessions: foundSessionCount };
+  } catch (error: any) {
+    console.error("fetchKabinError:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function updateSystemParameter(key: string, value: number) {
   try {
     const supabase = await createClient();
-    // Use upsert to create or update the parameter automatically
     const { error } = await supabase
       .from('SystemParameter')
       .upsert({ key, value }, { onConflict: 'key' });
@@ -443,11 +452,9 @@ export async function updateSystemParameter(key: string, value: number) {
     if (error) throw error;
     revalidatePath('/settings');
     revalidatePath('/');
-    revalidatePath('/finans');
-    revalidatePath('/gelir-gider');
-    revalidatePath('/investments');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
+

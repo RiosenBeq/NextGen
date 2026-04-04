@@ -1,6 +1,7 @@
 "use client";
 
 // Vercel Trigger: Last Sync @ 2026-04-04
+import { useState, useEffect } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar, Topbar, MobileNav } from "@/components/LayoutUI";
@@ -15,7 +16,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
   return (
     <html lang="tr" suppressHydrationWarning>
@@ -27,7 +35,7 @@ export default function RootLayout({
       <body suppressHydrationWarning className={`${inter.className} bg-[#F1F5F9] flex h-screen overflow-hidden text-slate-900 font-sans antialiased selection:bg-blue-200`}>
         <Sidebar />
         <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-          <Topbar />
+          <Topbar onToggleMenu={toggleMobileMenu} isOpen={mobileMenuOpen} />
           <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-20 lg:pb-0">
             <AnimatePresence mode="wait">
               <motion.div
@@ -44,7 +52,7 @@ export default function RootLayout({
               </motion.div>
             </AnimatePresence>
           </div>
-          <MobileNav />
+          <MobileNav hidden={mobileMenuOpen} />
         </main>
       </body>
     </html>

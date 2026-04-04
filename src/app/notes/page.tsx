@@ -15,32 +15,22 @@ export default async function NotesPage() {
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
-        <div className="space-y-4">
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2"
-          >
-            <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-2">Knowledge Base</span>
-          </motion.div>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-3">Knowledge Base</span>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+            <StickyNote className="w-6 h-6 text-slate-400" />
             Sistem Notları & Ajanda
           </h1>
-          <p className="text-sm text-slate-500 font-medium max-w-xl">
-            Kurumsal hafıza, stratejik kararlar ve operasyonel protokollerin merkezi kayıt noktası.
+          <p className="text-sm text-slate-500 mt-1 max-w-xl">
+            Kurumsal hafıza, stratejik kararlar ve operasyonel protokoller.
           </p>
         </div>
 
-        <div className="flex gap-4">
-           <div className="premium-card px-8 py-6 flex items-center gap-5">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100">
-                 <MessageSquareText className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div>
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">DOKÜMANTASYON</p>
-                 <p className="text-2xl font-bold text-slate-900">{notes.length} Aktif Kayıt</p>
-              </div>
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200 rounded-xl">
+           <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200 flex items-center gap-3">
+              <MessageSquareText className="w-4 h-4 text-indigo-500" />
+              <span className="text-sm font-bold text-slate-900">{notes.length} Aktif Kayıt</span>
            </div>
         </div>
       </header>

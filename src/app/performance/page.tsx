@@ -1,5 +1,5 @@
 import { MonthlyPerformanceForm } from '@/features/ledger/components/MonthlyPerformanceForm';
-import { getActiveLocations } from '@/features/ledger/actions';
+import { getActiveLocations, getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
 import { Database, Activity } from 'lucide-react';
 
@@ -12,6 +12,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function PerformancePage() {
   const locations = await getActiveLocations();
+  const params = await getSystemParameters();
+  const sessionPrice = Number(params['SESSION_PRICE_INCL_VAT'] || 300);
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
@@ -44,15 +46,18 @@ export default async function PerformancePage() {
       </header>
 
       <div className="space-y-8">
-        <MonthlyPerformanceForm locations={locations.map((l: any) => ({ 
-          id: l.id, 
-          name: l.name,
-          fixedRent: l.fixedRent,
-          duesAmount: l.duesAmount,
-          rentVatRate: l.rentVatRate,
-          revenueShareRate: l.revenueShareRate,
-          revenueThreshold: l.revenueThreshold
-        }))} />
+        <MonthlyPerformanceForm 
+          sessionPrice={sessionPrice}
+          locations={locations.map((l: any) => ({ 
+            id: l.id, 
+            name: l.name,
+            fixedRent: l.fixedRent,
+            duesAmount: l.duesAmount,
+            rentVatRate: l.rentVatRate,
+            revenueShareRate: l.revenueShareRate,
+            revenueThreshold: l.revenueThreshold
+          }))} 
+        />
       </div>
     </div>
   );

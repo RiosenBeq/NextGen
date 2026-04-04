@@ -6,18 +6,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput } from '../schema';
 import { addMonthlyPerformance } from '../actions';
 import { calculateMonthlyCashFlow } from '../calculations';
-import { Loader2, Plus, TrendingUp, Info, CheckCircle2 } from 'lucide-react';
+import { Loader2, Plus, TrendingUp, Info, CheckCircle2, Zap, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { getKabinRaporSessions } from '../actions';
 
 interface Props {
   locations: any[];
+  sessionPrice: number;
 }
 
-export function MonthlyPerformanceForm({ locations }: Props) {
+export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, reset, control } = useForm<MonthlyPerformanceInput>({
     resolver: zodResolver(monthlyPerformanceSchema),
@@ -40,7 +43,7 @@ export function MonthlyPerformanceForm({ locations }: Props) {
       watchedValues.sessionCount || 0,
       watchedValues.extraExpenseAmount || 0,
       {
-        sessionPrice: 300,
+        sessionPrice,
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 0,
@@ -50,12 +53,41 @@ export function MonthlyPerformanceForm({ locations }: Props) {
     );
   }, [watchedValues, locations]);
 
+  const handleSync = async () => {
+    const locId = watchedValues.locationId;
+    const month = watchedValues.month;
+    
+    if (!locId || !month) {
+      setErrorMsg('Lütfen önce lokasyon ve dönemi seçin.');
+      return;
+    }
+
+    setIsSyncing(true);
+    setErrorMsg('');
+    try {
+      const result = await getKabinRaporSessions(locId, month);
+      if (result.success) {
+        reset({ ...watchedValues as any, sessionCount: result.sessions });
+        setSuccessMsg(`KabinRapor verisi başarıyla çekildi: ${result.sessions} seans`);
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err: any) {
+      setErrorMsg(`API Hatası: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const onSubmit = async (data: MonthlyPerformanceInput) => {
     setIsSubmitting(true);
     setErrorMsg('');
     setSuccessMsg('');
-    data.month = new Date(data.month).toISOString();
-    const result = await addMonthlyPerformance(data);
+    const result = await addMonthlyPerformance({
+      ...data,
+      month: new Date(data.month as string).toISOString()
+    } as any);
     if (result.success) {
       setSuccessMsg('Aylık performans başarıyla işlendi.');
       reset();
@@ -123,7 +155,18 @@ export function MonthlyPerformanceForm({ locations }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600">Toplam Oturum Adedi</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-600">Toplam Oturum Adedi</label>
+              <button
+                type="button"
+                onClick={handleSync}
+                disabled={isSyncing}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 transition-colors disabled:opacity-50"
+              >
+                {isSyncing ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                Canlı Veriden Doldur
+              </button>
+            </div>
             <div className="relative">
               <input
                 type="number"

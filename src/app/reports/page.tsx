@@ -14,6 +14,7 @@ export default function ReportsPage() {
     processedData: any[];
     totals: any;
     locations: any[];
+    liveAllTime: any | null;
   } | null>(null);
   const [filterLocation, setFilterLocation] = useState('all');
 
@@ -26,8 +27,10 @@ export default function ReportsPage() {
       const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
 
       let liveData: any = null;
+      let liveAllTime: any = null;
       try {
         liveData = await kabinRapor.getComprehensiveData('Bu Ay');
+        liveAllTime = await kabinRapor.getComprehensiveData('Tüm Zamanlar');
       } catch (e) {
         console.error("Live data fetch failed on reports:", e);
       }
@@ -88,7 +91,8 @@ export default function ReportsPage() {
       setData({
         processedData: processed,
         totals: calcTotals(processed),
-        locations: locations || []
+        locations: locations || [],
+        liveAllTime: liveAllTime?.allTimeTotals || null
       });
     }
     fetchData();
@@ -155,9 +159,9 @@ export default function ReportsPage() {
       {/* Summary Cards */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: "Filtrelenmiş Ciro", value: `₺${currentTotals.revenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200", tag: "Arşiv" },
-          { label: "Net Nakit Akışı", value: `₺${currentTotals.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: ArrowUpRight, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200", tag: `%${currentTotals.revenue > 0 ? (currentTotals.profit / currentTotals.revenue * 100).toFixed(1) : '0'} Marj` },
-          { label: "Toplam Seans", value: currentTotals.sessions.toLocaleString('tr-TR'), icon: CalendarDays, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200", tag: "Kümülatif" },
+          { label: "Toplam Ciro (Canlı)", value: `₺${(data.liveAllTime?.total_revenue || currentTotals.revenue).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200", tag: "API All-Time" },
+          { label: "Net Nakit Akışı", value: `₺${currentTotals.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: ArrowUpRight, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200", tag: "Arşiv Bazlı" },
+          { label: "Toplam Seans (Canlı)", value: (data.liveAllTime?.total_paid_sessions || currentTotals.sessions).toLocaleString('tr-TR'), icon: CalendarDays, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200", tag: "API Senkron" },
         ].map((kpi, idx) => (
           <motion.div
             key={kpi.label}

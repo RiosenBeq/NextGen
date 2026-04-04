@@ -122,9 +122,8 @@ export function Sidebar() {
   );
 }
 
-export function Topbar() {
+export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, isOpen?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -133,10 +132,6 @@ export function Topbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
   return (
     <>
       <header className={cn(
@@ -144,7 +139,7 @@ export function Topbar() {
         scrolled ? "shadow-sm border-slate-200" : "border-slate-100"
       )}>
         <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={onToggleMenu}
           className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
         >
           <Menu className="w-5 h-5 text-slate-600" />
@@ -172,15 +167,6 @@ export function Topbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <motion.button 
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            className="relative p-2 text-slate-500 hover:text-slate-800 transition-colors hover:bg-slate-100 rounded-lg"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-blue-500 rounded-full" />
-          </motion.button>
-          
           <div className="flex items-center gap-2.5 cursor-pointer group">
             <div className="hidden md:flex flex-col items-end">
               <p className="text-xs font-semibold text-slate-800 leading-none mb-0.5">Yönetici</p>
@@ -194,14 +180,14 @@ export function Topbar() {
       </header>
 
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {isOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={onToggleMenu}
             />
             <motion.div
               initial={{ x: -260 }}
@@ -211,7 +197,7 @@ export function Topbar() {
               className="fixed top-0 left-0 w-64 h-full z-[70] bg-[#1E293B] overflow-y-auto lg:hidden shadow-2xl"
             >
               <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
-                <Link href="/" className="flex items-center gap-2.5" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/" className="flex items-center gap-2.5" onClick={onToggleMenu}>
                   <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center">
                     <Zap className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
                   </div>
@@ -219,7 +205,7 @@ export function Topbar() {
                     NextGen<span className="text-[#60A5FA]">Box</span>
                   </span>
                 </Link>
-                <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-white/[0.06]">
+                <button onClick={onToggleMenu} className="p-1.5 rounded-lg hover:bg-white/[0.06]">
                   <X className="w-4.5 h-4.5 text-slate-400" />
                 </button>
               </div>
@@ -232,7 +218,7 @@ export function Topbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={onToggleMenu}
                       className={cn("sidebar-link", isActive && "active")}
                     >
                       <Icon className={cn("w-4 h-4", isActive ? "text-[#60A5FA]" : "text-slate-600")} />
@@ -249,8 +235,9 @@ export function Topbar() {
   );
 }
 
-export function MobileNav() {
+export function MobileNav({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname();
+  if (hidden) return null;
 
   const mobileLinks = [
     { href: "/", label: "Ana Sayfa", icon: Home },

@@ -27,7 +27,15 @@ export async function uploadDocument(formData: FormData) {
         upsert: false,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      if (uploadError.message?.toLowerCase().includes('bucket not found')) {
+        return { 
+          success: false, 
+          error: 'Eksik Yapılandırma: Supabase üzerinde "documents" bucket\'ı bulunamadı. Lütfen Storage panelinden bu isimle bir public bucket oluşturun.' 
+        };
+      }
+      throw uploadError;
+    }
 
     // Public URL al
     const { data: { publicUrl } } = supabase.storage

@@ -171,7 +171,7 @@ export async function uploadExpenseAttachment(formData: FormData) {
       if (msg.includes('bucket not found')) {
         return { 
           success: false, 
-          error: 'HATA: Supabase üzerinde "documents" isimli bir Storage Bucket bulunamadı. Lütfen Supabase panelinden bu bucket\'ı oluşturun ve "public" erişime açın.' 
+          error: 'Eksik Yapılandırma: Supabase üzerinde "documents" bucket\'ı bulunamadı. Lütfen Storage panelinden bu isimle bir public bucket oluşturun.' 
         };
       }
       if (msg.includes('security policy') || msg.includes('unauthorized') || msg.includes('new row violates row-level security')) {

@@ -65,7 +65,7 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
     setIsSyncing(true);
     setErrorMsg('');
     try {
-      const result = await getKabinRaporSessions(locId, month);
+      const result = await getKabinRaporSessions(locId, typeof month === 'string' ? month : month.toISOString());
       if (result.success) {
         reset({ ...watchedValues as any, sessionCount: result.sessions });
         setSuccessMsg(`KabinRapor verisi başarıyla çekildi: ${result.sessions} seans`);

@@ -65,7 +65,7 @@ export default function ExpensesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-200 selection:bg-blue-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-blue-500/30">
       {/* Dynamic Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse"></div>
@@ -98,7 +98,7 @@ export default function ExpensesPage() {
             <div className="flex gap-4">
               <div className="relative group overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="p-5 rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-2xl relative min-w-[160px]">
+                <div className="p-5 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl relative min-w-[160px]">
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2">BU AYKİ GİDER</p>
                   <p className="text-2xl font-black text-white font-mono tracking-tighter">
                     ₺{data.thisMonthTotal.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
@@ -108,7 +108,7 @@ export default function ExpensesPage() {
               
               <div className="relative group overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="p-5 rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-2xl relative min-w-[160px]">
+                <div className="p-5 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl relative min-w-[160px]">
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2">TOPLAM GİDER</p>
                   <p className="text-2xl font-black text-white font-mono tracking-tighter">
                     ₺{data.total.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}

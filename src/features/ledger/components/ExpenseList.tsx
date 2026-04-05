@@ -93,7 +93,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="premium-card bg-white/[0.03] backdrop-blur-3xl overflow-hidden shadow-2xl border border-white/10 rounded-[32px]"
+      className="premium-card bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl border border-white/10 rounded-[32px]"
     >
       {/* Filters Toolbar */}
       <div className="p-8 border-b border-white/5 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white/[0.01]">
@@ -161,9 +161,9 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                 onChange={(e) => setFilterSettled(e.target.value)}
                 className="w-full pl-4 pr-10 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-pointer appearance-none shadow-inner focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
               >
-                <option value="ALL" className="bg-[#07090e]">TÜM MAHSUPLAR</option>
-                <option value="ACTIVE" className="bg-[#07090e]">BEKLEYENLER</option>
-                <option value="SETTLED" className="bg-[#07090e]">ÖDENENLER</option>
+                <option value="ALL" className="bg-[#07090e]">TÜMÜ</option>
+                <option value="ACTIVE" className="bg-[#07090e]">BEKLEYEN</option>
+                <option value="SETTLED" className="bg-[#07090e]">MAHSUP EDİLDİ</option>
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             </div>
@@ -200,7 +200,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
               </tr>
             ) : null}
             {filtered.map((exp) => (
-              <tr key={exp.id} className="hover:bg-white/[0.02] transition-all group/row">
+              <tr key={exp.id} className="hover:bg-blue-500/5 hover:shadow-[inset_4px_0_0_0_rgba(59,130,246,0.5)] transition-all duration-300 group/row border-l-4 border-transparent hover:border-blue-500">
                 <td className="px-8 py-6">
                   <p className="font-black text-white text-sm tracking-tight truncate max-w-xs uppercase italic" title={exp.description}>
                     {exp.description}
@@ -247,8 +247,8 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                     className={cn(
                       "inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest shadow-xl",
                       exp.description.includes('[MAHSUP]') 
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20" 
-                        : "bg-white/5 border-white/10 text-slate-500 hover:text-white"
+                        ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-500/30" 
+                        : "bg-gradient-to-r from-slate-800 to-slate-700 border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                     )}
                   >
                      {settlingId === exp.id ? (

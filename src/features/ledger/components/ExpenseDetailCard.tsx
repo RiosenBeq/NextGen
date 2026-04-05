@@ -20,7 +20,7 @@ interface ExpenseItem {
   id: string;
   label: string;
   value: number;
-  icon: any;
+  iconName: string;
   subLabel?: string;
   color: string;
 }
@@ -101,7 +101,12 @@ export default function ExpenseDetailCard({ total, breakdown, tag = "KDV Dahil" 
                  <div className="flex items-center justify-between">
                    <div className="flex items-center gap-4">
                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border", item.color.replace('bg-', 'text-').replace('text-', 'bg-') + '/10', item.color.replace('bg-', 'border-') + '/20')}>
-                        <item.icon size={20} className={item.color.replace('bg-', 'text-')} />
+                        {/* Map icons by name */}
+                        {item.iconName === 'Building2' && <Building2 size={20} className={item.color.replace('bg-', 'text-')} />}
+                        {item.iconName === 'Activity' && <Activity size={20} className={item.color.replace('bg-', 'text-')} />}
+                        {item.iconName === 'HandCoins' && <HandCoins size={20} className={item.color.replace('bg-', 'text-')} />}
+                        {item.iconName === 'CreditCard' && <CreditCard size={20} className={item.color.replace('bg-', 'text-')} />}
+                        {item.iconName === 'PlusCircle' && <PlusCircle size={20} className={item.color.replace('bg-', 'text-')} />}
                      </div>
                      <div>
                         <p className="text-sm font-black text-white uppercase italic tracking-tight">{item.label}</p>

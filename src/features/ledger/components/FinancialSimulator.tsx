@@ -31,32 +31,32 @@ export default function FinancialSimulator({ defaultParams }: Props) {
        title: 'NET NAKİT AKIŞI',
        icon: Zap,
        math: `₺${simulation.netCash.toLocaleString('tr-TR')}`,
-       text: 'Tüm harçlıklar (kira, fatura, komisyon) ödenince kumbarada kalan gerçek paradır.',
-       details: 'Brüt Cirodan tüm operasyonel ve sabit giderler düşüldükten sonra cebine kalan net paradır.',
+       text: `Bu ayki ${sessions} seans ve ₺${defaultParams.sessionPrice || 350} birim fiyattan elde edilen brüt cirodan; kira, komisyon ve işletme giderleri düşüldüğünde cebinize kalan net tutardır. (Matematik: Brüt - Sabit - Değişken)`,
+       details: 'Vergi ve platform kesintileri dahil tüm dışa akışların ardından elde edilen gerçek geliri temsil eder.',
        formula: 'Brüt Gelir - (Kira + Aidat + KDV + Komisyonlar + Ciro Payı)'
     },
     'margin': {
-       title: 'KÂR MARJI',
+       title: 'KÂR MARJI (PROFIT MARGIN)',
        icon: Target,
        math: `%${simulation.profitMargin.toFixed(1)}`,
-       text: 'Her 100 liranın ne kadarı bize kar kalıyor? Elmanın yarısı mı, çeyreği mi?',
-       details: 'İşletme verimliliğini ölçer. Bu oran ne kadar yüksekse, her satıştan o kadar çok net kazanç elde ediyorsun demektir.',
+       text: 'Net Nakit Akışının, Brüt Gelir içerisindeki yüzdelik payıdır.',
+       details: 'İşletme verimliliğini ölçen ana göstergedir. Oranın yüksek olması, operasyonel giderlerin minimize edildiğini gösterir.',
        formula: '(Net Nakit Akışı / Brüt Gelir) × 100'
     },
     'breaven': {
-       title: 'BAŞA BAŞ NOKTASI',
+       title: 'BAŞA BAŞ NOKTASI (BREAK-EVEN)',
        icon: Rocket,
        math: `${simulation.breakEvenSessions} Seans`,
-       text: 'Borçları kapatıp "oh be" demek için kaç kişinin şarkı söylemesi gerektiğini söyler.',
-       details: 'Zarar etmeyi bıraktığın sınır çizgisidir. Bu rakama ulaştığında dükkan kendi kendini döndürür.',
-       formula: 'Sabit Giderler ÷ (Birim Fiyat × 0.96)'
+       text: 'Bir takvim ayında zarar durumundan çıkıp kârlılığa geçilmesi için ulaşılması gereken asgari satış adedidir.',
+       details: 'Sabit giderlerin toplamının, tek bir seansın net getiri ve katkı payına bölünmesiyle hesaplanır.',
+       formula: 'Sabit Giderler ÷ (Birim Fiyat × (1 - Kesintiler))'
     },
     'roi': {
        title: 'AYLIK ROI (GERİ DÖNÜŞ)',
        icon: TrendingUp,
        math: `%${simulation.roiPercentage?.toFixed(1) || '0.0'}`,
-       text: 'Ektiğin tohumun her ay ne kadar hızlı büyüdüğünü ölçer.',
-       details: 'Yatırımın aylık bazda geri alınma hızıdır. %10 ROI, yatırımın 10 ayda amorti edilmesi demektir.',
+       text: `Yapılan yatırımın (₺${(defaultParams.investmentAmount || 350000).toLocaleString('tr-TR')}) aylık net kâra oranıdır. Mevcut verilerle yatırımınızın %${(simulation.roiPercentage || 0).toFixed(1)} kısmını her ay geri topluyorsunuz.`,
+       details: 'Aylık net kar ile yatırdığınız anaparanın kendini ne kadar sürede telafi edeceğini belirten yatırım getiri oranıdır.',
        formula: '(Aylık Net Nakit / Toplam Yatırım) × 100'
     }
   };

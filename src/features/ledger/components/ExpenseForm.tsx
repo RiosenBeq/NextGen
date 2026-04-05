@@ -11,18 +11,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const EXPENSE_CATEGORIES = [
-  { id: 'rent', label: 'Kira' },
-  { id: 'utilities', label: 'Faturalar' },
-  { id: 'maintenance', label: 'Bakım/Onarım' },
-  { id: 'marketing', label: 'Pazarlama' },
-  { id: 'equipment', label: 'Ekipman' },
-  { id: 'operational', label: 'Operasyonel' },
-  { id: 'other', label: 'Diğer' },
+  { id: 'rent', label: 'KİRA GİDERİ' },
+  { id: 'utilities', label: 'FATURA & KURUMSAL' },
+  { id: 'maintenance', label: 'BAKIM & ONARIM' },
+  { id: 'marketing', label: 'PAZARLAMA & REKLAM' },
+  { id: 'equipment', label: 'EKİPMAN ALIMI' },
+  { id: 'operational', label: 'GÜNLÜK OPERASYON' },
+  { id: 'other', label: 'DİĞER' },
 ];
 
 const PAYMENT_FREQUENCIES = [
-  { id: 'ONE_TIME', label: 'Tek Seferlik (Bakım, Alım vb.)' },
-  { id: 'RECURRING', label: 'Tekrarlayan (Kira, İnternet vb.)' },
+  { id: 'ONE_TIME', label: 'TEK SEFERLİK İŞLEM' },
+  { id: 'RECURRING', label: 'DÜZENLİ ÖDEME (Aylık)' },
 ];
 
 export default function ExpenseForm({ 
@@ -93,7 +93,7 @@ export default function ExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.amount || !formData.description) {
-      alert('Lütfen açıklama ve tutar alanlarını doldurun.');
+      alert('Sisteme kayıt yapabilmek için açıklama ve matrah bilgilerini eksiksiz girmelisiniz.');
       return;
     }
 
@@ -180,7 +180,7 @@ export default function ExpenseForm({
   };
 
   return (
-    <div className="bg-[#0f1117] border border-white/10 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5 selection:bg-blue-500/30">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5 selection:bg-blue-500/30">
       {/* Premium Gradient Header */}
       <div className="relative bg-gradient-to-br from-blue-600/20 to-indigo-700/20 px-8 py-10 overflow-hidden flex items-center justify-between border-b border-white/5 backdrop-blur-xl">
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
@@ -252,9 +252,9 @@ export default function ExpenseForm({
                   value={formData.locationId}
                   onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 >
-                  <option value="" className="bg-[#0f1117]">GENEL MERKEZ / TÜM ŞUBELER</option>
+                  <option value="" className="bg-[#0f1117] font-black uppercase text-slate-300">GENEL MERKEZ / TÜM ŞUBELER</option>
                   {locations.map(loc => (
-                    <option key={loc.id} value={loc.id} className="bg-[#0f1117]">{loc.name.toUpperCase()}</option>
+                    <option key={loc.id} value={loc.id} className="bg-[#0f1117] font-black uppercase">{loc.name.toUpperCase()}</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />

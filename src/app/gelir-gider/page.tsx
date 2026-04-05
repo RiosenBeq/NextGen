@@ -175,11 +175,11 @@ export default async function GelirGiderPage(props: {
   });
 
   const expenseBreakdownData = [
-    { id: 'rent', label: 'AVM Kirası (+KDV)', value: avmRentTotal, icon: Building2, subLabel: 'Stopaj/Tevkifat Dahil', color: 'bg-red-500' },
-    { id: 'dues', label: 'AVM Aidat & Ortak', value: avmDuesTotal, icon: Activity, subLabel: 'İşletme Giderleri', color: 'bg-orange-500' },
-    { id: 'rev', label: 'Ciro Payı (Sözleşme)', value: revenueShareSum, icon: HandCoins, subLabel: 'Kira Üstü Hakediş', color: 'bg-amber-500' },
-    { id: 'comm', label: 'Ödeme Komisyonları', value: totalCommissionSum, icon: CreditCard, subLabel: 'iyzico + Nayax (%4)', color: 'bg-rose-500' },
-    { id: 'ops', label: 'Operasyonel Giderler', value: operationalExpensesTotalValue, icon: PlusCircle, subLabel: 'Faturalar & Diğer', color: 'bg-emerald-500' },
+    { id: 'rent', label: 'AVM Kirası (+KDV)', value: avmRentTotal, iconName: 'Building2', subLabel: 'Stopaj/Tevkifat Dahil', color: 'bg-red-500' },
+    { id: 'dues', label: 'AVM Aidat & Ortak', value: avmDuesTotal, iconName: 'Activity', subLabel: 'İşletme Giderleri', color: 'bg-orange-500' },
+    { id: 'rev', label: 'Ciro Payı (Sözleşme)', value: revenueShareSum, iconName: 'HandCoins', subLabel: 'Kira Üstü Hakediş', color: 'bg-amber-500' },
+    { id: 'comm', label: 'Ödeme Komisyonları', value: totalCommissionSum, iconName: 'CreditCard', subLabel: 'iyzico + Nayax (%4)', color: 'bg-rose-500' },
+    { id: 'ops', label: 'Operasyonel Giderler', value: operationalExpensesTotalValue, iconName: 'PlusCircle', subLabel: 'Faturalar & Diğer', color: 'bg-emerald-500' },
   ].filter(x => x.value > 0);
 
   const filteredExpenses = (expenses || []).filter(exp => {

@@ -33,7 +33,11 @@ export default async function DashboardPage() {
   const { data: expensesData } = await supabase
     .from('Expense')
     .select('*')
-    .limit(100);
+    .limit(500);
+
+  const { data: investmentData } = await supabase
+    .from('Investment')
+    .select('totalAmount');
 
   const { data: paramsData } = await supabase
     .from('SystemParameter')
@@ -56,15 +60,17 @@ export default async function DashboardPage() {
       const loc = perf.location;
       const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
       
+      // ONLY location-specific expenses here. Shared (null) handled at global level.
       const recurringTotal = (expensesData || [])
-        .filter((e: any) => e.type === 'RECURRING' && (!e.locationId || e.locationId === loc.id))
+        .filter((e: any) => e.type === 'RECURRING' && e.locationId === loc.id)
         .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
         
       const oneTimeTotal = (expensesData || [])
         .filter((e: any) => {
           if (e.type === 'RECURRING') return false;
+          if (e.locationId !== loc.id) return false;
           const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
-          return expMonth === perfMonthStr && (!e.locationId || e.locationId === loc.id);
+          return expMonth === perfMonthStr;
         })
         .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
 
@@ -96,15 +102,23 @@ export default async function DashboardPage() {
     }
   }
 
-  const chartEntries = Object.entries(monthlyTotals).slice(-6);
-  const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
+  // Calculate Shared (Global) Expenses exactly once
+  const sharedRecurring = (expensesData || [])
+    .filter((e: any) => e.type === 'RECURRING' && !e.locationId)
+    .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+  const sharedOneTime = (expensesData || [])
+    .filter((e: any) => e.type !== 'RECURRING' && !e.locationId)
+    .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+
+  // Apply shared recurring across the number of active months
+  const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
+  const totalSharedExpenseSet = (sharedRecurring * allMonthCount) + sharedOneTime;
 
   const displayAllTimeRevenue = totalManualRevenue;
-  const trueGlobalNetCash = totalManualNetCash;
-  const totalGlobalOperationalExpense = totalManualOperationalExpense;
+  const totalInvestment = (investmentData || []).reduce((s, i) => s + i.totalAmount, 0);
+  const totalGlobalOperationalExpense = totalManualOperationalExpense + totalSharedExpenseSet;
+  const trueGlobalNetCash = displayAllTimeRevenue - totalGlobalOperationalExpense;
   const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
-  const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
-  const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
 
   const kpis = [
     { 

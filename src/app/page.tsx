@@ -14,6 +14,8 @@ import {
 import * as motion from "framer-motion/client";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import DashboardClientUI from '@/components/premium/DashboardClientUI';
+import { getActiveLocations } from '@/features/ledger/actions';
 
 export const metadata = {
   title: 'Panel — NextGenBox',
@@ -148,220 +150,31 @@ export default async function DashboardPage() {
   const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
   const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
 
-  // Prepare Bursa vs Izmir comparison data (Last 6 months)
-  const comparisonData: any[] = [];
-  const monthNames = Array.from(new Set(performances?.map(p => new Date(p.month).toLocaleDateString('tr-TR', { month: 'short' })) || []));
+  // New Data Fetching for UI
+  const activeLocations = await getActiveLocations() || [];
   
-  monthNames.slice(-6).forEach(m => {
-    const entry: any = { month: m };
-    const monthPerfs = performances?.filter(p => new Date(p.month).toLocaleDateString('tr-TR', { month: 'short' }) === m) || [];
-    monthPerfs.forEach(p => {
-      entry[p.location.name] = p.sessionCount;
-    });
-    comparisonData.push(entry);
-  });
+  // Stats preparation for Premium UI
+  const stats = {
+    revenue: displayAllTimeRevenue,
+    expense: totalGlobalOperationalExpense,
+    profit: trueGlobalNetCash,
+    roi: insights[0]?.roi || 0,
+    sessions: displayTotalSessions,
+    monthlyGrowth: 12.5 // Mock for now or calculate if data allows
+  };
+
+  const { data: latestExpenses } = await supabase
+    .from('Expense')
+    .select('*, location:Location(name)')
+    .order('createdAt', { ascending: false })
+    .limit(10);
 
   return (
-    <div className="page-wrapper space-y-8 animate-fade-in">
-      
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <LayoutDashboard className="w-8 h-8" style={{ color: '#2F6BFF' }} />
-            Performans Paneli
-          </h1>
-          <p className="text-sm text-slate-500 mt-2 font-medium">Finansal operasyonlar ve şube performansı anlık özeti.</p>
-        </div>
-        
-        <div className="flex flex-col items-end gap-1.5">
-           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 italic">Son Güncelleme: {new Date().toLocaleTimeString('tr-TR')}</p>
-        </div>
-      </header>
-
-      {/* Interactive KPI Cards */}
-      <InteractiveKPICards 
-        totalRevenue={displayAllTimeRevenue}
-        totalExpense={totalGlobalOperationalExpense}
-        totalInvestment={totalInvestment}
-        totalNetCash={trueGlobalNetCash}
-        expenses={expensesData || []}
-        allMonthCount={allMonthCount}
-      />
-
-      {/* Bursa vs İzmir Comparison */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
-          <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest italic">Şube Performans Kıyaslaması (Bursa vs İzmir)</h2>
-          <div className="flex-1 border-t border-slate-100" />
-        </div>
-        <div className="premium-card p-8 bg-white border border-slate-100">
-           <PerformanceComparison data={comparisonData} />
-        </div>
-      </section>
-
-      {/* Insights + Expense Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <section className="lg:col-span-8 space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest italic">Stratejik Performans Matrisi</h2>
-            <div className="flex-1 border-t border-slate-100" />
-          </div>
-          <div className="min-h-[400px] overflow-visible">
-            <StrategicMatrix insights={insights} />
-          </div>
-        </section>
-
-        <section className="lg:col-span-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest italic">Gider Dağılımı</h2>
-            <div className="flex-1 border-t border-slate-100" />
-          </div>
-          <div className="premium-card p-6 h-full flex flex-col justify-center">
-            <ExpenseBreakdown expenses={expensesData || []} />
-          </div>
-        </section>
-      </div>
-
-      {/* Performance Score + Additional Stats */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="premium-card p-8 flex flex-col sm:flex-row items-center gap-8 text-white relative overflow-hidden group" style={{ background: '#1E2A44' }}>
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-            <ShieldCheck size={120} />
-          </div>
-          <div className="relative shrink-0">
-            <svg className="w-32 h-32 transform -rotate-90">
-              <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" strokeWidth="10" fill="transparent" />
-              <motion.circle 
-                cx="64" cy="64" r="56" stroke="#2F6BFF" strokeWidth="12" fill="transparent" 
-                strokeDasharray={351.8}
-                initial={{ strokeDashoffset: 351.8 }}
-                animate={{ strokeDashoffset: 351.8 - (351.8 * 0.88) }}
-                transition={{ duration: 2, ease: "circOut" }}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-black text-white italic">88</span>
-              <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: '#60A5FA' }}>Verimlilik</span>
-            </div>
-          </div>
-          <div className="space-y-4 text-center sm:text-left relative z-10">
-            <div className="flex items-center justify-center sm:justify-start gap-2.5">
-              <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                <ShieldCheck size={18} />
-              </div>
-              <h3 className="text-lg font-black tracking-tight text-white uppercase italic">Sistem Sağlık Skoru</h3>
-            </div>
-            <p className="text-sm text-slate-400 font-medium leading-relaxed">
-              Lokasyon bazlı gider-gelir dengesi <span className="text-blue-400 font-black">%88</span> verimlilikle çalışıyor. 
-              Sabit giderler optimize edilmiş durumda ve manuel girişler şeffaflığı artırıyor.
-            </p>
-            <div className="flex flex-wrap gap-2.5 justify-center sm:justify-start">
-              <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest">Stabil Akış</span>
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest">Kâr Odaklı</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="premium-card p-8 bg-white border border-slate-100 flex flex-col justify-center space-y-6">
-           <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Toplam Oturum</h4>
-                <p className="text-3xl font-black text-slate-900 tracking-tighter">{displayTotalSessions.toLocaleString('tr-TR')}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl border flex items-center justify-center" style={{ background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
-                 <Activity className="w-6 h-6" style={{ color: '#2F6BFF' }} />
-              </div>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-50">
-              <div className="space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Haftalık Ortalama</p>
-                <p className="text-lg font-black text-slate-900 tracking-tighter font-mono">{(displayTotalSessions / Math.max(allMonthCount * 4, 1)).toFixed(1)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI (Tahmini)</p>
-                <p className="text-lg font-black tracking-tighter font-mono" style={{ color: '#12B76A' }}>%{insights[0]?.roi.toFixed(1) || '0.0'}</p>
-              </div>
-           </div>
-        </div>
-      </section>
-
-      {/* Simulator */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest italic leading-none">Finansal Projeksiyon Simülatörü</h2>
-          <div className="flex-1 border-t border-slate-100" />
-        </div>
-        <div className="premium-card p-8 bg-white shadow-sm border border-slate-100">
-          <FinancialSimulator 
-            defaultParams={{
-              sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
-              kdvRate: paramMap['VAT_RATE'] || 20,
-              investmentAmount: insights[0]?.totalInvestment || 250000,
-            }} 
-          />
-        </div>
-      </section>
-
-      {/* Legacy Chart (Momentum) replaced with cleaner version or improved */}
-      <section className="pb-8">
-        <div className="premium-card p-10 bg-gradient-to-br from-white to-slate-50/30 border border-slate-100 shadow-xl shadow-slate-200/40">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-            <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tighter italic uppercase">Momentum Analizi</h3>
-              <p className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Aylık toplam ciro ve kârlılık momentumu (Son 6 Dönem)</p>
-            </div>
-            <div className="flex gap-6 p-2 bg-white rounded-2xl border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-100">
-                <div className="w-3 h-3 rounded-full bg-slate-200" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ciro (TL)</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border" style={{ borderColor: 'rgba(47,107,255,0.2)', background: 'rgba(47,107,255,0.05)' }}>
-                <div className="w-3 h-3 rounded-full" style={{ background: '#2F6BFF' }} />
-                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest" style={{ color: '#2F6BFF' }}>Net Kâr (TL)</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="h-[320px] flex items-end justify-between gap-4 md:gap-10 px-4">
-            {chartEntries.map(([month, data], i) => {
-              const h_rev = (data.revenue / maxVal) * 100;
-              const h_prof = Math.max(0, (data.profit / maxVal) * 100);
-              return (
-                <div key={month} className="flex-1 flex flex-col items-center gap-6 group h-full justify-end">
-                  <div className="w-full flex items-end justify-center gap-2 grow">
-                    <motion.div 
-                      initial={{ height: 0 }} animate={{ height: `${h_rev}%` }}
-                      transition={{ duration: 1, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full max-w-[32px] bg-slate-100 rounded-t-xl group-hover:bg-slate-200 transition-all duration-300 border border-slate-200 relative"
-                    >
-                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                         <span className="text-[9px] font-black text-slate-400 bg-white px-2 py-1 rounded-md border border-slate-100 shadow-sm">₺{Math.round(data.revenue/1000)}k</span>
-                       </div>
-                    </motion.div>
-                    <motion.div 
-                      initial={{ height: 0 }} animate={{ height: `${h_prof}%` }}
-                      transition={{ duration: 1.2, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full max-w-[32px] rounded-t-xl group-hover:scale-x-105 transition-all duration-300 relative"
-                      style={{ background: 'linear-gradient(to top, #2F6BFF, #60A5FA)', boxShadow: '0 10px 15px -3px rgba(47,107,255,0.3)' }}
-                    >
-                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                         <span className="text-[9px] font-black bg-white px-2 py-1 rounded-md border shadow-sm" style={{ color: '#2F6BFF', borderColor: 'rgba(47,107,255,0.2)' }}>₺{Math.round(data.profit/1000)}k</span>
-                       </div>
-                    </motion.div>
-                  </div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-slate-900 transition-colors">
-                    {month}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    </div>
+    <DashboardClientUI 
+      stats={stats} 
+      recentExpenses={latestExpenses || []} 
+      locations={activeLocations} 
+      categories={[]} // Form uses internal list for now
+    />
   );
 }

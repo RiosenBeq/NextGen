@@ -27,7 +27,8 @@ import {
   Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { logout } from "@/app/actions/auth";
+import { logout, updateProfile } from "@/app/actions/auth";
+import { PremiumModal } from "./premium/PremiumModal";
 
 const navLinks = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Ana Panel" },
@@ -93,7 +94,7 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
     <motion.aside 
       initial={{ x: -260, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-64 shrink-0 hidden lg:flex flex-col h-screen text-white relative z-50"
+      className="w-64 shrink-0 hidden lg:flex flex-col h-screen text-white relative z-50 shadow-2xl"
       style={{ background: '#1E2A44' }}
     >
       {/* Logo */}
@@ -128,7 +129,7 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
                     href={link.href}
                     className={cn(
                       "sidebar-link",
-                      isActive && "active"
+                      isActive && "active text-white bg-white/[0.06] shadow-sm"
                     )}
                   >
                     <Icon className={cn(
@@ -164,14 +165,10 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
   );
 }
 
-import ModernModal from '@/components/ModernModal';
-import { updateProfile } from '@/app/actions/auth';
-
 export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole }: { onToggleMenu?: () => void, isOpen?: boolean, userEmail?: string, userFullName?: string, userRole?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [profileName, setProfileName] = useState(userFullName || '');
   const pathname = usePathname();
 
   const displayName = userFullName || (userEmail
@@ -219,7 +216,7 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                   <Link 
                     href={crumb.href}
                     className={cn(
-                      "text-[10px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
+                      "text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap",
                       i === breadcrumbs.length - 1 ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
                     )}
                   >
@@ -254,52 +251,48 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
         </div>
       </header>
 
-      <ModernModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title="Profil Ayarları" maxWidth="max-w-md">
-        <div className="p-6">
+      <PremiumModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title="Profil Ayarları" maxWidth="max-w-md">
+        <div className="p-8">
           <form action={async (formData) => {
             setIsUpdating(true);
             const res = await updateProfile(formData);
             setIsUpdating(false);
             if (res.success) {
                setProfileModalOpen(false);
+               window.location.reload();
             } else {
-               alert(res.error);
+               alert((res as any).error || "Bir hata oluştu.");
             }
-          }} className="space-y-4">
-            <div className="space-y-1.5">
-               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Ad Soyad (Görünen İsim)</label>
+          }} className="space-y-6">
+            <div className="space-y-2">
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Ad Soyad (Sistem Kimliği)</label>
                <input 
                   type="text" 
                   name="fullName"
                   required
-                  value={profileName}
-                  onChange={e => setProfileName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none transition-all shadow-inner"
-                  placeholder="Görünmesini istediğiniz tam adınız"
+                  defaultValue={userFullName || ''}
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-[22px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-inner"
+                  placeholder="İsminizi giriniz..."
                />
             </div>
-            <div className="space-y-1.5 opacity-60 pointer-events-none">
-               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">E-Posta Adresi</label>
-               <input 
-                  type="email" 
-                  disabled
-                  value={userEmail || ''}
-                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900"
-               />
+            <div className="space-y-2 opacity-50 pointer-events-none">
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">E-Posta (Yalnızca Okuma)</label>
+               <div className="w-full px-6 py-4 bg-slate-100 border border-slate-200 rounded-[22px] text-sm font-bold text-slate-400 italic">
+                  {userEmail}
+               </div>
             </div>
-            <div className="pt-4">
+            <div className="pt-6">
                <button 
                  type="submit"
                  disabled={isUpdating}
-                 className="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100"
-                 style={{ background: '#2F6BFF', color: 'white' }}
+                 className="w-full py-5 bg-blue-600 text-white rounded-[24px] text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                >
-                 {isUpdating ? 'Güncelleniyor...' : 'Profili Kaydet'}
+                 {isUpdating ? 'Senkronize Ediliyor...' : 'Profil Ayarlarını Uygula'}
                </button>
             </div>
           </form>
         </div>
-      </ModernModal>
+      </PremiumModal>
 
       <AnimatePresence>
         {isOpen && (
@@ -333,7 +326,7 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                 </button>
               </div>
 
-              <nav className="p-3 space-y-0.5">
+              <nav className="p-3 space-y-0.5" role="navigation">
                 {navLinks.map(link => {
                   const isActive = pathname === link.href;
                   const Icon = link.icon;
@@ -376,7 +369,7 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
 
   return (
     <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-slate-200 px-2 py-1.5 rounded-2xl shadow-xl shadow-slate-200/70 max-w-[92vw]">
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-0.5" role="navigation">
         {mobileLinks.map(link => {
           const isActive = pathname === link.href;
           const Icon = link.icon;

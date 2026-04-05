@@ -2,28 +2,32 @@
 
 import React, { useState } from 'react';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  ArrowUpRight, 
-  ArrowDownRight, 
   Plus, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
+  ChevronRight, 
+  Wallet, 
+  Receipt,
+  FileText,
+  TrendingUp,
+  TrendingDown,
+  BrainCircuit,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Search,
+  Filter,
+  MoreHorizontal,
   Download,
   Calendar,
-  Wallet,
   PieChart,
   Activity,
-  ChevronRight,
-  Eye,
-  Receipt
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import { PremiumFlipCard } from './PremiumFlipCard';
+import AIFinancialAnalyst from './AIFinancialAnalyst';
 
 interface DashboardProps {
   stats: {
@@ -158,7 +162,12 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
         />
       </section>
 
-      {/* 2. RECENT TRANSACTIONS TABLE (VERCEL STYLE) */}
+      {/* 2. AI FINANCIAL ANALYST (STRATEGIC OVERVIEW) */}
+      <section>
+          <AIFinancialAnalyst />
+      </section>
+
+      {/* 3. RECENT TRANSACTIONS TABLE (VERCEL STYLE) */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
            <div className="space-y-1">

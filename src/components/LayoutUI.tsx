@@ -23,7 +23,9 @@ import {
   BarChart3,
   Search,
   PlusCircle,
-  Zap
+  Zap,
+  LogOut,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,9 +33,11 @@ const navLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, category: "Main" },
   { href: "/performance", label: "Performans", icon: PlusCircle, category: "Operasyonlar" },
   { href: "/reports", label: "Nakit Akışı", icon: TrendingUp, category: "Finans" },
+  { href: "/monthly", label: "Aylık Özet", icon: Calendar, category: "Finans" },
   { href: "/gelir-gider", label: "Gelir & Gider", icon: Wallet, category: "Finans" },
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finans" },
   { href: "/expenses", label: "Gider Yönetimi", icon: CreditCard, category: "Finans" },
+  { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finans" },
   { href: "/notes", label: "Notlar", icon: FileText, category: "Diğer" },
   { href: "/logs", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/settings", label: "Ayarlar", icon: Settings, category: "Sistem" },
@@ -102,11 +106,6 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t border-white/[0.06] space-y-3">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/[0.12]">
-          <div className="status-dot-green shrink-0" style={{width:'7px',height:'7px'}} />
-          <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wide">Sistem Aktif</span>
-        </div>
-        
         <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] cursor-pointer hover:bg-white/[0.06] transition-colors">
           <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
             <User className="w-4 h-4 text-slate-400" />

@@ -5,6 +5,7 @@ import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
 import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
 import ExpenseBreakdown from '@/features/ledger/components/ExpenseBreakdown';
 import PerformanceComparison from '@/features/ledger/components/PerformanceComparison';
+import InteractiveKPICards from '@/features/ledger/components/InteractiveKPICards';
 import { 
   TrendingUp, CreditCard, Wallet, Activity, 
   ArrowUpRight, Radio, LayoutDashboard, BarChart3, 
@@ -121,42 +122,6 @@ export default async function DashboardPage() {
   const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
   const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
 
-  const kpis = [
-    { 
-      label: "Toplam Ciro", 
-      sublabel: "Manuel Kayıtlar",
-      value: `₺${displayAllTimeRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
-      icon: TrendingUp, 
-      trend: "Manuel Mod",
-      iconColor: "text-emerald-600",
-      iconBg: "bg-emerald-50 border-emerald-100",
-      cardClass: "stat-card-green",
-      positive: true
-    },
-    {
-      label: "Toplam Gider",
-      sublabel: "Komisyon + AVM + Diğer",
-      value: `₺${totalGlobalOperationalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
-      icon: CreditCard,
-      iconColor: "text-red-600",
-      iconBg: "bg-red-50 border-red-100",
-      cardClass: "stat-card-red",
-      trend: "Tüm Zamanlar",
-      positive: false
-    },
-    {
-      label: "Net Nakit Akışı",
-      sublabel: "Tüm Operasyonel Giderler Sonrası",
-      value: `₺${trueGlobalNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
-      icon: Wallet,
-      iconColor: trueGlobalNetCash >= 0 ? "text-blue-600" : "text-amber-600",
-      iconBg: trueGlobalNetCash >= 0 ? "bg-blue-50 border-blue-100" : "bg-amber-50 border-amber-100",
-      cardClass: trueGlobalNetCash >= 0 ? "stat-card-blue" : "stat-card-amber",
-      trend: `Yatırım: ₺${totalInvestment.toLocaleString('tr-TR')}`,
-      positive: trueGlobalNetCash >= 0
-    },
-  ];
-
   // Prepare Bursa vs Izmir comparison data (Last 6 months)
   const comparisonData: any[] = [];
   const monthNames = Array.from(new Set(performances?.map(p => new Date(p.month).toLocaleDateString('tr-TR', { month: 'short' })) || []));
@@ -188,46 +153,19 @@ export default async function DashboardPage() {
         </div>
         
         <div className="flex flex-col items-end gap-1.5">
-           <div className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm text-sm">
-             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-200" />
-             <span className="font-bold text-slate-700 tracking-tight uppercase text-xs">Sistem Durumu: Stabil</span>
-           </div>
            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 italic">Son Güncelleme: {new Date().toLocaleTimeString('tr-TR')}</p>
         </div>
       </header>
 
-      {/* KPI Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {kpis.map((kpi, idx) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.08, type: 'spring', damping: 20 }}
-            className={cn("premium-card p-6 group hover:shadow-xl transition-all duration-300", kpi.cardClass)}
-          >
-            <div className="flex items-start justify-between mb-6">
-              <div className={cn("w-12 h-12 rounded-2xl border flex items-center justify-center transition-transform group-hover:scale-110 duration-300", kpi.iconBg)}>
-                <kpi.icon className={cn("w-6 h-6", kpi.iconColor)} />
-              </div>
-              <span className={cn(
-                "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter",
-                kpi.positive ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-              )}>
-                {kpi.trend}
-              </span>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{kpi.label}</p>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tighter">{kpi.value}</h2>
-              <p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1">
-                 <ArrowUpRight size={12} className="text-slate-300" />
-                 {kpi.sublabel}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </section>
+      {/* Interactive KPI Cards */}
+      <InteractiveKPICards 
+        totalRevenue={displayAllTimeRevenue}
+        totalExpense={totalGlobalOperationalExpense}
+        totalInvestment={totalInvestment}
+        totalNetCash={trueGlobalNetCash}
+        expenses={expensesData || []}
+        allMonthCount={allMonthCount}
+      />
 
       {/* Bursa vs İzmir Comparison */}
       <section className="space-y-4">

@@ -12,7 +12,7 @@ export async function createAuditLog(
   try {
     const supabase = await createClient();
     const headersList = await headers();
-    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
+    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || '127.0.0.1';
     const userAgent = headersList.get('user-agent') || 'unknown';
 
     const { error } = await supabase

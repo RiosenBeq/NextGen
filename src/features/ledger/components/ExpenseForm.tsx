@@ -368,11 +368,11 @@ export default function ExpenseForm({
             <label className="text-[13px] font-semibold text-slate-700 ml-1">Ödemeyi Yapan (Kaynak)</label>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {[
-                { id: 'Ortak Hesap', label: 'Ortak Hesap', sub: 'Okan, Talha, Furkan' },
-                { id: 'Okan', label: 'Okan', sub: '%25 Pay' },
-                { id: 'Talha', label: 'Talha', sub: '%25 Pay' },
-                { id: 'Furkan', label: 'Furkan', sub: '%25 Pay' },
-                { id: 'Alp', label: 'Alp', sub: '%25 Pay' }
+                { id: 'Ortak Hesap', label: 'Ortak Hesap' },
+                { id: 'Okan', label: 'Okan' },
+                { id: 'Talha', label: 'Talha' },
+                { id: 'Furkan', label: 'Furkan' },
+                { id: 'Alp', label: 'Alp' }
               ].map((partner) => {
                 const isSelected = formData.paidBy === partner.id;
                 return (
@@ -396,12 +396,6 @@ export default function ExpenseForm({
                       isSelected ? "text-blue-700" : "text-slate-700"
                     )}>
                       {partner.label}
-                    </span>
-                    <span className={cn(
-                      "text-[9px] mt-0.5 tracking-wider uppercase font-semibold",
-                      isSelected ? "text-blue-500" : "text-slate-400"
-                    )}>
-                      {partner.sub}
                     </span>
                   </div>
                 );

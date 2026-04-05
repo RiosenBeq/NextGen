@@ -392,3 +392,18 @@ body {
     padding: 1.25rem 1rem 12rem; /* Increased to fix overlap with floating navigation */
   }
 }
+
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+}

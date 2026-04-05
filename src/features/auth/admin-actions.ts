@@ -62,7 +62,7 @@ export async function createSystemUser(data: any) {
       role: validatedData.role 
     });
 
-    revalidatePath('/users');
+    revalidatePath('/kullanicilar');
     return { success: true, user: { id: userData.user.id, email: userData.user.email } };
   } catch (error: any) {
     console.error("Create User Error:", error);
@@ -109,7 +109,7 @@ export async function deleteSystemUser(userId: string) {
 
     await createAuditLog('DELETE', 'AuthUser', userId);
 
-    revalidatePath('/users');
+    revalidatePath('/kullanicilar');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

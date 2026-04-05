@@ -1,5 +1,5 @@
 import { getActiveLocations } from '@/features/ledger/actions';
-import { getDailyPerformanceHistory } from '@/features/ledger/performance-actions';
+import { getDailyPerformanceHistory } from '@/features/ledger/performans-actions';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import PremiumExpenseTable from '@/components/premium/PremiumExpenseTable';
 import { 

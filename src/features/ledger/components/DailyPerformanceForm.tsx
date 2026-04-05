@@ -9,8 +9,9 @@ import {
   Settings, TrendingUp, Beaker, 
   MessageSquare, Trash2, ChevronDown
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { upsertDailyPerformance } from '../performance-actions';
+import { upsertDailyPerformance } from '../performans-actions';
 
 const performanceSchema = z.object({
   locationId: z.string().min(1, 'Lokasyon seçiniz'),
@@ -195,6 +196,4 @@ export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerf
   );
 }
 
-function AnimatePresence({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
+

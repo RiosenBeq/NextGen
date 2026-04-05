@@ -55,6 +55,8 @@ model MonthlyPerformance {
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
+  @@unique([locationId, month])
 }
 
 model Expense {

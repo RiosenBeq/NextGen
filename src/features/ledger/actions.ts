@@ -26,9 +26,9 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
     if (error) throw error;
 
-    revalidatePath('/performance');
+    revalidatePath('/performans');
     revalidatePath('/');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
 
     return { success: true };
   } catch (error: any) {
@@ -81,10 +81,10 @@ export async function addExpense(data: any) {
       locationId: validatedData.locationId
     });
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: any) {
     console.error("Add Expense Error:", error);
@@ -134,10 +134,10 @@ export async function updateExpense(id: string, data: any) {
       amount: amountWithVat
     });
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: any) {
     console.error("Update Expense Error:", error);
@@ -227,10 +227,10 @@ export async function deleteExpense(id: string) {
     
     await createAuditLog('DELETE', 'Expense', id);
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
@@ -266,8 +266,8 @@ export async function addInvestment(data: any) {
       amount: amount 
     });
 
-    revalidatePath('/investments');
-    revalidatePath('/expenses');
+    revalidatePath('/yatirimlar');
+    revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -303,8 +303,8 @@ export async function updateInvestment(id: string, data: any) {
       amount: amount 
     });
 
-    revalidatePath('/investments');
-    revalidatePath('/expenses');
+    revalidatePath('/yatirimlar');
+    revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -320,8 +320,8 @@ export async function deleteInvestment(id: string) {
     
     await createAuditLog('DELETE', 'Investment', id);
 
-    revalidatePath('/investments');
-    revalidatePath('/expenses');
+    revalidatePath('/yatirimlar');
+    revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -355,9 +355,9 @@ export async function updateLocationParameters(id: string, data: any) {
       .eq('id', id);
 
     if (error) throw error;
-    revalidatePath('/settings');
+    revalidatePath('/ayarlar');
     revalidatePath('/');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     return { success: true };
@@ -492,9 +492,9 @@ export async function updateSystemParameter(key: string, value: number) {
 
     await createAuditLog('UPDATE', 'SystemParameter', key, { newValue: safeValue });
     
-    revalidatePath('/settings');
+    revalidatePath('/ayarlar');
     revalidatePath('/');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     return { success: true };
@@ -526,9 +526,9 @@ export async function resetSystemParameters() {
 
     await createAuditLog('UPDATE', 'SystemParameter', 'ALL', 'Ayarlar varsayılana sıfırlandı.');
 
-    revalidatePath('/settings');
+    revalidatePath('/ayarlar');
     revalidatePath('/');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     return { success: true };
@@ -547,7 +547,7 @@ export async function toggleExpenseSettled(id: string, currentDesc: string) {
   const { error } = await supabase.from('Expense').update({ description: newDesc }).eq('id', id);
   if (error) return { success: false, error: error.message };
   
-  revalidatePath('/expenses');
+  revalidatePath('/giderler');
   return { success: true };
 }
 
@@ -565,6 +565,6 @@ export async function autoSettleOldExpenses() {
       count++;
     }
   }
-  revalidatePath('/expenses');
+  revalidatePath('/giderler');
   return { success: true, count };
 }

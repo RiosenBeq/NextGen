@@ -117,9 +117,9 @@ export default async function ReportsPage({
         </div>
 
         <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200 rounded-xl">
-          <Link href="/reports?location=all" className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-all", filterLocation === 'all' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}>Tümü</Link>
+          <Link href="/raporlar?location=all" className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-all", filterLocation === 'all' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}>Tümü</Link>
           {(locations || []).map(loc => (
-            <Link key={loc.id} href={`/reports?location=${loc.id}`} className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap", filterLocation === loc.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}>{loc.name.split(' ')[0]}</Link>
+            <Link key={loc.id} href={`/raporlar?location=${loc.id}`} className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap", filterLocation === loc.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}>{loc.name.split(' ')[0]}</Link>
           ))}
         </div>
       </header>

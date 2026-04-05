@@ -103,14 +103,14 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                </div>
                <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-2xl">
                   <FilterLink 
-                    href="/performance?location=all" 
+                    href="/performans?location=all" 
                     active={historyLocId === '' || historyLocId === 'all'} 
                     label="Tümü" 
                   />
                   {locations.map(loc => (
                     <FilterLink 
                       key={loc.id} 
-                      href={`/performance?location=${loc.id}`} 
+                      href={`/performans?location=${loc.id}`} 
                       active={historyLocId === loc.id} 
                       label={loc.name} 
                     />

@@ -144,11 +144,11 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">PERFORMANS SKORU</p>
                 <div className="grid grid-cols-2 gap-2">
                    <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Session</p>
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Oturum</p>
                       <p className="text-sm font-black text-white italic tracking-tight">{stats.sessions}</p>
                    </div>
                    <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Growth</p>
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Büyüme</p>
                       <p className="text-sm font-black text-emerald-400 italic tracking-tight">+{stats.monthlyGrowth}%</p>
                    </div>
                 </div>

@@ -35,9 +35,9 @@ export async function upsertDailyPerformance(data: {
     // Recalculate monthly aggregate for this location/month
     await syncMonthlyPerformance(data.locationId, data.date);
 
-    revalidatePath('/performance');
+    revalidatePath('/performans');
     revalidatePath('/');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
 
     return { success: true, data: record };
@@ -61,16 +61,21 @@ async function syncMonthlyPerformance(locationId: string, dateStr: string) {
     .gte('date', startOfMonth)
     .lte('date', endOfMonth);
 
-  if (error) return;
+  if (error) {
+    console.error("Aggregation Error:", error);
+    return;
+  }
 
   const totalSessions = (dailies || []).reduce((acc, curr) => acc + (curr.sessionCount || 0), 0);
 
   // Update MonthlyPerformance (The Financial Table)
   const monthId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  await supabase
+  const deterministicId = `perf_${monthId}_${locationId}`;
+
+  const { error: upsertError } = await supabase
     .from('MonthlyPerformance')
     .upsert({
-      id: `perf_${monthId}_${locationId}`,
+      id: deterministicId,
       locationId: locationId,
       month: startOfMonth,
       sessionCount: totalSessions,
@@ -78,6 +83,10 @@ async function syncMonthlyPerformance(locationId: string, dateStr: string) {
     }, {
       onConflict: 'id'
     });
+
+  if (upsertError) {
+    console.error("Monthly Upsert Error:", upsertError);
+  }
 }
 
 export async function getDailyPerformanceHistory(locationId: string, limit = 30) {

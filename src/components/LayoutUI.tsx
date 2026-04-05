@@ -32,17 +32,17 @@ import { PremiumModal } from "./premium/PremiumModal";
 
 const navLinks = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Ana Panel" },
-  { href: "/performance", label: "Performans Girişi", icon: PlusCircle, category: "Operasyonlar" },
-  { href: "/reports", label: "Nakit Akışı", icon: TrendingUp, category: "Finansal Analiz" },
+  { href: "/performans", label: "Performans Girişi", icon: PlusCircle, category: "Operasyonlar" },
+  { href: "/raporlar", label: "Nakit Akışı", icon: TrendingUp, category: "Finansal Analiz" },
   { href: "/hedefler", label: "Hedefler & Projeksiyon", icon: Target, category: "Finansal Analiz" },
-  { href: "/monthly", label: "Aylık Özet", icon: Calendar, category: "Finansal Analiz" },
+  { href: "/aylik-ozet", label: "Aylık Özet", icon: Calendar, category: "Finansal Analiz" },
   { href: "/gelir-gider", label: "Gelir & Gider", icon: Wallet, category: "Finansal Analiz" },
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finansal Analiz" },
-  { href: "/expenses", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
+  { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
   { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finansal Analiz" },
-  { href: "/notes", label: "Notlar", icon: FileText, category: "Destek" },
-  { href: "/logs", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
-  { href: "/settings", label: "Ayarlar", icon: Settings, category: "Sistem" },
+  { href: "/notlar", label: "Notlar", icon: FileText, category: "Destek" },
+  { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
+  { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
 ];
 
 function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' }) {
@@ -363,8 +363,8 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
   const mobileLinks = [
     { href: "/", label: "Ana Sayfa", icon: Home },
     { href: "/gelir-gider", label: "Finans", icon: Wallet },
-    { href: "/reports", label: "Rapor", icon: TrendingUp },
-    { href: "/expenses", label: "Giderler", icon: CreditCard },
+    { href: "/raporlar", label: "Rapor", icon: TrendingUp },
+    { href: "/giderler", label: "Giderler", icon: CreditCard },
   ];
 
   return (

@@ -62,7 +62,7 @@ export async function uploadDocument(formData: FormData) {
       fileType: relatedType 
     });
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     revalidatePath('/belgeler');
     return { success: true };
@@ -108,7 +108,7 @@ export async function deleteDocument(id: string) {
     const { error } = await supabase.from('Document').delete().eq('id', id);
     if (error) throw error;
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     revalidatePath('/belgeler');
     return { success: true };

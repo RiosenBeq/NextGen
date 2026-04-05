@@ -38,7 +38,7 @@ export default async function DashboardPage() {
 
   if (defaultPageParam) {
     const val = parseInt(String(defaultPageParam.value));
-    if (val === 1) redirect('/performance');
+    if (val === 1) redirect('/performans');
     if (val === 2) redirect('/gelir-gider');
   }
 

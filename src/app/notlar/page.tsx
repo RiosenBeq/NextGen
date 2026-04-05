@@ -1,5 +1,5 @@
-import { getNotes } from '@/features/notes/actions';
-import NoteList from '@/features/notes/components/NoteList';
+import { getNotes } from '@/features/notlar/actions';
+import NoteList from '@/features/notlar/components/NoteList';
 import * as motion from "framer-motion/client";
 import { StickyNote, MessageSquareText } from 'lucide-react';
 

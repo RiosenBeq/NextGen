@@ -50,7 +50,7 @@ export async function addNote(title: string, content: string = '', color: string
     return { success: false, error: error.message };
   }
 
-  revalidatePath('/notes');
+  revalidatePath('/notlar');
   revalidatePath('/');
   return { success: true, note: data };
 }
@@ -73,7 +73,7 @@ export async function updateNote(id: string | number, title: string, content: st
     return { success: false, error: error.message };
   }
 
-  revalidatePath('/notes');
+  revalidatePath('/notlar');
   revalidatePath('/');
   return { success: true, note: data };
 }
@@ -93,7 +93,7 @@ export async function deleteNote(id: string | number) {
     return { success: false, error: error.message };
   }
 
-  revalidatePath('/notes');
+  revalidatePath('/notlar');
   revalidatePath('/');
   return { success: true };
 }

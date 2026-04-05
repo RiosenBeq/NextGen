@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function UsersPage() {
-  redirect('/settings?tab=users');
+  redirect('/ayarlar?tab=users');
   return null;
 }

@@ -72,8 +72,8 @@ export function SystemParametersForm({ parameters }: Props) {
               defaultValue={parameters['SESSION_PRICE_INCL_VAT'] || 300} 
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
               placeholder="300" 
-              onFocus={(e) => { e.currentTarget.style.ringWidth = "4px"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.ringWidth = "0px"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
@@ -87,8 +87,8 @@ export function SystemParametersForm({ parameters }: Props) {
               defaultValue={parameters['VAT_RATE'] || 0} 
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
               placeholder="0" 
-              onFocus={(e) => { e.currentTarget.style.ringWidth = "4px"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.ringWidth = "0px"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
@@ -102,8 +102,8 @@ export function SystemParametersForm({ parameters }: Props) {
               defaultValue={parameters['CORP_TAX_RATE'] || 0} 
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
               placeholder="0" 
-              onFocus={(e) => { e.currentTarget.style.ringWidth = "4px"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.ringWidth = "0px"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
         </div>

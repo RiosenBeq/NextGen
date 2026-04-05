@@ -71,8 +71,8 @@ export function LocationSettingsForm({ location }: Props) {
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
               style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as any}
               placeholder="0.00" 
-              onFocus={(e) => { e.currentTarget.style.ringWidth = "4px"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.ringWidth = "0px"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
@@ -86,8 +86,8 @@ export function LocationSettingsForm({ location }: Props) {
               defaultValue={location.duesAmount} 
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner"
               placeholder="0.00" 
-              onFocus={(e) => { e.currentTarget.style.ringWidth = "4px"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.ringWidth = "0px"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
@@ -101,8 +101,8 @@ export function LocationSettingsForm({ location }: Props) {
               defaultValue={location.rentVatRate} 
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
               placeholder="20" 
-              onFocus={(e) => { e.currentTarget.style.ringWidth = "4px"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.ringWidth = "0px"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 

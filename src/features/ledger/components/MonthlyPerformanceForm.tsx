@@ -9,7 +9,6 @@ import { calculateMonthlyCashFlow } from '../calculations';
 import { Loader2, Plus, TrendingUp, Info, CheckCircle2, Zap, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { getKabinRaporSessions } from '../actions';
 
 interface Props {
   locations: any[];
@@ -20,7 +19,6 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, reset, control } = useForm<MonthlyPerformanceInput>({
     resolver: zodResolver(monthlyPerformanceSchema),
@@ -53,32 +51,7 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
     );
   }, [watchedValues, locations]);
 
-  const handleSync = async () => {
-    const locId = watchedValues.locationId;
-    const month = watchedValues.month;
-    
-    if (!locId || !month) {
-      setErrorMsg('Lütfen önce lokasyon ve dönemi seçin.');
-      return;
-    }
 
-    setIsSyncing(true);
-    setErrorMsg('');
-    try {
-      const result = await getKabinRaporSessions(locId, typeof month === 'string' ? month : month.toISOString());
-      if (result.success) {
-        reset({ ...watchedValues as any, sessionCount: result.sessions });
-        setSuccessMsg(`KabinRapor verisi başarıyla çekildi: ${result.sessions} seans`);
-        setTimeout(() => setSuccessMsg(''), 3000);
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (err: any) {
-      setErrorMsg(`API Hatası: ${err.message}`);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const onSubmit = async (data: MonthlyPerformanceInput) => {
     setIsSubmitting(true);
@@ -107,7 +80,7 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
       >
         <header className="mb-8">
           <h2 className="text-lg font-bold text-slate-900 mb-1">Performans Kaydı</h2>
-          <p className="text-xs text-slate-400">KabinRapor verilerini sisteme aktarın</p>
+          <p className="text-xs text-slate-400">Verileri manuel olarak sisteme girin</p>
         </header>
         
         <AnimatePresence>
@@ -157,15 +130,6 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-600">Toplam Oturum Adedi</label>
-              <button
-                type="button"
-                onClick={handleSync}
-                disabled={isSyncing}
-                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 transition-colors disabled:opacity-50"
-              >
-                {isSyncing ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
-                Canlı Veriden Doldur
-              </button>
             </div>
             <div className="relative">
               <input

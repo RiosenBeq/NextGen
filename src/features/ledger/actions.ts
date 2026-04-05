@@ -416,32 +416,6 @@ export async function getSystemParameters() {
   }
 }
 
-export async function getKabinRaporSessions(locationId: string, monthStr: string) {
-  try {
-    const { kabinRapor } = await import('@/lib/kabinRapor');
-    const supabase = await createClient();
-    const { data: location } = await supabase.from('Location').select('name').eq('id', locationId).single();
-    if (!location) throw new Error('Lokasyon bulunamadı');
-
-    const cityName = location.name.split(' ')[0]; // Zafer, Mavi, vb.
-    const monthId = monthStr.slice(0, 7);
-    const currentMonthId = new Date().toISOString().slice(0, 7);
-    
-    // API: 'Bu Ay' or 'YYYY-MM'
-    const range = monthId === currentMonthId ? 'Bu Ay' : monthId;
-    const liveData = await kabinRapor.getCitySplittedData(range as any);
-    
-    if (!liveData) throw new Error('API verisi alınamadı');
-    const cityData = (liveData.cities as any)[cityName];
-    const foundSessionCount = cityData?.sessions || 0;
-    
-    return { success: true, sessions: foundSessionCount };
-  } catch (error: any) {
-    console.error("fetchKabinError:", error);
-    return { success: false, error: error.message };
-  }
-}
-
 export async function updateSystemParameter(key: string, value: number) {
   try {
     const supabase = await createClient();

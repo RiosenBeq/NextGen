@@ -4,7 +4,6 @@ import { getLocationInsights } from '@/features/ledger/actions';
 import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
 import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
 import ExpenseBreakdown from '@/features/ledger/components/ExpenseBreakdown';
-import { kabinRapor } from '@/lib/kabinRapor';
 import { 
   TrendingUp, CreditCard, Wallet, Activity, 
   ArrowUpRight, Radio, LayoutDashboard, BarChart3, 
@@ -24,14 +23,6 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const supabase = await createClient();
   const insights = await getLocationInsights();
-
-  // Live Data from kabinrapor.com
-  let liveData: any = null;
-  try {
-    liveData = await kabinRapor.getComprehensiveData('Tüm Zamanlar');
-  } catch (error) {
-    console.error("Failed to fetch live kabin data:", error);
-  }
 
   const { data: performances } = await supabase
     .from('MonthlyPerformance')
@@ -86,26 +77,13 @@ export default async function DashboardPage() {
   const chartEntries = Object.entries(monthlyTotals).slice(-6);
   const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
 
-  const allTimeTotal = liveData?.allTimeTotals;
-  const citySplit = liveData?.citySplit;
-  const thisMonthTotal = liveData?.thisMonthTotals;
+  // Manual records are now the only source of truth
+  const displayAllTimeRevenue = totalManualRevenue;
+  const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
 
-  const displayMonthlyRevenue = thisMonthTotal ? thisMonthTotal.total_revenue : totalManualRevenue;
-  
-  // Use KabinRapor All-Time revenue if available
-  const displayAllTimeRevenue = allTimeTotal?.total_revenue || totalManualRevenue;
-  const displayTotalSessions = allTimeTotal 
-    ? allTimeTotal.total_paid_sessions 
-    : (performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0);
-
-  // Truer Global Net Cash Flow
-  // KabinRapor All-Time Revenue - Base 4% Commission - Total AVM Expenses (from db) - Total Investment (from db)
   const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
   const globalCommission = displayAllTimeRevenue * 0.04;
   
-  // Manual AVM Expenses = NetCash is derived from Brüt - Commission - AVm Expense. So AVM Expense = Brüt - Commission - NetCash.
-  // Instead of recalculating, we know totalManualCommission includes generic 4% + AVM revenue share. 
-  // Let's just use the differential logic: 
   const totalManualAvmExpense = performances?.reduce((acc, perf) => {
     return acc + (perf.location.fixedRent * 1.20) + perf.location.duesAmount;
   }, 0) || 0;
@@ -116,10 +94,10 @@ export default async function DashboardPage() {
   const kpis = [
     { 
       label: "Toplam Ciro", 
-      sublabel: "Canlı Senkron",
+      sublabel: "Manuel Kayıtlar",
       value: `₺${displayAllTimeRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, 
       icon: TrendingUp, 
-      trend: allTimeTotal ? "API Güncel" : "Manuel Kayıt",
+      trend: "Manuel Mod",
       iconColor: "text-emerald-600",
       iconBg: "bg-emerald-50 border-emerald-100",
       cardClass: "stat-card-green",
@@ -156,11 +134,7 @@ export default async function DashboardPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            {liveData ? (
-              <span className="live-dot">Canlı Akış</span>
-            ) : (
-              <span className="text-xs text-amber-600 font-semibold">Manuel Mod</span>
-            )}
+            <span className="text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">Manuel Mod</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
             <LayoutDashboard className="w-6 h-6 text-slate-400" />
@@ -169,13 +143,10 @@ export default async function DashboardPage() {
           <p className="text-sm text-slate-500 mt-1">Finansal akış ve stratejik konumlandırma özeti.</p>
         </div>
         
-        <Link href="/kabin" className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl premium-card hover:shadow-md transition-all text-sm">
-          <div className={cn("w-2 h-2 rounded-full", liveData ? "bg-emerald-500 animate-pulse" : "bg-amber-400")} />
-          <span className="font-medium text-slate-700">
-            {liveData ? "Sistem Aktif" : "Bağlantı Bekleniyor"}
-          </span>
-          <ArrowUpRight className="w-4 h-4 text-slate-400" />
-        </Link>
+        <div className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl premium-card text-sm">
+          <div className="w-2 h-2 rounded-full bg-amber-400" />
+          <span className="font-medium text-slate-700">Çevrimdışı Mod</span>
+        </div>
       </header>
 
       {/* KPI Cards */}

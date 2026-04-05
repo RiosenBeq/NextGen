@@ -4,7 +4,6 @@ import { TrendingUp, ArrowUpRight, CalendarDays, FileText, ArrowRight } from 'lu
 import * as motion from "framer-motion/client";
 import { getSystemParameters } from '@/features/ledger/actions';
 import { cn } from '@/lib/utils';
-import { kabinRapor } from '@/lib/kabinRapor';
 import Link from 'next/link';
 
 export const metadata = {
@@ -29,30 +28,10 @@ export default async function ReportsPage({
     .select('*, location:Location(*)')
     .order('month', { ascending: false });
 
-  // Parallel fetch live data on server
-  const [liveData, liveAllTimeRaw] = await Promise.all([
-    kabinRapor.getComprehensiveData('Bu Ay'),
-    kabinRapor.getComprehensiveData('Tüm Zamanlar')
-  ]);
-
-  const liveAllTime = liveAllTimeRaw?.allTimeTotals || null;
-  const currentMonthId = new Date().toISOString().slice(0, 7);
-
   const processed = (performances || []).map((perf: any) => {
     const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
-    const isCurrentMonth = perfMonthId === currentMonthId;
     
     let sessions = perf.sessionCount;
-    let isLive = false;
-
-    if (isCurrentMonth && liveData?.citySplit?.cities) {
-      const cityName = perf.location.name.split(' ')[0];
-      const cityData = liveData.citySplit?.cities[cityName];
-      if (cityData) {
-        sessions = cityData.sessions;
-        isLive = true;
-      }
-    }
 
     const calc = calculateMonthlyCashFlow(sessions, perf.extraExpenseAmount || 0, {
       sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
@@ -73,7 +52,7 @@ export default async function ReportsPage({
       nayax: calc.nayaxCommission,
       extraExpense: perf.extraExpenseAmount || 0,
       netCash: calc.netCash,
-      isLive,
+      isLive: false,
     };
   });
 
@@ -88,9 +67,9 @@ export default async function ReportsPage({
   };
 
   const kpis = [
-    { label: "Toplam Ciro (Canlı)", value: `₺${(liveAllTime?.total_revenue || currentTotals.revenue).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200", tag: "API All-Time" },
+    { label: "Toplam Ciro", value: `₺${currentTotals.revenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200", tag: "Kayıt Bazlı" },
     { label: "Net Nakit Akışı", value: `₺${currentTotals.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: ArrowUpRight, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200", tag: "Arşiv Bazlı" },
-    { label: "Toplam Seans (Canlı)", value: (liveAllTime?.total_paid_sessions || currentTotals.sessions).toLocaleString('tr-TR'), icon: CalendarDays, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200", tag: "API Senkron" },
+    { label: "Toplam Seans", value: currentTotals.sessions.toLocaleString('tr-TR'), icon: CalendarDays, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200", tag: "Manuel Mod" },
   ];
 
   return (
@@ -155,7 +134,6 @@ export default async function ReportsPage({
                     <td>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-slate-900 text-sm">{row.month}</span>
-                        {row.isLive && <span className="live-dot text-[8px]">Canlı</span>}
                       </div>
                     </td>
                     <td><span className="text-sm text-slate-700">{row.locationName}</span></td>

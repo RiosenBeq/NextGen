@@ -34,7 +34,6 @@ const navLinks = [
   { href: "/gelir-gider", label: "Gelir & Gider", icon: Wallet, category: "Finans" },
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finans" },
   { href: "/expenses", label: "Gider Yönetimi", icon: CreditCard, category: "Finans" },
-  { href: "/kabin", label: "Kabin Verisi", icon: Database, category: "Veriler" },
   { href: "/notes", label: "Notlar", icon: FileText, category: "Diğer" },
   { href: "/logs", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/settings", label: "Ayarlar", icon: Settings, category: "Sistem" },
@@ -243,7 +242,6 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
     { href: "/", label: "Ana Sayfa", icon: Home },
     { href: "/gelir-gider", label: "Finans", icon: Wallet },
     { href: "/reports", label: "Rapor", icon: TrendingUp },
-    { href: "/kabin", label: "Kabinler", icon: Database },
     { href: "/expenses", label: "Giderler", icon: CreditCard },
   ];
 

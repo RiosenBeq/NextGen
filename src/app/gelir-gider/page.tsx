@@ -1,6 +1,5 @@
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { kabinRapor } from '@/lib/kabinRapor';
 import * as motion from "framer-motion/client";
 import { 
   TrendingUp, TrendingDown, Wallet, BarChart3, 
@@ -33,24 +32,18 @@ export default async function GelirGiderPage(props: {
   const sysParams = await getSystemParameters();
   const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
 
-  // Parallel fetch everything on server
+  // Parallel fetch database records
   const [
     { data: locations },
     { data: performances },
-    { data: expenses },
-    liveData,
-    allTimeData
+    { data: expenses }
   ] = await Promise.all([
     supabase.from('Location').select('*').eq('isActive', true),
     supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false }),
     supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
-    kabinRapor.getComprehensiveData((filterMonth || 'Bu Ay') as any),
-    !filterMonth ? kabinRapor.getComprehensiveData('Tüm Zamanlar') : Promise.resolve(null)
   ]);
 
   const monthlyEntries: any[] = [];
-  const currentMonthId = new Date().toISOString().slice(0, 7);
-  const targetMonthId = filterMonth || currentMonthId;
   
   const formatMonthSafe = (isoStringOrMonthId: string) => {
     let y, m;
@@ -99,49 +92,6 @@ export default async function GelirGiderPage(props: {
     }
   }
 
-  // Live Data overrides
-  if (liveData?.citySplit?.cities) {
-    const cities = liveData.citySplit.cities;
-    for (const [cityName, cityData] of Object.entries(cities) as any) {
-       const matchingLoc = (locations || []).find(l => l.name.toLowerCase().includes(cityName.toLowerCase()));
-       if (!matchingLoc) continue;
-
-       const liveSessions = cityData.sessions;
-       const recurringExpensesTotal = (expenses || [])
-         .filter(e => e.type === 'RECURRING' && (!e.locationId || e.locationId === matchingLoc.id))
-         .reduce((s, e) => s + (e.amountWithVat || 0), 0);
-
-       const calc = calculateMonthlyCashFlow(liveSessions, recurringExpensesTotal, {
-         sessionPrice,
-         iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
-         fixedRent: matchingLoc.fixedRent, duesAmount: matchingLoc.duesAmount,
-         revenueShareRate: matchingLoc.revenueShareRate || 15,
-       });
-
-       const liveEntry = {
-         monthId: targetMonthId,
-         month: filterMonth ? formatMonthSafe(filterMonth) : formatMonthSafe(currentMonthId),
-         locationName: matchingLoc.name,
-         locationId: matchingLoc.id,
-         sessions: liveSessions,
-         grossRevenue: calc.grossRevenue,
-         totalExpense: calc.totalExpense,
-         netCash: calc.netCash,
-         totalCommission: calc.totalCommission,
-         revenueShare: calc.revenueShare,
-         avmExpense: calc.totalAvmExpense,
-         isLive: true
-       };
-
-       const existingIndex = monthlyEntries.findIndex(e => e.monthId === targetMonthId && e.locationId === matchingLoc.id);
-       if (existingIndex > -1) {
-         monthlyEntries[existingIndex] = liveEntry;
-       } else {
-         monthlyEntries.unshift(liveEntry);
-       }
-    }
-  }
-
   const filteredMonthlyEntries = monthlyEntries.filter(entry => {
     if (filterMonth && entry.monthId !== filterMonth) return false;
     if (filterLocation !== 'all' && entry.locationId !== filterLocation) return false;
@@ -161,14 +111,14 @@ export default async function GelirGiderPage(props: {
 
   const categoryTotals: Record<string, number> = {};
   for (const exp of filteredExpenses) {
-    const cat = exp.category || 'other';
+    const cat = exp.categoryId || 'other';
     categoryTotals[cat] = (categoryTotals[cat] || 0) + (exp.amountWithVat || 0);
   }
 
   const manualGross = filteredMonthlyEntries.reduce((s, e) => s + e.grossRevenue, 0);
-  const trueGross = (!filterMonth && allTimeData?.allTimeTotals) ? allTimeData.allTimeTotals.total_revenue : manualGross;
-  const trueSessions = (!filterMonth && allTimeData?.allTimeTotals) ? allTimeData.allTimeTotals.total_paid_sessions : filteredMonthlyEntries.reduce((s, e) => s + e.sessions, 0);
-  const trueCommission = (!filterMonth && allTimeData?.allTimeTotals) ? trueGross * 0.04 : filteredMonthlyEntries.reduce((s, e) => s + e.totalCommission, 0);
+  const trueGross = manualGross;
+  const trueSessions = filteredMonthlyEntries.reduce((s, e) => s + e.sessions, 0);
+  const trueCommission = filteredMonthlyEntries.reduce((s, e) => s + e.totalCommission, 0);
   const avmExpenseAndRevShare = filteredMonthlyEntries.reduce((s, e) => s + e.avmExpense + e.revenueShare, 0);
   
   const allMonthsVisible = Array.from(new Set(monthlyEntries.map(e => e.monthId)));
@@ -178,7 +128,7 @@ export default async function GelirGiderPage(props: {
   const totalExpenseSum = trueCommission + avmExpenseAndRevShare + oneTimeExpensesTotal + recurringDeductionTotal;
 
   const kpis = [
-    { label: 'Brüt Gelir', value: trueGross, icon: TrendingUp, cardClass: 'stat-card-green', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100 border-emerald-200', tag: 'Ciro' },
+    { label: 'Brüt Gelir', value: trueGross, icon: TrendingUp, cardClass: 'stat-card-green', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100 border-emerald-200', tag: 'Kayıtlı Ciro' },
     { label: 'Toplam Gider', value: totalExpenseSum, icon: TrendingDown, cardClass: 'stat-card-red', iconColor: 'text-red-600', iconBg: 'bg-red-100 border-red-200', tag: 'KDV Dahil' },
     { label: 'Net Durum', value: trueGross - totalExpenseSum, icon: Wallet, cardClass: (trueGross - totalExpenseSum) >= 0 ? 'stat-card-blue' : 'stat-card-red', iconColor: (trueGross - totalExpenseSum) >= 0 ? 'text-blue-600' : 'text-red-600', iconBg: (trueGross - totalExpenseSum) >= 0 ? 'bg-blue-100 border-blue-200' : 'bg-red-100 border-red-200', tag: 'Nakit Akışı' },
     { label: 'Toplam Seans', value: trueSessions, icon: BarChart3, cardClass: 'bg-white', iconColor: 'text-slate-600', iconBg: 'bg-slate-100 border-slate-200', tag: 'Hacim', isCurrency: false },
@@ -186,7 +136,7 @@ export default async function GelirGiderPage(props: {
 
   const insightSub = [
     { label: 'iyzico %2 + Nayax %2', sub: 'Toplam Operasyonel Kesinti', value: trueCommission, icon: CreditCard, iconColor: 'text-red-500', cardClass: 'stat-card-red' },
-    { label: 'AVM Ciro Payı %15', sub: 'Kira ve Hakediş Gideri', value: filteredMonthlyEntries.reduce((s, e) => s + e.revenueShare, 0), icon: Percent, iconColor: 'text-amber-600', cardClass: 'stat-card-amber' },
+    { label: 'AVM Ciro Payı', sub: 'Kira ve Hakediş Gideri', value: filteredMonthlyEntries.reduce((s, e) => s + e.revenueShare, 0), icon: Percent, iconColor: 'text-amber-600', cardClass: 'stat-card-amber' },
     { label: 'Operasyonel Marj', sub: 'Net Verimlilik Oranı', value: trueGross > 0 ? (((trueGross - totalExpenseSum) / trueGross) * 100) : 0, icon: PiggyBank, iconColor: 'text-blue-600', cardClass: 'stat-card-blue', isPercent: true },
   ];
 
@@ -242,7 +192,7 @@ export default async function GelirGiderPage(props: {
               <tbody>
                 {filteredMonthlyEntries.map((entry, idx) => (
                   <motion.tr key={idx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.04 }}>
-                    <td><div className="flex items-center gap-3"><div><p className="font-semibold text-slate-900 text-sm">{entry.month}</p><p className="text-xs text-slate-400 mt-0.5">{entry.locationName}</p></div>{entry.isLive && <span className="live-dot text-[9px]">Canlı</span>}</div></td>
+                    <td><div className="flex items-center gap-3"><div><p className="font-semibold text-slate-900 text-sm">{entry.month}</p><p className="text-xs text-slate-400 mt-0.5">{entry.locationName}</p></div></div></td>
                     <td className="text-center font-mono font-semibold text-slate-700">{entry.sessions}</td>
                     <td className="text-right font-semibold text-slate-900">₺{entry.grossRevenue.toLocaleString('tr-TR')}</td>
                     <td className="text-right text-red-500 font-medium text-sm">₺{entry.avmExpense.toLocaleString('tr-TR')}</td>

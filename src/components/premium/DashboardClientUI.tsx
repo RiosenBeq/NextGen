@@ -20,14 +20,17 @@ import {
   Calendar,
   PieChart,
   Activity,
-  Eye
+  Eye,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import { PremiumFlipCard } from './PremiumFlipCard';
-import AIFinancialAnalyst from './AIFinancialAnalyst';
+import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
+import { Loader2, Camera, UploadCloud } from 'lucide-react';
 
 interface DashboardProps {
   stats: {
@@ -48,6 +51,33 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+
+  const handleLateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedExpense) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const upload = await uploadExpenseAttachment(formData);
+      if (!upload.success || !upload.publicUrl) throw new Error(upload.error || 'Yükleme başarısız');
+
+      const update = await updateExpenseAttachment(selectedExpense.id, upload.publicUrl);
+      if (!update.success) throw new Error(update.error);
+
+      alert('Belge başarıyla eklendi.');
+      setIsDrawerOpen(false);
+      window.location.reload();
+    } catch (err: any) {
+      alert('Hata: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
@@ -209,6 +239,64 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
                 <DetailRow label="Lokasyon" value={selectedExpense.location?.name || 'Tümü'} />
                 <DetailRow label="Kategori" value={selectedExpense.category?.name || 'Genel'} />
                 <DetailRow label="Kayıt Tarihi" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
+                
+                {/* LATE ATTACHMENT SECTION */}
+                <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+                      <FileText size={14} className="text-blue-500" />
+                      BELGE / KANIT DURUMU
+                   </p>
+                   
+                   {selectedExpense.attachmentUrl ? (
+                     <a 
+                       href={selectedExpense.attachmentUrl} 
+                       target="_blank" 
+                       rel="noopener"
+                       className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100 group/link"
+                     >
+                        <div className="flex items-center gap-3">
+                           <div className="bg-white p-2 rounded-xl text-emerald-600 shadow-sm">
+                              <CheckCircle2 size={16} />
+                           </div>
+                           <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Belge Mevcut</span>
+                        </div>
+                        <ChevronRight size={16} className="text-emerald-400 group-hover/link:translate-x-1 transition-transform" />
+                     </a>
+                   ) : (
+                     <div className="space-y-4">
+                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100">
+                           <AlertCircle size={16} className="text-rose-500" />
+                           <span className="text-[10px] font-black text-rose-700 uppercase tracking-widest">Henüz Belge Eklenmedi</span>
+                        </div>
+                        
+                        <input 
+                          type="file" 
+                          ref={fileRef} 
+                          onChange={handleLateUpload} 
+                          className="hidden" 
+                          accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        />
+                        
+                        <button 
+                          onClick={() => fileRef.current?.click()}
+                          disabled={isUploading}
+                          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all text-[10px] font-black uppercase tracking-widest italic"
+                        >
+                           {isUploading ? (
+                             <>
+                               <Loader2 size={16} className="animate-spin" />
+                               DOSYA YÜKLENİYOR...
+                             </>
+                           ) : (
+                             <>
+                               <UploadCloud size={16} />
+                               BELGE YÜKLE (PDF/GÖRSEL)
+                             </>
+                           )}
+                        </button>
+                     </div>
+                   )}
+                </div>
              </div>
 
              <div className="pt-10 border-t border-slate-50">

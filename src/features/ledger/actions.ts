@@ -217,7 +217,45 @@ export async function uploadExpenseAttachment(formData: FormData) {
     return { success: false, error: `Sunucu hatası: ${error.message}` };
   }
 }
+export async function updateExpenseAttachment(id: string, fileUrl: string) {
+  try {
+    const supabase = await createClient();
+    
+    // 1. Update the Expense record
+    const { error: updateError } = await supabase
+      .from('Expense')
+      .update({ attachmentUrl: fileUrl })
+      .eq('id', id);
 
+    if (updateError) throw updateError;
+
+    // 2. Create the Document record for traceability
+    const { error: docError } = await supabase
+      .from('Document')
+      .insert({
+        fileUrl: fileUrl,
+        fileName: 'Fatura / Belge (Sonradan Eklendi)',
+        relatedType: 'expense',
+        relatedId: id
+      });
+
+    if (docError) throw docError;
+
+    await createAuditLog('UPDATE', 'Expense', id, {
+       action: 'ATTACH_DOCUMENT',
+       fileUrl
+    });
+
+    revalidatePath('/giderler');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Update Attachment Error:", error);
+    return { success: false, error: String(error?.message || 'Bağlantı hatası.') };
+  }
+}
 
 export async function deleteExpense(id: string) {
   try {

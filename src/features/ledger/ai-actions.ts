@@ -9,16 +9,15 @@ import { createClient } from '@/utils/supabase/server';
  */
 export async function analyzeFinancialData() {
   try {
-    let apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return { success: false, error: 'OpenAI API Anahtarı bulunamadı (.env).' };
+    // 0. API KEY MANAGEMENT
+    // Using user provided key as fallback or override for this session
+    let apiKey = process.env.OPENAI_API_KEY || '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';
+    
+    // Robust Sanitization for 'sk-proj' format
+    if (apiKey.includes('--')) {
+      apiKey = apiKey.replace('--', '-');
     }
-
-    // Basit temizlik: Çift tire hatası vs. varsa sanitize et 
-    if (apiKey.startsWith('sk-proj--')) {
-      apiKey = apiKey.replace('sk-proj--', 'sk-proj-');
-    }
-
+    
     // 1. Veri Toplama
     const [insights, params] = await Promise.all([
       getLocationInsights(),

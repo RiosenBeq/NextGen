@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { Calendar, Wallet, TrendingUp, CreditCard, Receipt, Anchor, ArrowDownRight, ArrowUpRight, Target, Activity } from 'lucide-react';
+import { Calendar, Wallet, TrendingUp, CreditCard, Receipt, Anchor, ArrowDownRight, ArrowUpRight, Target, Activity, MapPin } from 'lucide-react';
 import MonthSelector from '@/features/ledger/components/MonthSelector';
 import { cn } from '@/lib/utils';
 
@@ -108,219 +108,239 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   });
 
   return (
-    <div className="page-wrapper min-h-screen bg-[#0f1117] space-y-8 animate-fade-in p-6 md:p-10">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-white/5">
+    <div className="page-wrapper min-h-screen bg-[#0f1117] space-y-8 animate-fade-in p-6 md:p-10 no-scrollbar">
+      
+      {/* 1. TOP HEADER & NAVIGATION */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-10 border-b border-white/5">
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Calendar size={22} strokeWidth={2.5} />
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-[22px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+              <Activity size={28} strokeWidth={2.5} />
             </div>
             <div>
-              <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] italic">PERFORMANS ANALİZİ</span>
-              <h1 className="text-4xl font-black text-white tracking-tighter italic uppercase mt-0.5">
-                Aylık Finansal Özet
+              <div className="flex items-center gap-2 mb-1">
+                 <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                 <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic">Stratejik Finans Raporu</span>
+              </div>
+              <h1 className="text-4xl font-black text-white tracking-tighter italic uppercase leading-none">
+                {monthName} <span className="text-slate-600">Özeti</span>
               </h1>
             </div>
           </div>
-          <p className="text-sm text-slate-500 font-bold max-w-xl leading-relaxed italic">
-            "{monthName}" dönemine ait tüm gelir kalemleri, AVM operasyon giderleri ve cihaz amortismanı düşülmüş net hakediş tablosu.
-          </p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="premium-card bg-white/[0.03] border border-white/10 p-1.5 rounded-[22px] flex items-center gap-2">
-            <MonthSelector availableMonths={availableMonths} selectedMonthStr={selectedMonthStr} />
-          </div>
+        <div className="flex items-center gap-6">
+           <div className="px-6 py-3 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center gap-4 backdrop-blur-xl">
+              <span className="text-[10px] font-black text-slate-500 uppercase italic">Dönem Seçimi:</span>
+              <MonthSelector availableMonths={availableMonths} selectedMonthStr={selectedMonthStr} />
+           </div>
         </div>
       </header>
 
-      {/* Hero Stats Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main EBIT Card */}
+      {/* 2. STRATEGIC EBIT PANEL (HERO) */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        {/* Main Performance Grid */}
         <div className={cn(
-           "lg:col-span-8 group relative rounded-[48px] p-10 md:p-16 overflow-hidden flex flex-col justify-between transition-all duration-700",
+           "lg:col-span-8 group relative rounded-[48px] p-12 overflow-hidden flex flex-col justify-between transition-all duration-700 border-2",
            isProfitable 
-             ? "bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 shadow-[0_0_100px_rgba(16,185,129,0.1)]" 
-             : "bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 shadow-[0_0_100px_rgba(244,63,94,0.1)]"
+             ? "bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/10 shadow-[0_0_80px_rgba(16,185,129,0.05)]" 
+             : "bg-gradient-to-br from-rose-500/10 to-transparent border-rose-500/10 shadow-[0_0_80px_rgba(244,63,94,0.05)]"
         )}>
-           <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity blur-[1px] rotate-12 group-hover:rotate-0 duration-1000">
-             <Anchor size={400} strokeWidth={1} />
+           <div className="absolute top-0 right-0 p-12 opacity-5 blur-[2px] rotate-[-15deg]">
+             <Target size={400} strokeWidth={0.5} />
+           </div>
+
+           <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-3">
+                 <div className={cn("px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border italic backdrop-blur-md", 
+                   isProfitable ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20")}>
+                    {isProfitable ? "NET OPERASYONEL KAR" : "NET OPERASYONEL ZARAR"}
+                 </div>
+                 <div className="px-4 py-1 rounded-full bg-white/5 text-[9px] font-black text-slate-500 border border-white/5 uppercase tracking-widest italic">
+                    AMORTİSMAN SONRASI (EBIT)
+                 </div>
+              </div>
+              
+              <div className="flex items-baseline gap-4">
+                 <h2 className={cn("text-8xl md:text-[140px] font-black tracking-tighter tabular-nums italic drop-shadow-2xl leading-none transition-all", 
+                   isProfitable ? "text-white" : "text-rose-500")}>
+                   {isProfitable ? "" : "-"}₺{Math.abs(ebitProfit).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+                 </h2>
+                 <span className={cn("text-xl font-black italic uppercase", isProfitable ? "text-emerald-500" : "text-rose-600")}>
+                   {isProfitable ? "Elite Performans" : "Büyüme Riski"}
+                 </span>
+              </div>
+           </div>
+
+           <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-4 mt-16">
+              {[
+                { label: 'KİŞİ BAŞI HAKEDİŞ', val: `₺${(ebitProfit / 4).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: Wallet },
+                { label: 'YATIRIM GETİRİSİ', val: `%${((ebitProfit / totalInv) * 100).toFixed(1)}`, icon: TrendingUp },
+                { label: 'KÂN MARJI', val: `%${((rawNetCash / monthRevenue) * 100).toFixed(1)}`, icon: Target },
+                { label: 'BRÜT Hacim', val: `₺${monthRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: Activity }
+              ].map((stat, i) => (
+                <div key={i} className="bg-white/[0.03] border border-white/5 p-6 rounded-[32px] group/item hover:bg-white/10 transition-all">
+                   <div className="flex items-center gap-3 mb-3">
+                      <stat.icon size={14} className="text-blue-500 opacity-60" />
+                      <p className="text-[9px] uppercase font-black tracking-[0.2em] text-slate-500 italic">{stat.label}</p>
+                   </div>
+                   <p className="text-2xl font-black text-white italic tracking-tighter">{stat.val}</p>
+                </div>
+              ))}
+           </div>
+        </div>
+
+        {/* Device Amortization Detail */}
+        <div className="lg:col-span-4 premium-card bg-[#14161f] border border-white/5 p-12 rounded-[48px] flex flex-col justify-between group overflow-hidden relative">
+           <div className="absolute -top-10 -right-10 opacity-5 -rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+              <Anchor size={260} />
            </div>
            
-           <div className="relative z-10 space-y-2">
-             <div className="flex items-center gap-2">
-               <Target className={isProfitable ? "text-emerald-500" : "text-rose-500"} size={16} />
-               <h2 className="text-[11px] font-black uppercase tracking-[0.4em] italic text-slate-400">AMORTİSMAN SONRASI NET KAZANÇ (EBIT)</h2>
-             </div>
-             <div className={cn(
-               "text-7xl md:text-9xl font-black tracking-tighter tabular-nums italic drop-shadow-2xl transition-all duration-500",
-               isProfitable ? "text-emerald-400" : "text-rose-400"
-             )}>
-               {isProfitable ? "+" : ""}₺{ebitProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-             </div>
-           </div>
-
-           <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-              <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-6 rounded-[32px] group/item hover:bg-white/10 transition-all">
-                 <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-2 italic">KİŞİ BAŞI HAKEDİŞ</p>
-                 <div className="flex items-center justify-between">
-                   <p className="text-2xl font-black text-white italic tracking-tighter">₺{(ebitProfit / 4).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-                   <ArrowUpRight size={20} className="text-blue-500 opacity-0 group-hover/item:opacity-100 transition-all" />
-                 </div>
-              </div>
-              <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-6 rounded-[32px] group/item hover:bg-white/10 transition-all">
-                 <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-2 italic">YATIRIM GERİ DÖNÜŞÜ</p>
-                 <p className="text-2xl font-black text-white italic tracking-tighter">%{((ebitProfit / totalInv) * 100).toFixed(1)}</p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-6 rounded-[32px] group/item hover:bg-white/10 transition-all">
-                 <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-2 italic">OPERASYONEL MARJ</p>
-                 <p className="text-2xl font-black text-white italic tracking-tighter">%{((rawNetCash / monthRevenue) * 100).toFixed(1)}</p>
-              </div>
-           </div>
-        </div>
-
-        {/* Amortization Detail Card */}
-        <div className="lg:col-span-4 premium-card bg-white/[0.02] border border-white/10 p-10 rounded-[48px] flex flex-col justify-between group overflow-hidden">
-           <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Activity size={200} />
-           </div>
            <div className="relative z-10">
-              <div className="w-14 h-14 rounded-3xl bg-slate-800/50 border border-white/10 flex items-center justify-center text-slate-400 mb-6 group-hover:scale-110 group-hover:text-amber-500 transition-all duration-500">
-                <TrendingUp size={28} />
-              </div>
-              <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-4">Cihaz Amortismanı</h3>
-              <p className="text-sm text-slate-500 font-bold leading-relaxed mb-8 italic">
-                Toplam yatırım maliyeti olan <span className="text-slate-300">₺{totalInv.toLocaleString('tr-TR')}</span> tutarın, 36 ay (3 yıl) üzerinden her aya düşen payıdır.
-              </p>
-              <div className="space-y-4">
-                 <div className="p-6 rounded-[32px] bg-amber-500/5 border border-amber-500/10 text-center group-hover:border-amber-500/30 transition-all">
-                    <p className="text-4xl font-black text-amber-500 italic tracking-tighter">₺{monthlyAmortization.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-2">DÜŞÜLEN TUTAR / AY</p>
+              <div className="flex items-center gap-4 mb-8">
+                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                   <TrendingUp size={24} />
                  </div>
+                 <h3 className="text-xl font-black text-white italic tracking-tighter uppercase">Cihaz Amortismanı</h3>
+              </div>
+              
+              <div className="space-y-6">
+                 <div className="p-8 rounded-[36px] bg-white/[0.02] border border-white/5 flex flex-col items-center text-center group-hover:bg-amber-500/5 group-hover:border-amber-500/10 transition-all">
+                    <p className="text-5xl font-black text-white italic tracking-tighter shadow-sm mb-2">₺{monthlyAmortization.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic leading-relaxed">BU AYIN PAYINA DÜŞEN <br/> YATIRIM GİDERİ</p>
+                 </div>
+                 <p className="text-[11px] text-slate-500 font-bold leading-relaxed italic text-center px-4">
+                    Toplam <span className="text-slate-300">₺{totalInv.toLocaleString('tr-TR')}</span> yatırımın 36 aylık (3 yıl) amortisman planına göre hesaplanmıştır.
+                 </p>
               </div>
            </div>
-           <div className="relative z-10 pt-8 mt-8 border-t border-white/5">
-              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 italic">
-                <Receipt size={12} /> VERGİ & MUHASEBE UYUMLU
-              </p>
+
+           <div className="relative z-10 pt-10 mt-10 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-widest italic">
+                    <Receipt size={14} className="text-amber-500" /> RESMİ MUHASEBE UYUMLU
+                 </div>
+                 <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+              </div>
            </div>
         </div>
       </section>
 
-      {/* Financial Breakdown Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         <div className="premium-card p-8 bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all">
-            <div className="flex justify-between items-start mb-6">
-               <div className="flex flex-col gap-1">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">TOPLAM BRÜT CİRO</span>
-                 <p className="text-3xl font-black text-white italic tracking-tighter">₺{monthRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-               </div>
-               <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-400"><TrendingUp size={18} /></div>
-            </div>
-            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-               <div className="h-full bg-blue-500 w-[100%]" />
-            </div>
-         </div>
-
-         <div className="premium-card p-8 bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all">
-            <div className="flex justify-between items-start mb-6">
-               <div className="flex flex-col gap-1">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">AVM KİRA & GELİR PAYI</span>
-                 <p className="text-3xl font-black text-white italic tracking-tighter">₺{monthAvmFixed.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-               </div>
-               <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-400"><CreditCard size={18} /></div>
-            </div>
-            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-               <div className="h-full bg-rose-500 transition-all duration-1000" style={{ width: `${(monthAvmFixed / monthRevenue) * 100}%` }} />
-            </div>
-         </div>
-
-         <div className="premium-card p-8 bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all">
-            <div className="flex justify-between items-start mb-6">
-               <div className="flex flex-col gap-1">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">KOMİSYON & MASRAFLAR</span>
-                 <p className="text-3xl font-black text-white italic tracking-tighter">₺{(monthOperationalExpense + monthCommission).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-               </div>
-               <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500"><Receipt size={18} /></div>
-            </div>
-            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-               <div className="h-full bg-amber-500 transition-all duration-1000" style={{ width: `${((monthOperationalExpense + monthCommission) / monthRevenue) * 100}%` }} />
-            </div>
-         </div>
+      {/* 3. COST STRUCTURE (QUICK METRICS) */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         {[
+           { label: 'BRÜT SATIŞ HACMİ', val: monthRevenue, color: 'blue', icon: Activity },
+           { label: 'AVM KİRA & CİRO PAYI', val: monthAvmFixed, color: 'rose', icon: CreditCard },
+           { label: 'OPERASYONEL GİDERLER', val: monthOperationalExpense + monthCommission, color: 'amber', icon: Receipt }
+         ].map((card, i) => (
+           <div key={i} className="premium-card p-10 bg-[#14161f] border border-white/5 hover:border-white/10 transition-all group/cost">
+              <div className="flex justify-between items-start mb-8">
+                 <div className="space-y-4">
+                   <div className="flex items-center gap-2">
+                     <card.icon size={12} className={cn("text-" + card.color + "-500")} />
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">{card.label}</span>
+                   </div>
+                   <p className="text-4xl font-black text-white italic tracking-tighter">₺{card.val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
+                 </div>
+                 <div className={cn("p-4 rounded-2xl bg-" + card.color + "-500/10 text-" + card.color + "-500 group-hover/cost:scale-110 transition-transform shadow-xl")}><card.icon size={20} /></div>
+              </div>
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                 <div className={cn("h-full bg-" + card.color + "-500 transition-all duration-1000")} 
+                      style={{ width: `${card.color === 'blue' ? 100 : (card.val / monthRevenue) * 100}%` }} />
+              </div>
+           </div>
+         ))}
       </section>
 
-      {/* Transaction Feed */}
-      <section className="premium-card overflow-hidden bg-white/[0.02] border border-white/10 rounded-[40px] shadow-2xl">
-         <div className="p-10 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-white/10 flex items-center justify-center text-slate-400 italic">
-                <Receipt size={24} />
+      {/* 4. TRANSACTION AUDIT TABLE */}
+      <section className="premium-card overflow-hidden bg-[#14161f] border border-white/5 rounded-[48px] shadow-[0_40px_80px_rgba(0,0,0,0.4)]">
+         <div className="px-12 py-10 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-white/[0.02] to-transparent">
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-white/10 flex items-center justify-center text-slate-400 italic shadow-inner">
+                <Receipt size={22} />
               </div>
-              <h3 className="text-xl font-black text-white italic tracking-tighter uppercase">Ekstra Harcama Detayları</h3>
+              <div>
+                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase">Ekstra Gider Detayları</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Stratejik Audit Kayıtları</p>
+              </div>
             </div>
-            <div className="hidden md:flex gap-4">
-               <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Sadece {monthName} Dönemi</div>
+            <div className="hidden md:flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest italic">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />{monthName} Dönemi Filtrelendi
             </div>
          </div>
          
-         <div className="overflow-x-auto p-2">
-           <table className="w-full text-left border-separate border-spacing-y-2">
-             <thead>
-               <tr className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] italic">
-                 <th className="px-10 py-5">Açıklama / Kategori</th>
-                 <th className="text-center">Ödemeyi Yapan</th>
-                 <th className="text-center">Tip</th>
-                 <th className="text-right px-10">Tutar</th>
-               </tr>
-             </thead>
-             <tbody>
-               {monthSpecificExpenses.length === 0 ? (
-                 <tr>
-                    <td colSpan={4} className="py-20 text-center">
-                       <div className="flex flex-col items-center gap-4 opacity-20">
-                         <Activity size={48} />
-                         <p className="text-sm font-black italic tracking-widest uppercase text-slate-400">Bu ay için özel masraf kaydı bulunamadı.</p>
-                       </div>
-                    </td>
-                 </tr>
-               ) : (
-                 monthSpecificExpenses.map((exp: any) => (
-                   <tr key={exp.id} className="group hover:bg-white/[0.02] transition-all bg-white/[0.01] rounded-[24px]">
-                     <td className="px-10 py-6 rounded-l-[32px] border-y border-l border-white/5">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-black text-slate-200 group-hover:text-white transition-colors">{exp.description}</span>
-                          <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
-                            <div className="w-1 h-1 rounded-full bg-slate-700" />
-                            {exp.location?.name || 'GENEL'}
-                          </span>
+         <div className="overflow-x-auto">
+            <table className="w-full text-left border-separate border-spacing-y-0">
+              <thead>
+                <tr className="text-[10px] text-slate-600 uppercase font-black tracking-[0.2em] italic border-b border-white/5">
+                  <th className="px-12 py-8 bg-white/[0.01]">AÇIKLAMA / LOKASYON</th>
+                  <th className="text-center bg-white/[0.01]">SORUMLU</th>
+                  <th className="text-center bg-white/[0.01]">SİSTEM TİPİ</th>
+                  <th className="text-right px-12 bg-white/[0.01]">KALEM TUTARI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthSpecificExpenses.length === 0 ? (
+                  <tr>
+                     <td colSpan={4} className="py-24 text-center">
+                        <div className="flex flex-col items-center gap-6 opacity-10">
+                          <Activity size={60} strokeWidth={1} />
+                          <p className="text-xs font-black italic tracking-[0.3em] uppercase text-slate-400">Veri Girişi Bulunmuyor</p>
                         </div>
                      </td>
-                     <td className="text-center border-y border-white/5">
-                        <span className="text-[10px] uppercase font-black tracking-widest text-blue-400 bg-blue-400/5 px-3 py-1.5 rounded-xl border border-blue-400/10">
-                          {exp.paidBy || 'ORTAK HESAP'}
-                        </span>
-                     </td>
-                     <td className="text-center border-y border-white/5">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">
-                          {exp.type === 'RECURRING' ? 'DÜZENLİ' : 'TEK SEFER'}
-                        </span>
-                     </td>
-                     <td className="text-right px-10 rounded-r-[32px] border-y border-r border-white/5">
-                        <span className="text-lg font-black text-rose-500 tracking-tighter italic">
-                          ₺{exp.amountWithVat?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                        </span>
-                     </td>
-                   </tr>
-                 ))
-               )}
-             </tbody>
-           </table>
+                  </tr>
+                ) : (
+                  monthSpecificExpenses.map((exp: any, idx: number) => (
+                    <tr key={exp.id} className={cn("group transition-all hover:bg-white/[0.03]", idx % 2 === 0 ? "bg-white/[0.01]" : "bg-transparent")}>
+                      <td className="px-12 py-7 border-t border-white/5">
+                         <div className="flex flex-col gap-1">
+                           <span className="text-sm font-black text-slate-200 group-hover:text-blue-400 transition-colors">{exp.description}</span>
+                           <div className="flex items-center gap-2 text-[9px] font-bold text-slate-600 uppercase tracking-widest italic">
+                             <MapPin size={10} className="text-slate-700" />
+                             {exp.location?.name || 'Genel Şube'}
+                           </div>
+                         </div>
+                      </td>
+                      <td className="text-center border-t border-white/5">
+                         <span className="text-[10px] uppercase font-black tracking-widest text-blue-500 px-3 py-1 rounded-lg bg-blue-500/5 border border-blue-500/10 italic leading-none">
+                           {exp.paidBy || 'MERKEZ KASA'}
+                         </span>
+                      </td>
+                      <td className="text-center border-t border-white/5">
+                         <div className="flex flex-col items-center gap-1">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] italic">
+                              {exp.type === 'RECURRING' ? 'DÜZENLİ ÖDEME' : 'AD-HOC İŞLEM'}
+                            </span>
+                            <div className={cn("w-6 h-0.5 rounded-full", exp.type === 'RECURRING' ? "bg-amber-500/30" : "bg-blue-500/30")} />
+                         </div>
+                      </td>
+                      <td className="text-right px-12 border-t border-white/5">
+                         <span className="text-xl font-black text-white tracking-tighter italic tabular-nums group-hover:text-rose-500 transition-colors">
+                           ₺{exp.amountWithVat?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+                         </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+         </div>
+         
+         <div className="p-10 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">TOPLAM {monthSpecificExpenses.length} KALEM ANALİZ EDİLDİ</p>
+            <div className="w-12 h-1 rounded-full bg-slate-800" />
          </div>
       </section>
 
-      {/* Mobile Footer Spacing */}
-      <div className="h-20" />
+      {/* 5. FOOTER LOGO & SYSTEM STATUS */}
+      <footer className="pt-20 pb-40 flex flex-col items-center gap-6 opacity-30 text-center">
+         <div className="h-10 w-[2px] bg-gradient-to-b from-blue-500 to-transparent" />
+         <div className="space-y-1">
+           <p className="text-[11px] font-black italic tracking-[0.5em] text-white uppercase">NEXTGEN PERFORMANCE CLOUD</p>
+           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">EST. 2026 • PROFESSIONAL DATA SYSTEM</p>
+         </div>
+      </footer>
     </div>
   );
 }

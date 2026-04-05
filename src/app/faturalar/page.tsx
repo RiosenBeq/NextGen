@@ -66,10 +66,13 @@ export default async function InvoicesPage() {
               {invoices.map((inv: any) => (
                 <div key={inv.id} className="premium-card group hover:border-blue-300 transition-all duration-300 overflow-hidden flex flex-col">
                    <div className="h-40 bg-slate-50 border-b border-slate-100 flex items-center justify-center relative group-hover:bg-blue-50/50 transition-colors">
-                     {/* Placeholder for Document type logic (image or PDF icon) */}
-                     {inv.attachmentUrl?.toLowerCase().endsWith('.pdf') ? (
-                       <FileText className="w-16 h-16 text-slate-300 group-hover:text-blue-400 transition-colors" />
-                     ) : (
+                      {/* Placeholder for Document type logic (image or PDF icon) */}
+                      {inv.attachmentUrl?.toLowerCase().includes('.pdf') ? (
+                        <div className="flex flex-col items-center gap-3">
+                           <FileText className="w-16 h-16 text-blue-400/40 group-hover:text-blue-500/60 transition-colors" />
+                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PDF DOKÜMAN</span>
+                        </div>
+                      ) : (
                         <div className="w-full h-full relative">
                            {/* eslint-disable-next-line @next/next/no-img-element */}
                            <img src={inv.attachmentUrl} alt="Belge" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />

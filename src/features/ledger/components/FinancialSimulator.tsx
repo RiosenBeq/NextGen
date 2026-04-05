@@ -26,14 +26,23 @@ export default function FinancialSimulator({ defaultParams }: Props) {
     });
   }, [sessions, defaultParams]);
 
-  const explanations: Record<string, { title: string, icon: any, math: string, text: string, details: string, formula: string }> = {
+  const explanations: Record<string, { title: string, icon: any, math: string, text: string, details: string, formula: string, breakdown?: { label: string, value: string, color?: string }[] }> = {
     'cashflow': {
        title: 'NET NAKİT AKIŞI',
        icon: Zap,
-       math: `₺${simulation.netCash.toLocaleString('tr-TR')}`,
-       text: `Bu ayki ${sessions} seans ve ₺${defaultParams.sessionPrice || 350} birim fiyattan elde edilen brüt cirodan; kira, komisyon ve işletme giderleri düşüldüğünde cebinize kalan net tutardır. (Matematik: Brüt - Sabit - Değişken)`,
-       details: 'Vergi ve platform kesintileri dahil tüm dışa akışların ardından elde edilen gerçek geliri temsil eder.',
-       formula: 'Brüt Gelir - (Kira + Aidat + KDV + Komisyonlar + Ciro Payı)'
+       math: `₺${simulation.netCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
+       text: `Bu ayki ${sessions} seans beklentisine göre elde edilen net tutar.`,
+       details: 'Vergi ve platform kesintileri dahil tüm operasyonel dışa akışların ardından elde edilen gerçek geliri temsil eder.',
+       formula: 'Brüt Gelir - (Kira + Aidat + KDV + Komisyon + Ciro Payı)',
+       breakdown: [
+         { label: 'Brüt Gelir (KDV Dahil)', value: `₺${simulation.grossRevenue.toLocaleString('tr-TR')}`, color: 'text-emerald-400' },
+         { label: 'Nayax + iyzico (%4)', value: `-₺${simulation.totalCommission.toLocaleString('tr-TR')}`, color: 'text-rose-400' },
+         { label: 'Ham Kira (KDV Hariç)', value: `₺${(defaultParams.fixedRent || 0).toLocaleString('tr-TR')}`, color: 'text-slate-400' },
+         { label: 'Kira KDV (%20)', value: `₺${((defaultParams.fixedRent || 0) * 0.2).toLocaleString('tr-TR')}`, color: 'text-slate-400' },
+         { label: 'AVM Aidat', value: `₺${(defaultParams.fixedRent ? (defaultParams.duesAmount || 0) : 0).toLocaleString('tr-TR')}`, color: 'text-slate-400' },
+         { label: 'Ciro Payı (%15)', value: `-₺${simulation.revenueShare.toLocaleString('tr-TR')}`, color: 'text-rose-400' },
+         { label: 'TOPLAM GİDERLER', value: `-₺${simulation.totalExpense.toLocaleString('tr-TR')}`, color: 'text-rose-400' },
+       ]
     },
     'margin': {
        title: 'KÂR MARJI (PROFIT MARGIN)',
@@ -301,6 +310,28 @@ export default function FinancialSimulator({ defaultParams }: Props) {
                       </p>
                       <code className="text-[11px] font-black text-blue-400/90 tracking-tight">{explanations[activeModal].formula}</code>
                     </div>
+
+                    {/* Breakdown Implementation */}
+                    {explanations[activeModal].breakdown && (
+                      <div className="p-6 rounded-[28px] bg-white/[0.01] border border-white/5 space-y-4">
+                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center border-b border-white/5 pb-3">STRATEJİK KALEM KIRILIMI</p>
+                         <div className="space-y-3">
+                            {explanations[activeModal].breakdown?.map((item, idx) => (
+                               <div key={idx} className="flex justify-between items-center text-xs font-bold text-slate-300">
+                                  <span className="text-slate-500 uppercase tracking-tighter italic">{item.label}</span>
+                                  <span className={cn("italic tracking-tighter", item.color)}>{item.value}</span>
+                               </div>
+                            ))}
+                         </div>
+                         
+                         {/* March Exception Notice */}
+                         {activeModal === 'cashflow' && (
+                           <div className="mt-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 italic text-center uppercase tracking-widest">
+                             💡 MART 2026 İÇİN CİRO PAYI MUAFİYETİ UYGULANMIŞTIR.
+                           </div>
+                         )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

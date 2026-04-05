@@ -106,3 +106,83 @@ export async function getDailyPerformanceHistory(locationId: string, limit = 30)
     return [];
   }
 }
+
+/**
+ * MonthlyPerformance CRUD
+ */
+export async function upsertMonthlyPerformance(data: {
+  id?: string;
+  locationId: string;
+  month: string; // ISO string for first day of month
+  sessionCount: number;
+  extraExpenseAmount?: number;
+}) {
+  try {
+    const supabase = await createClient();
+    
+    // Deterministic ID if not provided
+    const date = new Date(data.month);
+    const monthId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const targetId = data.id || `perf_${monthId}_${data.locationId}`;
+
+    const { data: record, error } = await supabase
+      .from('MonthlyPerformance')
+      .upsert({
+        id: targetId,
+        locationId: data.locationId,
+        month: data.month,
+        sessionCount: data.sessionCount,
+        extraExpenseAmount: data.extraExpenseAmount || 0,
+        updatedAt: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    revalidatePath('/raporlar');
+    revalidatePath('/');
+    
+    return { success: true, data: record };
+  } catch (error: any) {
+    console.error("Monthly Upsert Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteMonthlyPerformance(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
+    if (error) throw error;
+
+    revalidatePath('/raporlar');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error("Monthly Delete Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * DailyPerformance CRUD
+ */
+export async function deleteDailyPerformance(id: string, locationId: string, dateStr: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('DailyPerformance').delete().eq('id', id);
+    if (error) throw error;
+
+    // Recalculate month aggregate
+    await syncMonthlyPerformance(locationId, dateStr);
+
+    revalidatePath('/performans');
+    revalidatePath('/');
+    revalidatePath('/raporlar');
+    return { success: true };
+  } catch (error: any) {
+    console.error("Daily Delete Error:", error);
+    return { success: false, error: error.message };
+  }
+}

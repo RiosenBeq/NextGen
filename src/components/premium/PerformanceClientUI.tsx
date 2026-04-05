@@ -11,16 +11,19 @@ import {
   ChevronRight,
   ArrowRight,
   Activity,
-  History,
+  History as HistoryIcon,
   Info,
   MoreHorizontal,
+  MoreVertical,
+  Edit2,
   Trash2,
-  MoreVertical
+  Edit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import DailyPerformanceForm from '@/features/ledger/components/DailyPerformanceForm';
-import { PremiumDrawer } from './PremiumModal';
+import { PremiumDrawer, PremiumModal } from './PremiumModal';
+import { deleteDailyPerformance } from '@/features/ledger/performans-actions';
 
 interface PerformanceClientProps {
   locations: any[];
@@ -30,10 +33,30 @@ interface PerformanceClientProps {
 
 export default function PerformanceClientUI({ locations, history, historyLocId }: PerformanceClientProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatMonth = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const handleDelete = async (row: any) => {
+    if (!confirm('Bu günlük kaydı silmek istediğinize emin misiniz? Bu işlem aylık raporları etkileyecektir.')) return;
+    setIsLoading(true);
+    try {
+      const resp = await deleteDailyPerformance(row.id, row.locationId, row.date);
+      if (!resp.success) alert(resp.error);
+    } catch (err) {
+      alert('Silme sırasında bir hata oluştu');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (row: any) => {
+    setSelectedRow(row);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -79,12 +102,12 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
             {/* INFO BOX */}
             <div className="p-8 rounded-[36px] bg-slate-950 text-white relative overflow-hidden shadow-2xl">
                <div className="absolute top-0 right-0 p-8 opacity-10 blur-xl">
-                  <Info size={120} />
+                  <HistoryIcon size={120} />
                </div>
                <div className="relative space-y-4">
                   <div className="flex items-center gap-2">
-                     <Info size={18} className="text-blue-400" />
-                     <h3 className="text-xs font-black uppercase tracking-widest text-blue-400">Veri Mimari Kılavuzu</h3>
+                     <HistoryIcon size={18} className="text-slate-400" />
+                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest italic">Giriş Geçmişi</h3>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed font-medium">
                      Girdiğiniz günlük veriler (Oturum & Test), ilgili ayın <span className="text-white font-bold italic">Nakit Akışı (P&L)</span> tablolarına otomatik olarak yansıtılır. 
@@ -98,7 +121,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
          <section className="xl:col-span-7 space-y-6">
             <div className="flex items-center justify-between px-2">
                <div className="flex items-center gap-3">
-                  <History size={18} className="text-slate-400" />
+                  <HistoryIcon size={18} className="text-slate-400" />
                   <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest italic">Giriş Geçmişi</h3>
                </div>
                <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-2xl">
@@ -152,8 +175,23 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                               </div>
                            </td>
                            <td className="px-8 py-6 text-right">
-                              <div className="inline-flex items-center justify-center p-2 rounded-xl bg-slate-50 text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-sm">
-                                 <ArrowRight size={14} strokeWidth={3} />
+                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <button 
+                                   onClick={(e) => { e.stopPropagation(); handleEdit(row); }}
+                                   className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95"
+                                 >
+                                    <Edit2 size={16} />
+                                 </button>
+                                 <button 
+                                   onClick={(e) => { e.stopPropagation(); handleDelete(row); }}
+                                   disabled={isLoading}
+                                   className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm active:scale-95"
+                                 >
+                                    <Trash2 size={16} />
+                                 </button>
+                                 <div className="p-2.5 rounded-xl bg-slate-900 text-white shadow-sm ml-2">
+                                    <ArrowRight size={14} strokeWidth={3} />
+                                 </div>
                               </div>
                            </td>
                         </tr>
@@ -162,7 +200,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                         <tr>
                            <td colSpan={4} className="py-24 text-center">
                               <div className="flex flex-col items-center justify-center space-y-4 opacity-30">
-                                 <History size={48} className="text-slate-200" />
+                                 <HistoryIcon size={48} className="text-slate-200" />
                                  <p className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">Henüz veri girişi yapılmadı.</p>
                               </div>
                            </td>
@@ -225,6 +263,21 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
            </div>
         )}
       </PremiumDrawer>
+
+      {/* 4. EDIT MODAL */}
+      <PremiumModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        title="Operasyonel Veri Düzenle"
+        maxWidth="max-w-xl"
+      >
+        <DailyPerformanceForm 
+          locations={locations}
+          initialData={selectedRow}
+          onSuccess={() => setIsEditModalOpen(false)}
+          onCancel={() => setIsEditModalOpen(false)}
+        />
+      </PremiumModal>
 
     </div>
   );

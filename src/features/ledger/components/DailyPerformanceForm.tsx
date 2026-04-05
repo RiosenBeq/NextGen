@@ -25,21 +25,23 @@ type PerformanceFormValues = z.infer<typeof performanceSchema>;
 
 interface DailyPerformanceFormProps {
   locations: any[];
+  initialData?: any;
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerformanceFormProps) {
+export default function DailyPerformanceForm({ locations, initialData, onSuccess, onCancel }: DailyPerformanceFormProps) {
   const [loading, setLoading] = useState(false);
-  const [showExtra, setShowExtra] = useState(false);
+  const [showExtra, setShowExtra] = useState(!!initialData?.extraMetrics?.notlar);
 
   const form = useForm<PerformanceFormValues>({
     resolver: zodResolver(performanceSchema) as any,
     defaultValues: {
-      locationId: '',
-      date: new Date().toISOString().split('T')[0],
-      sessionCount: 0,
-      testCount: 0,
-      notes: '',
+      locationId: initialData?.locationId || '',
+      date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      sessionCount: initialData?.sessionCount || 0,
+      testCount: initialData?.testCount || 0,
+      notes: initialData?.extraMetrics?.notlar || '',
     },
   });
 

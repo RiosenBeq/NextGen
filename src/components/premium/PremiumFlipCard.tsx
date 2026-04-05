@@ -51,7 +51,7 @@ export function PremiumFlipCard({
 
   return (
     <div 
-      className={cn("relative h-48 w-full perspective-1000 group cursor-pointer", className)}
+      className={cn("relative h-[220px] w-full perspective-1000 group cursor-pointer", className)}
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div

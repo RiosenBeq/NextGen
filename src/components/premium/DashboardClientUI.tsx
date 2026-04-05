@@ -59,25 +59,29 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
         
         {/* Revenue Card */}
         <PremiumFlipCard 
-           title="Toplam Ciro" 
+           title="Brüt Ciro" 
            value={formatCurrency(stats.revenue)} 
-           subValue="Brüt Satış Hacmi"
-           trend={{ value: "+12.5%", isPositive: true }}
+           subValue="Aylık Toplam Hacim"
+           trend={{ value: "+12.4%", isPositive: true }}
            color="emerald"
            icon={<TrendingUp className="w-5 h-5" />}
            backContent={
-             <div className="space-y-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">HEDEF TAMAMLANMA</p>
-                <div className="flex items-center justify-center gap-4">
-                   <div className="text-3xl font-black text-white italic">82%</div>
-                   <div className="w-px h-10 bg-white/10" />
-                   <div className="text-left">
-                      <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Aylık Hedef</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kalan: ₺240K</p>
+             <div className="space-y-4">
+                <div className="space-y-1">
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">HAFTALIK VERİMLİLİK</p>
+                   <div className="flex justify-between items-end border-b border-white/5 pb-2">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Haftalık Ort.</span>
+                      <span className="text-sm font-black italic text-emerald-400">{formatCurrency(stats.revenue / 4)}</span>
                    </div>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                   <motion.div initial={{ width: 0 }} animate={{ width: '82%' }} className="h-full bg-emerald-500" />
+                <div className="space-y-2">
+                   <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
+                      <span>Hedef %85</span>
+                      <span>Büyüme Endeksi</span>
+                   </div>
+                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} animate={{ width: '85%' }} className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                   </div>
                 </div>
              </div>
            }
@@ -92,18 +96,19 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
            color="rose"
            icon={<TrendingDown className="w-5 h-5" />}
            backContent={
-             <div className="space-y-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">BÜTÇE KONTROLÜ</p>
-                <div className="flex items-center justify-center gap-3">
-                   <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
-                      <Activity size={24} />
+             <div className="space-y-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">GİDER KIRILIMI</p>
+                <div className="grid grid-cols-2 gap-2">
+                   <div className="p-2 bg-white/5 rounded-xl border border-white/5">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Sabit</p>
+                      <p className="text-[11px] font-black text-white italic tracking-tight">%60</p>
                    </div>
-                   <div className="text-left">
-                      <p className="text-[11px] font-black text-white uppercase italic tracking-tighter">Kritik Bölge</p>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Sınır: ₺12.5K</p>
+                   <div className="p-2 bg-white/5 rounded-xl border border-white/5">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Değişken</p>
+                      <p className="text-[11px] font-black text-rose-400 italic tracking-tight">%40</p>
                    </div>
                 </div>
-                <p className="text-[9px] text-slate-400 font-medium italic">Gider kalemleri projeksiyona göre %12 daha düşük seyrediyor.</p>
+                <p className="text-[9px] text-slate-400 font-medium italic text-center">Gider kalemleri projeksiyona göre %12 daha düşük seyrediyor.</p>
              </div>
            }
         />
@@ -117,18 +122,24 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
            color="blue"
            icon={<Wallet className="w-5 h-5" />}
            backContent={
-             <div className="space-y-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">MARJ ANALİZİ</p>
-                <div className="flex items-center justify-center gap-4">
-                   <div className="w-16 h-16 rounded-full border-4 border-blue-500/20 flex items-center justify-center relative">
-                      <span className="text-xs font-black text-white italic tracking-tighter">%24</span>
-                      <svg className="absolute inset-0 w-full h-full -rotate-90">
-                         <circle cx="32" cy="32" r="30" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray="100" strokeDashoffset="24" className="text-blue-500" />
-                      </svg>
+             <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">KÂR PAYI DAĞILIMI</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                   <div className="flex justify-between border-b border-white/5 py-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Okan</span>
+                      <span className="text-[10px] font-black text-white italic">%25</span>
                    </div>
-                   <div className="text-left">
-                      <p className="text-[11px] font-black text-white uppercase italic">Elite Marj</p>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Sektör Ort: %18</p>
+                   <div className="flex justify-between border-b border-white/5 py-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Talha</span>
+                      <span className="text-[10px] font-black text-white italic">%25</span>
+                   </div>
+                   <div className="flex justify-between border-b border-white/5 py-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Furkan</span>
+                      <span className="text-[10px] font-black text-white italic">%25</span>
+                   </div>
+                   <div className="flex justify-between border-b border-white/5 py-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Alp</span>
+                      <span className="text-[10px] font-black text-white italic">%25</span>
                    </div>
                 </div>
              </div>
@@ -142,10 +153,10 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
            subValue="Yatırım Verimliliği"
            trend={{ value: "+0.4%", isPositive: true }}
            color="amber"
-           icon={<Activity className="w-5 h-5" />}
+           icon={<Target className="w-5 h-5" />}
            backContent={
-             <div className="space-y-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">PERFORMANS SKORU</p>
+             <div className="space-y-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">PERFORMANS SKORU</p>
                 <div className="grid grid-cols-2 gap-2">
                    <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
                       <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Oturum</p>
@@ -156,14 +167,14 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
                       <p className="text-sm font-black text-emerald-400 italic tracking-tight">+{stats.monthlyGrowth}%</p>
                    </div>
                 </div>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] pt-1">Optimum bölgeye ulaşıldı.</p>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] pt-1 text-center">Optimum bölgeye ulaşıldı.</p>
              </div>
            }
         />
       </section>
 
       {/* 2. AI FINANCIAL ANALYST (STRATEGIC OVERVIEW) */}
-      <section>
+      <section className="mt-6">
           <AIFinancialAnalyst />
       </section>
 

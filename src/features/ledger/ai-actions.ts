@@ -9,9 +9,14 @@ import { createClient } from '@/utils/supabase/server';
  */
 export async function analyzeFinancialData() {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    let apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return { success: false, error: 'OpenAI API Anahtarı bulunamadı (.env).' };
+    }
+
+    // Basit temizlik: Çift tire hatası vs. varsa sanitize et 
+    if (apiKey.startsWith('sk-proj--')) {
+      apiKey = apiKey.replace('sk-proj--', 'sk-proj-');
     }
 
     // 1. Veri Toplama

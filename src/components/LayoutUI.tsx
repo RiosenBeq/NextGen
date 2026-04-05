@@ -35,6 +35,7 @@ const navLinks = [
   { href: "/performans", label: "Performans Girişi", icon: PlusCircle, category: "Operasyonlar" },
   { href: "/raporlar", label: "Nakit Akışı", icon: TrendingUp, category: "Finansal Analiz" },
   { href: "/hedefler", label: "Hedefler & Projeksiyon", icon: Target, category: "Finansal Analiz" },
+  { href: "/ai-analiz", label: "AI Finansal Analiz", icon: Zap, category: "Finansal Analiz" },
   { href: "/aylik-ozet", label: "Aylık Özet", icon: Calendar, category: "Finansal Analiz" },
   { href: "/gelir-gider", label: "Gelir & Gider", icon: Wallet, category: "Finansal Analiz" },
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finansal Analiz" },

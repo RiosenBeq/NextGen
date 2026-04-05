@@ -55,167 +55,43 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
       
-      {/* 1. TOP SECTION: SUMMAY CARDS (3D FLIP STYLE) */}
+      {/* 1. TOP SECTION: SUMMAY CARDS (OLD ELITE STYLE) */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* Revenue Card */}
-        <PremiumFlipCard 
-           title="Brüt Ciro" 
-           value={formatCurrency(stats.revenue)} 
-           subValue="Aylık Toplam Hacim"
-           trend={{ value: "+12.4%", isPositive: true }}
-           color="emerald"
-           icon={<TrendingUp className="w-5 h-5" />}
-           backContent={
-             <div className="space-y-4">
-                <div className="space-y-1">
-                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">HAFTALIK VERİMLİLİK</p>
-                   <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Haftalık Ort.</span>
-                      <span className="text-sm font-black italic text-emerald-400">{formatCurrency(stats.revenue / 4)}</span>
-                   </div>
-                </div>
-                <div className="space-y-2">
-                   <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
-                      <span>Hedef %85</span>
-                      <span>Büyüme Endeksi</span>
-                   </div>
-                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: '85%' }} className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                   </div>
-                </div>
-             </div>
-           }
+        <StatCard 
+          title="Brüt Ciro" 
+          value={formatCurrency(stats.revenue)} 
+          subtitle="Aylık Toplam Hacim"
+          trend="+12.4%"
+          isPositive={true}
+          icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
         />
-
-        {/* Expense Card */}
-        <PremiumFlipCard 
-           title="Operasyonel Gider" 
-           value={formatCurrency(stats.expense)} 
-           subValue="Yönetilebilir Maliyet"
-           trend={{ value: "-2.1%", isPositive: false }}
-           color="rose"
-           icon={<TrendingDown className="w-5 h-5" />}
-           backContent={
-             <div className="space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">GİDER KIRILIMI</p>
-                <div className="grid grid-cols-2 gap-2">
-                   <div className="p-2 bg-white/5 rounded-xl border border-white/5">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Sabit</p>
-                      <p className="text-[11px] font-black text-white italic tracking-tight">%60</p>
-                   </div>
-                   <div className="p-2 bg-white/5 rounded-xl border border-white/5">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Değişken</p>
-                      <p className="text-[11px] font-black text-rose-400 italic tracking-tight">%40</p>
-                   </div>
-                </div>
-                <p className="text-[9px] text-slate-400 font-medium italic text-center">Gider kalemleri projeksiyona göre %12 daha düşük seyrediyor.</p>
-             </div>
-           }
+        <StatCard 
+          title="Operasyonel Gider" 
+          value={formatCurrency(stats.expense)} 
+          subtitle="Yönetilebilir Maliyet"
+          trend="-2.1%"
+          isPositive={false}
+          icon={<TrendingDown className="w-5 h-5 text-rose-500" />}
         />
-
-        {/* Profit Card */}
-        <PremiumFlipCard 
-           title="Net Kâr (P&L)" 
-           value={formatCurrency(stats.profit)} 
-           subValue="Net İşletme Kazancı"
-           trend={{ value: "+8.1%", isPositive: true }}
-           color="blue"
-           icon={<Wallet className="w-5 h-5" />}
-           backContent={
-             <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">KÂR PAYI DAĞILIMI</p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                   <div className="flex justify-between border-b border-white/5 py-1">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Okan</span>
-                      <span className="text-[10px] font-black text-white italic">%25</span>
-                   </div>
-                   <div className="flex justify-between border-b border-white/5 py-1">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Talha</span>
-                      <span className="text-[10px] font-black text-white italic">%25</span>
-                   </div>
-                   <div className="flex justify-between border-b border-white/5 py-1">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Furkan</span>
-                      <span className="text-[10px] font-black text-white italic">%25</span>
-                   </div>
-                   <div className="flex justify-between border-b border-white/5 py-1">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Alp</span>
-                      <span className="text-[10px] font-black text-white italic">%25</span>
-                   </div>
-                </div>
-             </div>
-           }
+        <StatCard 
+          title="Net Kâr (P&L)" 
+          value={formatCurrency(stats.profit)} 
+          subtitle="Net İşletme Kazancı"
+          trend="+8.1%"
+          isPositive={true}
+          icon={<Wallet className="w-5 h-5 text-blue-500" />}
         />
-
-        {/* ROI / Performance Card */}
-        <PremiumFlipCard 
-           title="Verimlilik Skoru" 
-           value={`%${stats.roi.toFixed(1)}`} 
-           subValue="Yatırım Verimliliği"
-           trend={{ value: "+0.4%", isPositive: true }}
-           color="amber"
-           icon={<Target className="w-5 h-5" />}
-           backContent={
-             <div className="space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic text-center">PERFORMANS SKORU</p>
-                <div className="grid grid-cols-2 gap-2">
-                   <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Oturum</p>
-                      <p className="text-sm font-black text-white italic tracking-tight">{stats.sessions}</p>
-                   </div>
-                   <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Büyüme</p>
-                      <p className="text-sm font-black text-emerald-400 italic tracking-tight">+{stats.monthlyGrowth}%</p>
-                   </div>
-                </div>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] pt-1 text-center">Optimum bölgeye ulaşıldı.</p>
-             </div>
-           }
+        <StatCard 
+          title="Verimlilik Skoru" 
+          value={`%${stats.roi.toFixed(1)}`} 
+          subtitle="Yatırım Verimliliği"
+          trend="+0.4%"
+          isPositive={true}
+          icon={<Target className="w-5 h-5 text-amber-500" />}
         />
       </section>
-      
-      {/* 1.5 VISUAL ANALYTICS: TREND CHART */}
-      <section className="bg-white border border-slate-200 rounded-[40px] p-8 shadow-sm">
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-            <div className="space-y-1">
-               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600 uppercase tracking-widest italic">
-                  <Activity size={12} className="animate-pulse" />
-                  Trend Analizi
-               </div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Finansal Dinamikler</h2>
-            </div>
-            
-            <div className="flex items-center gap-8">
-               <div className="flex items-center gap-2.5">
-                  <div className="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Brüt Ciro</span>
-               </div>
-               <div className="flex items-center gap-2.5">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Net Kâr (P&L)</span>
-               </div>
-            </div>
-         </div>
 
-         <div className="h-[300px] w-full relative">
-            <PremiumTrendChart data={chartData} />
-         </div>
-         
-         <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Gerçekleşen aylık kümülatif performans verileri</p>
-            <div className="flex items-center gap-2 text-blue-600 text-[10px] font-black uppercase tracking-widest italic group cursor-pointer">
-               Detaylı Raporu Gör
-               <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </div>
-         </div>
-      </section>
-
-      {/* 2. AI FINANCIAL ANALYST (STRATEGIC OVERVIEW) */}
-      <section className="mt-6">
-          <AIFinancialAnalyst />
-      </section>
-
-      {/* 3. RECENT TRANSACTIONS TABLE (VERCEL STYLE) */}
+      {/* RECENT TRANSACTIONS TABLE (VERCEL STYLE) */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
            <div className="space-y-1">

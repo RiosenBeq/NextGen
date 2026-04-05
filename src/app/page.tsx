@@ -22,8 +22,24 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
+import { redirect } from 'next/navigation';
+
 export default async function DashboardPage() {
   const supabase = await createClient();
+  
+  // Check for default page setting
+  const { data: defaultPageParam } = await supabase
+    .from('SystemParameter')
+    .select('value')
+    .eq('key', 'SETTING_DEFAULT_PAGE')
+    .single();
+
+  if (defaultPageParam) {
+    const val = parseInt(String(defaultPageParam.value));
+    if (val === 1) redirect('/performance');
+    if (val === 2) redirect('/gelir-gider');
+  }
+
   const insights = await getLocationInsights();
 
   const { data: performances } = await supabase

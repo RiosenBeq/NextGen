@@ -491,19 +491,20 @@ export async function updateSystemParameter(key: string, value: number) {
     }
     const safeValue = parseFloat(String(value));
 
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('SystemParameter')
-      .upsert({ key, value: safeValue }, { onConflict: 'key' });
+    // Use Prisma for reliable ID generation and upsert handling
+    await prisma.systemParameter.upsert({
+      where: { key },
+      update: { value: safeValue },
+      create: { key, value: safeValue },
+    });
 
-    if (error) throw error;
-    
     await createAuditLog('UPDATE', 'SystemParameter', key, { newValue: safeValue });
     
     revalidatePath('/settings');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
+    console.error("Update System Param Error:", error);
     return { success: false, error: error.message };
   }
 }
@@ -520,11 +521,12 @@ export async function resetSystemParameters() {
       'SETTING_ANIMATION_SPEED': 1
     };
 
-    const supabase = await createClient();
     for (const [key, value] of Object.entries(defaults)) {
-      await supabase
-        .from('SystemParameter')
-        .upsert({ key, value }, { onConflict: 'key' });
+      await prisma.systemParameter.upsert({
+        where: { key },
+        update: { value: (value as number) },
+        create: { key, value: (value as number) },
+      });
     }
 
     await createAuditLog('UPDATE', 'SystemParameter', 'ALL', 'Ayarlar varsayılana sıfırlandı.');

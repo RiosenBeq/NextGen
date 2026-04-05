@@ -2,6 +2,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientShell from "./ClientShell";
 
+import { SettingsProvider } from "@/providers/SettingsProvider";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
@@ -17,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body suppressHydrationWarning className={`${inter.className} bg-[#F1F5F9] flex h-screen overflow-hidden text-slate-900 font-sans antialiased selection:bg-blue-200`}>
-        <ClientShell>{children}</ClientShell>
+        <SettingsProvider>
+          <ClientShell>{children}</ClientShell>
+        </SettingsProvider>
       </body>
     </html>
   );

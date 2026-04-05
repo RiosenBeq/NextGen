@@ -5,6 +5,7 @@ import { getAuditLogs } from '@/features/audit/actions';
 import { Activity, Shield, Clock, Globe, Filter, Search, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/providers/SettingsProvider';
 
 export function AuditLogSearch({ onSearch }: { onSearch: (val: string) => void }) {
   return (
@@ -26,6 +27,7 @@ export default function LogsPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<string>('');
+  const { settings } = useSettings();
 
   useEffect(() => {
     async function fetchLogs() {
@@ -158,7 +160,7 @@ export default function LogsPage() {
                         <p className="text-sm font-bold text-slate-700 leading-relaxed tracking-tight underline decoration-slate-100 underline-offset-4">
                           {display}
                         </p>
-                        {technical && (
+                        {technical && settings.SETTING_LOG_DETAIL_LEVEL === 1 && (
                           <div className="flex items-center gap-1.5">
                             <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
                               {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}

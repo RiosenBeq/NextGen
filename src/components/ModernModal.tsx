@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { useSettings } from '@/providers/SettingsProvider';
+
 interface ModernModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,6 +25,17 @@ export default function ModernModal({
   showCloseButton = true
 }: ModernModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const { settings } = useSettings();
+
+  // Settings Mapping
+  const isTopPosition = settings.SETTING_POPUP_POSITION === 1;
+  const animSpeed = settings.SETTING_ANIMATION_SPEED; // 0: Fast, 1: Normal, 2: Slow
+  
+  const transition = {
+    type: "spring" as const,
+    damping: animSpeed === 0 ? 35 : (animSpeed === 2 ? 15 : 25),
+    stiffness: animSpeed === 0 ? 500 : (animSpeed === 2 ? 150 : 350)
+  };
 
   // Close on Escape key
   useEffect(() => {
@@ -53,13 +66,16 @@ export default function ModernModal({
           />
 
           {/* Modal Container */}
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-6 pointer-events-none">
+          <div className={cn(
+            "fixed inset-0 z-[101] flex p-4 md:p-6 pointer-events-none transition-all duration-500",
+            isTopPosition ? "items-start justify-center pt-[10vh]" : "items-center justify-center"
+          )}>
             <motion.div
               ref={modalRef}
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: isTopPosition ? -40 : 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              exit={{ opacity: 0, scale: 0.95, y: isTopPosition ? -40 : 20 }}
+              transition={transition}
               className={cn(
                 "w-full bg-[#0f1117] border border-white/10 rounded-[32px] shadow-2xl pointer-events-auto overflow-hidden relative flex flex-col max-h-[90vh]",
                 maxWidth

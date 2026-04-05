@@ -60,9 +60,8 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
           description: 'Modalların ekranın neresinde açılacağını belirler.',
           type: 'select',
           options: [
-            { value: 0, label: 'Merkezi (Viewport Center)', description: 'Ekranın ortasında, odağı korur.' },
-            { value: 1, label: 'Üst (Sticky Top)', description: 'Ekranın en üstünde, klasik görünüm.' },
-            { value: 2, label: 'Dinamik (Smart Positioning)', description: 'Scroll durumuna göre en uygun konuma yerleştirir.' }
+            { value: 0, label: 'Merkez', description: 'Ekranın ortası.' },
+            { value: 1, label: 'Üst', description: 'Ekranın üstü.' }
           ]
         },
         {
@@ -85,21 +84,10 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
       settings: [
         {
           key: 'SETTING_LOG_DETAIL_LEVEL',
-          label: 'Log Detay Seviyesi',
-          description: 'Sistem loglarında ne kadar veri tutulacağını belirler.',
+          label: 'Teknik Log Görünümü',
+          description: 'Sistem loglarında JSON veri detaylarını göster/gizle.',
           type: 'toggle',
-          labels: { on: 'Detaylı (Teknik Veri Dahil)', off: 'Kısa (Sadece Özet)' }
-        },
-        {
-          key: 'SETTING_DEFAULT_PAGE',
-          label: 'Varsayılan Başlangıç Sayfası',
-          description: 'Sisteme giriş yapıldığında ilk açılacak ekran.',
-          type: 'select',
-          options: [
-            { value: 0, label: 'Dashboard (Özet)', description: 'Genel finansal durum.' },
-            { value: 1, label: 'Performans Girişi', description: 'Günlük veri giriş ekranı.' },
-            { value: 2, label: 'Finansal Tablo', description: 'Detaylı gelir-gider dökümü.' }
-          ]
+          labels: { on: 'Açık', off: 'Kapalı' }
         }
       ]
     }
@@ -135,7 +123,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
             </div>
             
             <div className="p-2">
-              {group.settings.map((setting) => (
+              {group.settings.map((setting: any) => (
                 <div 
                   key={setting.key} 
                   className="group flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl hover:bg-white/[0.02] transition-colors gap-6"

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2 } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
-import ModernModal from '@/components/ModernModal';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import { deleteExpense, toggleExpenseSettled } from '../actions';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
@@ -338,23 +338,25 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
         </div>
       </div>
 
-      <ModernModal
+      <PremiumModal
         isOpen={!!editingExpense}
         onClose={() => setEditingExpense(null)}
-        maxWidth="max-w-2xl"
-        showCloseButton={false}
+        maxWidth="max-w-3xl"
+        title="Gider Kaydını Düzenle"
       >
-        {editingExpense && (
-          <ExpenseForm
-            locations={locations}
-            initialData={{
-              ...editingExpense,
-              amount: editingExpense.amountWithoutVat
-            }}
-            onClose={() => setEditingExpense(null)}
-          />
-        )}
-      </ModernModal>
+        <div className="p-8">
+          {editingExpense && (
+            <ExpenseForm
+              locations={locations}
+              initialData={{
+                ...editingExpense,
+                amount: editingExpense.amountWithoutVat
+              }}
+              onClose={() => setEditingExpense(null)}
+            />
+          )}
+        </div>
+      </PremiumModal>
     </motion.div>
   );
 }

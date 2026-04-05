@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PiggyBank, Search, Edit2, Trash2 } from 'lucide-react';
 import { InvestmentForm } from './InvestmentForm';
-import ModernModal from '@/components/ModernModal';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import { deleteInvestment } from '../actions';
 
 interface Location {
@@ -153,24 +153,26 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
       </div>
 
       {/* Edit Modal Refactored */}
-      <ModernModal
+      <PremiumModal
         isOpen={!!editingInvestment}
         onClose={() => setEditingInvestment(null)}
         maxWidth="max-w-2xl"
-        showCloseButton={false}
+        title="Yatırım Kalemini Düzenle"
       >
-        {editingInvestment && (
-          <InvestmentForm 
-            locations={locations} 
-            initialData={{
-              ...editingInvestment, 
-              amount: editingInvestment.amountWithoutVat,
-              locationId: editingInvestment.locationId || ''
-            }} 
-            onClose={() => setEditingInvestment(null)} 
-          />
-        )}
-      </ModernModal>
+        <div className="p-8">
+          {editingInvestment && (
+            <InvestmentForm 
+              locations={locations} 
+              initialData={{
+                ...editingInvestment, 
+                amount: editingInvestment.amountWithoutVat,
+                locationId: editingInvestment.locationId || ''
+              }} 
+              onClose={() => setEditingInvestment(null)} 
+            />
+          )}
+        </div>
+      </PremiumModal>
     </motion.section>
   );
 }

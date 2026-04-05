@@ -94,6 +94,7 @@ model Investment {
 
 model Note {
   id        String   @id @default(cuid())
+  userId    String?  // The user who owns this note
   title     String
   content   String?
   color     String   @default("zinc") // To store tag/color info

@@ -36,7 +36,7 @@ export default function SettingsPage() {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-10">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/10">Administration Console</span>
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/10">Yönetim Konsolu</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight text-white flex items-center gap-4 uppercase italic tracking-tighter">
              <Settings className="w-10 h-10 text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]" />
@@ -51,7 +51,7 @@ export default function SettingsPage() {
           <div className="px-6 py-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-5 shadow-2xl backdrop-blur-xl">
             <div className="flex flex-col items-end">
               <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Yetki Seviyesi</span>
-              <span className="text-xs font-black text-blue-400 uppercase italic">Root Administrator</span>
+              <span className="text-xs font-black text-blue-400 uppercase italic">Tam Yetkili Yönetici</span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shadow-inner">
                <ShieldCheck size={24} />

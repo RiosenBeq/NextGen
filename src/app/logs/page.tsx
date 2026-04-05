@@ -251,7 +251,7 @@ export default function LogsPage() {
             <div className="w-px h-4 bg-slate-200"></div>
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Toplam {filteredLogs.length} Kayıt Listeleniyor</span>
           </div>
-          <p className="text-[10px] font-medium text-slate-300 italic">NextGenBox Intelligence Security Suite v2.0</p>
+          <p className="text-[10px] font-medium text-slate-300 italic">NextGenBox Akıllı Güvenlik Paketi v2.0</p>
         </div>
       </section>
     </div>

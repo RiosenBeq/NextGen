@@ -147,7 +147,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
                   <div className="flex-shrink-0">
                     {setting.type === 'select' ? (
                       <div className="flex flex-wrap gap-2">
-                        {setting.options?.map((opt) => {
+                        {setting.options?.map((opt: any) => {
                           const isActive = (params[setting.key] || 0) === opt.value;
                           return (
                             <button
@@ -202,7 +202,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
            </div>
            <div>
               <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] italic">DİNAMİK YAPILANDIRMA ÜSSÜ</p>
-              <p className="text-sm font-black text-white uppercase tracking-tight mt-1">NextGenBox Intelligence Suite</p>
+              <p className="text-sm font-black text-white uppercase tracking-tight mt-1">NextGenBox Akıllı Yönetim Paneli</p>
            </div>
         </div>
         <p className="text-[10px] font-bold text-slate-500 text-center md:text-right max-w-[280px] italic">

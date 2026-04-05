@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Dashboard — NextGenBox',
+  title: 'Panel — NextGenBox',
   robots: 'noindex, nofollow',
 };
 
@@ -167,10 +167,6 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">Eski Veriler Temizlendi</span>
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Manual Mod Aktif</span>
-          </div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
             <LayoutDashboard className="w-8 h-8 text-blue-600" />
             Performans Paneli

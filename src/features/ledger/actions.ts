@@ -233,6 +233,8 @@ export async function deleteExpense(id: string) {
     revalidatePath('/expenses');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
+    revalidatePath('/reports');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -368,6 +370,9 @@ export async function updateLocationParameters(id: string, data: any) {
     if (error) throw error;
     revalidatePath('/settings');
     revalidatePath('/');
+    revalidatePath('/reports');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -502,6 +507,9 @@ export async function updateSystemParameter(key: string, value: number) {
     
     revalidatePath('/settings');
     revalidatePath('/');
+    revalidatePath('/reports');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     console.error("Update System Param Error:", error);
@@ -533,6 +541,9 @@ export async function resetSystemParameters() {
 
     revalidatePath('/settings');
     revalidatePath('/');
+    revalidatePath('/reports');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

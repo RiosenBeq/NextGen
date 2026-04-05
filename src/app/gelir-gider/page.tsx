@@ -4,11 +4,12 @@ import * as motion from "framer-motion/client";
 import { 
   TrendingUp, TrendingDown, Wallet, BarChart3, 
   Calendar, CreditCard, Percent,
-  ListFilter, PiggyBank
+  ListFilter, PiggyBank, Building2, Activity, HandCoins, PlusCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/server';
+import ExpenseDetailCard from '@/features/ledger/components/ExpenseDetailCard';
 
 const EXPENSE_CATEGORIES: Record<string, { label: string; color: string; dot: string }> = {
   rent:        { label: 'Kira',         color: 'metric-pill-red',   dot: 'bg-red-500' },
@@ -64,6 +65,11 @@ export default async function GelirGiderPage(props: {
   let totalCommissionSum = 0;
   let trueSessionsSum = 0;
   let revenueShareSum = 0;
+  
+  // Breakdown accumulation
+  let avmRentTotal = 0;
+  let avmDuesTotal = 0;
+  let operationalExpensesTotalValue = 0;
 
   if (performances) {
     for (const perf of performances) {
@@ -141,6 +147,11 @@ export default async function GelirGiderPage(props: {
           totalCommissionSum += calc.totalCommission;
           trueSessionsSum += perf.sessionCount;
           revenueShareSum += calc.revenueShare;
+          
+          // Breakdown details (aggregated for filtered view)
+          avmRentTotal += loc.fixedRent * 1.2;
+          avmDuesTotal += loc.duesAmount;
+          operationalExpensesTotalValue += totalExtraExpense;
         }
       }
     }
@@ -151,6 +162,14 @@ export default async function GelirGiderPage(props: {
     if (filterLocation !== 'all' && entry.locationId !== filterLocation) return false;
     return true;
   });
+
+  const expenseBreakdownData = [
+    { id: 'rent', label: 'AVM Kirası (+KDV)', value: avmRentTotal, icon: Building2, subLabel: 'Stopaj/Tevkifat Dahil', color: 'bg-red-500' },
+    { id: 'dues', label: 'AVM Aidat & Ortak', value: avmDuesTotal, icon: Activity, subLabel: 'İşletme Giderleri', color: 'bg-orange-500' },
+    { id: 'rev', label: 'Ciro Payı (Sözleşme)', value: revenueShareSum, icon: HandCoins, subLabel: 'Kira Üstü Hakediş', color: 'bg-amber-500' },
+    { id: 'comm', label: 'Ödeme Komisyonları', value: totalCommissionSum, icon: CreditCard, subLabel: 'iyzico + Nayax (%4)', color: 'bg-rose-500' },
+    { id: 'ops', label: 'Operasyonel Giderler', value: operationalExpensesTotalValue, icon: PlusCircle, subLabel: 'Faturalar & Diğer', color: 'bg-emerald-500' },
+  ].filter(x => x.value > 0);
 
   const filteredExpenses = (expenses || []).filter(exp => {
     const isRecurring = exp.type === 'RECURRING';
@@ -171,7 +190,7 @@ export default async function GelirGiderPage(props: {
 
   const kpis = [
     { label: 'Brüt Gelir', value: totalGrossSum, icon: TrendingUp, cardClass: 'stat-card-green', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100 border-emerald-200', tag: 'Kayıtlı Ciro' },
-    { label: 'Toplam Gider', value: totalExpenseSumValue, icon: TrendingDown, cardClass: 'stat-card-red', iconColor: 'text-red-600', iconBg: 'bg-red-100 border-red-200', tag: 'KDV Dahil' },
+    { label: 'Toplam Gider', value: totalExpenseSumValue, isExpense: true, tag: 'KDV Dahil' },
     { label: 'Net Durum', value: totalNetCashSum, icon: Wallet, cardClass: totalNetCashSum >= 0 ? 'stat-card-blue' : 'stat-card-red', iconColor: totalNetCashSum >= 0 ? 'text-blue-600' : 'text-red-600', iconBg: totalNetCashSum >= 0 ? 'bg-blue-100 border-blue-200' : 'bg-red-100 border-red-200', tag: 'Nakit Akışı' },
     { label: 'Toplam Seans', value: trueSessionsSum, icon: BarChart3, cardClass: 'bg-white', iconColor: 'text-slate-600', iconBg: 'bg-slate-100 border-slate-200', tag: 'Hacim', isCurrency: false },
   ];
@@ -203,14 +222,25 @@ export default async function GelirGiderPage(props: {
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi, idx) => (
-          <motion.div key={kpi.label} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }} className={cn("premium-card p-5 border", kpi.cardClass)}>
-            <div className="flex items-start justify-between mb-4">
-              <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center", kpi.iconBg)}><kpi.icon className={cn("w-4.5 h-4.5", kpi.iconColor)} /></div>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">{kpi.tag}</span>
-            </div>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{kpi.label}</p>
-            <h2 className="text-xl font-bold text-slate-900">{kpi.isCurrency === false ? kpi.value.toLocaleString('tr-TR') : `₺${kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`}</h2>
-          </motion.div>
+          (kpi as any).isExpense ? (
+             <ExpenseDetailCard 
+                key={kpi.label} 
+                total={totalExpenseSumValue} 
+                breakdown={expenseBreakdownData} 
+                tag={kpi.tag}
+             />
+          ) : (
+            <motion.div key={kpi.label} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }} className={cn("premium-card p-5 border", (kpi as any).cardClass)}>
+              <div className="flex items-start justify-between mb-4">
+                <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center", (kpi as any).iconBg)}>
+                   {kpi.icon && <kpi.icon className={cn("w-4.5 h-4.5", (kpi as any).iconColor)} />}
+                </div>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">{kpi.tag}</span>
+              </div>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{kpi.label}</p>
+              <h2 className="text-xl font-bold text-slate-900 italic tracking-tighter uppercase">{(kpi as any).isCurrency === false ? kpi.value.toLocaleString('tr-TR') : `₺${kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`}</h2>
+            </motion.div>
+          )
         ))}
       </section>
 

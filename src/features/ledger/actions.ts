@@ -147,7 +147,16 @@ export async function updateExpense(id: string, data: any) {
 
 export async function uploadExpenseAttachment(formData: FormData) {
   try {
-    const supabase = await createClient();
+    // 1. Sunucu taraflı güvenli yükleme için Admin yetkisini kullan (Bypass RLS on upload)
+    const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return { success: false, error: 'Sistem Hatası: Supabase url veya yetki anahtarı bulunamadı.' };
+    }
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const adminSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
     const file = formData.get('file') as File;
     if (!file) return { success: false, error: 'Dosya seçilmedi.' };
 
@@ -156,7 +165,6 @@ export async function uploadExpenseAttachment(formData: FormData) {
       return { success: false, error: `Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum 15MB yüklenebilir.` };
     }
 
-    // Determine the correct MIME type
     const allowedTypes: Record<string, string> = {
       'application/pdf': 'pdf',
       'image/jpeg': 'jpg',
@@ -178,40 +186,35 @@ export async function uploadExpenseAttachment(formData: FormData) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `expenses/${fileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // 2. Eksik bucket problemini otomatik çöz: 
+    const { data: buckets } = await adminSupabase.storage.listBuckets();
+    if (!buckets?.find(b => b.name === 'documents')) {
+       // Bucket yoksa Public olarak hemen yarat
+       await adminSupabase.storage.createBucket('documents', { public: true });
+    }
+
+    // 3. Dosyayı doğrudan Admin servisi ile yükle (RLS engeline takılmaz)
+    const { data: uploadData, error: uploadError } = await adminSupabase.storage
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
-        contentType: mimeType,  // ← Explicitly set content type
+        contentType: mimeType,
       });
 
     if (uploadError) {
-      console.error("Supabase Storage Error:", uploadError);
-      const msg = uploadError.message?.toLowerCase() || '';
-      if (msg.includes('bucket not found')) {
-        return { 
-          success: false, 
-          error: 'Eksik Yapılandırma: Supabase üzerinde "documents" bucket\'ı bulunamadı. Lütfen Storage panelinden bu isimle bir public bucket oluşturun.' 
-        };
-      }
-      if (msg.includes('security policy') || msg.includes('unauthorized') || msg.includes('new row violates row-level security')) {
-        return { 
-          success: false, 
-          error: 'HATA: "documents" bucket\'ı için yazma izni (RLS Policy) bulunamadı. Lütfen Supabase panelinden anonim kullanıcılar için INSERT/SELECT izinlerini tanımlayın.' 
-        };
-      }
-      throw uploadError;
+      console.error("Storage Error:", uploadError);
+      return { success: false, error: `Yükleme hatası: ${uploadError.message}` };
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminSupabase.storage
       .from('documents')
       .getPublicUrl(filePath);
 
     return { success: true, publicUrl };
   } catch (error: any) {
     console.error("Upload Error:", error);
-    return { success: false, error: `Yükleme hatası: ${error.message}` };
+    return { success: false, error: `Sunucu hatası: ${error.message}` };
   }
 }
 

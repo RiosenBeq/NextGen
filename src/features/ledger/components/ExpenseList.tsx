@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2 } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
+import ModernModal from '@/components/ModernModal';
 import { deleteExpense, toggleExpenseSettled } from '../actions';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
@@ -336,36 +337,25 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
         </div>
       </div>
 
-      {/* Edit Modal Override */}
-      <AnimatePresence>
+      {/* Edit Modal Refactored */}
+      <ModernModal
+        isOpen={!!editingExpense}
+        onClose={() => setEditingExpense(null)}
+        maxWidth="max-w-2xl"
+        showCloseButton={false} // ExpenseForm already has a close button
+      >
         {editingExpense && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setEditingExpense(null)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100]"
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed inset-x-4 top-[5vh] md:top-[10vh] mx-auto z-[101] max-w-2xl max-h-[85vh] overflow-y-auto no-scrollbar rounded-2xl shadow-2xl"
-            >
-              <ExpenseForm
-                locations={locations}
-                initialData={{
-                  ...editingExpense,
-                  amount: editingExpense.amountWithoutVat
-                }}
-                onClose={() => setEditingExpense(null)}
-              />
-            </motion.div>
-          </>
+          <ExpenseForm
+            locations={locations}
+            initialData={{
+              ...editingExpense,
+              amount: editingExpense.amountWithoutVat
+            }}
+            onClose={() => setEditingExpense(null)}
+          />
         )}
-      </AnimatePresence>
+      </ModernModal>
     </motion.div>
   );
 }
+

@@ -7,6 +7,7 @@ import * as motion from "framer-motion/client";
 import { getActiveLocations } from '@/features/ledger/actions';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import ExpenseList from '@/features/ledger/components/ExpenseList';
+import ModernModal from '@/components/ModernModal';
 import { AnimatePresence } from 'framer-motion';
 
 export default function ExpensesPage() {
@@ -126,32 +127,19 @@ export default function ExpensesPage() {
           </div>
         </header>
 
-        {/* Expense Form Modal */}
-        <AnimatePresence>
-          {showForm && (
-            <>
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowForm(false)}
-                className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100]"
-              />
-              <motion.div
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-x-4 top-[5vh] md:top-[10vh] mx-auto z-[101] max-w-2xl max-h-[85vh] overflow-y-auto no-scrollbar rounded-3xl shadow-2xl border border-white/10 ring-1 ring-white/20"
-              >
-                <ExpenseForm 
-                  locations={data.locations} 
-                  onClose={() => setShowForm(false)} 
-                />
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+        {/* Expense Form Modal Refactored */}
+        <ModernModal 
+          isOpen={showForm} 
+          onClose={() => setShowForm(false)}
+          maxWidth="max-w-2xl"
+          showCloseButton={false}
+        >
+          <ExpenseForm 
+            locations={data.locations} 
+            onClose={() => setShowForm(false)} 
+          />
+        </ModernModal>
+
 
         {/* Data Section */}
         <section className="relative">

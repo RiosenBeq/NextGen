@@ -477,11 +477,19 @@ export async function getSystemParameters() {
 
 export async function updateSystemParameter(key: string, value: number) {
   try {
-    const allowedKeys = ['SESSION_PRICE_INCL_VAT', 'VAT_RATE', 'CORP_TAX_RATE'];
+    const allowedKeys = [
+      'SESSION_PRICE_INCL_VAT', 
+      'VAT_RATE', 
+      'CORP_TAX_RATE',
+      'SETTING_POPUP_POSITION',
+      'SETTING_LOG_DETAIL_LEVEL',
+      'SETTING_DEFAULT_PAGE',
+      'SETTING_ANIMATION_SPEED'
+    ];
     if (!allowedKeys.includes(key)) {
       return { success: false, error: 'Geçersiz parametre anahtarı.' };
     }
-    const safeValue = Math.max(0, parseFloat(String(value)) || 0);
+    const safeValue = parseFloat(String(value));
 
     const supabase = await createClient();
     const { error } = await supabase
@@ -489,6 +497,38 @@ export async function updateSystemParameter(key: string, value: number) {
       .upsert({ key, value: safeValue }, { onConflict: 'key' });
 
     if (error) throw error;
+    
+    await createAuditLog('UPDATE', 'SystemParameter', key, { newValue: safeValue });
+    
+    revalidatePath('/settings');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function resetSystemParameters() {
+  try {
+    const defaults = {
+      'SESSION_PRICE_INCL_VAT': 300,
+      'VAT_RATE': 20,
+      'CORP_TAX_RATE': 25,
+      'SETTING_POPUP_POSITION': 0,
+      'SETTING_LOG_DETAIL_LEVEL': 0,
+      'SETTING_DEFAULT_PAGE': 0,
+      'SETTING_ANIMATION_SPEED': 1
+    };
+
+    const supabase = await createClient();
+    for (const [key, value] of Object.entries(defaults)) {
+      await supabase
+        .from('SystemParameter')
+        .upsert({ key, value }, { onConflict: 'key' });
+    }
+
+    await createAuditLog('UPDATE', 'SystemParameter', 'ALL', 'Ayarlar varsayılana sıfırlandı.');
+
     revalidatePath('/settings');
     revalidatePath('/');
     return { success: true };

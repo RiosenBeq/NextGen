@@ -106,7 +106,7 @@ model AuditLog {
   action    String   // CREATE, UPDATE, DELETE
   entity    String   // Expense, Investment, etc.
   entityId  String
-  details   String?  // JSON string
+  details   String?  // JSON string or formatted text
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())

@@ -180,125 +180,131 @@ export default function ExpenseForm({
   };
 
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-2xl ring-1 ring-slate-900/5">
+    <div className="bg-[#0f1117] border border-white/10 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5 selection:bg-blue-500/30">
       {/* Premium Gradient Header */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-8 overflow-hidden flex items-center justify-between">
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 blur-3xl rounded-full"></div>
+      <div className="relative bg-gradient-to-br from-blue-600/20 to-indigo-700/20 px-8 py-10 overflow-hidden flex items-center justify-between border-b border-white/5 backdrop-blur-xl">
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+        <div className="absolute -right-20 -top-20 w-60 h-60 bg-blue-500/10 blur-[100px] rounded-full"></div>
         
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center shadow-inner">
-            <Receipt className="w-6 h-6 text-white" />
+        <div className="relative z-10 flex items-center gap-5">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
+            <Receipt className="w-7 h-7 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight">
-              {initialData ? 'Gideri Güncelle' : 'Yeni Gider Fişi İşle'}
+            <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic">
+              {initialData ? 'GİDER GÜNCELLE' : 'YENİ GİDER FİŞİ'}
             </h2>
-            <p className="text-blue-100 text-sm font-medium opacity-90 mt-0.5">Operasyonel maliyetlerinizi kaydedin.</p>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">OPERASYONEL MALİYET ANALİZİ</p>
           </div>
         </div>
         
         {onClose && (
           <button 
             onClick={onClose} 
-            className="relative z-10 w-10 h-10 rounded-full bg-black/10 hover:bg-black/20 text-white/70 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm shadow-sm"
+            className="relative z-10 w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm border border-white/5 hover:border-white/20 active:scale-95"
           >
-            <X size={18} strokeWidth={2.5} />
+            <X size={20} strokeWidth={3} />
           </button>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-6">
+      <form onSubmit={handleSubmit} className="p-8 space-y-8 bg-black/20">
         {/* Step 1: Basic Info */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">1. Temel Bilgiler</h3>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 pl-1">
+            <span className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center text-[10px] font-black text-blue-400 border border-blue-500/30">1</span>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">TEMEL BİLGİLER</h3>
+          </div>
           
-          <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-slate-700 ml-1">Kısa Açıklama veya Fiş Başlığı <span className="text-red-500">*</span></label>
+          <div className="space-y-3">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">FIŞ AÇIKLAMASI <span className="text-red-500/50">*</span></label>
             <input
               type="text"
               required
-              placeholder="Örn: Zafer Plaza Kahve Alımı, Aylık SuperBox Faturası..."
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium text-slate-800"
+              placeholder="Örn: ZAFER PLAZA KAHVE ALIMI..."
+              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all placeholder:text-slate-600 font-bold text-white uppercase italic tracking-tight shadow-inner"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-slate-700 ml-1">Tarih <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">İŞLEM TARİHİ <span className="text-red-500/50">*</span></label>
+              <div className="relative group">
+                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="date"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 cursor-pointer"
+                  className="w-full pl-12 pr-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-white cursor-pointer shadow-inner [color-scheme:dark]"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-slate-700 ml-1">Şube / Lokasyon</label>
-              <div className="relative">
-                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">ŞUBE / LOKASYON</label>
+              <div className="relative group">
+                <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-focus-within:text-blue-400 transition-colors" />
                 <select
-                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 appearance-none cursor-pointer"
+                  className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-white appearance-none cursor-pointer shadow-inner uppercase tracking-tighter"
                   value={formData.locationId}
                   onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 >
-                  <option value="">Merkez / Tüm Şubeler (Genel)</option>
+                  <option value="" className="bg-[#0f1117]">GENEL MERKEZ / TÜM ŞUBELER</option>
                   {locations.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    <option key={loc.id} value={loc.id} className="bg-[#0f1117]">{loc.name.toUpperCase()}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Step 2: Financial Details */}
-        <div className="space-y-4 pt-4 border-t border-slate-100">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">2. Finansal Detaylar</h3>
+        <div className="space-y-6 pt-6 border-t border-white/5">
+          <div className="flex items-center gap-3 pl-1">
+            <span className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-[10px] font-black text-indigo-400 border border-indigo-500/30">2</span>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">FİNANSAL VERİLER</h3>
+          </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-slate-700 ml-1 flex justify-between">
-                <span>Net Tutar (KDV Hariç) <span className="text-red-500">*</span></span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
+                <span>MATRAH (KDV HARİÇ) <span className="text-red-500/50">*</span></span>
               </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₺</span>
+              <div className="relative group">
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-500 font-black italic">₺</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   required
                   placeholder="0.00"
-                  className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all font-mono font-bold text-slate-900"
+                  className="w-full pl-10 pr-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-2xl focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-mono font-black text-white shadow-inner tracking-tighter"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-slate-700 ml-1">KDV Oranı</label>
-              <div className="relative">
-                <Percent className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">KDV ORANI</label>
+              <div className="relative group">
+                <Percent className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-focus-within:text-blue-400 transition-colors" />
                 <select
-                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 appearance-none cursor-pointer"
+                  className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-white appearance-none cursor-pointer shadow-inner uppercase tracking-widest"
                   value={formData.vatRate}
                   onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
                 >
-                  <option value="0">%0 Vergisiz/KDV'siz</option>
-                  <option value="1">%1 İndirimli Pırlanta/Gıda vb.</option>
-                  <option value="10">%10 Hizmet / Gıda</option>
-                  <option value="20">%20 Standart KDV</option>
+                  <option value="0" className="bg-[#0f1117]">%0 VERGİSİZ</option>
+                  <option value="1" className="bg-[#0f1117]">%1 İNDİRİMLİ</option>
+                  <option value="10" className="bg-[#0f1117]">%10 HİZMET</option>
+                  <option value="20" className="bg-[#0f1117]">%20 STANDART</option>
                 </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               </div>
             </div>
           </div>
@@ -306,22 +312,22 @@ export default function ExpenseForm({
           <AnimatePresence>
             {amountNum > 0 && (
               <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="overflow-hidden no-scrollbar"
               >
-                <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                      <CircleDollarSign size={16} />
+                <div className="p-6 rounded-[24px] bg-gradient-to-br from-blue-600/10 to-indigo-600/5 border border-blue-500/20 flex items-center justify-between shadow-[0_0_30px_rgba(59,130,246,0.1)]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/30">
+                      <CircleDollarSign size={20} />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest">KDV Dahil Toplam</p>
-                      <p className="text-xs text-indigo-500 font-medium mt-0.5">Ödenecek Nihai Tutar</p>
+                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] italic">ÖDENECEK TOPLAM</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5 tracking-widest">KDV DAHİL NİHAİ TUTAR</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-black text-indigo-700 tracking-tight">
+                  <span className="text-3xl font-black text-white tracking-tighter italic drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
                     ₺{totalWithVat.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -329,50 +335,49 @@ export default function ExpenseForm({
             )}
           </AnimatePresence>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-slate-700 ml-1">Ödeme Tipi & Sıklığı</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">ÖDEME TİPİ</label>
               <div className="relative">
                 <select
-                  className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 appearance-none cursor-pointer"
+                  className="w-full pl-5 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-white appearance-none cursor-pointer shadow-inner uppercase tracking-tight"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >
                   {PAYMENT_FREQUENCIES.map(f => (
-                    <option key={f.id} value={f.id}>{f.label}</option>
+                    <option key={f.id} value={f.id} className="bg-[#0f1117]">{f.label.toUpperCase()}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-slate-700 ml-1">Gider Kategorisi</label>
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">KATEGORİ</label>
               <div className="relative">
                 <select
-                  className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 appearance-none cursor-pointer"
+                  className="w-full pl-5 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-white appearance-none cursor-pointer shadow-inner uppercase tracking-tight"
                   value={formData.categoryId}
                   onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 >
                   {EXPENSE_CATEGORIES.map(c => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
+                    <option key={c.id} value={c.id} className="bg-[#0f1117]">{c.label.toUpperCase()}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               </div>
             </div>
           </div>
 
-          {/* Paid By Selector (Shareholders) */}
-          <div className="space-y-3 mt-2">
-            <label className="text-[13px] font-semibold text-slate-700 ml-1">Ödemeyi Yapan (Kaynak)</label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="space-y-4">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">ÖDEMEYİ YAPAN ANALİZ KAYNAĞI</label>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
-                { id: 'Ortak Hesap', label: 'Ortak Hesap' },
-                { id: 'Okan', label: 'Okan' },
-                { id: 'Talha', label: 'Talha' },
-                { id: 'Furkan', label: 'Furkan' },
-                { id: 'Alp', label: 'Alp' }
+                { id: 'Ortak Hesap', label: 'ORTAK HESAP' },
+                { id: 'Okan', label: 'OKAN' },
+                { id: 'Talha', label: 'TALHA' },
+                { id: 'Furkan', label: 'FURKAN' },
+                { id: 'Alp', label: 'ALP' }
               ].map((partner) => {
                 const isSelected = formData.paidBy === partner.id;
                 return (
@@ -380,20 +385,28 @@ export default function ExpenseForm({
                     key={partner.id}
                     onClick={() => setFormData({ ...formData, paidBy: partner.id })}
                     className={cn(
-                      "cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all relative overflow-hidden",
+                      "cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all relative overflow-hidden group/item",
                       isSelected 
-                        ? "border-blue-500 bg-blue-50/50 shadow-sm" 
-                        : "border-slate-100 bg-slate-50/50 hover:bg-slate-100/80 hover:border-slate-200"
+                        ? "border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.2)]" 
+                        : "border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20"
                     )}
                   >
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 text-blue-500">
-                        <CheckCircle2 size={14} className="fill-blue-100" />
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {isSelected && (
+                        <motion.div 
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1"
+                        >
+                          <div className="w-6 h-6 bg-blue-500 flex items-center justify-center rounded-bl-xl">
+                            <CheckCircle2 size={10} className="text-white" />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <span className={cn(
-                      "text-sm font-bold",
-                      isSelected ? "text-blue-700" : "text-slate-700"
+                      "text-[10px] font-black tracking-tighter uppercase",
+                      isSelected ? "text-white" : "text-slate-500 group-hover/item:text-slate-300 transition-colors"
                     )}>
                       {partner.label}
                     </span>
@@ -405,18 +418,21 @@ export default function ExpenseForm({
         </div>
 
         {/* Step 3: Evrak ve Belge */}
-        <div className="space-y-4 pt-4 border-t border-slate-100">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">3. Belge Yükleme (Opsiyonel)</h3>
+        <div className="space-y-6 pt-6 border-t border-white/5">
+          <div className="flex items-center gap-3 pl-1">
+            <span className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-[10px] font-black text-emerald-400 border border-emerald-500/30">3</span>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">BELGE VE KANIT YÜKLEME</h3>
+          </div>
           
           <div
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "group relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden text-center",
+              "group relative flex flex-col items-center justify-center p-12 rounded-[32px] border-2 border-dashed transition-all cursor-pointer overflow-hidden shadow-inner",
               file && !fileError
-                ? "border-emerald-400 bg-emerald-50/50"
+                ? "border-emerald-500/30 bg-emerald-500/5 shadow-[inset_0_0_40px_rgba(16,185,129,0.05)]"
                 : fileError
-                ? "border-red-400 bg-red-50/50"
-                : "border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50"
+                ? "border-red-500/30 bg-red-500/5 shadow-[inset_0_0_40px_rgba(239,68,68,0.05)]"
+                : "border-white/10 bg-white/[0.02] hover:border-blue-500/30 hover:bg-blue-500/5"
             )}
           >
             <input
@@ -434,9 +450,9 @@ export default function ExpenseForm({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="w-full max-w-sm rounded-xl overflow-hidden shadow-lg border-2 border-white relative z-10"
+                  className="w-full max-w-sm rounded-[24px] overflow-hidden shadow-2xl border-4 border-white/10 relative z-10"
                 >
-                  <img src={previewUrl} alt="Fatura Önizleme" className="w-full h-auto object-cover max-h-48" />
+                  <img src={previewUrl} alt="Fatura Önizleme" className="w-full h-auto object-cover max-h-56" />
                 </motion.div>
               ) : file && isPdf && !fileError ? (
                 <motion.div
@@ -444,32 +460,32 @@ export default function ExpenseForm({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex flex-col items-center gap-3 relative z-10"
+                  className="flex flex-col items-center gap-4 relative z-10"
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-white border border-emerald-200 shadow-sm flex items-center justify-center text-emerald-500">
-                    <FileText size={32} strokeWidth={1.5} />
+                  <div className="w-20 h-20 rounded-3xl bg-white/5 border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)] flex items-center justify-center text-emerald-400">
+                    <FileText size={40} strokeWidth={1} />
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700 max-w-xs">{file.name}</p>
-                    <p className="text-[11px] font-semibold text-emerald-600 mt-1 uppercase tracking-widest">{formatFileSize(file.size)} • PDF BELGESİ</p>
+                  <div className="text-center">
+                    <p className="text-xs font-black text-white italic truncate max-w-[200px] uppercase tracking-tighter">{file.name}</p>
+                    <p className="text-[9px] font-black text-emerald-500 mt-2 uppercase tracking-[0.2em]">{formatFileSize(file.size)} • PDF AKTİF</p>
                   </div>
                 </motion.div>
               ) : fileError ? (
-                <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3 relative z-10">
-                  <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-500">
-                    <AlertCircle size={28} />
+                <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-4 relative z-10">
+                  <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                    <AlertCircle size={32} />
                   </div>
-                  <p className="text-sm font-bold text-red-600 max-w-sm">{fileError}</p>
-                  <span className="text-xs text-red-400 font-medium px-4 py-2 bg-red-100 rounded-full">Yeni belge seç</span>
+                  <p className="text-xs font-black text-red-500 uppercase tracking-widest">{fileError}</p>
+                  <span className="text-[9px] text-white font-black px-5 py-2 bg-red-500 rounded-full uppercase tracking-widest active:scale-95 transition-all">YENİDEN SEÇ</span>
                 </motion.div>
               ) : (
-                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3 relative z-10">
-                  <div className="w-16 h-16 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:text-blue-500 group-hover:border-blue-200 transition-all duration-300">
-                    <Upload size={28} strokeWidth={1.5} />
+                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-5 relative z-10">
+                  <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 group-hover:scale-110 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all duration-500 shadow-xl">
+                    <Upload size={32} strokeWidth={1.5} />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-base font-bold text-slate-700 group-hover:text-blue-700 transition-colors">Fatura Görüntüsü Yükle</p>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Sürükle bırak veya gözat</p>
+                  <div className="space-y-2 text-center">
+                    <p className="text-sm font-black text-white italic group-hover:text-blue-400 transition-colors uppercase tracking-tight">BELGE SÜRÜKLE VEYA SEÇ</p>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.25em]">SİSTEME KANIT EKLE</p>
                   </div>
                 </motion.div>
               )}
@@ -479,28 +495,27 @@ export default function ExpenseForm({
               <button
                 type="button"
                 onClick={removeFile}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/90 backdrop-blur text-slate-500 hover:text-red-500 hover:bg-red-50 shadow-sm border border-slate-200 transition-all z-20"
+                className="absolute top-6 right-6 p-3 rounded-full bg-black/40 hover:bg-black/60 text-slate-400 hover:text-white backdrop-blur shadow-xl border border-white/10 transition-all z-20 active:scale-90"
               >
-                <X size={16} strokeWidth={2.5} />
+                <X size={16} strokeWidth={3} />
               </button>
             )}
           </div>
 
-          {/* Upload loading state indicator */}
           <AnimatePresence>
             {uploadStatus !== 'idle' && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50/80 border border-blue-100/80 backdrop-blur-sm"
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-xl"
               >
-                {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && <Loader2 size={16} className="text-blue-600 animate-spin" />}
-                {uploadStatus === 'done' && <CheckCircle2 size={16} className="text-emerald-500" />}
+                {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && <Loader2 size={18} className="text-blue-400 animate-spin" />}
+                {uploadStatus === 'done' && <CheckCircle2 size={18} className="text-emerald-400" />}
                 
-                <span className="text-sm font-semibold text-blue-800">
-                  {uploadStatus === 'compressing' ? 'Görsel optimize ediliyor...' : 
-                   uploadStatus === 'uploading' ? 'Merkeze yükleniyor...' : 'Veritabanına eklendi!'}
+                <span className="text-[10px] font-black text-blue-300 uppercase tracking-widest">
+                  {uploadStatus === 'compressing' ? 'GÖRSEL OPTİMİZE EDİLİYOR...' : 
+                   uploadStatus === 'uploading' ? 'BULUTA YÜKLENİYOR...' : 'İŞLEM BAŞARILI!'}
                 </span>
               </motion.div>
             )}
@@ -508,33 +523,32 @@ export default function ExpenseForm({
         </div>
 
         {/* Submit Actions */}
-        <div className="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+        <div className="pt-8 border-t border-white/5 flex items-center justify-end gap-4">
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors text-sm"
+              className="px-8 py-4 rounded-2xl font-black text-slate-500 hover:text-white hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.2em] italic"
             >
-              Vazgeç
+              İPTAL ET
             </button>
           )}
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 md:flex-none uppercase tracking-wider relative group overflow-hidden bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white rounded-xl px-8 py-3.5 font-black text-xs transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
+            className="flex-1 md:flex-none uppercase tracking-[0.25em] relative group overflow-hidden bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white rounded-2xl px-12 py-4 font-black text-[11px] transition-all flex items-center justify-center gap-3 shadow-[0_0_25px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:cursor-not-allowed border border-blue-400/30 italic"
           >
-            <span className="absolute w-0 h-0 transition-all duration-300 ease-out bg-white rounded-full group-hover:w-32 group-hover:h-32 opacity-10"></span>
-            <span className="relative flex items-center gap-2">
+            <span className="relative flex items-center gap-3">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  İşleniyor...
+                  ANALİZ EDİLİYOR...
                 </>
               ) : (
                 <>
-                  {initialData ? 'Gideri Güncelle' : 'Gideri Kaydet'}
-                  <ArrowRight size={16} strokeWidth={2.5} />
+                  {initialData ? 'GÜNCELLEMEYİ KAYDET' : 'GİDERİ VERİTABANINA İŞLE'}
+                  <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </span>

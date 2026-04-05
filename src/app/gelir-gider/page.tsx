@@ -43,6 +43,8 @@ export default async function GelirGiderPage(props: {
     supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
   ]);
 
+  const activeLocationCount = (locations || []).length || 1;
+
   const monthlyEntries: any[] = [];
   
   const formatMonthSafe = (isoStringOrMonthId: string) => {
@@ -71,17 +73,39 @@ export default async function GelirGiderPage(props: {
       const [y, m] = perf.month.split('T')[0].split('-');
       const perfMonthStr = `${y}-${m}`;
       
+      // Recurring expenses:
+      //   - Location-specific recurring  → full amount only for that location
+      //   - Global recurring (locationId=null) → split equally across all active locations
       const recurringTotal = (expenses || [])
-        .filter(e => e.type === 'RECURRING' && (!e.locationId || e.locationId === loc.id))
-        .reduce((s, e) => s + (e.amountWithVat || 0), 0);
-        
+        .filter(e => e.type === 'RECURRING')
+        .reduce((s, e) => {
+          if (!e.locationId) {
+            // Global expense — split across all active locations
+            return s + (e.amountWithVat || 0) / activeLocationCount;
+          } else if (e.locationId === loc.id) {
+            // Location-specific — full amount
+            return s + (e.amountWithVat || 0);
+          }
+          return s;
+        }, 0);
+
+      // One-time expenses for this month/location
       const oneTimeTotal = (expenses || [])
         .filter(e => {
           if (e.type === 'RECURRING') return false;
           const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
-          return expMonth === perfMonthStr && (!e.locationId || e.locationId === loc.id);
+          if (expMonth !== perfMonthStr) return false;
+          // Match global (locationId=null) or same location
+          if (e.locationId && e.locationId !== loc.id) return false;
+          return true;
         })
-        .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+        .reduce((s, e) => {
+          if (!e.locationId) {
+            // Global one-time — split across all active locations
+            return s + (e.amountWithVat || 0) / activeLocationCount;
+          }
+          return s + (e.amountWithVat || 0);
+        }, 0);
 
       const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 

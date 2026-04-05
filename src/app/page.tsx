@@ -33,11 +33,7 @@ export default async function DashboardPage() {
   const { data: expensesData } = await supabase
     .from('Expense')
     .select('*')
-    .limit(500);
-
-  const { data: investmentData } = await supabase
-    .from('Investment')
-    .select('totalAmount');
+    .limit(100);
 
   const { data: paramsData } = await supabase
     .from('SystemParameter')
@@ -47,6 +43,10 @@ export default async function DashboardPage() {
     acc[p.key] = p.value;
     return acc;
   }, {});
+
+  const activeLocationCount = (performances
+    ? [...new Set(performances.map((p: any) => p.locationId))].length
+    : 1) || 1;
 
   const monthlyTotals: Record<string, any> = {};
   let totalManualRevenue = 0;
@@ -60,19 +60,28 @@ export default async function DashboardPage() {
       const loc = perf.location;
       const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
       
-      // ONLY location-specific expenses here. Shared (null) handled at global level.
+      // Recurring: global split + location-specific full
       const recurringTotal = (expensesData || [])
-        .filter((e: any) => e.type === 'RECURRING' && e.locationId === loc.id)
-        .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
-        
+        .filter((e: any) => e.type === 'RECURRING')
+        .reduce((s: number, e: any) => {
+          if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+          if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
+          return s;
+        }, 0);
+
+      // One-time: global split + location-specific full
       const oneTimeTotal = (expensesData || [])
         .filter((e: any) => {
           if (e.type === 'RECURRING') return false;
-          if (e.locationId !== loc.id) return false;
           const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
-          return expMonth === perfMonthStr;
+          if (expMonth !== perfMonthStr) return false;
+          if (e.locationId && e.locationId !== loc.id) return false;
+          return true;
         })
-        .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
+        .reduce((s: number, e: any) => {
+          if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+          return s + (e.amountWithVat || 0);
+        }, 0);
 
       const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
@@ -102,23 +111,15 @@ export default async function DashboardPage() {
     }
   }
 
-  // Calculate Shared (Global) Expenses exactly once
-  const sharedRecurring = (expensesData || [])
-    .filter((e: any) => e.type === 'RECURRING' && !e.locationId)
-    .reduce((s, e) => s + (e.amountWithVat || 0), 0);
-  const sharedOneTime = (expensesData || [])
-    .filter((e: any) => e.type !== 'RECURRING' && !e.locationId)
-    .reduce((s, e) => s + (e.amountWithVat || 0), 0);
-
-  // Apply shared recurring across the number of active months
-  const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
-  const totalSharedExpenseSet = (sharedRecurring * allMonthCount) + sharedOneTime;
+  const chartEntries = Object.entries(monthlyTotals).slice(-6);
+  const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
 
   const displayAllTimeRevenue = totalManualRevenue;
-  const totalInvestment = (investmentData || []).reduce((s, i) => s + i.totalAmount, 0);
-  const totalGlobalOperationalExpense = totalManualOperationalExpense + totalSharedExpenseSet;
-  const trueGlobalNetCash = displayAllTimeRevenue - totalGlobalOperationalExpense;
+  const trueGlobalNetCash = totalManualNetCash;
+  const totalGlobalOperationalExpense = totalManualOperationalExpense;
   const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
+  const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
+  const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
 
   const kpis = [
     { 

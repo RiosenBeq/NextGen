@@ -30,7 +30,6 @@ interface DailyPerformanceFormProps {
 export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerformanceFormProps) {
   const [loading, setLoading] = useState(false);
   const [showExtra, setShowExtra] = useState(false);
-  const [extraFields, setExtraFields] = useState<{ key: string; value: string }[]>([]);
 
   const form = useForm<PerformanceFormValues>({
     resolver: zodResolver(performanceSchema) as any,
@@ -43,16 +42,11 @@ export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerf
     },
   });
 
-  const addExtraField = () => setExtraFields([...extraFields, { key: '', value: '' }]);
-  const removeExtraField = (index: number) => setExtraFields(extraFields.filter((_, i) => i !== index));
 
   const onSubmit = async (values: PerformanceFormValues) => {
     setLoading(true);
     try {
       const extraMetrics: Record<string, any> = {};
-      extraFields.forEach(f => {
-        if (f.key.trim()) extraMetrics[f.key] = f.value;
-      });
       if (values.notes) extraMetrics['notlar'] = values.notes;
 
       const res = await upsertDailyPerformance({
@@ -68,7 +62,6 @@ export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerf
           testCount: 0,
           notes: '',
         });
-        setExtraFields([]);
         onSuccess?.();
       } else {
         alert(res.error);
@@ -159,7 +152,7 @@ export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerf
              className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors"
            >
              <Plus className={cn("w-3.5 h-3.5 transition-transform", showExtra ? "rotate-45" : "0")} />
-             Dinamik Metrik Ekle / Notlar
+             Notlar Ekle
            </button>
 
            <AnimatePresence>
@@ -174,48 +167,6 @@ export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerf
                       placeholder="Günün notunu giriniz..."
                       className="w-full h-20 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:bg-white focus:border-blue-400 transition-all outline-none resize-none"
                     />
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ekstra Metrikler (JSON Yapısı)</p>
-                    {extraFields.map((field, idx) => (
-                      <div key={idx} className="flex gap-2">
-                        <input
-                          placeholder="Metrik Adı"
-                          value={field.key}
-                          onChange={(e) => {
-                            const newFields = [...extraFields];
-                            newFields[idx].key = e.target.value;
-                            setExtraFields(newFields);
-                          }}
-                          className="flex-1 h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold focus:bg-white outline-none"
-                        />
-                        <input
-                          placeholder="Değer"
-                          value={field.value}
-                          onChange={(e) => {
-                            const newFields = [...extraFields];
-                            newFields[idx].value = e.target.value;
-                            setExtraFields(newFields);
-                          }}
-                          className="flex-1 h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold focus:bg-white outline-none"
-                        />
-                        <button 
-                          type="button" 
-                          onClick={() => removeExtraField(idx)}
-                          className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addExtraField}
-                      className="text-[10px] font-bold text-blue-600 uppercase bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all"
-                    >
-                      + Yeni Alan
-                    </button>
                   </div>
                </div>
              )}

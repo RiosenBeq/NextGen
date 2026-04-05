@@ -137,6 +137,7 @@ export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, is
 
   // Simple Turkish Breadcrumb Logic
   const getBreadcrumbs = () => {
+    if (!pathname) return [{ label: 'Panel', href: '/' }];
     if (pathname === '/') return [{ label: 'Panel', href: '/' }];
     const segments = pathname.split('/').filter(Boolean);
     const crumbs = segments.map((seg, i) => {

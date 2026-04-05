@@ -48,14 +48,24 @@ export default async function GelirGiderPage(props: {
 
   const monthlyEntries: any[] = [];
   
-  const formatMonthSafe = (isoStringOrMonthId: string) => {
+  const formatMonthSafe = (isoStringOrMonthId: any) => {
+    if (!isoStringOrMonthId) return '—';
+    
+    // Ensure we have a string
+    const str = String(isoStringOrMonthId);
     let y, m;
-    if (isoStringOrMonthId.includes('T')) {
-      [y, m] = isoStringOrMonthId.split('T')[0].split('-');
+    
+    if (str.includes('T')) {
+      [y, m] = str.split('T')[0].split('-');
     } else {
-      [y, m] = isoStringOrMonthId.split('-');
+      [y, m] = str.split('-');
     }
+    
+    if (!y || !m) return 'Bilinmiyor';
+    
     const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+    if (isNaN(d.getTime())) return 'Hatalı Tarih';
+    
     return d.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' });
   };
 
@@ -74,9 +84,10 @@ export default async function GelirGiderPage(props: {
   if (performances) {
     for (const perf of performances) {
       const loc = perf.location;
-      if (!loc) continue;
+      if (!loc || !perf.month) continue;
 
-      const [y, m] = perf.month.split('T')[0].split('-');
+      const monthValue = String(perf.month);
+      const [y, m] = monthValue.split('T')[0].split('-');
       const perfMonthStr = `${y}-${m}`;
       
       // Recurring expenses:

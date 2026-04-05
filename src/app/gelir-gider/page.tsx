@@ -209,7 +209,7 @@ export default async function GelirGiderPage(props: {
   const insightSub = [
     { label: 'iyzico %2 + Nayax %2', sub: 'Toplam Operasyonel Kesinti', value: totalCommissionSum, icon: CreditCard, iconColor: 'text-red-500', cardClass: 'stat-card-red' },
     { label: 'AVM Ciro Payı', sub: 'Kira ve Hakediş Gideri', value: revenueShareSum, icon: Percent, iconColor: 'text-amber-600', cardClass: 'stat-card-amber' },
-    { label: 'Operasyonel Marj', sub: 'Net Verimlilik Oranı', value: totalGrossSum > 0 ? ((totalNetCashSum / totalGrossSum) * 100) : 0, icon: PiggyBank, iconColor: 'text-blue-600', cardClass: 'stat-card-blue', isPercent: true },
+    { label: 'Operasyonel Marj', sub: 'Net Verimlilik Oranı', value: totalGrossSum > 0 ? ((totalNetCashSum / totalGrossSum) * 100) : 0, icon: PiggyBank, iconColor: '', cardClass: 'stat-card-blue' },
   ];
 
   const maxCatTotal = Math.max(...Object.values(categoryTotals), 0.1);
@@ -219,7 +219,7 @@ export default async function GelirGiderPage(props: {
       <header className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-semibold text-blue-600 uppercase tracking-widest bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg inline-block mb-2">Financial Ledger</span>
+            <span className="text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-lg inline-block mb-2 border" style={{ color: '#2F6BFF', background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>Financial Ledger</span>
             <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5"><Wallet className="w-6 h-6 text-slate-400" />Gelir & Gider Paneli</h1>
           </div>
           <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200 rounded-xl">
@@ -261,7 +261,7 @@ export default async function GelirGiderPage(props: {
             <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-sm"><item.icon className={cn("w-5 h-5", item.iconColor)} /></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-500 font-medium truncate">{item.label}</p>
-              <p className="text-lg font-bold text-slate-900">{item.isPercent ? `%${item.value.toFixed(1)}` : `₺${item.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`}</p>
+              <p className="text-lg font-bold text-slate-900">{(item as any).isPercent ? `%${item.value.toFixed(1)}` : `₺${item.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`}</p>
             </div>
           </div>
         ))}
@@ -301,7 +301,7 @@ export default async function GelirGiderPage(props: {
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${(amount / maxCatTotal) * 100}%` }} transition={{ duration: 0.7 }} className="h-full rounded-full bg-[#2563EB]" />
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${(amount / maxCatTotal) * 100}%` }} transition={{ duration: 0.7 }} className="h-full rounded-full" style={{ background: '#2F6BFF' }} />
                 </div>
               </div>
             ))}

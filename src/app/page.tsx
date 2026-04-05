@@ -168,7 +168,7 @@ export default async function DashboardPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <LayoutDashboard className="w-8 h-8 text-blue-600" />
+            <LayoutDashboard className="w-8 h-8" style={{ color: '#2F6BFF' }} />
             Performans Paneli
           </h1>
           <p className="text-sm text-slate-500 mt-2 font-medium">Finansal operasyonlar ve şube performansı anlık özeti.</p>
@@ -226,7 +226,7 @@ export default async function DashboardPage() {
 
       {/* Performance Score + Additional Stats */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="premium-card p-8 flex flex-col sm:flex-row items-center gap-8 bg-slate-900 text-white relative overflow-hidden group">
+        <div className="premium-card p-8 flex flex-col sm:flex-row items-center gap-8 text-white relative overflow-hidden group" style={{ background: '#1E2A44' }}>
           <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
             <ShieldCheck size={120} />
           </div>
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
             <svg className="w-32 h-32 transform -rotate-90">
               <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" strokeWidth="10" fill="transparent" />
               <motion.circle 
-                cx="64" cy="64" r="56" stroke="#3B82F6" strokeWidth="12" fill="transparent" 
+                cx="64" cy="64" r="56" stroke="#2F6BFF" strokeWidth="12" fill="transparent" 
                 strokeDasharray={351.8}
                 initial={{ strokeDashoffset: 351.8 }}
                 animate={{ strokeDashoffset: 351.8 - (351.8 * 0.88) }}
@@ -244,7 +244,7 @@ export default async function DashboardPage() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-3xl font-black text-white italic">88</span>
-              <span className="text-[10px] font-black text-blue-400 uppercase tracking-wider">Verimlilik</span>
+              <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: '#60A5FA' }}>Verimlilik</span>
             </div>
           </div>
           <div className="space-y-4 text-center sm:text-left relative z-10">
@@ -271,8 +271,8 @@ export default async function DashboardPage() {
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Toplam Oturum</h4>
                 <p className="text-3xl font-black text-slate-900 tracking-tighter">{displayTotalSessions.toLocaleString('tr-TR')}</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                 <Activity className="w-6 h-6 text-blue-500" />
+              <div className="w-12 h-12 rounded-2xl border flex items-center justify-center" style={{ background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
+                 <Activity className="w-6 h-6" style={{ color: '#2F6BFF' }} />
               </div>
            </div>
            
@@ -283,7 +283,7 @@ export default async function DashboardPage() {
               </div>
               <div className="space-y-1">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI (Tahmini)</p>
-                <p className="text-lg font-black text-emerald-600 tracking-tighter font-mono">%{insights[0]?.roi.toFixed(1) || '0.0'}</p>
+                <p className="text-lg font-black tracking-tighter font-mono" style={{ color: '#12B76A' }}>%{insights[0]?.roi.toFixed(1) || '0.0'}</p>
               </div>
            </div>
         </div>
@@ -319,9 +319,9 @@ export default async function DashboardPage() {
                 <div className="w-3 h-3 rounded-full bg-slate-200" />
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ciro (TL)</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-100 bg-blue-50/30">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Net Kâr (TL)</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border" style={{ borderColor: 'rgba(47,107,255,0.2)', background: 'rgba(47,107,255,0.05)' }}>
+                <div className="w-3 h-3 rounded-full" style={{ background: '#2F6BFF' }} />
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest" style={{ color: '#2F6BFF' }}>Net Kâr (TL)</span>
               </div>
             </div>
           </div>
@@ -345,10 +345,11 @@ export default async function DashboardPage() {
                     <motion.div 
                       initial={{ height: 0 }} animate={{ height: `${h_prof}%` }}
                       transition={{ duration: 1.2, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full max-w-[32px] bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-xl shadow-lg shadow-blue-200/50 group-hover:shadow-blue-300 group-hover:scale-x-105 transition-all duration-300 relative"
+                      className="w-full max-w-[32px] rounded-t-xl group-hover:scale-x-105 transition-all duration-300 relative"
+                      style={{ background: 'linear-gradient(to top, #2F6BFF, #60A5FA)', boxShadow: '0 10px 15px -3px rgba(47,107,255,0.3)' }}
                     >
                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                         <span className="text-[9px] font-black text-blue-600 bg-white px-2 py-1 rounded-md border border-blue-100 shadow-sm">₺{Math.round(data.profit/1000)}k</span>
+                         <span className="text-[9px] font-black bg-white px-2 py-1 rounded-md border shadow-sm" style={{ color: '#2F6BFF', borderColor: 'rgba(47,107,255,0.2)' }}>₺{Math.round(data.profit/1000)}k</span>
                        </div>
                     </motion.div>
                   </div>

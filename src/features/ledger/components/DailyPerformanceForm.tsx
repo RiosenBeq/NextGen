@@ -33,7 +33,7 @@ export default function DailyPerformanceForm({ locations, onSuccess }: DailyPerf
   const [extraFields, setExtraFields] = useState<{ key: string; value: string }[]>([]);
 
   const form = useForm<PerformanceFormValues>({
-    resolver: zodResolver(performanceSchema),
+    resolver: zodResolver(performanceSchema) as any,
     defaultValues: {
       locationId: '',
       date: new Date().toISOString().split('T')[0],

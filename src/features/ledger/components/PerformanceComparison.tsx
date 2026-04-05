@@ -1,17 +1,7 @@
 'use client'
 
-import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell
-} from 'recharts';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
 
 interface PerformanceComparisonProps {
@@ -19,63 +9,79 @@ interface PerformanceComparisonProps {
 }
 
 export default function PerformanceComparison({ data }: PerformanceComparisonProps) {
-  // Assuming data structure: [{ month: 'Mart', 'Bursa Zafer Plaza': 205, 'Mavibahçe': 263 }, ...]
-  
-  const locations = data.length > 0 ? Object.keys(data[0]).filter(k => k !== 'month') : [];
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<{ month: string, loc: string, val: number } | null>(null);
+
+  if (!data || data.length === 0) return null;
+
+  const locations = Object.keys(data[0]).filter(k => k !== 'month');
+  const maxVal = Math.max(...data.flatMap(d => locations.map(l => d[l] || 0)), 1);
+
+  const colors = ['#2563EB', '#F59E0B', '#10B981', '#6366F1'];
 
   return (
-    <div className="w-full h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          margin={{
-            top: 20,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-          barGap={8}
-        >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-          <XAxis 
-            dataKey="month" 
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: '#64748B', fontSize: 11, fontWeight: 600 }}
-            dy={10}
-          />
-          <YAxis 
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: '#64748B', fontSize: 11, fontWeight: 600 }}
-          />
-          <Tooltip 
-            cursor={{ fill: '#F1F5F9' }}
-            contentStyle={{ 
-              borderRadius: '12px', 
-              border: 'none', 
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-              fontSize: '12px',
-              fontWeight: '600'
+    <div className="w-full h-full min-h-[300px] flex flex-col pt-8 relative">
+      {/* Legend */}
+      <div className="absolute top-0 right-0 flex gap-4">
+        {locations.map((loc, i) => (
+          <div key={loc} className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{loc}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex-1 flex items-end justify-between gap-4 md:gap-8 px-4 h-[240px]">
+        {data.map((d, i) => (
+          <div key={d.month} className="flex-1 flex flex-col items-center group h-full justify-end">
+            <div className="w-full flex items-end justify-center gap-1 md:gap-2 grow">
+              {locations.map((loc, locIdx) => {
+                const val = d[loc] || 0;
+                const h = (val / maxVal) * 100;
+                return (
+                  <div key={loc} className="relative w-full max-w-[24px]">
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      transition={{ duration: 1, delay: i * 0.05 + locIdx * 0.1, ease: "circOut" }}
+                      className="w-full rounded-t-lg shadow-sm cursor-help hover:brightness-110 transition-all"
+                      style={{ backgroundColor: colors[locIdx % colors.length] }}
+                      onMouseEnter={(e) => setHoveredBar({ month: d.month, loc, val })}
+                      onMouseLeave={() => setHoveredBar(null)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <span className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-900 transition-colors">
+              {d.month}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Axis Line */}
+      <div className="w-full h-px bg-slate-100 mt-0" />
+
+      {/* Tooltip */}
+      <AnimatePresence>
+        {hoveredBar && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            className="absolute z-50 bg-slate-900 text-white p-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none"
+            style={{ 
+              left: '50%',
+              top: '20px',
+              transform: 'translateX(-50%)'
             }}
-          />
-          <Legend 
-            verticalAlign="top" 
-            align="right"
-            iconType="circle"
-            wrapperStyle={{ paddingBottom: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-          />
-          {locations.map((loc, index) => (
-            <Bar 
-              key={loc} 
-              dataKey={loc} 
-              fill={index === 0 ? '#2563EB' : '#F59E0B'} 
-              radius={[4, 4, 0, 0]} 
-              barSize={24}
-            />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
+          >
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{hoveredBar.month} — {hoveredBar.loc}</p>
+            <p className="text-sm font-black italic">{hoveredBar.val.toLocaleString('tr-TR')} Seans</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

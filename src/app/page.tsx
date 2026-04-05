@@ -4,6 +4,7 @@ import { getLocationInsights } from '@/features/ledger/actions';
 import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
 import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
 import ExpenseBreakdown from '@/features/ledger/components/ExpenseBreakdown';
+import PerformanceComparison from '@/features/ledger/components/PerformanceComparison';
 import { 
   TrendingUp, CreditCard, Wallet, Activity, 
   ArrowUpRight, Radio, LayoutDashboard, BarChart3, 

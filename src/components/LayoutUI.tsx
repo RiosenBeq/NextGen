@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,11 +8,9 @@ import {
   LayoutDashboard, 
   FileText, 
   Settings, 
-  Bell, 
   User,
   TrendingUp,
   CreditCard,
-  Database,
   ShieldCheck,
   ChevronRight,
   Wallet,
@@ -21,16 +19,15 @@ import {
   X,
   Home,
   BarChart3,
-  Search,
   PlusCircle,
   Zap,
   LogOut,
   Calendar,
-  Scale,
   Building2,
   Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logout } from "@/app/actions/auth";
 
 const navLinks = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Ana Panel" },
@@ -48,27 +45,68 @@ const navLinks = [
   { href: "/settings", label: "Ayarlar", icon: Settings, category: "Sistem" },
 ];
 
-export function Sidebar() {
+function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleLogout = () => {
+    startTransition(async () => {
+      await logout();
+    });
+  };
+
+  if (variant === 'topbar') {
+    return (
+      <button
+        onClick={handleLogout}
+        disabled={isPending}
+        className="p-2 rounded-lg hover:bg-red-50 text-[--text-muted] hover:text-[--error] transition-all group"
+        title="Çıkış Yap"
+      >
+        <LogOut className="w-4.5 h-4.5 group-hover:scale-105 transition-transform" />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleLogout}
+      disabled={isPending}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-red-400 hover:bg-white/[0.04] transition-all group"
+    >
+      <LogOut className={cn(
+        "w-4 h-4 transition-transform",
+        isPending ? "animate-spin" : "group-hover:-translate-x-0.5"
+      )} />
+      <span>{isPending ? 'Çıkılıyor...' : 'Çıkış Yap'}</span>
+    </button>
+  );
+}
+
+export function Sidebar({ userEmail }: { userEmail?: string }) {
   const pathname = usePathname();
   const categories = Array.from(new Set(navLinks.map(l => l.category)));
+
+  const displayName = userEmail
+    ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)
+    : 'Yönetici';
 
   return (
     <motion.aside 
       initial={{ x: -260, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-64 bg-[#1E293B] shrink-0 hidden lg:flex flex-col h-screen text-white relative z-50"
+      className="w-64 bg-[--primary-navy] shrink-0 hidden lg:flex flex-col h-screen text-white relative z-50"
     >
       {/* Logo */}
       <div className="h-[65px] flex items-center px-5 border-b border-white/[0.06]">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-105">
+          <div className="w-9 h-9 rounded-xl bg-[--primary-blue] flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-105">
             <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-base tracking-tight text-white leading-tight">
               NextGen<span className="text-[#60A5FA]">Box</span>
             </span>
-            <span className="text-[9px] font-semibold tracking-[0.15em] text-slate-500 uppercase italic">Veri Merkezi</span>
+            <span className="text-[9px] font-semibold tracking-[0.15em] text-slate-500 uppercase">Veri Merkezi</span>
           </div>
         </Link>
       </div>
@@ -77,7 +115,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto px-3 py-5 space-y-6">
         {categories.map((cat) => (
           <div key={cat}>
-            <p className="px-3 text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3 italic">
+            <p className="px-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">
               {cat}
             </p>
             <nav className="space-y-0.5">
@@ -95,11 +133,11 @@ export function Sidebar() {
                   >
                     <Icon className={cn(
                       "w-4 h-4 shrink-0",
-                      isActive ? "text-[#60A5FA]" : "text-slate-600"
+                      isActive ? "text-[--sidebar-active-icon]" : "text-slate-600"
                     )} />
-                    <span className="text-sm font-semibold">{link.label}</span>
+                    <span className="text-sm font-medium">{link.label}</span>
                     {isActive && (
-                      <ChevronRight className="w-3.5 h-3.5 ml-auto text-[#60A5FA]" />
+                      <ChevronRight className="w-3.5 h-3.5 ml-auto text-[--sidebar-active-icon]" />
                     )}
                   </Link>
                 );
@@ -109,25 +147,30 @@ export function Sidebar() {
         ))}
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-white/[0.06] space-y-3">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] cursor-pointer hover:bg-white/[0.06] transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center shadow-lg">
-            <User className="w-4 h-4 text-slate-400" />
+      {/* Footer — User + Logout */}
+      <div className="p-4 border-t border-white/[0.06] space-y-2">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="w-8 h-8 rounded-lg bg-[--primary-blue]/20 flex items-center justify-center shadow-lg">
+            <User className="w-4 h-4 text-[#60A5FA]" />
           </div>
-          <div>
-            <p className="text-xs font-black text-white italic">Yönetici</p>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sistem Paneli</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-white truncate">{displayName}</p>
+            <p className="text-[10px] font-medium text-slate-500 truncate">{userEmail || 'Yönetim'}</p>
           </div>
         </div>
+        <LogoutButton variant="sidebar" />
       </div>
     </motion.aside>
   );
 }
 
-export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, isOpen?: boolean }) {
+export function Topbar({ onToggleMenu, isOpen, userEmail }: { onToggleMenu?: () => void, isOpen?: boolean, userEmail?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+
+  const displayName = userEmail
+    ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)
+    : 'Yönetici';
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -135,7 +178,6 @@ export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, is
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Simple Turkish Breadcrumb Logic
   const getBreadcrumbs = () => {
     if (!pathname) return [{ label: 'Panel', href: '/' }];
     if (pathname === '/') return [{ label: 'Panel', href: '/' }];
@@ -154,51 +196,52 @@ export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, is
     <>
       <header className={cn(
         "h-[65px] flex items-center justify-between px-5 md:px-8 sticky top-0 z-40 transition-all duration-200 border-b bg-white/80 backdrop-blur-md",
-        scrolled ? "shadow-sm border-slate-200" : "border-slate-100"
+        scrolled ? "shadow-sm border-[--border]" : "border-[--border]/50"
       )}>
         <div className="flex items-center gap-6">
           <button 
             onClick={onToggleMenu}
-            className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-[--surface-alt] transition-colors"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="w-5 h-5 text-[--text-secondary]" />
           </button>
 
-          {/* Breadcrumb IMPLEMENTATION */}
+          {/* Breadcrumb */}
           <nav className="hidden md:flex items-center gap-2 overflow-hidden">
              {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={crumb.href}>
                   <Link 
                     href={crumb.href}
                     className={cn(
-                      "text-[10px] font-black uppercase tracking-widest italic transition-colors whitespace-nowrap",
-                      i === breadcrumbs.length - 1 ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                      "text-[10px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
+                      i === breadcrumbs.length - 1 ? "text-[--primary-blue]" : "text-[--text-muted] hover:text-[--text-secondary]"
                     )}
                   >
                     {crumb.label}
                   </Link>
-                  {i < breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3 text-slate-300 shrink-0" />}
+                  {i < breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3 text-[--border-strong] shrink-0" />}
                 </React.Fragment>
              ))}
           </nav>
         </div>
 
         <Link href="/" className="lg:hidden flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#2563EB] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-[--primary-blue] flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-base text-slate-900">
-            NextGen<span className="text-[#2563EB]">Box</span>
+          <span className="font-bold text-base text-[--text-primary]">
+            NextGen<span className="text-[--primary-blue]">Box</span>
           </span>
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 cursor-pointer group">
+        <div className="flex items-center gap-2">
+          <LogoutButton variant="topbar" />
+          <div className="flex items-center gap-2.5 cursor-default group">
             <div className="hidden md:flex flex-col items-end">
-              <p className="text-[10px] font-black text-slate-900 leading-none mb-1 italic uppercase tracking-tighter">Yönetici</p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Yönetim Paneli</p>
+              <p className="text-[11px] font-semibold text-[--text-primary] leading-none mb-1">{displayName}</p>
+              <p className="text-[9px] font-medium text-[--text-muted] uppercase tracking-widest">Yönetim Paneli</p>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg group-hover:shadow-blue-200/50 transition-shadow">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[--primary-blue] to-[--deep-accent] flex items-center justify-center shadow-lg">
               <User className="w-4.5 h-4.5 text-white" />
             </div>
           </div>
@@ -220,11 +263,11 @@ export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, is
               animate={{ x: 0 }}
               exit={{ x: -260 }}
               transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-              className="fixed top-0 left-0 w-64 h-full z-[70] bg-[#1E293B] overflow-y-auto lg:hidden shadow-2xl"
+              className="fixed top-0 left-0 w-64 h-full z-[70] bg-[--primary-navy] overflow-y-auto lg:hidden shadow-2xl"
             >
               <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
                 <Link href="/" className="flex items-center gap-2.5" onClick={onToggleMenu}>
-                  <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[--primary-blue] flex items-center justify-center">
                     <Zap className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
                   </div>
                   <span className="font-bold text-base text-white">
@@ -247,12 +290,17 @@ export function Topbar({ onToggleMenu, isOpen }: { onToggleMenu?: () => void, is
                       onClick={onToggleMenu}
                       className={cn("sidebar-link", isActive && "active")}
                     >
-                      <Icon className={cn("w-4 h-4", isActive ? "text-[#60A5FA]" : "text-slate-600")} />
+                      <Icon className={cn("w-4 h-4", isActive ? "text-[--sidebar-active-icon]" : "text-slate-600")} />
                       <span>{link.label}</span>
                     </Link>
                   );
                 })}
               </nav>
+
+              {/* Mobile Logout */}
+              <div className="p-3 mt-4 border-t border-white/[0.06]">
+                <LogoutButton variant="sidebar" />
+              </div>
             </motion.div>
           </>
         )}
@@ -273,7 +321,7 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-slate-200 px-2 py-1.5 rounded-2xl shadow-xl shadow-slate-200/70 max-w-[92vw]">
+    <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-[--border] px-2 py-1.5 rounded-2xl shadow-xl shadow-slate-200/70 max-w-[92vw]">
       <div className="flex items-center gap-0.5">
         {mobileLinks.map(link => {
           const isActive = pathname === link.href;
@@ -285,8 +333,8 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
               className={cn(
                 "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all",
                 isActive
-                  ? "text-[#2563EB] bg-blue-50"
-                  : "text-slate-400 hover:text-slate-700 hover:bg-slate-50"
+                  ? "text-[--primary-blue] bg-blue-50"
+                  : "text-[--text-muted] hover:text-[--text-secondary] hover:bg-[--surface-alt]"
               )}
             >
               <Icon className="w-5 h-5" />

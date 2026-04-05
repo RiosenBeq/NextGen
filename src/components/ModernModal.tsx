@@ -12,7 +12,7 @@ interface ModernModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  maxWidth?: string; // e.g. 'max-w-2xl'
+  maxWidth?: string;
   showCloseButton?: boolean;
 }
 
@@ -29,7 +29,7 @@ export default function ModernModal({
 
   // Settings Mapping
   const isTopPosition = settings.SETTING_POPUP_POSITION === 1;
-  const animSpeed = settings.SETTING_ANIMATION_SPEED; // 0: Fast, 1: Normal, 2: Slow
+  const animSpeed = settings.SETTING_ANIMATION_SPEED;
   
   const transition = {
     type: "spring" as const,
@@ -62,7 +62,7 @@ export default function ModernModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] transition-all"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] transition-all"
           />
 
           {/* Modal Container */}
@@ -77,21 +77,21 @@ export default function ModernModal({
               exit={{ opacity: 0, scale: 0.95, y: isTopPosition ? -40 : 20 }}
               transition={transition}
               className={cn(
-                "w-full bg-[#0f1117] border border-white/10 rounded-[32px] shadow-2xl pointer-events-auto overflow-hidden relative flex flex-col max-h-[90vh]",
+                "w-full bg-[--surface] border border-[--border] rounded-2xl shadow-2xl pointer-events-auto overflow-hidden relative flex flex-col max-h-[90vh]",
                 maxWidth
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header (Optional) */}
+              {/* Header */}
               {title && (
-                <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                  <h3 className="text-lg font-black text-white italic uppercase tracking-tight">{title}</h3>
+                <div className="px-6 py-5 border-b border-[--border] flex items-center justify-between bg-[--surface-alt]/50">
+                  <h3 className="text-base font-semibold text-[--text-primary] tracking-tight">{title}</h3>
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="p-2 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all"
+                      className="p-1.5 rounded-lg hover:bg-[--surface-alt] text-[--text-muted] hover:text-[--text-primary] transition-all"
                     >
-                      <X size={20} strokeWidth={3} />
+                      <X size={18} strokeWidth={2.5} />
                     </button>
                   )}
                 </div>
@@ -101,14 +101,14 @@ export default function ModernModal({
               {!title && showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="absolute top-6 right-6 z-50 p-3 rounded-full bg-black/40 hover:bg-black/60 text-slate-400 hover:text-white backdrop-blur shadow-xl border border-white/10 transition-all active:scale-90"
+                  className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-[--surface] shadow-md border border-[--border] text-[--text-muted] hover:text-[--text-primary] hover:border-[--border-strong] transition-all active:scale-95"
                 >
-                  <X size={16} strokeWidth={3} />
+                  <X size={16} strokeWidth={2.5} />
                 </button>
               )}
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto no-scrollbar">
+              <div className="flex-1 overflow-y-auto">
                 {children}
               </div>
             </motion.div>

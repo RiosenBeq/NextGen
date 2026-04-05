@@ -426,5 +426,5 @@ function RoleButton({ active, label, desc, icon, onClick, isDark }: any) {
 }
 
 function cloneIcon(icon: any) {
-  return React.cloneElement(icon as React.ReactElement, { size: 28, strokeWidth: 2.5 });
+  return React.cloneElement(icon as React.ReactElement<any>, { size: 28, strokeWidth: 2.5 });
 }

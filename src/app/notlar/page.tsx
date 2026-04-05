@@ -17,7 +17,7 @@ export default async function NotesPage() {
     <div className="page-wrapper space-y-8 animate-fade-in">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-3">Knowledge Base</span>
+          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-3">Kurumsal Hafıza</span>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
             <StickyNote className="w-6 h-6 text-slate-400" />
             Sistem Notları & Ajanda

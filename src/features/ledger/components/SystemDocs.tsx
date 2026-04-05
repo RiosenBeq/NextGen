@@ -61,7 +61,7 @@ export function SystemDocs({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 </div>
                 <div>
                    <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Sistem Dökümantasyonu</h2>
-                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">NextGenBox Intelligence Knowledge Base</p>
+                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">NextGenBox Intelligence Kurumsal Hafıza</p>
                 </div>
               </div>
               <button 

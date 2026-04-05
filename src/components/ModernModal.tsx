@@ -65,21 +65,27 @@ export default function ModernModal({
 
           {/* Modal Container */}
           <div className={cn(
-            "fixed inset-0 z-[101] flex p-4 md:p-6 pointer-events-none transition-all duration-500",
-            isTopPosition ? "items-start justify-center pt-[10vh]" : "items-center justify-center"
+            "fixed inset-0 z-[101] flex flex-col pointer-events-none transition-all duration-500 md:p-6",
+            isTopPosition ? "justify-end md:items-start md:justify-center md:pt-[10vh]" : "justify-end md:items-center md:justify-center"
           )}>
             <motion.div
               ref={modalRef}
-              initial={{ opacity: 0, scale: 0.95, y: isTopPosition ? -40 : 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: isTopPosition ? -40 : 20 }}
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
               transition={transition}
               className={cn(
-                "w-full bg-white border border-slate-200 rounded-2xl shadow-2xl pointer-events-auto overflow-hidden relative flex flex-col max-h-[90vh]",
+                "w-full bg-white relative flex flex-col pointer-events-auto overflow-hidden",
+                "mt-auto max-h-[96vh] rounded-t-[32px] border-t border-slate-200 shadow-[0_-10px_40px_rgba(30,42,68,0.15)]", // Mobile styling (Bottom Sheet)
+                "md:mt-0 md:max-h-[90vh] md:rounded-2xl md:border md:shadow-2xl", // Desktop styling
                 maxWidth
               )}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Mobile Drawer Handle */}
+              <div className="w-full flex items-center justify-center pt-3 pb-1 md:hidden">
+                 <div className="w-12 h-1.5 rounded-full bg-slate-200" />
+              </div>
               {/* Header */}
               {title && (
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">

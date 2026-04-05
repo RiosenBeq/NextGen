@@ -49,7 +49,7 @@ export function MonthlyPerformanceForm({ locations, sessionPrice }: Props) {
         revenueShareRate: loc.revenueShareRate || 15,
       }
     );
-  }, [watchedValues, locations]);
+  }, [watchedValues, locations, sessionPrice]);
 
 
 

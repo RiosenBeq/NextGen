@@ -54,3 +54,25 @@ export async function logout(): Promise<void> {
   await supabase.auth.signOut();
   redirect('/login');
 }
+
+export async function updateProfile(formData: FormData) {
+  try {
+    const fullName = formData.get('fullName')?.toString() || '';
+    if (fullName.trim().length < 2) {
+      return { success: false, error: 'Ad soyad alanı çok kısa.' };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({
+      data: { full_name: fullName }
+    });
+
+    if (error) throw error;
+    
+    // Yalnızca başarılı olursa layout'u revalidate et
+    // redirect değil, çünkü modal ClientSide kapanacak
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Profil güncellenirken bir hata oluştu.' };
+  }
+}

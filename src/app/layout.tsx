@@ -37,6 +37,8 @@ export default async function RootLayout({
           <SettingsProvider>
             <ClientShell
               userEmail={user?.email || 'Yönetici'}
+              userFullName={user?.user_metadata?.full_name || ''}
+              userRole={user?.user_metadata?.role || 'user'}
             >
               {children}
             </ClientShell>

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { getActiveLocations, getSystemParameters } from '@/features/ledger/actions';
 import { LocationSettingsForm } from '@/features/ledger/components/LocationSettingsForm';
 import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
-import { Settings, ShieldCheck, Database, HelpCircle, MapPin, Sliders } from 'lucide-react';
+import { Settings, ShieldCheck, Database, HelpCircle, MapPin, Sliders, Users, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { SystemDocs } from '@/features/ledger/components/SystemDocs';
 
 import AppSettingsPanel from '@/features/ledger/components/AppSettingsPanel';
@@ -113,6 +114,25 @@ export default function SettingsPage() {
                 <div className="flex-1 h-[1px] bg-slate-200" />
              </div>
              <SystemParametersForm parameters={data.parameters} />
+          </div>
+
+          {/* User Management Link */}
+          <div className="space-y-6 pt-4">
+             <div className="flex items-center gap-4">
+                <Users className="w-6 h-6" style={{ color: '#1E2A44' }} />
+                <h2 className="text-xl font-black text-slate-900 tracking-tight italic uppercase">Platform Erişimi</h2>
+                <div className="flex-1 h-[1px] bg-slate-200" />
+             </div>
+             
+             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+                <div className="space-y-2 text-center sm:text-left">
+                   <h3 className="text-lg font-bold text-slate-900">Yetkilendirme ve Kullanıcılar</h3>
+                   <p className="text-sm font-medium text-slate-500 max-w-sm">Sisteme giriş yapabilen yetkili hesapları ve sistem rollerini yönetin. Sadece Üst Yöneticiler işlem yapabilir.</p>
+                </div>
+                <Link href="/users" className="px-6 py-4 rounded-xl flex items-center gap-2 font-bold uppercase tracking-widest text-[11px] text-white shadow-md transition-all hover:scale-105 active:scale-95 shrink-0" style={{ background: '#1E2A44' }}>
+                   Kullanıcı Yönetimi <ChevronRight size={14} />
+                </Link>
+             </div>
           </div>
           
           {/* Location Parameters */}

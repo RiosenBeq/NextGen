@@ -81,13 +81,13 @@ function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' 
   );
 }
 
-export function Sidebar({ userEmail }: { userEmail?: string }) {
+export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: string, userFullName?: string, userRole?: string }) {
   const pathname = usePathname();
   const categories = Array.from(new Set(navLinks.map(l => l.category)));
 
-  const displayName = userEmail
+  const displayName = userFullName || (userEmail
     ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)
-    : 'Yönetici';
+    : 'Yönetici');
 
   return (
     <motion.aside 
@@ -155,7 +155,7 @@ export function Sidebar({ userEmail }: { userEmail?: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-white truncate">{displayName}</p>
-            <p className="text-[10px] font-medium text-slate-500 truncate">{userEmail || 'Yönetim'}</p>
+            <p className="text-[10px] font-medium text-slate-500 truncate">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
           </div>
         </div>
         <LogoutButton variant="sidebar" />
@@ -164,13 +164,19 @@ export function Sidebar({ userEmail }: { userEmail?: string }) {
   );
 }
 
-export function Topbar({ onToggleMenu, isOpen, userEmail }: { onToggleMenu?: () => void, isOpen?: boolean, userEmail?: string }) {
+import ModernModal from '@/components/ModernModal';
+import { updateProfile } from '@/app/actions/auth';
+
+export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole }: { onToggleMenu?: () => void, isOpen?: boolean, userEmail?: string, userFullName?: string, userRole?: string }) {
   const [scrolled, setScrolled] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [profileName, setProfileName] = useState(userFullName || '');
   const pathname = usePathname();
 
-  const displayName = userEmail
+  const displayName = userFullName || (userEmail
     ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)
-    : 'Yönetici';
+    : 'Yönetici');
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -236,17 +242,64 @@ export function Topbar({ onToggleMenu, isOpen, userEmail }: { onToggleMenu?: () 
 
         <div className="flex items-center gap-2">
           <LogoutButton variant="topbar" />
-          <div className="flex items-center gap-2.5 cursor-default">
+          <button onClick={() => setProfileModalOpen(true)} className="flex items-center gap-2.5 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all border border-transparent hover:border-slate-200">
             <div className="hidden md:flex flex-col items-end">
               <p className="text-[11px] font-semibold text-slate-900 leading-none mb-1">{displayName}</p>
-              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Yönetim Paneli</p>
+              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
             </div>
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #2F6BFF, #2457E6)' }}>
               <User className="w-4 h-4 text-white" />
             </div>
-          </div>
+          </button>
         </div>
       </header>
+
+      <ModernModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title="Profil Ayarları" maxWidth="max-w-md">
+        <div className="p-6">
+          <form action={async (formData) => {
+            setIsUpdating(true);
+            const res = await updateProfile(formData);
+            setIsUpdating(false);
+            if (res.success) {
+               setProfileModalOpen(false);
+            } else {
+               alert(res.error);
+            }
+          }} className="space-y-4">
+            <div className="space-y-1.5">
+               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Ad Soyad (Görünen İsim)</label>
+               <input 
+                  type="text" 
+                  name="fullName"
+                  required
+                  value={profileName}
+                  onChange={e => setProfileName(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none transition-all shadow-inner"
+                  placeholder="Görünmesini istediğiniz tam adınız"
+               />
+            </div>
+            <div className="space-y-1.5 opacity-60 pointer-events-none">
+               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">E-Posta Adresi</label>
+               <input 
+                  type="email" 
+                  disabled
+                  value={userEmail || ''}
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900"
+               />
+            </div>
+            <div className="pt-4">
+               <button 
+                 type="submit"
+                 disabled={isUpdating}
+                 className="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100"
+                 style={{ background: '#2F6BFF', color: 'white' }}
+               >
+                 {isUpdating ? 'Güncelleniyor...' : 'Profili Kaydet'}
+               </button>
+            </div>
+          </form>
+        </div>
+      </ModernModal>
 
       <AnimatePresence>
         {isOpen && (

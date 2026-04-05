@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, StickyNote } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { addNote, updateNote } from '../actions';
+import { motion } from 'framer-motion';
 
 interface Props {
   initialData?: any;
@@ -43,86 +44,71 @@ export function NoteForm({ initialData, onClose }: Props) {
   ];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-[2rem] shadow-2xl overflow-hidden">
-      <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
-               <StickyNote className="w-4 h-4 text-blue-600" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">
-               {initialData ? 'Kaydı Güncelle' : 'Yeni Kayıt Oluştur'}
-            </h3>
-         </div>
-         <button 
-           onClick={onClose}
-           className="p-2 rounded-lg hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors"
-         >
-           <X size={18} />
-         </button>
+    <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 italic">Not Protokol Başlığı</label>
+        <input
+          autoFocus
+          type="text"
+          required
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Stratejik başlık giriniz..."
+          className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-6 py-4 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-black italic uppercase tracking-tighter text-lg shadow-inner"
+        />
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">BAŞLIK</label>
-          <input
-            autoFocus
-            type="text"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Not başlığını giriniz..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-semibold"
-          />
-        </div>
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 italic">Dokümantasyon & Detaylar</label>
+        <textarea
+          required
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Protokol detaylarını, kararları veya hatırlatıcıları buraya asenkron olarak not düşebilirsiniz..."
+          rows={6}
+          className="w-full bg-slate-50 border border-slate-200 rounded-[24px] px-6 py-4 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold italic leading-relaxed resize-none shadow-inner"
+        />
+      </div>
 
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">İÇERİK / DETAYLAR</label>
-          <textarea
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Sistem notu veya dokümantasyon detaylarını buraya yazınız..."
-            rows={5}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium resize-none"
-          />
-        </div>
-
-        <div className="space-y-3">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-center block">KATEGORİ RENK KODU</label>
-          <div className="flex justify-center gap-3">
-            {colors.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setColor(c.id)}
-                className={`w-10 h-10 rounded-xl border transition-all flex items-center justify-center ${
-                  color === c.id ? `scale-110 shadow hover:shadow-md ${c.border}` : 'border-transparent opacity-60 hover:opacity-100'
-                } ${c.bg}`}
-              >
-                {color === c.id && <div className="w-2 h-2 rounded-full bg-slate-800 shadow-sm" />}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="pt-2 flex gap-3">
+      <div className="space-y-4">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 italic text-center block">Kategori Renk Segmentasyonu</label>
+        <div className="flex justify-center gap-4">
+          {colors.map((c) => (
             <button
+              key={c.id}
               type="button"
-              onClick={onClose}
-              className="flex-1 bg-white hover:bg-slate-50 text-slate-600 font-bold text-[10px] tracking-widest py-3 rounded-xl transition-all uppercase border border-slate-200"
+              onClick={() => setColor(c.id)}
+              className={`w-12 h-12 rounded-2xl border-2 transition-all flex items-center justify-center relative shadow-sm ${
+                color === c.id ? `scale-110 -translate-y-1 shadow-lg ${c.border}` : 'border-transparent grayscale opacity-40 hover:opacity-100 hover:grayscale-0'
+              } ${c.bg}`}
             >
-              İPTAL
+              {color === c.id && (
+                <motion.div 
+                   layoutId="activeColor"
+                   className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-slate-900" 
+                />
+              )}
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] tracking-widest py-3 rounded-xl transition-all shadow-sm active:scale-95 uppercase disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? 'KAYDEDİLİYOR...' : (initialData ? 'GÜNCELLE' : 'KAYDET')}
-              <Plus size={14} />
-            </button>
+          ))}
         </div>
-      </form>
-    </div>
+      </div>
+
+      <div className="pt-6 grid grid-cols-2 gap-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="group px-8 py-4 bg-white border border-slate-200 text-slate-500 font-black text-[10px] tracking-[0.2em] rounded-[22px] transition-all hover:bg-slate-50 uppercase italic"
+          >
+            Vazgeç
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="group px-8 py-4 bg-slate-900 text-white font-black text-[10px] tracking-[0.2em] rounded-[22px] transition-all hover:bg-slate-800 shadow-xl shadow-slate-200 uppercase italic disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3 active:scale-95"
+          >
+            {isSubmitting ? 'Senkronize Ediliyor...' : (initialData ? 'Protokolü Güncelle' : 'Kaydı Tamamla')}
+          </button>
+      </div>
+    </form>
   );
 }

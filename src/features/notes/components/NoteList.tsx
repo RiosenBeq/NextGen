@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Edit2, Clock, StickyNote, Plus } from 'lucide-react';
+import { Trash2, Edit2, Clock, StickyNote, Plus, Search } from 'lucide-react';
 import { deleteNote } from '../actions';
 import { NoteForm } from './NoteForm';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { cn } from '@/lib/utils';
 
 interface Note {
   id: string | number;
@@ -39,23 +41,12 @@ export default function NoteList({ initialNotes }: Props) {
 
   const getCardColor = (color: string) => {
     switch (color) {
-      case 'zinc': return 'border-slate-200 bg-white hover:bg-slate-50';
-      case 'blue': return 'border-blue-200 bg-blue-50/30 hover:bg-blue-50/80';
-      case 'emerald': return 'border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50/80';
-      case 'amber': return 'border-amber-200 bg-amber-50/30 hover:bg-amber-50/80';
-      case 'rose': return 'border-rose-200 bg-rose-50/30 hover:bg-rose-50/80';
-      default: return 'border-slate-200 bg-white hover:bg-slate-50';
-    }
-  };
-
-  const getTextColor = (color: string) => {
-    switch (color) {
-      case 'zinc': return 'text-slate-600';
-      case 'blue': return 'text-blue-700';
-      case 'emerald': return 'text-emerald-700';
-      case 'amber': return 'text-amber-700';
-      case 'rose': return 'text-rose-700';
-      default: return 'text-slate-600';
+      case 'zinc': return 'bg-white border-slate-200 hover:border-slate-300';
+      case 'blue': return 'bg-blue-50/50 border-blue-100 hover:border-blue-200';
+      case 'emerald': return 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200';
+      case 'amber': return 'bg-amber-50/50 border-amber-100 hover:border-amber-200';
+      case 'rose': return 'bg-rose-50/50 border-rose-100 hover:border-rose-200';
+      default: return 'bg-white border-slate-200';
     }
   };
 
@@ -65,40 +56,47 @@ export default function NoteList({ initialNotes }: Props) {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center premium-card p-4 border border-slate-200">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-           <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200 shadow-sm">
-              <StickyNote size={18} className="text-slate-500" />
+    <div className="space-y-10">
+      
+      {/* 1. COMPACT TOOLBAR */}
+      <div className="flex flex-col md:flex-row gap-6 justify-between items-center bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+           <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200">
+              <StickyNote size={20} strokeWidth={2.5} className="italic" />
            </div>
-           <div className="flex-1 md:w-64">
+           <div className="relative flex-1 md:w-80 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Notlarda ara..." 
+                placeholder="Notlarda asenkron ara..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                className="w-full pl-11 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-[20px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-inner placeholder:text-slate-300"
               />
            </div>
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm hover:shadow active:scale-95 flex items-center justify-center gap-2"
+          className="w-full md:w-auto px-8 py-4 bg-blue-600 text-white rounded-[22px] text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
         >
-          <Plus size={16} />
-          Yeni Not
+          <Plus size={18} strokeWidth={3} />
+          Yeni Protokol Ekle
         </button>
       </div>
 
+      {/* 2. GRID SYSTEM */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         <AnimatePresence mode="popLayout">
           {filteredNotes.length === 0 && !isAdding && (
             <motion.div 
-               initial={{ opacity: 0, scale: 0.9 }}
+               initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
-               className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50"
+               className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[48px] bg-slate-50/50 flex flex-col items-center gap-4"
             >
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Arama sonucu bulunamadı</p>
+              <div className="w-16 h-16 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-300">
+                 <Search size={32} />
+              </div>
+              <p className="text-[11px] font-black italic text-slate-400 uppercase tracking-[0.3em]">Henüz bir not tanımlanmadı veya sonuç bulunamadı.</p>
             </motion.div>
           )}
 
@@ -109,81 +107,95 @@ export default function NoteList({ initialNotes }: Props) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ delay: idx * 0.03 }}
-              className={`group p-6 rounded-2xl transition-all flex flex-col justify-between h-full relative overflow-hidden shadow-sm hover:shadow-md ${getCardColor(note.color)}`}
+              transition={{ delay: idx * 0.05 }}
+              className={cn(
+                "group p-8 rounded-[40px] border shadow-sm transition-all duration-500 flex flex-col justify-between h-full min-h-[280px] relative overflow-hidden active:scale-[0.98]",
+                getCardColor(note.color)
+              )}
             >
-              <div className="space-y-4 relative z-10">
+              <div className="space-y-5 relative z-10">
                 <div className="flex justify-between items-start gap-4">
-                  <h3 className="font-bold text-slate-800 leading-tight text-lg group-hover:text-blue-600 transition-colors">
-                    {note.title}
-                  </h3>
-                  <div className="flex gap-1">
+                  <div className="flex items-center gap-3">
+                     <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:rotate-12", 
+                        note.color === 'blue' ? 'bg-blue-600 text-white' : 
+                        note.color === 'emerald' ? 'bg-emerald-600 text-white' :
+                        note.color === 'amber' ? 'bg-amber-600 text-white' :
+                        note.color === 'rose' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white'
+                     )}>
+                        <StickyNote size={20} strokeWidth={2.5} />
+                     </div>
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">Sistem Notu</span>
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
                     <button 
-                      onClick={() => setEditingNote(note)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                      onClick={(e) => { e.stopPropagation(); setEditingNote(note); }}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/80 border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-white transition-all shadow-sm"
                     >
-                      <Edit2 size={15} />
+                      <Edit2 size={16} />
                     </button>
                     <button 
-                      onClick={() => handleDelete(note.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/80 border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-white transition-all shadow-sm"
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
-                {note.content && (
-                  <p className="text-sm text-slate-500 leading-relaxed font-medium line-clamp-6">
-                    {note.content}
-                  </p>
-                )}
+                
+                <div className="space-y-2">
+                   <h3 className="font-black text-slate-900 leading-tight text-xl italic uppercase tracking-tighter group-hover:text-blue-600 transition-colors">
+                     {note.title}
+                   </h3>
+                   {note.content && (
+                     <p className="text-sm text-slate-500 leading-relaxed font-bold italic line-clamp-5">
+                       {note.content}
+                     </p>
+                   )}
+                </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-200/50 flex items-center justify-between relative z-10">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 tracking-wider">
-                    <Clock size={12} className="text-slate-400" />
-                    {new Date(note.createdAt).toLocaleDateString('tr-TR')}
+              <footer className="mt-8 pt-6 border-t border-slate-900/5 flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-slate-300" strokeWidth={2} />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                      {new Date(note.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
                   </div>
-                  <div className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-white/50 border ${getTextColor(note.color)} border-current/20`}>
+                  <div className={cn(
+                    "text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-sm",
+                    note.color === 'blue' ? 'border-blue-200 text-blue-600 bg-white' : 
+                    note.color === 'emerald' ? 'border-emerald-200 text-emerald-600 bg-white' :
+                    note.color === 'amber' ? 'border-amber-200 text-amber-600 bg-white' :
+                    note.color === 'rose' ? 'border-rose-200 text-rose-600 bg-white' : 'border-slate-200 text-slate-400 bg-white'
+                  )}>
                     {note.color}
                   </div>
-              </div>
+              </footer>
 
-              {/* Decorative Background Element */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-full -translate-y-16 translate-x-16 blur-2xl pointer-events-none group-hover:bg-white/60 transition-colors" />
+              {/* Glassmorphic Background Shine */}
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/20 rounded-full blur-3xl pointer-events-none group-hover:bg-white/40 transition-colors duration-500" />
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Modals */}
-      <AnimatePresence>
-        {(isAdding || editingNote) && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               onClick={() => { setIsAdding(false); setEditingNote(null); }}
-               className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.95, y: 10 }}
-               animate={{ opacity: 1, scale: 1, y: 0 }}
-               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-               className="w-full max-w-xl relative z-[101]"
-            >
-              <NoteForm 
-                initialData={editingNote} 
-                onClose={() => {
-                  setIsAdding(false);
-                  setEditingNote(null);
-                }} 
-              />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* 3. PREMIUM MODALS */}
+      <PremiumModal 
+        isOpen={isAdding || !!editingNote} 
+        onClose={() => { setIsAdding(false); setEditingNote(null); }} 
+        title={editingNote ? "Notu Güncelle" : "Yeni Sistem Notu Tanımla"}
+        maxWidth="max-w-xl"
+      >
+        <div className="p-8">
+           <NoteForm 
+             initialData={editingNote} 
+             onClose={() => {
+               setIsAdding(false);
+               setEditingNote(null);
+             }} 
+           />
+        </div>
+      </PremiumModal>
     </div>
   );
 }

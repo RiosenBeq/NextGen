@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
+import { PremiumFlipCard } from './PremiumFlipCard';
 
 interface DashboardProps {
   stats: {
@@ -49,48 +50,111 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
       
-      {/* 1. TOP SECTION: SUMMAY CARDS (LINEAR STYLE) */}
+      {/* 1. TOP SECTION: SUMMAY CARDS (3D FLIP STYLE) */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* Revenue Card */}
-        <StatCard 
+        <PremiumFlipCard 
            title="Toplam Ciro" 
            value={formatCurrency(stats.revenue)} 
-           subtitle="Geçen aya göre"
-           trend="+12.5%"
-           isPositive={true}
-           icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
+           subValue="Brüt Satış Hacmi"
+           trend={{ value: "+12.5%", isPositive: true }}
+           color="emerald"
+           icon={<TrendingUp className="w-5 h-5" />}
+           backContent={
+             <div className="space-y-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">HEDEF TAMAMLANMA</p>
+                <div className="flex items-center justify-center gap-4">
+                   <div className="text-3xl font-black text-white italic">82%</div>
+                   <div className="w-px h-10 bg-white/10" />
+                   <div className="text-left">
+                      <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Aylık Hedef</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kalan: ₺240K</p>
+                   </div>
+                </div>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                   <motion.div initial={{ width: 0 }} animate={{ width: '82%' }} className="h-full bg-emerald-500" />
+                </div>
+             </div>
+           }
         />
 
         {/* Expense Card */}
-        <StatCard 
+        <PremiumFlipCard 
            title="Operasyonel Gider" 
            value={formatCurrency(stats.expense)} 
-           subtitle="Bütçe kullanımı"
-           trend="-2.4%"
-           isPositive={false}
-           icon={<TrendingDown className="w-5 h-5 text-rose-500" />}
+           subValue="Yönetilebilir Maliyet"
+           trend={{ value: "-2.1%", isPositive: false }}
+           color="rose"
+           icon={<TrendingDown className="w-5 h-5" />}
+           backContent={
+             <div className="space-y-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">BÜTÇE KONTROLÜ</p>
+                <div className="flex items-center justify-center gap-3">
+                   <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
+                      <Activity size={24} />
+                   </div>
+                   <div className="text-left">
+                      <p className="text-[11px] font-black text-white uppercase italic tracking-tighter">Kritik Bölge</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Sınır: ₺12.5K</p>
+                   </div>
+                </div>
+                <p className="text-[9px] text-slate-400 font-medium italic">Gider kalemleri projeksiyona göre %12 daha düşük seyrediyor.</p>
+             </div>
+           }
         />
 
         {/* Profit Card */}
-        <StatCard 
+        <PremiumFlipCard 
            title="Net Kâr (P&L)" 
            value={formatCurrency(stats.profit)} 
-           subtitle="Piyasa momentumu"
-           trend="+8.1%"
-           isPositive={true}
-           icon={<Wallet className="w-5 h-5 text-blue-500" />}
-           highlight={true}
+           subValue="Net İşletme Kazancı"
+           trend={{ value: "+8.1%", isPositive: true }}
+           color="blue"
+           icon={<Wallet className="w-5 h-5" />}
+           backContent={
+             <div className="space-y-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">MARJ ANALİZİ</p>
+                <div className="flex items-center justify-center gap-4">
+                   <div className="w-16 h-16 rounded-full border-4 border-blue-500/20 flex items-center justify-center relative">
+                      <span className="text-xs font-black text-white italic tracking-tighter">%24</span>
+                      <svg className="absolute inset-0 w-full h-full -rotate-90">
+                         <circle cx="32" cy="32" r="30" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray="100" strokeDashoffset="24" className="text-blue-500" />
+                      </svg>
+                   </div>
+                   <div className="text-left">
+                      <p className="text-[11px] font-black text-white uppercase italic">Elite Marj</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Sektör Ort: %18</p>
+                   </div>
+                </div>
+             </div>
+           }
         />
 
         {/* ROI / Performance Card */}
-        <StatCard 
+        <PremiumFlipCard 
            title="Verimlilik Skoru" 
            value={`%${stats.roi.toFixed(1)}`} 
-           subtitle="Yatırım geri dönüşü"
-           trend="+0.4%"
-           isPositive={true}
-           icon={<Activity className="w-5 h-5 text-amber-500" />}
+           subValue="Yatırım Verimliliği"
+           trend={{ value: "+0.4%", isPositive: true }}
+           color="amber"
+           icon={<Activity className="w-5 h-5" />}
+           backContent={
+             <div className="space-y-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">PERFORMANS SKORU</p>
+                <div className="grid grid-cols-2 gap-2">
+                   <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Session</p>
+                      <p className="text-sm font-black text-white italic tracking-tight">{stats.sessions}</p>
+                   </div>
+                   <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Growth</p>
+                      <p className="text-sm font-black text-emerald-400 italic tracking-tight">+{stats.monthlyGrowth}%</p>
+                   </div>
+                </div>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] pt-1">Optimum bölgeye ulaşıldı.</p>
+             </div>
+           }
         />
       </section>
 

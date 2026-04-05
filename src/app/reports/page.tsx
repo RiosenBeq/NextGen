@@ -58,8 +58,7 @@ export default async function ReportsPage({
   const processed = (performances || []).map((perf: any) => {
     const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
     
-    let sessions = perf.sessionCount;
-    let isLive = false;
+    const sessions = perf.sessionCount;
 
     const recurringTotal = getRecurringTotal(perf.location.id);
     const oneTimeTotal = getOneTimeExpenses(perfMonthId, perf.location.id);
@@ -85,7 +84,6 @@ export default async function ReportsPage({
       extraExpense: totalExtraExpense,
       totalExpense: calc.totalExpense,
       netCash: calc.netCash,
-      isLive: false,
     };
   });
 

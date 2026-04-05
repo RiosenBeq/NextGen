@@ -56,6 +56,13 @@ export default async function GelirGiderPage(props: {
     return d.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' });
   };
 
+  let totalGrossSum = 0;
+  let totalExpenseSumValue = 0;
+  let totalNetCashSum = 0;
+  let totalCommissionSum = 0;
+  let trueSessionsSum = 0;
+  let revenueShareSum = 0;
+
   if (performances) {
     for (const perf of performances) {
       const loc = perf.location;
@@ -64,18 +71,28 @@ export default async function GelirGiderPage(props: {
       const [y, m] = perf.month.split('T')[0].split('-');
       const perfMonthStr = `${y}-${m}`;
       
-      const recurringExpensesTotal = (expenses || [])
+      const recurringTotal = (expenses || [])
         .filter(e => e.type === 'RECURRING' && (!e.locationId || e.locationId === loc.id))
         .reduce((s, e) => s + (e.amountWithVat || 0), 0);
-      
-      const calc = calculateMonthlyCashFlow(perf.sessionCount, (perf.extraExpenseAmount || 0) + recurringExpensesTotal, {
+        
+      const oneTimeTotal = (expenses || [])
+        .filter(e => {
+          if (e.type === 'RECURRING') return false;
+          const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+          return expMonth === perfMonthStr && (!e.locationId || e.locationId === loc.id);
+        })
+        .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+
+      const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
+
+      const calc = calculateMonthlyCashFlow(perf.sessionCount, totalExtraExpense, {
         sessionPrice,
         iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
         revenueShareRate: loc.revenueShareRate || 15,
       });
 
-      monthlyEntries.push({
+      const entry = {
         monthId: perfMonthStr,
         month: formatMonthSafe(perfMonthStr),
         locationName: loc.name,
@@ -87,8 +104,21 @@ export default async function GelirGiderPage(props: {
         totalCommission: calc.totalCommission,
         revenueShare: calc.revenueShare,
         avmExpense: calc.totalAvmExpense,
-        isLive: false
-      });
+      };
+
+      monthlyEntries.push(entry);
+
+      // Aggregate only if it matches filters
+      if (!filterMonth || entry.monthId === filterMonth) {
+        if (filterLocation === 'all' || entry.locationId === filterLocation) {
+          totalGrossSum += calc.grossRevenue;
+          totalExpenseSumValue += calc.totalExpense;
+          totalNetCashSum += calc.netCash;
+          totalCommissionSum += calc.totalCommission;
+          trueSessionsSum += perf.sessionCount;
+          revenueShareSum += calc.revenueShare;
+        }
+      }
     }
   }
 
@@ -115,29 +145,17 @@ export default async function GelirGiderPage(props: {
     categoryTotals[cat] = (categoryTotals[cat] || 0) + (exp.amountWithVat || 0);
   }
 
-  const manualGross = filteredMonthlyEntries.reduce((s, e) => s + e.grossRevenue, 0);
-  const trueGross = manualGross;
-  const trueSessions = filteredMonthlyEntries.reduce((s, e) => s + e.sessions, 0);
-  const trueCommission = filteredMonthlyEntries.reduce((s, e) => s + e.totalCommission, 0);
-  const avmExpenseAndRevShare = filteredMonthlyEntries.reduce((s, e) => s + e.avmExpense + e.revenueShare, 0);
-  
-  const allMonthsVisible = Array.from(new Set(monthlyEntries.map(e => e.monthId)));
-  const activeMonthsCount = !filterMonth ? allMonthsVisible.length : 1;
-  const recurringDeductionTotal = (expenses || []).filter(e => e.type === 'RECURRING').reduce((s, e) => s + (e.amountWithVat || 0), 0) * (activeMonthsCount || 1);
-  const oneTimeExpensesTotal = filteredExpenses.filter(e => e.type !== 'RECURRING').reduce((s, e) => s + (e.amountWithVat || 0), 0);
-  const totalExpenseSum = trueCommission + avmExpenseAndRevShare + oneTimeExpensesTotal + recurringDeductionTotal;
-
   const kpis = [
-    { label: 'Brüt Gelir', value: trueGross, icon: TrendingUp, cardClass: 'stat-card-green', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100 border-emerald-200', tag: 'Kayıtlı Ciro' },
-    { label: 'Toplam Gider', value: totalExpenseSum, icon: TrendingDown, cardClass: 'stat-card-red', iconColor: 'text-red-600', iconBg: 'bg-red-100 border-red-200', tag: 'KDV Dahil' },
-    { label: 'Net Durum', value: trueGross - totalExpenseSum, icon: Wallet, cardClass: (trueGross - totalExpenseSum) >= 0 ? 'stat-card-blue' : 'stat-card-red', iconColor: (trueGross - totalExpenseSum) >= 0 ? 'text-blue-600' : 'text-red-600', iconBg: (trueGross - totalExpenseSum) >= 0 ? 'bg-blue-100 border-blue-200' : 'bg-red-100 border-red-200', tag: 'Nakit Akışı' },
-    { label: 'Toplam Seans', value: trueSessions, icon: BarChart3, cardClass: 'bg-white', iconColor: 'text-slate-600', iconBg: 'bg-slate-100 border-slate-200', tag: 'Hacim', isCurrency: false },
+    { label: 'Brüt Gelir', value: totalGrossSum, icon: TrendingUp, cardClass: 'stat-card-green', iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100 border-emerald-200', tag: 'Kayıtlı Ciro' },
+    { label: 'Toplam Gider', value: totalExpenseSumValue, icon: TrendingDown, cardClass: 'stat-card-red', iconColor: 'text-red-600', iconBg: 'bg-red-100 border-red-200', tag: 'KDV Dahil' },
+    { label: 'Net Durum', value: totalNetCashSum, icon: Wallet, cardClass: totalNetCashSum >= 0 ? 'stat-card-blue' : 'stat-card-red', iconColor: totalNetCashSum >= 0 ? 'text-blue-600' : 'text-red-600', iconBg: totalNetCashSum >= 0 ? 'bg-blue-100 border-blue-200' : 'bg-red-100 border-red-200', tag: 'Nakit Akışı' },
+    { label: 'Toplam Seans', value: trueSessionsSum, icon: BarChart3, cardClass: 'bg-white', iconColor: 'text-slate-600', iconBg: 'bg-slate-100 border-slate-200', tag: 'Hacim', isCurrency: false },
   ];
 
   const insightSub = [
-    { label: 'iyzico %2 + Nayax %2', sub: 'Toplam Operasyonel Kesinti', value: trueCommission, icon: CreditCard, iconColor: 'text-red-500', cardClass: 'stat-card-red' },
-    { label: 'AVM Ciro Payı', sub: 'Kira ve Hakediş Gideri', value: filteredMonthlyEntries.reduce((s, e) => s + e.revenueShare, 0), icon: Percent, iconColor: 'text-amber-600', cardClass: 'stat-card-amber' },
-    { label: 'Operasyonel Marj', sub: 'Net Verimlilik Oranı', value: trueGross > 0 ? (((trueGross - totalExpenseSum) / trueGross) * 100) : 0, icon: PiggyBank, iconColor: 'text-blue-600', cardClass: 'stat-card-blue', isPercent: true },
+    { label: 'iyzico %2 + Nayax %2', sub: 'Toplam Operasyonel Kesinti', value: totalCommissionSum, icon: CreditCard, iconColor: 'text-red-500', cardClass: 'stat-card-red' },
+    { label: 'AVM Ciro Payı', sub: 'Kira ve Hakediş Gideri', value: revenueShareSum, icon: Percent, iconColor: 'text-amber-600', cardClass: 'stat-card-amber' },
+    { label: 'Operasyonel Marj', sub: 'Net Verimlilik Oranı', value: totalGrossSum > 0 ? ((totalNetCashSum / totalGrossSum) * 100) : 0, icon: PiggyBank, iconColor: 'text-blue-600', cardClass: 'stat-card-blue', isPercent: true },
   ];
 
   const maxCatTotal = Math.max(...Object.values(categoryTotals), 0.1);

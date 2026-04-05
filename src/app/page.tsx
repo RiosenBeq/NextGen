@@ -48,19 +48,38 @@ export default async function DashboardPage() {
   let totalManualRevenue = 0;
   let totalManualNetCash = 0;
   let totalManualCommission = 0;
+  let totalManualAvmExpense = 0;
+  let totalManualOperationalExpense = 0;
 
   if (performances) {
     for (const perf of performances) {
+      const loc = perf.location;
+      const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
+      
+      const recurringTotal = (expensesData || [])
+        .filter((e: any) => e.type === 'RECURRING' && (!e.locationId || e.locationId === loc.id))
+        .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
+        
+      const oneTimeTotal = (expensesData || [])
+        .filter((e: any) => {
+          if (e.type === 'RECURRING') return false;
+          const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+          return expMonth === perfMonthStr && (!e.locationId || e.locationId === loc.id);
+        })
+        .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
+
+      const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
+
       const calc = calculateMonthlyCashFlow(
         perf.sessionCount,
-        perf.extraExpenseAmount,
+        totalExtraExpense,
         {
           sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
           iyzicoCommissionRate: 2,
           nayaxCommissionRate: 2,
-          fixedRent: perf.location.fixedRent,
-          duesAmount: perf.location.duesAmount,
-          revenueShareRate: perf.location.revenueShareRate || 15,
+          fixedRent: loc.fixedRent,
+          duesAmount: loc.duesAmount,
+          revenueShareRate: loc.revenueShareRate || 15,
         }
       );
 
@@ -71,36 +90,21 @@ export default async function DashboardPage() {
 
       totalManualRevenue += calc.grossRevenue;
       totalManualNetCash += calc.netCash;
-      totalManualCommission += (calc.totalCommission + calc.revenueShare);
+      totalManualCommission += calc.totalCommission;
+      totalManualAvmExpense += calc.totalAvmExpense;
+      totalManualOperationalExpense += (calc.totalCommission + calc.totalAvmExpense + totalExtraExpense);
     }
   }
 
   const chartEntries = Object.entries(monthlyTotals).slice(-6);
   const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
 
-  // Manual records are now the only source of truth
   const displayAllTimeRevenue = totalManualRevenue;
+  const trueGlobalNetCash = totalManualNetCash;
+  const totalGlobalOperationalExpense = totalManualOperationalExpense;
   const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
-
   const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
-  const globalCommission = displayAllTimeRevenue * 0.04;
-  
-  const totalManualAvmExpense = performances?.reduce((acc, perf) => {
-    return acc + (perf.location.fixedRent * 1.20) + perf.location.duesAmount;
-  }, 0) || 0;
-
-  // Expense table: recurring + one-time expenses
-  const totalRecurringExpenses = (expensesData || [])
-    .filter((e: any) => e.type === 'RECURRING')
-    .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
   const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
-  const totalOneTimeExpenses = (expensesData || [])
-    .filter((e: any) => e.type !== 'RECURRING')
-    .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
-
-  const totalGlobalOperationalExpense = globalCommission + totalManualAvmExpense + (totalRecurringExpenses * Math.max(allMonthCount, 1)) + totalOneTimeExpenses;
-  // Net nakit akışı: Gelir - Operasyonel Giderler (yatırım dahil değil, Excel Nakit_Akis ile uyumlu)
-  const trueGlobalNetCash = displayAllTimeRevenue - totalGlobalOperationalExpense;
 
   const kpis = [
     { 

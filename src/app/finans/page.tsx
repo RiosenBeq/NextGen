@@ -21,7 +21,7 @@ export default async function FinansalTablo({
   searchParams: Promise<{ month?: string }>;
 }) {
   const params = await searchParams;
-  const filterMonth = params.month || new Date().toISOString().slice(0, 7);
+  const filterMonth = params.month || 'all';
 
   const supabase = await createClient();
   const sysParams = await getSystemParameters();
@@ -68,11 +68,23 @@ export default async function FinansalTablo({
       if (!loc) continue;
 
       const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
-      if (filterMonth && perfMonthStr !== filterMonth) continue;
+      if (filterMonth !== 'all' && perfMonthStr !== filterMonth) continue;
 
       const sessions = perf.sessionCount;
-      const recurringTotal = getRecurringTotal(loc.id);
-      const oneTimeTotal = getOneTimeExpenses(perfMonthStr, loc.id);
+      
+      // Calculate recurring + one-time expenses for THIS month/location
+      const recurringTotal = (expenses || [])
+        .filter(e => e.type === 'RECURRING' && (!e.locationId || e.locationId === loc.id))
+        .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+        
+      const oneTimeTotal = (expenses || [])
+        .filter(e => {
+          if (e.type === 'RECURRING') return false;
+          const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+          return expMonth === perfMonthStr && (!e.locationId || e.locationId === loc.id);
+        })
+        .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+
       const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
       const calc = calculateMonthlyCashFlow(sessions, totalExtraExpense, {
@@ -129,12 +141,11 @@ export default async function FinansalTablo({
     };
   });
 
-  // Generate month options for filter
+  // Filter options for months
   const allMonths = performances
     ? [...new Set(performances.map(p => new Date(p.month).toISOString().slice(0, 7)))]
     : [];
-  if (!allMonths.includes(currentMonthId)) allMonths.push(currentMonthId);
-  allMonths.sort();
+  allMonths.sort().reverse();
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
@@ -158,6 +169,15 @@ export default async function FinansalTablo({
 
         <div className="flex gap-3 items-center flex-wrap">
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-xl">
+            <Link
+                href={`/finans?month=all`}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  filterMonth === 'all' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                HEPSİ
+              </Link>
             {allMonths.map(m => {
               const label = new Date(m + '-01').toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' });
               return (

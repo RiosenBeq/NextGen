@@ -22,15 +22,17 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { deleteExpense, toggleExpenseSettled } from '@/features/ledger/actions';
+import { Edit2 } from 'lucide-react';
 
 interface PremiumExpenseTableProps {
   expenses: any[];
   locations: any[];
   documents: any[];
   onView: (exp: any) => void;
+  onEdit: (exp: any) => void;
 }
 
-export default function PremiumExpenseTable({ expenses, locations, documents, onView }: PremiumExpenseTableProps) {
+export default function PremiumExpenseTable({ expenses, locations, documents, onView, onEdit }: PremiumExpenseTableProps) {
   const [filterType, setFilterType] = useState('ALL');
   const [filterLocation, setFilterLocation] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,27 +187,33 @@ export default function PremiumExpenseTable({ expenses, locations, documents, on
                      </td>
 
                      <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <button 
-                              onClick={(e) => handleToggleSettled(exp.id, exp.description, e)}
-                              title={exp.description.includes('[MAHSUP]') ? "Mahsup Kaldır" : "Mahsup Olarak İşaretle"}
-                              className={cn(
-                                 "p-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95",
-                                 exp.description.includes('[MAHSUP]') ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                              )}
-                           >
-                              <CheckCircle2 size={16} strokeWidth={2.5} />
-                           </button>
-                           <button 
-                              onClick={(e) => handleDelete(exp.id, e)}
-                              className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 border border-slate-100 hover:border-rose-100 transition-all hover:scale-105 active:scale-95"
-                           >
-                              <Trash2 size={16} strokeWidth={2.5} />
-                           </button>
-                           <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200">
-                              <ChevronRight size={14} strokeWidth={3} />
-                           </div>
-                        </div>
+                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                               onClick={(e) => { e.stopPropagation(); onEdit(exp); }}
+                               className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                            >
+                               <Edit2 size={16} strokeWidth={2.5} />
+                            </button>
+                            <button 
+                               onClick={(e) => handleToggleSettled(exp.id, exp.description, e)}
+                               title={exp.description.includes('[MAHSUP]') ? "Mahsup Kaldır" : "Mahsup Olarak İşaretle"}
+                               className={cn(
+                                  "p-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 shadow-sm",
+                                  exp.description.includes('[MAHSUP]') ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                               )}
+                            >
+                               <CheckCircle2 size={16} strokeWidth={2.5} />
+                            </button>
+                            <button 
+                               onClick={(e) => handleDelete(exp.id, e)}
+                               className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 border border-slate-100 hover:border-rose-100 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                            >
+                               <Trash2 size={16} strokeWidth={2.5} />
+                            </button>
+                            <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200 ml-2">
+                               <ChevronRight size={14} strokeWidth={3} />
+                            </div>
+                         </div>
                      </td>
                   </tr>
                ))}

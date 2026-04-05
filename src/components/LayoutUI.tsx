@@ -120,7 +120,13 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
               {cat}
             </p>
             <nav className="space-y-0.5">
-              {navLinks.filter(l => l.category === cat).map((link) => {
+              {navLinks.filter(l => {
+                if (l.category === cat) {
+                  if (userRole !== 'superadmin' && (l.href === '/ayarlar' || l.href === '/gunlukler')) return false;
+                  return true;
+                }
+                return false;
+              }).map((link) => {
                 const isActive = pathname === link.href;
                 const Icon = link.icon;
                 return (
@@ -327,7 +333,10 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
               </div>
 
               <nav className="p-3 space-y-0.5" role="navigation">
-                {navLinks.map(link => {
+                {navLinks.filter(l => {
+                  if (userRole !== 'superadmin' && (l.href === '/ayarlar' || l.href === '/gunlukler')) return false;
+                  return true;
+                }).map(link => {
                   const isActive = pathname === link.href;
                   const Icon = link.icon;
                   return (

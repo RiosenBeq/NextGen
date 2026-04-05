@@ -36,6 +36,7 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
@@ -75,7 +76,7 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
            </div>
            
            <button 
-             onClick={() => setShowForm(true)}
+             onClick={() => { setEditingExpense(null); setShowForm(true); }}
              className="px-6 py-5 bg-slate-900 text-white rounded-[24px] text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-3 group"
            >
               <div className="p-1 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors">
@@ -88,26 +89,28 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
 
       {/* 2. MAIN DATA SECTION */}
       <section className="relative">
-          <PremiumExpenseTable 
-             expenses={expenses} 
-             locations={locations} 
-             documents={documents} 
-             onView={(exp: any) => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
-          />
+           <PremiumExpenseTable 
+              expenses={expenses} 
+              locations={locations} 
+              documents={documents} 
+              onView={(exp: any) => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
+              onEdit={(exp: any) => { setEditingExpense(exp); setShowForm(true); }}
+           />
       </section>
 
       {/* 3. MODALS & DRAWERS */}
-      <PremiumModal 
-        isOpen={showForm} 
-        onClose={() => setShowForm(false)} 
-        title="Gider Kaydı Tanımla"
-        maxWidth="max-w-2xl"
-      >
-        <ExpenseForm 
-          locations={locations} 
-          onClose={() => { setShowForm(false); window.location.reload(); }} 
-        />
-      </PremiumModal>
+       <PremiumModal 
+         isOpen={showForm} 
+         onClose={() => { setShowForm(false); setEditingExpense(null); }} 
+         title={editingExpense ? "Gider Kaydı Güncelle" : "Gider Kaydı Tanımla"}
+         maxWidth="max-w-2xl"
+       >
+         <ExpenseForm 
+           locations={locations} 
+           initialData={editingExpense}
+           onClose={() => { setShowForm(false); setEditingExpense(null); window.location.reload(); }} 
+         />
+       </PremiumModal>
 
       <PremiumDrawer 
         isOpen={isDrawerOpen} 

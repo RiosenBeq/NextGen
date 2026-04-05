@@ -24,6 +24,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { InvestmentForm } from '@/features/ledger/components/InvestmentForm';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
+import { deleteInvestment } from '@/features/ledger/actions';
+import { Edit2, Trash2 } from 'lucide-react';
 
 interface InvestmentsClientProps {
   investments: any[];
@@ -36,11 +38,32 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState<any>(null);
+  const [editingInvestment, setEditingInvestment] = useState<any>(null);
   const [filterLocation, setFilterLocation] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatCurrency = (val: number, currency: string = 'TL') => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(val);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bu yatırım kaydını kalıcı olarak silmek istediğinize emin misiniz?')) return;
+    setIsLoading(true);
+    try {
+      const res = await deleteInvestment(id);
+      if (!res.success) alert(res.error);
+      else window.location.reload();
+    } catch (err) {
+      alert('Silme sırasında hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (inv: any) => {
+    setEditingInvestment(inv);
+    setShowForm(true);
+  };
 
   const filtered = investments.filter(inv => {
     if (filterLocation !== 'all' && inv.locationId !== filterLocation) return false;
@@ -88,7 +111,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
            </div>
            
            <button 
-             onClick={() => setShowForm(true)}
+             onClick={() => { setEditingInvestment(null); setShowForm(true); }}
              className="px-6 py-5 bg-emerald-600 text-white rounded-[24px] text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 group"
            >
               <div className="p-1 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors">
@@ -198,8 +221,23 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
                            </div>
                         </td>
                         <td className="px-8 py-6 text-right">
-                           <div className="inline-flex items-center justify-center p-2 rounded-xl bg-slate-50 text-slate-300 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm">
-                              <ArrowRight size={14} strokeWidth={3} />
+                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleEdit(inv); }}
+                                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                              >
+                                 <Edit2 size={16} strokeWidth={2.5} />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDelete(inv.id); }}
+                                disabled={isLoading}
+                                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                              >
+                                 <Trash2 size={16} strokeWidth={2.5} />
+                              </button>
+                              <div className="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center text-white shadow-lg shadow-slate-200 ml-2">
+                                 <ArrowRight size={14} strokeWidth={3} />
+                              </div>
                            </div>
                         </td>
                      </tr>
@@ -212,13 +250,14 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
       {/* 4. MODALS & DRAWERS */}
       <PremiumModal 
         isOpen={showForm} 
-        onClose={() => setShowForm(false)} 
-        title="Yatırım (CAPEX) Kaydı Tanımla"
+        onClose={() => { setShowForm(false); setEditingInvestment(null); }} 
+        title={editingInvestment ? "Yatırım Kaydı Düzenle" : "Yatırım (CAPEX) Kaydı Tanımla"}
         maxWidth="max-w-2xl"
       >
         <InvestmentForm 
           locations={locations} 
-          onClose={() => { setShowForm(false); window.location.reload(); }} 
+          initialData={editingInvestment}
+          onClose={() => { setShowForm(false); setEditingInvestment(null); window.location.reload(); }} 
         />
       </PremiumModal>
 

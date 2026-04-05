@@ -169,12 +169,19 @@ export default async function DashboardPage() {
     .order('createdAt', { ascending: false })
     .limit(10);
 
+  const chartData = Object.entries(monthlyTotals).map(([month, data]) => ({
+    month,
+    revenue: data.revenue,
+    profit: data.profit
+  })).slice(-6);
+
   return (
     <DashboardClientUI 
       stats={stats} 
       recentExpenses={latestExpenses || []} 
       locations={activeLocations} 
-      categories={[]} // Form uses internal list for now
+      categories={[]} 
+      chartData={chartData}
     />
   );
 }

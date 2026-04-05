@@ -3,7 +3,7 @@ import { getSystemParameters } from '@/features/ledger/actions';
 import * as motion from "framer-motion/client";
 import {
   TrendingUp, TrendingDown, BarChart3, Percent,
-  Zap, CreditCard, Calendar, Target, RefreshCw
+  Zap, CreditCard, Calendar, Target, RefreshCw, Building2
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
@@ -141,23 +141,42 @@ export default async function FinansalTablo({
   const totalAvmExpense = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0);
   const totalNetCash = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNetCash, 0);
 
-  const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
+  const totalExtraExpenseAll = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalExtraExpense, 0);
+
+  const recurringGlobalTotal = (expenses || []).filter(e => e.type === 'RECURRING').reduce((s, e) => s + (e.amountWithVat || 0), 0);
+  const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0) + recurringGlobalTotal;
   const netRevenuePerSession = sessionPrice * 0.96;
   const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
 
-  const scenarios = [200, 370, 500, 750, 1000, 1500].map(sessions => {
-    const mockCalc = calculateMonthlyCashFlow(sessions, 0, {
-      sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
-      fixedRent: (locations?.[0]?.fixedRent || 40000),
-      duesAmount: (locations?.[0]?.duesAmount || 6000),
-      revenueShareRate: 15
-    });
+  const scenarios = [200, 370, 500, 750, 1000, 1500, 2000, 3000].map(totalSessions => {
+    let mockNetCash = 0;
+    let mockOkanShare = 0;
+    
+    // Fallback if no locations found in db
+    const locs = locations && locations.length > 0 ? locations : [{ fixedRent: 40000, duesAmount: 6000, revenueShareRate: 15 }];
+    const sessionsPerLoc = Math.floor(totalSessions / locs.length);
+
+    for (const loc of locs) {
+      const mockCalc = calculateMonthlyCashFlow(sessionsPerLoc, 0, {
+        sessionPrice,
+        iyzicoCommissionRate: 2,
+        nayaxCommissionRate: 2,
+        fixedRent: loc.fixedRent || 40000,
+        duesAmount: loc.duesAmount || 6000,
+        revenueShareRate: loc.revenueShareRate || 15
+      });
+      // We deduct the recurring expenses for the simulation
+      const locRecurring = recurringGlobalTotal / locs.length;
+      mockNetCash += (mockCalc.netCash - locRecurring);
+      mockOkanShare += ((mockCalc.netCash - locRecurring) * 0.25);
+    }
+
     return {
-      sessions,
-      monthlyNet: sessions * netRevenuePerSession,
-      monthlyProfit: mockCalc.netCash,
-      yearlyProfit: mockCalc.netCash * 12,
-      monthlyPerPartner: mockCalc.okanShare,
+      sessions: totalSessions,
+      monthlyNet: totalSessions * netRevenuePerSession,
+      monthlyProfit: mockNetCash,
+      yearlyProfit: mockNetCash * 12,
+      monthlyPerPartner: mockOkanShare,
     };
   });
 
@@ -225,9 +244,9 @@ export default async function FinansalTablo({
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "Toplam Ciro", value: totalGross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
-          { label: "iyzico (%2)", value: totalIyzico, icon: Percent, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
-          { label: "Nayax (%2)", value: totalNayax, icon: CreditCard, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
-          { label: "AVM Gideri", value: totalAvmExpense, icon: TrendingDown, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
+          { label: "Komisyonlar (%4)", value: totalIyzico + totalNayax, icon: CreditCard, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
+          { label: "AVM Gideri", value: totalAvmExpense, icon: Building2, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
+          { label: "Operasyonel Gider", value: totalExtraExpenseAll, icon: Zap, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
           { label: "Reel Kazanç", value: totalNetCash, icon: BarChart3, cardClass: totalNetCash >= 0 ? "stat-card-green" : "stat-card-red", iconColor: totalNetCash >= 0 ? "text-emerald-600" : "text-red-600", iconBg: totalNetCash >= 0 ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200" },
         ].map((kpi, idx) => (
           <motion.div

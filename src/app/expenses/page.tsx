@@ -65,67 +65,54 @@ export default function ExpensesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-blue-500/30">
-      {/* Dynamic Background Gradients */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse"></div>
-        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full bg-indigo-600/10 blur-[100px]"></div>
-        <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] rounded-full bg-slate-800/20 blur-[150px]"></div>
-      </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="page-wrapper max-w-7xl mx-auto space-y-8 animate-fade-in relative z-10 p-4 md:p-8 pt-12">
+      {/* Header Section */}
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-6 border-b border-slate-100">
+        <div>
+          <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full mb-3 border" style={{ background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
+            <Activity className="w-3.5 h-3.5 animate-pulse" style={{ color: '#2F6BFF' }} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: '#2F6BFF' }}>
+              FİNANSAL YÖNETİM MERKEZİ
+            </span>
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+            <Wallet className="w-8 h-8" style={{ color: '#2F6BFF' }} />
+            Gider Yönetimi
+          </h1>
+          <p className="text-sm text-slate-500 mt-2 font-medium max-w-2xl">
+            İşletme giderlerini, fatura takibini ve ekip mahsuplaşmalarını <span className="font-bold text-slate-700">Gerçek Zamanlı</span> verilerle profesyonelce yönetin.
+          </p>
+        </div>
 
-      <div className="page-wrapper max-w-7xl mx-auto space-y-10 relative z-10 p-4 md:p-8 pt-12">
-        
-        {/* Header Section */}
-        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-md mb-2">
-              <Activity className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-              <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">
-                FİNANSAL YÖNETİM MERKEZİ
-              </span>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-5 w-full lg:w-auto">
+          {/* Stats Cards Row */}
+          <div className="flex gap-4">
+            <div className="premium-card p-5 bg-white border border-slate-100 min-w-[160px]">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Bu Ayki Gider</p>
+              <p className="text-2xl font-black text-slate-900 font-mono tracking-tighter">
+                ₺{data.thisMonthTotal.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+              </p>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter flex items-center gap-4 italic uppercase">
-              <Wallet className="w-10 h-10 text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
-              Gider <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Yönetimi</span>
-            </h1>
-            <p className="text-sm md:text-lg text-slate-400 font-medium max-w-2xl leading-relaxed">
-              İşletme giderlerini, fatura takibini ve ekip mahsuplaşmalarını <span className="text-blue-400 font-bold">Gerçek Zamanlı</span> verilerle profesyonelce yönetin.
-            </p>
+            
+            <div className="premium-card p-5 border min-w-[160px]" style={{ background: '#1E2A44', borderColor: 'rgba(255,255,255,0.1)' }}>
+              <p className="text-[9px] font-black uppercase tracking-[0.15em] mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Toplam Gider</p>
+              <p className="text-2xl font-black text-white font-mono tracking-tighter">
+                ₺{data.total.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-5 w-full lg:w-auto">
-            {/* Stats Cards Row */}
-            <div className="flex gap-4">
-              <div className="relative group overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="p-5 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl relative min-w-[160px]">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2">BU AYKİ GİDER</p>
-                  <p className="text-2xl font-black text-white font-mono tracking-tighter">
-                    ₺{data.thisMonthTotal.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="relative group overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="p-5 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl relative min-w-[160px]">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2">TOPLAM GİDER</p>
-                  <p className="text-2xl font-black text-white font-mono tracking-tighter">
-                    ₺{data.total.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowForm(true)}
-              className="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-95 flex items-center justify-center gap-3"
-            >
-              <Plus size={20} strokeWidth={3} />
-              <span>YENİ GİDER EKLE</span>
-            </button>
-          </div>
-        </header>
+          <button
+            onClick={() => setShowForm(true)}
+            className="group relative px-6 py-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 text-white cursor-pointer"
+            style={{ background: '#2F6BFF' }}
+          >
+            <Plus size={18} strokeWidth={3} />
+            <span>Yeni Gider Ekle</span>
+          </button>
+        </div>
+      </header>
 
         {/* Expense Form Modal Refactored */}
         <ModernModal 

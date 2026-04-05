@@ -99,7 +99,7 @@ export default async function ReportsPage({
 
   const kpis = [
     { label: "Toplam Ciro", value: `₺${currentTotals.revenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200", tag: "Kayıt Bazlı" },
-    { label: "Net Nakit Akışı", value: `₺${currentTotals.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: ArrowUpRight, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200", tag: "Arşiv Bazlı" },
+    { label: "Net Nakit Akışı", value: `₺${currentTotals.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`, icon: ArrowUpRight, cardClass: "", iconColor: "", iconBg: "border", tag: "Arşiv Bazlı", isBrandBlue: true },
     { label: "Toplam Seans", value: currentTotals.sessions.toLocaleString('tr-TR'), icon: CalendarDays, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200", tag: "Manuel Mod" },
   ];
 
@@ -107,7 +107,7 @@ export default async function ReportsPage({
     <div className="page-wrapper space-y-8 animate-fade-in">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-2">
+          <span className="text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-lg inline-block mb-2 border" style={{ color: '#2F6BFF', background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
             Performans Arşivi
           </span>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
@@ -128,8 +128,8 @@ export default async function ReportsPage({
         {kpis.map((kpi, idx) => (
           <motion.div key={kpi.label} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }} className={cn("premium-card p-5 border", kpi.cardClass)}>
             <div className="flex items-start justify-between mb-4">
-              <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center", kpi.iconBg)}>
-                <kpi.icon className={cn("w-5 h-5", kpi.iconColor)} />
+              <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center", kpi.iconBg)} style={(kpi as any).isBrandBlue ? { background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.2)' } : undefined}>
+                <kpi.icon className={cn("w-5 h-5", kpi.iconColor)} style={(kpi as any).isBrandBlue ? { color: '#2F6BFF' } : undefined} />
               </div>
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">{kpi.tag}</span>
             </div>

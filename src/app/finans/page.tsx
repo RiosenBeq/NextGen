@@ -193,7 +193,7 @@ export default async function FinansalTablo({
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
+            <span className="text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-lg border" style={{ color: '#2F6BFF', background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
               Tahmini Verimlilik
             </span>
           </div>
@@ -279,7 +279,7 @@ export default async function FinansalTablo({
             return (
               <motion.div key={loc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="premium-card p-5">
                 <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-blue-500" />
+                  <Zap className="w-4 h-4" style={{ color: '#2F6BFF' }} />
                   {loc.name}
                 </h3>
                 <div className="space-y-3">
@@ -372,8 +372,8 @@ export default async function FinansalTablo({
            ].map((item, idx) => (
              <div key={idx} className="premium-card p-5 hover:shadow-md transition-all group">
                 <div className="flex gap-3">
-                   <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                      <span className="text-[10px] font-bold text-blue-600">Q</span>
+                   <div className="w-8 h-8 rounded-full border flex items-center justify-center shrink-0" style={{ background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
+                      <span className="text-[10px] font-bold" style={{ color: '#2F6BFF' }}>Q</span>
                    </div>
                    <div className="space-y-2">
                       <h4 className="text-sm font-bold text-slate-900">{item.q}</h4>

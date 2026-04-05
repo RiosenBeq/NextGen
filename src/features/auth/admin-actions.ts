@@ -1,0 +1,117 @@
+'use server'
+
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+import { createAuditLog } from '@/lib/audit';
+
+const supabaseAdminOptions = {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+};
+
+function getAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Supabase admin credentials eksik.');
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, supabaseAdminOptions);
+}
+
+const newUserSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi giriniz."),
+  password: z.string().min(8, "Şifre en az 8 karakter olmalıdır."),
+  role: z.enum(['superadmin', 'user']).default('user'),
+  fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır.").optional()
+});
+
+/**
+ * Yeni bir kullanıcı oluşturur (Sadece Super Admin yetkisi gerektirir)
+ * Bu metod, işlemi gerçekleştiren admin kullanıcısının session'unu kapatmadan yeni kullanıcı açabilmesini sağlar.
+ */
+export async function createSystemUser(data: any) {
+  try {
+    const validatedData = newUserSchema.parse(data);
+
+    // TODO: Gerçekte caller'ın admin olup olmadığını kontrol eden bir Middleware mekanizmasına ek olarak buradan da kontrol edilebilir.
+
+    const adminAuthClient = getAdminClient();
+    
+    // Auth admin api üzerinden kullanıcı yarat
+    const { data: userData, error } = await adminAuthClient.auth.admin.createUser({
+      email: validatedData.email,
+      password: validatedData.password,
+      email_confirm: true, // Şifre onaysız direkt aktif olsun
+      user_metadata: {
+        role: validatedData.role,
+        full_name: validatedData.fullName || ''
+      }
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    await createAuditLog('CREATE', 'AuthUser', userData?.user?.id || 'new', { 
+      email: validatedData.email, 
+      role: validatedData.role 
+    });
+
+    revalidatePath('/users');
+    return { success: true, user: { id: userData.user.id, email: userData.user.email } };
+  } catch (error: any) {
+    console.error("Create User Error:", error);
+    if (error.name === 'ZodError') {
+      return { success: false, error: error.errors[0].message };
+    }
+    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+  }
+}
+
+/**
+ * Sistemdeki tüm kullanıcıları listeler (Yalnızca Admin)
+ */
+export async function getSystemUsers() {
+  try {
+    const adminAuthClient = getAdminClient();
+    const { data, error } = await adminAuthClient.auth.admin.listUsers();
+    
+    if (error) throw error;
+    
+    return data.users.map(u => ({
+      id: u.id,
+      email: u.email,
+      role: u.user_metadata?.role || 'user',
+      fullName: u.user_metadata?.full_name || '-',
+      createdAt: u.created_at,
+      lastSignIn: u.last_sign_in_at
+    }));
+  } catch (error) {
+    console.error("List Users Error:", error);
+    return [];
+  }
+}
+
+/**
+ * Bir kullanıcıyı siler
+ */
+export async function deleteSystemUser(userId: string) {
+  try {
+    const adminAuthClient = getAdminClient();
+    const { error } = await adminAuthClient.auth.admin.deleteUser(userId);
+    
+    if (error) throw error;
+
+    await createAuditLog('DELETE', 'AuthUser', userId);
+
+    revalidatePath('/users');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

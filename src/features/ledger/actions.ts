@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import { monthlyPerformanceSchema, MonthlyPerformanceInput } from './schema';
+import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
 import prisma from '@/lib/db';
 
@@ -39,43 +39,36 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
 export async function addExpense(data: any) {
   try {
-    // Input validation
-    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
-      return { success: false, error: 'Açıklama alanı zorunludur.' };
-    }
-    if (!data.type || !['ONE_TIME', 'RECURRING'].includes(data.type)) {
-      return { success: false, error: 'Geçersiz ödeme tipi.' };
-    }
-    const description = data.description.trim().slice(0, 500);
+    const validatedData = expenseSchema.parse(data);
+    const amountWithoutVat = Math.max(0, validatedData.amount || 0);
+    const vatRate = Math.max(0, Math.min(100, validatedData.vatRate || 0));
+    const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const supabase = await createClient();
-    const vatRate = Math.max(0, Math.min(100, parseFloat(data.vatRate) || 0));
-    const amountWithoutVat = Math.max(0, parseFloat(data.amount) || 0);
-    const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const { data: record, error } = await supabase
       .from('Expense')
       .insert({
         id: `exp_${crypto.randomUUID()}`,
-        locationId: data.locationId || null,
-        description,
-        type: data.type,
+        locationId: validatedData.locationId || null,
+        description: validatedData.description,
+        type: validatedData.type,
         amountWithoutVat,
         amountWithVat,
         vatRate,
-        isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
-        month: data.month || null,
-        paidBy: data.paidBy || 'Ortak Hesap',
-        categoryId: data.categoryId || null,
+        isOfficial: validatedData.isOfficial,
+        month: validatedData.month || null,
+        paidBy: validatedData.paidBy || 'Ortak Hesap',
+        categoryId: validatedData.categoryId || null,
       })
       .select()
       .single();
 
     if (error) throw error;
 
-    if (data.attachmentUrl) {
+    if (validatedData.attachmentUrl) {
       await supabase.from('Document').insert({
-        fileUrl: data.attachmentUrl,
+        fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge',
         relatedType: 'expense',
         relatedId: record.id
@@ -83,9 +76,9 @@ export async function addExpense(data: any) {
     }
 
     await createAuditLog('CREATE', 'Expense', record.id, {
-      description: data.description,
+      description: validatedData.description,
       amount: amountWithVat,
-      locationId: data.locationId
+      locationId: validatedData.locationId
     });
 
     revalidatePath('/expenses');
@@ -101,24 +94,25 @@ export async function addExpense(data: any) {
 
 export async function updateExpense(id: string, data: any) {
   try {
+    const validatedData = expenseSchema.parse(data);
     const supabase = await createClient();
-    const vatRate = parseFloat(data.vatRate) || 0;
-    const amountWithoutVat = parseFloat(data.amount) || 0;
+    const vatRate = Math.max(0, Math.min(100, validatedData.vatRate || 0));
+    const amountWithoutVat = Math.max(0, validatedData.amount || 0);
     const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const { data: record, error } = await supabase
       .from('Expense')
       .update({
-        locationId: data.locationId || null,
-        description: data.description,
-        type: data.type,
+        locationId: validatedData.locationId || null,
+        description: validatedData.description,
+        type: validatedData.type,
         amountWithoutVat: amountWithoutVat,
         amountWithVat: amountWithVat,
         vatRate: vatRate,
-        isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
-        month: data.month || null,
-        paidBy: data.paidBy || 'Ortak Hesap',
-        categoryId: data.categoryId || null,
+        isOfficial: validatedData.isOfficial,
+        month: validatedData.month || null,
+        paidBy: validatedData.paidBy || 'Ortak Hesap',
+        categoryId: validatedData.categoryId || null,
       })
       .eq('id', id)
       .select()
@@ -126,9 +120,9 @@ export async function updateExpense(id: string, data: any) {
 
     if (error) throw error;
 
-    if (data.attachmentUrl) {
+    if (validatedData.attachmentUrl) {
       await supabase.from('Document').insert({
-        fileUrl: data.attachmentUrl,
+        fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge (Grup)',
         relatedType: 'expense',
         relatedId: id
@@ -136,7 +130,7 @@ export async function updateExpense(id: string, data: any) {
     }
 
     await createAuditLog('UPDATE', 'Expense', id, {
-      description: data.description,
+      description: validatedData.description,
       amount: amountWithVat
     });
 
@@ -243,40 +237,30 @@ export async function deleteExpense(id: string) {
 
 export async function addInvestment(data: any) {
   try {
-    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
-      return { success: false, error: 'Yatırım açıklaması zorunludur.' };
-    }
-    if (!data.locationId) {
-      return { success: false, error: 'Lokasyon seçimi zorunludur.' };
-    }
-    const amount = Math.max(0, parseFloat(data.amount) || 0);
+    const validatedData = investmentSchema.parse(data);
+    const amount = Math.max(0, validatedData.amount || 0);
     if (amount <= 0) {
       return { success: false, error: 'Geçerli bir tutar giriniz.' };
     }
-    const description = data.description.trim().slice(0, 500);
-    const currency = ['TL', 'USD', 'EUR'].includes(data.currency) ? data.currency : 'TL';
-    const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 1000) : '';
 
     const supabase = await createClient();
     const { error } = await supabase
       .from('Investment')
       .insert({
         id: `inv_${crypto.randomUUID()}`,
-        locationId: data.locationId,
-        description,
-        currency,
+        locationId: validatedData.locationId,
+        description: validatedData.description,
+        currency: validatedData.currency,
         amountWithoutVat: amount,
         totalAmount: amount,
-        notes,
+        notes: validatedData.notes || '',
       });
 
     if (error) throw error;
 
-    // We don't have the generated record easily from insert without select
-    // but the ID prefix is inv_ + uuid which we can pre-generate or extract
     await createAuditLog('CREATE', 'Investment', 'new', { 
-      description: data.description, 
-      amount: data.amount 
+      description: validatedData.description, 
+      amount: amount 
     });
 
     revalidatePath('/investments');
@@ -293,29 +277,27 @@ export async function updateInvestment(id: string, data: any) {
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz yatırım ID.' };
     }
-    const amount = Math.max(0, parseFloat(data.amount) || 0);
-    const description = (data.description || '').trim().slice(0, 500);
-    const currency = ['TL', 'USD', 'EUR'].includes(data.currency) ? data.currency : 'TL';
-    const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 1000) : '';
+    const validatedData = investmentSchema.parse(data);
+    const amount = Math.max(0, validatedData.amount || 0);
 
     const supabase = await createClient();
     const { error } = await supabase
       .from('Investment')
       .update({
-        locationId: data.locationId,
-        description,
-        currency,
+        locationId: validatedData.locationId,
+        description: validatedData.description,
+        currency: validatedData.currency,
         amountWithoutVat: amount,
         totalAmount: amount,
-        notes,
+        notes: validatedData.notes || '',
       })
       .eq('id', id);
 
     if (error) throw error;
 
     await createAuditLog('UPDATE', 'Investment', id, { 
-      description: data.description, 
-      amount: data.amount 
+      description: validatedData.description, 
+      amount: amount 
     });
 
     revalidatePath('/investments');
@@ -349,11 +331,13 @@ export async function updateLocationParameters(id: string, data: any) {
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz lokasyon ID.' };
     }
-    const fixedRent = Math.max(0, parseFloat(data.fixedRent) || 0);
-    const duesAmount = Math.max(0, parseFloat(data.duesAmount) || 0);
-    const revenueShareRate = Math.max(0, Math.min(100, parseFloat(data.revenueShareRate) || 0));
-    const revenueThreshold = Math.max(0, parseFloat(data.revenueThreshold) || 0);
-    const rentVatRate = Math.max(0, Math.min(100, parseFloat(data.rentVatRate) || 0));
+    const validatedData = locationParamsSchema.parse(data);
+    
+    const fixedRent = Math.max(0, validatedData.fixedRent);
+    const duesAmount = Math.max(0, validatedData.duesAmount);
+    const revenueShareRate = Math.max(0, Math.min(100, validatedData.revenueShareRate));
+    const revenueThreshold = Math.max(0, validatedData.revenueThreshold);
+    const rentVatRate = Math.max(0, Math.min(100, validatedData.rentVatRate));
 
     const supabase = await createClient();
     const { error } = await supabase

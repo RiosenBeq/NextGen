@@ -67,12 +67,20 @@ export async function addExpense(data: any) {
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
         categoryId: data.categoryId || null,
-        attachmentUrl: data.attachmentUrl || null,
       })
       .select()
       .single();
 
     if (error) throw error;
+
+    if (data.attachmentUrl) {
+      await supabase.from('Document').insert({
+        fileUrl: data.attachmentUrl,
+        fileName: 'Fatura / Belge',
+        relatedType: 'expense',
+        relatedId: record.id
+      });
+    }
 
     await createAuditLog('CREATE', 'Expense', record.id, {
       description: data.description,
@@ -111,13 +119,21 @@ export async function updateExpense(id: string, data: any) {
         month: data.month || null,
         paidBy: data.paidBy || 'Ortak Hesap',
         categoryId: data.categoryId || null,
-        attachmentUrl: data.attachmentUrl || null,
       })
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
+
+    if (data.attachmentUrl) {
+      await supabase.from('Document').insert({
+        fileUrl: data.attachmentUrl,
+        fileName: 'Fatura / Belge (Grup)',
+        relatedType: 'expense',
+        relatedId: id
+      });
+    }
 
     await createAuditLog('UPDATE', 'Expense', id, {
       description: data.description,
@@ -404,6 +420,7 @@ export async function getLocationInsights() {
            fixedRent: loc.fixedRent,
            duesAmount: loc.duesAmount,
            revenueShareRate: loc.revenueShareRate || 15,
+           month: perf.month
         });
         cumulativeNetCash += pCalc.netCash;
       });
@@ -480,3 +497,34 @@ export async function updateSystemParameter(key: string, value: number) {
   }
 }
 
+export async function toggleExpenseSettled(id: string, currentDesc: string) {
+  const isSettled = currentDesc.includes('[MAHSUP]');
+  const newDesc = isSettled 
+    ? currentDesc.replace('[MAHSUP] ', '')
+    : `[MAHSUP] ${currentDesc}`;
+    
+  const supabase = await createClient();
+  const { error } = await supabase.from('Expense').update({ description: newDesc }).eq('id', id);
+  if (error) return { success: false, error: error.message };
+  
+  revalidatePath('/expenses');
+  return { success: true };
+}
+
+export async function autoSettleOldExpenses() {
+  const supabase = await createClient();
+  const { data: expenses } = await supabase.from('Expense').select('id, description');
+  
+  if (!expenses) return { success: true };
+
+  let count = 0;
+  for (const exp of expenses) {
+    const d = exp.description.toLowerCase();
+    if (!d.includes('[mahsup]') && !d.includes('eren') && !d.includes('murat')) {
+      await supabase.from('Expense').update({ description: `[MAHSUP] ${exp.description}` }).eq('id', exp.id);
+      count++;
+    }
+  }
+  revalidatePath('/expenses');
+  return { success: true, count };
+}

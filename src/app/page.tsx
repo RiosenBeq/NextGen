@@ -63,7 +63,13 @@ export default async function DashboardPage() {
       
       // Recurring: global split + location-specific full
       const recurringTotal = (expensesData || [])
-        .filter((e: any) => e.type === 'RECURRING')
+        .filter((e: any) => {
+          if (e.type !== 'RECURRING') return false;
+          const d = e.description || '';
+          // Skip AVM fixed costs that are already calculated automatically
+          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+          return true;
+        })
         .reduce((s: number, e: any) => {
           if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
           if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
@@ -74,6 +80,10 @@ export default async function DashboardPage() {
       const oneTimeTotal = (expensesData || [])
         .filter((e: any) => {
           if (e.type === 'RECURRING') return false;
+          const d = e.description || '';
+          // Skip AVM fixed costs that are already calculated automatically
+          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+          
           const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
           if (expMonth !== perfMonthStr) return false;
           if (e.locationId && e.locationId !== loc.id) return false;

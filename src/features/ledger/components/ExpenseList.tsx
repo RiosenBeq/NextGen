@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2 } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
-import { deleteExpense } from '../actions';
+import { deleteExpense, toggleExpenseSettled } from '../actions';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 interface Expense {
   id: string;
   description: string;
-  type: string;
+  type: 'ONE_TIME' | 'RECURRING'; // Type-safe for localization
   month?: string;
   isOfficial: boolean;
   vatRate: number;
@@ -31,14 +32,14 @@ interface Props {
 // Renk haritası (kategorilere göre etiket renkleri)
 const getCategoryColor = (category: string) => {
   const map: Record<string, string> = {
-    'Operasyonel': 'bg-blue-50 text-blue-700 border-blue-200',
-    'Kira': 'bg-purple-50 text-purple-700 border-purple-200',
-    'Faturalar': 'bg-rose-50 text-rose-700 border-rose-200',
-    'Bakım/Onarım': 'bg-amber-50 text-amber-700 border-amber-200',
-    'Pazarlama': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'Ekipman': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    'Personel': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    'Diğer': 'bg-slate-50 text-slate-700 border-slate-200',
+    'Operasyonel': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    'Kira': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    'Faturalar': 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    'Bakım/Onarım': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    'Pazarlama': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    'Ekipman': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    'Personel': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    'Diğer': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
   };
   return map[category] || map['Diğer'];
 };
@@ -46,20 +47,27 @@ const getCategoryColor = (category: string) => {
 export default function ExpenseList({ initialExpenses, documents, locations }: Props) {
   const [filterType, setFilterType] = useState('ALL');
   const [filterPaidBy, setFilterPaidBy] = useState('ALL');
+  const [filterSettled, setFilterSettled] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
+  const [settlingId, setSettlingId] = useState<string | null>(null);
 
   const expenseMap = initialExpenses.map((exp) => ({
     ...exp,
     documents: documents.filter(d => d.relatedId === exp.id),
     paidBy: exp.paidBy || 'Ortak Hesap',
+    isSettled: exp.description.includes('[MAHSUP]'),
   }));
 
   const filtered = expenseMap.filter((exp) => {
     if (filterType !== 'ALL' && exp.type !== filterType) return false;
     if (filterPaidBy !== 'ALL' && exp.paidBy !== filterPaidBy) return false;
     if (searchQuery && !exp.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    
+    if (filterSettled === 'SETTLED' && !exp.isSettled) return false;
+    if (filterSettled === 'ACTIVE' && exp.isSettled) return false;
+    
     return true;
   });
 
@@ -72,72 +80,91 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
     }
   };
 
+  const handleToggleSettled = async (exp: any) => {
+    setSettlingId(exp.id);
+    await toggleExpenseSettled(exp.id, exp.description);
+    window.location.reload();
+  };
+
   const filteredTotal = filtered.reduce((acc, curr) => acc + (curr.amountWithVat || 0), 0);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="premium-card bg-white overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-200/60"
+      className="premium-card bg-white/[0.03] backdrop-blur-3xl overflow-hidden shadow-2xl border border-white/10 rounded-[32px]"
     >
       {/* Filters Toolbar */}
-      <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-            <Filter className="w-5 h-5 text-slate-600" />
+      <div className="p-8 border-b border-white/5 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white/[0.01]">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+            <Filter className="w-6 h-6 text-blue-400" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 tracking-tight">Kayıtlı Giderler</h2>
-            <p className="text-[11px] text-slate-500 font-medium">Toplam {filtered.length} işlem listeleniyor</p>
+            <h2 className="text-lg font-black text-white tracking-tight italic uppercase">Kayıtlı Giderler</h2>
+            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Toplam {filtered.length} işlem analiz ediliyor</p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 md:justify-end">
-          <div className="relative w-full sm:max-w-[240px]">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-1 xl:justify-end">
+          <div className="relative w-full md:max-w-[280px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Açıklama, not vb. ara..."
+              placeholder="Gider açıklaması ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all placeholder:text-slate-400 shadow-sm"
+              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 outline-none transition-all placeholder:text-slate-600 shadow-inner text-white font-medium"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="relative">
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="w-full sm:w-auto pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 cursor-pointer appearance-none shadow-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all"
+                className="w-full pl-4 pr-10 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-pointer appearance-none shadow-inner focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
               >
-                <option value="ALL">Kategori: Tümü</option>
-                <option value="Operasyonel">Operasyonel</option>
-                <option value="Kira">Kira</option>
-                <option value="Faturalar">Faturalar</option>
-                <option value="Bakım/Onarım">Bakım/Onarım</option>
-                <option value="Pazarlama">Pazarlama</option>
-                <option value="Ekipman">Ekipman</option>
-                <option value="Personel">Personel</option>
-                <option value="Diğer">Diğer</option>
+                <option value="ALL" className="bg-[#07090e]">TÜM KATEGORİLER</option>
+                <option value="Operasyonel" className="bg-[#07090e]">OPERASYONEL</option>
+                <option value="Kira" className="bg-[#07090e]">KİRA</option>
+                <option value="Faturalar" className="bg-[#07090e]">FATURALAR</option>
+                <option value="Bakım/Onarım" className="bg-[#07090e]">BAKIM/ONARIM</option>
+                <option value="Pazarlama" className="bg-[#07090e]">PAZARLAMA</option>
+                <option value="Ekipman" className="bg-[#07090e]">EKİPMAN</option>
+                <option value="Personel" className="bg-[#07090e]">PERSONEL</option>
+                <option value="Diğer" className="bg-[#07090e]">DİĞER</option>
               </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             </div>
 
-            <div className="relative w-full sm:w-auto">
+            <div className="relative">
               <select
                 value={filterPaidBy}
                 onChange={(e) => setFilterPaidBy(e.target.value)}
-                className="w-full sm:w-auto pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 cursor-pointer appearance-none shadow-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all"
+                className="w-full pl-4 pr-10 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-pointer appearance-none shadow-inner focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
               >
-                <option value="ALL">Ödeyen: Tümü</option>
-                <option value="Ortak Hesap">Ortak Hesap</option>
-                <option value="Okan">Okan</option>
-                <option value="Talha">Talha</option>
-                <option value="Furkan">Furkan</option>
-                <option value="Alp">Alp</option>
+                <option value="ALL" className="bg-[#07090e]">TÜM ÖDEYENLER</option>
+                <option value="Ortak Hesap" className="bg-[#07090e]">ORTAK HESAP</option>
+                <option value="Okan" className="bg-[#07090e]">OKAN</option>
+                <option value="Talha" className="bg-[#07090e]">TALHA</option>
+                <option value="Furkan" className="bg-[#07090e]">FURKAN</option>
+                <option value="Alp" className="bg-[#07090e]">ALP</option>
               </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={filterSettled}
+                onChange={(e) => setFilterSettled(e.target.value)}
+                className="w-full pl-4 pr-10 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-pointer appearance-none shadow-inner focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
+              >
+                <option value="ALL" className="bg-[#07090e]">TÜM MAHSUPLAR</option>
+                <option value="ACTIVE" className="bg-[#07090e]">BEKLEYENLER</option>
+                <option value="SETTLED" className="bg-[#07090e]">ÖDENENLER</option>
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             </div>
           </div>
         </div>
@@ -147,98 +174,130 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[900px]">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-              <th className="px-6 py-4 whitespace-nowrap">Açıklama / Tarih</th>
-              <th className="px-6 py-4 whitespace-nowrap">Kategori / Şube</th>
-              <th className="px-6 py-4 whitespace-nowrap">Ödeme Kaynağı</th>
-              <th className="px-6 py-4 whitespace-nowrap text-center">Belge Durumu</th>
-              <th className="px-6 py-4 whitespace-nowrap text-right">Vergi (KDV)</th>
-              <th className="px-6 py-4 whitespace-nowrap text-right">Net Tutar</th>
-              <th className="px-6 py-4 whitespace-nowrap text-center w-24">Aksiyon</th>
+            <tr className="bg-white/[0.02] border-b border-white/5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">
+              <th className="px-8 py-5 whitespace-nowrap">Açıklama & Takvim</th>
+              <th className="px-8 py-5 whitespace-nowrap">Kategori & Tip</th>
+              <th className="px-8 py-5 whitespace-nowrap">Ödeme Kaynağı</th>
+              <th className="px-8 py-5 whitespace-nowrap text-center">Mahsup Durumu</th>
+              <th className="px-8 py-5 whitespace-nowrap text-center">Evrak</th>
+              <th className="px-8 py-5 whitespace-nowrap text-right">Vergi Verisi</th>
+              <th className="px-8 py-5 whitespace-nowrap text-right text-blue-400">Net Tutar</th>
+              <th className="px-8 py-5 whitespace-nowrap text-center w-24">İşlem</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100/80">
+          <tbody className="divide-y divide-white/5">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7}>
-                  <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-                    <Search className="w-8 h-8 text-slate-300" />
-                    <p className="text-sm font-medium">Seçili kriterlerde kayıt bulunamadı.</p>
+                <td colSpan={8}>
+                  <div className="flex flex-col items-center justify-center py-24 text-slate-600 gap-4">
+                    <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Search className="w-8 h-8 opacity-20" />
+                    </div>
+                    <p className="text-xs font-black uppercase tracking-widest italic">Analiz edilecek veri bulunamadı.</p>
                   </div>
                 </td>
               </tr>
             ) : null}
             {filtered.map((exp) => (
-              <tr key={exp.id} className="hover:bg-slate-50/60 transition-colors group">
-                <td className="px-6 py-4">
-                  <p className="font-bold text-slate-900 text-sm max-w-xs truncate" title={exp.description}>
+              <tr key={exp.id} className="hover:bg-white/[0.02] transition-all group/row">
+                <td className="px-8 py-6">
+                  <p className="font-black text-white text-sm tracking-tight truncate max-w-xs uppercase italic" title={exp.description}>
                     {exp.description}
                   </p>
-                  <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5 font-medium">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {exp.month ? new Date(exp.month).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş'}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Calendar className="w-3 h-3 text-blue-500/50" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      {exp.month ? new Date(exp.month).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TİRAJSIZ'}
+                    </span>
+                  </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col items-start gap-1.5">
+                <td className="px-8 py-6">
+                  <div className="flex flex-col items-start gap-1.5 animate-in slide-in-from-left-2 duration-300">
+                    <span className="text-[10px] font-black text-slate-100 uppercase tracking-tighter">
+                      {exp.location?.name || 'GENEL MERKEZ'}
+                    </span>
                     <span className={cn(
-                      "text-[10px] items-center font-bold px-2 py-0.5 rounded-md border",
-                      getCategoryColor(exp.type)
+                      "text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-[0.2em] shadow-sm",
+                      getCategoryColor(exp.type === 'RECURRING' ? 'Kira' : 'Operasyonel') // Logic adjustment if needed
                     )}>
-                      {exp.type}
-                    </span>
-                    <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                      {exp.location?.name || 'Genel Merkez'}
+                      {exp.type === 'RECURRING' ? 'DÜZENLİ' : 'TEK SEFERLİK'}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-700 shadow-sm shrink-0">
-                      {exp.paidBy?.[0]?.toUpperCase()}
+                <td className="px-8 py-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-white shadow-xl shrink-0 italic">
+                       {exp.paidBy?.[0]?.toUpperCase()}
                     </div>
-                    <span className="text-sm font-semibold text-slate-700">{exp.paidBy}</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-slate-200 uppercase tracking-tighter">{exp.paidBy}</span>
+                      {exp.description.includes('[MAHSUP]') && (
+                        <span className="text-[8px] text-emerald-500 font-black italic uppercase tracking-[0.1em] mt-0.5">
+                           SİSTEMDEN DÜŞÜLDÜ
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-center">
-                  {exp.attachmentUrl ? (
+                <td className="px-8 py-6 text-center">
+                  <button 
+                    disabled={settlingId === exp.id}
+                    onClick={() => handleToggleSettled(exp)}
+                    className={cn(
+                      "inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest shadow-xl",
+                      exp.description.includes('[MAHSUP]') 
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20" 
+                        : "bg-white/5 border-white/10 text-slate-500 hover:text-white"
+                    )}
+                  >
+                     {settlingId === exp.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                     ) : exp.description.includes('[MAHSUP]') ? (
+                        <><CheckCircle2 className="w-4 h-4 shadow-[0_0_10px_rgba(16,185,129,0.5)]" /> MAHSUP EDİLDİ</>
+                     ) : (
+                        <><div className="w-3.5 h-3.5 rounded-full border-2 border-slate-600" /> BEKLEMEDE</>
+                     )}
+                  </button>
+                </td>
+                <td className="px-8 py-6 text-center">
+                  {exp.attachmentUrl || (exp.documents && exp.documents.length > 0) ? (
                     <a
-                      href={exp.attachmentUrl}
+                      href={exp.attachmentUrl || (exp.documents ? exp.documents[0].fileUrl : '#')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[11px] font-bold"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20 transition-all text-[9px] font-black uppercase tracking-widest shadow-xl"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Belge Ekli
+                      BELGE ONAYLI
                     </a>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 text-[11px] font-bold">
-                      <FileText className="w-3.5 h-3.5 opacity-50" />
-                      Eksik
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-600 text-[9px] font-black uppercase tracking-widest italic">
+                      <FileText className="w-3.5 h-3.5 opacity-30" />
+                      BELGE YOK
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 border border-slate-200">
-                    <span className="text-[11px] font-bold text-slate-600">%{(exp.vatRate || 0).toLocaleString('tr-TR')}</span>
+                <td className="px-8 py-6 text-right">
+                  <div className="inline-flex flex-col items-end">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">%{(exp.vatRate || 0).toLocaleString('tr-TR')} KDV</span>
+                    <p className="text-[10px] text-slate-600 font-bold mt-1">
+                      MATRAH: ₺{(exp.amountWithoutVat || 0).toLocaleString('tr-TR')}
+                    </p>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-medium mt-1">
-                    Matrah: ₺{(exp.amountWithoutVat || 0).toLocaleString('tr-TR')}
-                  </p>
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-8 py-6 text-right">
                   <div className="flex flex-col items-end">
-                    <span className="text-sm font-black text-slate-900 tracking-tight">
+                    <span className="text-lg font-black text-white tracking-tighter italic">
                       ₺{(exp.amountWithVat || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">KDV Dahil</span>
+                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mt-0.5 animate-pulse">KESİN TUTAR</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <td className="px-8 py-6 text-center">
+                  <div className="flex items-center justify-center gap-2 opacity-0 group-hover/row:opacity-100 transition-all transform translate-x-1 group-hover/row:translate-x-0">
                     <button
                       onClick={() => setEditingExpense(exp)}
-                      className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm"
+                      className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/20 active:scale-95"
                       title="Düzenle"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -246,7 +305,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                     <button
                       onClick={() => handleDelete(exp.id)}
                       disabled={deletingExpenseId === exp.id}
-                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
+                      className="p-2.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20 active:scale-95"
                       title="Sil"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -260,14 +319,18 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
       </div>
 
       {/* Footer Bar */}
-      <div className="px-6 py-5 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Canlı Senkronizasyon</span>
-        </div>
+      <div className="px-8 py-6 bg-white/[0.01] border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-4">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Seçili Toplam:</span>
-          <span className="text-2xl font-black text-slate-900 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">VERİ AKIŞI AKTİF</span>
+          </div>
+          <div className="h-4 w-px bg-white/10"></div>
+          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">KORUMALI SİSTEM</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">FİLTRELENMİŞ ANALİZ TOPLAMI:</span>
+          <span className="text-3xl font-black text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
             ₺{filteredTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>

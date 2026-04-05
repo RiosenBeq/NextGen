@@ -25,7 +25,10 @@ import {
   PlusCircle,
   Zap,
   LogOut,
-  Calendar
+  Calendar,
+  Scale,
+  Building2,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +36,9 @@ const navLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, category: "Main" },
   { href: "/performance", label: "Performans", icon: PlusCircle, category: "Operasyonlar" },
   { href: "/reports", label: "Nakit Akışı", icon: TrendingUp, category: "Finans" },
+  { href: "/hedefler", label: "Hedefler & Projeksiyon", icon: Target, category: "Finans" },
   { href: "/monthly", label: "Aylık Özet", icon: Calendar, category: "Finans" },
+  { href: "/avm-odemeleri", label: "AVM Kira Ödemeleri", icon: Building2, category: "Finans" },
   { href: "/gelir-gider", label: "Gelir & Gider", icon: Wallet, category: "Finans" },
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finans" },
   { href: "/expenses", label: "Gider Yönetimi", icon: CreditCard, category: "Finans" },

@@ -2,25 +2,38 @@ import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
 import { Calendar, Wallet, TrendingUp, CreditCard, Users, Landmark, Receipt, Anchor } from 'lucide-react';
+import MonthSelector from '@/features/ledger/components/MonthSelector';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 export const metadata = { title: 'Aylık Özet — NextGenBox' };
 export const dynamic = 'force-dynamic';
 
-export default async function MonthlySummaryPage({ searchParams }: { searchParams: { m?: string } }) {
+export default async function MonthlySummaryPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const supabase = await createClient();
   const params = await getSystemParameters();
+  const sp = await searchParams;
 
   const { data: performances } = await supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false });
   const { data: allExpenses } = await supabase.from('Expense').select('*');
   const { data: investments } = await supabase.from('Investment').select('*');
 
-  const totalInv = (investments || []).reduce((acc, i) => acc + (i.totalAmount || 0), 0);
-  const monthlyAmortization = totalInv > 0 ? totalInv / 60 : 0; // 5 Yıllık (60 ay) Amortisman
+  const totalInv = (investments || []).reduce((acc: any, i: any) => acc + (i.totalAmount || 0), 0);
+  const monthlyAmortization = totalInv > 0 ? totalInv / 36 : 0; // 36 Aylık (3 Yıl) Amortisman
 
-  const availableMonths = Array.from(new Set((performances || []).map(p => new Date(p.month).toISOString().slice(0, 7)))).sort().reverse();
-  const selectedMonthStr = searchParams?.m || availableMonths[0] || new Date().toISOString().slice(0, 7);
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
+  let availableMonths = Array.from(new Set([
+    ...((performances || []).map((p: any) => new Date(p.month).toISOString().slice(0, 7))),
+    ...((allExpenses || []).map((e: any) => e.month ? e.month.slice(0, 7) : e.createdAt.slice(0, 7))),
+    currentMonthStr,
+    '2026-04',
+    '2026-03'
+  ])).sort().reverse();
+
+  // Sabit başlangıç 2026 Mart sonrasını al
+  availableMonths = availableMonths.filter((m: string) => m >= '2026-03');
+
+  const selectedMonthStr = sp?.m || availableMonths[0] || currentMonthStr;
 
   // Split month label
   const monthDate = new Date(selectedMonthStr + '-01');
@@ -40,7 +53,12 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
     
     // Giderleri o ay ile eşleştirme
     const recurringTotal = (allExpenses || [])
-        .filter(e => e.type === 'RECURRING')
+        .filter(e => {
+            if (e.type !== 'RECURRING') return false;
+            const d = e.description || '';
+            if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+            return true;
+        })
         .reduce((s, e) => {
           if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocCount;
           if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
@@ -50,6 +68,9 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
     const oneTimeTotal = (allExpenses || [])
         .filter(e => {
           if (e.type === 'RECURRING') return false;
+          const d = e.description || '';
+          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+          
           const expMonthStr = e.month ? e.month.slice(0, 7) : e.createdAt.slice(0, 7);
           return expMonthStr === selectedMonthStr && (!e.locationId || e.locationId === loc.id);
         })
@@ -66,7 +87,8 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent,
         duesAmount: loc.duesAmount,
-        revenueShareRate: loc.revenueShareRate || 15
+        revenueShareRate: loc.revenueShareRate || 15,
+        month: selectedMonthStr
     });
 
     monthRevenue += calc.grossRevenue;
@@ -104,22 +126,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
         </div>
         
         <div className="flex items-center gap-3">
-          <form className="flex items-center gap-2">
-            <select 
-              name="m" 
-              defaultValue={selectedMonthStr}
-              className="bg-white border border-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm focus:ring-4 ring-indigo-50 outline-none"
-            >
-              {availableMonths.map(m => (
-                <option key={m} value={m}>
-                  {new Date(m + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
-                </option>
-              ))}
-            </select>
-            <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-colors shadow-sm">
-              Filtrele
-            </button>
-          </form>
+          <MonthSelector availableMonths={availableMonths} selectedMonthStr={selectedMonthStr} />
         </div>
       </header>
 
@@ -162,7 +169,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
          <div className="premium-card p-6 border-l-4 border-l-slate-400 bg-slate-50">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Landmark size={14}/> Cihaz Amortismanı</p>
             <p className="text-3xl font-black text-slate-800">₺{monthlyAmortization.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-            <p className="text-[9px] font-bold text-slate-400 mt-2 italic shadow-sm bg-white/50 px-2 py-1 inline-block rounded">(840.500 TL Demirbaş / 60 Ay)</p>
+            <p className="text-[9px] font-bold text-slate-400 mt-2 italic shadow-sm bg-white/50 px-2 py-1 inline-block rounded">(Yatırım Maliyeti / 36 Ay)</p>
          </div>
       </section>
 

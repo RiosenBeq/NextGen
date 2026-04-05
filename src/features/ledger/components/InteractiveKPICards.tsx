@@ -22,14 +22,14 @@ export default function InteractiveKPICards({
 }) {
   const absoluteNet = totalNetCash - totalInvestment;
   const isProfitable = absoluteNet >= 0;
-
-  // Amortization (60 months / 5 years linear depreciation)
-  const monthlyAmortization = totalInvestment / 60;
+  // Amortization (36 months / 3 years linear depreciation)
+  const monthlyAmortization = totalInvestment / 36;
   const totalAmortization = monthlyAmortization * allMonthCount;
   const trueNetProfit = totalNetCash - totalAmortization;
 
   const [isExpenseFlipped, setIsExpenseFlipped] = useState(false);
   const [isInvestmentFlipped, setIsInvestmentFlipped] = useState(false);
+  const [isNetProfitFlipped, setIsNetProfitFlipped] = useState(false);
 
   // Son 5 gider
   const topExpenses = [...expenses]
@@ -201,40 +201,71 @@ export default function InteractiveKPICards({
         </motion.div>
       </motion.div>
 
-      {/* 4. Toplam Net Durum */}
+      {/* 5. Toplam Net Durum (FLIPPABLE) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className={cn(
-          "premium-card p-6 group hover:shadow-xl transition-all duration-300",
-          isProfitable ? "stat-card-blue bg-blue-50/20" : "stat-card-red bg-rose-50/20 border-rose-200"
-        )}
+        className="relative h-full"
+        style={{ perspective: "1000px" }}
       >
-        <div className="flex items-start justify-between mb-6">
-          <div className="w-12 h-12 rounded-2xl border flex items-center justify-center transition-transform group-hover:scale-110 duration-300 bg-white shadow-sm">
-            <PiggyBank className={cn("w-6 h-6", isProfitable ? "text-blue-600" : "text-rose-600")} />
-          </div>
-          <span className={cn(
-            "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter",
-            isProfitable ? "bg-blue-100 text-blue-700" : "bg-rose-100 text-rose-700"
-          )}>
-            {isProfitable ? "NET KÂR" : "NET ZARAR"}
-          </span>
-        </div>
-        <div className="space-y-1">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ROI Durumu</p>
-          <h2 className={cn(
-            "text-2xl font-black tracking-tighter",
-            isProfitable ? "text-blue-700" : "text-rose-600"
-          )}>
-            {isProfitable ? "+" : ""}
-            ₺{absoluteNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-          </h2>
-          <p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1">
-             Tüm Gelir - Gider - Yatırım
-          </p>
-        </div>
+         <motion.div
+            className="w-full h-full relative preserve-3d cursor-pointer"
+            animate={{ rotateY: isNetProfitFlipped ? 180 : 0 }}
+            transition={{ duration: 0.6, type: "spring", stiffness: 200, damping: 20 }}
+            onClick={() => setIsNetProfitFlipped(!isNetProfitFlipped)}
+         >
+            {/* FRONT FACE */}
+            <div className={cn(
+              "absolute inset-0 backface-hidden w-full h-full premium-card p-6 group hover:shadow-xl transition-all duration-300",
+              isProfitable ? "stat-card-blue bg-blue-50/20" : "stat-card-red bg-rose-50/20 border-rose-200"
+            )}>
+              <div className="flex items-start justify-between mb-6">
+                <div className="w-12 h-12 rounded-2xl border flex items-center justify-center transition-transform group-hover:scale-110 duration-300 bg-white shadow-sm">
+                  <PiggyBank className={cn("w-6 h-6", isProfitable ? "text-blue-600" : "text-rose-600")} />
+                </div>
+                <span className={cn(
+                  "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center gap-1",
+                  isProfitable ? "bg-blue-100 text-blue-700" : "bg-rose-100 text-rose-700"
+                )}>
+                  {isProfitable ? "NET KÂR" : "NÖTR/ZARAR"} <Repeat size={10} />
+                </span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ROI Durumu</p>
+                <h2 className={cn(
+                  "text-2xl font-black tracking-tighter",
+                  isProfitable ? "text-blue-700" : "text-rose-600"
+                )}>
+                  {isProfitable ? "+" : ""}
+                  ₺{absoluteNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+                </h2>
+                <p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1">
+                   Tüm Gelir - Gider - Nakdi Yatırım
+                </p>
+              </div>
+            </div>
+
+            {/* BACK FACE */}
+            <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-5 border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white shadow-xl rotate-y-180">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-indigo-100 pb-2 mb-3 flex items-center justify-between">
+                Sermaye Geri Dönüşü
+                <Repeat size={12} className="text-indigo-400 opacity-50" />
+              </h3>
+              
+              <div className="flex-1 space-y-3">
+                 <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Tahmini Geri Dönüş (Amorti)</p>
+                    <p className="text-sm font-black text-indigo-700">36 Ay Hedefi</p>
+                 </div>
+
+                 <div className="pt-2 border-t border-indigo-100 space-y-1">
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Aylık Erimesi Gereken Yatırım</p>
+                    <p className="text-sm font-black text-slate-800">₺{monthlyAmortization.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} / ay</p>
+                 </div>
+              </div>
+            </div>
+         </motion.div>
       </motion.div>
 
     </section>

@@ -73,6 +73,7 @@ model Expense {
 
   createdAt        DateTime  @default(now())
   attachmentUrl    String?
+  isSettled        Boolean   @default(false)
 }
 
 model Investment {

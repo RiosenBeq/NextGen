@@ -1,139 +1,159 @@
-"use client";
-
-import { useEffect, useState } from 'react';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
+import { kabinRapor } from '@/lib/kabinRapor';
 import * as motion from "framer-motion/client";
-import { 
-  TrendingUp, TrendingDown, BarChart3, Percent, 
+import {
+  TrendingUp, TrendingDown, BarChart3, Percent,
   Zap, CreditCard, Calendar, Target, RefreshCw
 } from 'lucide-react';
-import { createClient } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import SyncButton from './SyncButton';
 
-export default function FinansalTablo() {
-  const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7));
-  const [data, setData] = useState<{
-    locations: any[];
-    avmSummaries: any;
-    totals: any;
-    scenarios: any[];
-    params: any;
-    breakEven: any;
-  } | null>(null);
+export const metadata = {
+  title: 'Finansal Analiz — NextGenBox',
+};
 
-  const [isSyncing, setIsSyncing] = useState(false);
+export const dynamic = 'force-dynamic';
 
-  const triggerSync = async () => {
-    setIsSyncing(true);
-    try {
-      const res = await fetch('/api/sync-kabin');
-      const result = await res.json();
-      if (result.success) window.location.reload();
-    } catch (e) {
-      console.error("Sync failed:", e);
-    } finally {
-      setIsSyncing(false);
-    }
+export default async function FinansalTablo({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const params = await searchParams;
+  const filterMonth = params.month || new Date().toISOString().slice(0, 7);
+
+  const supabase = await createClient();
+  const sysParams = await getSystemParameters();
+  const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
+
+  const [
+    { data: locations },
+    { data: performances },
+    { data: expenses },
+    liveData,
+  ] = await Promise.all([
+    supabase.from('Location').select('*').eq('isActive', true),
+    supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: true }),
+    supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
+    kabinRapor.getComprehensiveData('Bu Ay'),
+  ]);
+
+  const currentMonthId = new Date().toISOString().slice(0, 7);
+
+  // Recurring expenses
+  const recurringExpenses = (expenses || []).filter(e => e.type === 'RECURRING');
+  const getRecurringTotal = (locationId?: string) => {
+    return recurringExpenses
+      .filter(e => !e.locationId || e.locationId === locationId)
+      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
   };
 
-  useEffect(() => {
-    async function fetchData() {
-      const supabase = createClient();
-      const params = await getSystemParameters();
-      const sessionPrice = params['SESSION_PRICE_INCL_VAT'] || 300;
+  // One-time expenses per month
+  const getOneTimeExpenses = (monthId: string, locationId?: string) => {
+    return (expenses || [])
+      .filter(e => {
+        if (e.type === 'RECURRING') return false;
+        const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+        if (expMonth !== monthId) return false;
+        if (locationId && e.locationId && e.locationId !== locationId) return false;
+        return true;
+      })
+      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+  };
 
-      const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
-      const { data: performances } = await supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: true });
+  const avmSummaries: Record<string, any> = {};
 
-      const avmSummaries: Record<string, any> = {};
-      if (performances && locations) {
-        for (const perf of performances) {
-          const loc = perf.location;
-          if (!loc) continue;
+  if (performances && locations) {
+    for (const perf of performances) {
+      const loc = perf.location;
+      if (!loc) continue;
 
-          const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
-          if (filterMonth && perfMonthStr !== filterMonth) continue;
+      const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
+      if (filterMonth && perfMonthStr !== filterMonth) continue;
 
-          const calc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount || 0, {
-            sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
-            fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
-            revenueShareRate: loc.revenueShareRate || 15,
-          });
+      const isCurrentMonth = perfMonthStr === currentMonthId;
+      let sessions = perf.sessionCount;
+      let isLive = false;
 
-          if (!avmSummaries[loc.id]) {
-            avmSummaries[loc.id] = {
-              name: loc.name, totalSessions: 0, totalGrossRevenue: 0,
-              totalCommission: 0, totalRevenueShare: 0, totalAvmExpense: 0,
-              totalNetCash: 0, fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
-              totalIyzico: 0, totalNayax: 0,
-            };
-          }
-
-          avmSummaries[loc.id].totalSessions += perf.sessionCount;
-          avmSummaries[loc.id].totalGrossRevenue += calc.grossRevenue;
-          avmSummaries[loc.id].totalCommission += calc.totalCommission;
-          avmSummaries[loc.id].totalIyzico += calc.iyzicoCommission;
-          avmSummaries[loc.id].totalNayax += calc.nayaxCommission;
-          avmSummaries[loc.id].totalRevenueShare += calc.revenueShare;
-          avmSummaries[loc.id].totalAvmExpense += calc.totalAvmExpense;
-          avmSummaries[loc.id].totalNetCash += calc.netCash;
+      // Override with live kabinRapor data for current month
+      if (isCurrentMonth && liveData?.citySplit?.cities) {
+        const cityName = loc.name.split(' ')[0];
+        const cityData = (liveData.citySplit.cities as any)[cityName];
+        if (cityData) {
+          sessions = cityData.sessions;
+          isLive = true;
         }
       }
 
-      const totalGross = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalGrossRevenue, 0);
-      const totalSessions = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalSessions, 0);
-      const totalIyzico = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalIyzico, 0);
-      const totalNayax = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNayax, 0);
+      const recurringTotal = getRecurringTotal(loc.id);
+      const oneTimeTotal = getOneTimeExpenses(perfMonthStr, loc.id);
+      const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
-      const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
-      const netRevenuePerSession = sessionPrice * 0.96; 
-      const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
+      const calc = calculateMonthlyCashFlow(sessions, totalExtraExpense, {
+        sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
+        fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
+        revenueShareRate: loc.revenueShareRate || 15,
+      });
 
-      const scenarios = [200, 370, 500, 750, 1000, 1500].map(sessions => {
-        const mockCalc = calculateMonthlyCashFlow(sessions, 0, {
-          sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
-          fixedRent: (locations?.[0]?.fixedRent || 40000), 
-          duesAmount: (locations?.[0]?.duesAmount || 6000),
-          revenueShareRate: 15
-        });
-        return {
-          sessions,
-          monthlyNet: sessions * netRevenuePerSession,
-          monthlyProfit: mockCalc.netCash,
-          yearlyProfit: mockCalc.netCash * 12,
-          monthlyPerPartner: mockCalc.okanShare,
+      if (!avmSummaries[loc.id]) {
+        avmSummaries[loc.id] = {
+          name: loc.name, totalSessions: 0, totalGrossRevenue: 0,
+          totalCommission: 0, totalRevenueShare: 0, totalAvmExpense: 0,
+          totalNetCash: 0, fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
+          totalIyzico: 0, totalNayax: 0, totalExtraExpense: 0, isLive: false,
         };
-      });
+      }
 
-      setData({
-        locations: locations || [],
-        avmSummaries,
-        totals: {
-          gross: totalGross,
-          sessions: totalSessions,
-          net: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNetCash, 0),
-          commission: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalCommission, 0),
-          iyzico: totalIyzico,
-          nayax: totalNayax,
-          avmExpense: Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0),
-        },
-        scenarios,
-        params: { sessionPrice, netRevenuePerSession },
-        breakEven: { total: breakEvenTotal, perAvm: Math.ceil(breakEvenTotal / (locations?.length || 1)) },
-      });
+      avmSummaries[loc.id].totalSessions += sessions;
+      avmSummaries[loc.id].totalGrossRevenue += calc.grossRevenue;
+      avmSummaries[loc.id].totalCommission += calc.totalCommission;
+      avmSummaries[loc.id].totalIyzico += calc.iyzicoCommission;
+      avmSummaries[loc.id].totalNayax += calc.nayaxCommission;
+      avmSummaries[loc.id].totalRevenueShare += calc.revenueShare;
+      avmSummaries[loc.id].totalAvmExpense += calc.totalAvmExpense;
+      avmSummaries[loc.id].totalExtraExpense += totalExtraExpense;
+      avmSummaries[loc.id].totalNetCash += calc.netCash;
+      if (isLive) avmSummaries[loc.id].isLive = true;
     }
-    fetchData();
-  }, [filterMonth]);
+  }
 
-  if (!data) return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="flex items-center gap-3">
-        <div className="w-6 h-6 rounded-full border-2 border-blue-200 border-t-blue-500 animate-spin" />
-        <span className="text-sm text-slate-500">Veriler yükleniyor...</span>
-      </div>
-    </div>
-  );
+  const totalGross = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalGrossRevenue, 0);
+  const totalSessions = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalSessions, 0);
+  const totalIyzico = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalIyzico, 0);
+  const totalNayax = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNayax, 0);
+  const totalAvmExpense = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0);
+  const totalNetCash = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNetCash, 0);
+  const anyLive = Object.values(avmSummaries).some((a: any) => a.isLive);
+
+  const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
+  const netRevenuePerSession = sessionPrice * 0.96;
+  const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
+
+  const scenarios = [200, 370, 500, 750, 1000, 1500].map(sessions => {
+    const mockCalc = calculateMonthlyCashFlow(sessions, 0, {
+      sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
+      fixedRent: (locations?.[0]?.fixedRent || 40000),
+      duesAmount: (locations?.[0]?.duesAmount || 6000),
+      revenueShareRate: 15
+    });
+    return {
+      sessions,
+      monthlyNet: sessions * netRevenuePerSession,
+      monthlyProfit: mockCalc.netCash,
+      yearlyProfit: mockCalc.netCash * 12,
+      monthlyPerPartner: mockCalc.okanShare,
+    };
+  });
+
+  // Generate month options for filter
+  const allMonths = performances
+    ? [...new Set(performances.map(p => new Date(p.month).toISOString().slice(0, 7)))]
+    : [];
+  if (!allMonths.includes(currentMonthId)) allMonths.push(currentMonthId);
+  allMonths.sort();
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
@@ -145,7 +165,7 @@ export default function FinansalTablo() {
             <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
               Tahmini Verimlilik
             </span>
-            <span className="live-dot text-[9px]">Senkronize</span>
+            {anyLive && <span className="live-dot text-[9px]">Canlı Veri</span>}
           </div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
             <Target className="w-6 h-6 text-slate-400" />
@@ -157,38 +177,39 @@ export default function FinansalTablo() {
         </div>
 
         <div className="flex gap-3 items-center flex-wrap">
-          <div className="relative">
-            <Calendar className="absolute left-3 inset-y-0 my-auto w-4 h-4 text-blue-500" />
-            <input 
-              type="month" 
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
-              className="elite-input pl-9 w-44 text-xs cursor-pointer"
-            />
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-xl">
+            {allMonths.map(m => {
+              const label = new Date(m + '-01').toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' });
+              return (
+                <Link
+                  key={m}
+                  href={`/finans?month=${m}`}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                    filterMonth === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                  )}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </div>
           <div className="premium-card px-4 py-2.5 flex items-center gap-2">
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Bilet Fiyatı</span>
-            <span className="text-sm font-bold text-slate-900">₺{data.params.sessionPrice}</span>
+            <span className="text-sm font-bold text-slate-900">₺{sessionPrice}</span>
           </div>
-          <button 
-            onClick={triggerSync}
-            disabled={isSyncing}
-            className="elite-button-secondary flex items-center gap-2 text-xs"
-          >
-            <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
-            Senkronize Et
-          </button>
+          <SyncButton />
         </div>
       </header>
 
       {/* KPI Cards */}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: "Toplam Ciro", value: data.totals.gross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
-          { label: "iyzico (%2)", value: data.totals.iyzico, icon: Percent, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
-          { label: "Nayax (%2)", value: data.totals.nayax, icon: CreditCard, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
-          { label: "AVM Gideri", value: data.totals.avmExpense, icon: TrendingDown, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
-          { label: "Reel Kazanç", value: data.totals.net, icon: BarChart3, cardClass: data.totals.net >= 0 ? "stat-card-green" : "stat-card-red", iconColor: data.totals.net >= 0 ? "text-emerald-600" : "text-red-600", iconBg: data.totals.net >= 0 ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200" },
+          { label: "Toplam Ciro", value: totalGross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
+          { label: "iyzico (%2)", value: totalIyzico, icon: Percent, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
+          { label: "Nayax (%2)", value: totalNayax, icon: CreditCard, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
+          { label: "AVM Gideri", value: totalAvmExpense, icon: TrendingDown, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
+          { label: "Reel Kazanç", value: totalNetCash, icon: BarChart3, cardClass: totalNetCash >= 0 ? "stat-card-green" : "stat-card-red", iconColor: totalNetCash >= 0 ? "text-emerald-600" : "text-red-600", iconBg: totalNetCash >= 0 ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200" },
         ].map((kpi, idx) => (
           <motion.div
             key={kpi.label}
@@ -214,28 +235,39 @@ export default function FinansalTablo() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {data.locations.map((loc) => (
-            <motion.div key={loc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="premium-card p-5">
-              <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
-                 <Zap className="w-4 h-4 text-blue-500" />
-                 {loc.name}
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                  <span className="text-xs font-medium text-slate-500">Kira (+%20 KDV)</span>
-                  <span className="font-semibold text-slate-900">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
+          {(locations || []).map((loc) => {
+            const locSummary = avmSummaries[loc.id];
+            const recurringForLoc = getRecurringTotal(loc.id);
+            return (
+              <motion.div key={loc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="premium-card p-5">
+                <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-blue-500" />
+                  {loc.name}
+                  {locSummary?.isLive && <span className="live-dot text-[8px] ml-2">Canlı</span>}
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                    <span className="text-xs font-medium text-slate-500">Kira (+%20 KDV)</span>
+                    <span className="font-semibold text-slate-900">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                    <span className="text-xs font-medium text-slate-500">Aidat</span>
+                    <span className="font-semibold text-slate-900">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
+                  </div>
+                  {recurringForLoc > 0 && (
+                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                      <span className="text-xs font-medium text-slate-500">Tekrarlayan Giderler</span>
+                      <span className="font-semibold text-red-500">₺{recurringForLoc.toLocaleString('tr-TR')}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Aylık Toplam</span>
+                    <span className="text-lg font-bold text-slate-900">₺{((loc.fixedRent * 1.20) + loc.duesAmount + recurringForLoc).toLocaleString('tr-TR')}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                  <span className="text-xs font-medium text-slate-500">Aidat</span>
-                  <span className="font-semibold text-slate-900">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
-                </div>
-                <div className="flex justify-between items-center pt-2">
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Aylık Toplam</span>
-                  <span className="text-lg font-bold text-slate-900">₺{((loc.fixedRent * 1.20) + loc.duesAmount).toLocaleString('tr-TR')}</span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
@@ -249,8 +281,8 @@ export default function FinansalTablo() {
         <div className="premium-card overflow-hidden">
           <div className="p-5 border-b border-slate-100 bg-slate-50">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Tüm resmi vergiler hariç reel nakit tablosu. Başabaş noktası: <strong className="text-amber-600">{data.breakEven.total} oturum/ay</strong>.
-              AVM başına günlük <strong className="text-blue-600">~{Math.ceil(data.breakEven.perAvm / 30)} seans</strong> gereklidir.
+              Tüm resmi vergiler hariç reel nakit tablosu. Başabaş noktası: <strong className="text-amber-600">{breakEvenTotal} oturum/ay</strong>.
+              AVM başına günlük <strong className="text-blue-600">~{Math.ceil(Math.ceil(breakEvenTotal / (locations?.length || 1)) / 30)} seans</strong> gereklidir.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -265,12 +297,12 @@ export default function FinansalTablo() {
                 </tr>
               </thead>
               <tbody>
-                {data.scenarios.map((s: any) => {
-                  const isBreakEven = Math.abs(s.sessions - data.breakEven.total) < 30;
+                {scenarios.map((s: any) => {
+                  const isBreakEven = Math.abs(s.sessions - breakEvenTotal) < 30;
                   return (
                     <tr key={s.sessions} className={cn(isBreakEven && "bg-amber-50")}>
                       <td className="font-semibold text-slate-900">{s.sessions}</td>
-                      <td className="text-center text-slate-500 font-medium">{Math.round(s.sessions / data.locations.length)}</td>
+                      <td className="text-center text-slate-500 font-medium">{Math.round(s.sessions / (locations?.length || 1))}</td>
                       <td className="text-right font-medium text-slate-700">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</td>
                       <td className={cn("text-right font-bold", s.monthlyProfit >= 0 ? 'text-emerald-700' : 'text-red-600')}>
                         ₺{s.monthlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}

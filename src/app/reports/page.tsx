@@ -23,6 +23,7 @@ export default async function ReportsPage({
   const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
 
   const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
+<<<<<<< HEAD
   const { data: performances } = await supabase
     .from('MonthlyPerformance')
     .select('*, location:Location(*)')
@@ -32,11 +33,68 @@ export default async function ReportsPage({
     const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
     
     let sessions = perf.sessionCount;
+=======
+  const [
+    { data: performances },
+    { data: expenses },
+    liveData,
+    liveAllTimeRaw,
+  ] = await Promise.all([
+    supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false }),
+    supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
+    kabinRapor.getComprehensiveData('Bu Ay'),
+    kabinRapor.getComprehensiveData('Tüm Zamanlar'),
+  ]);
 
-    const calc = calculateMonthlyCashFlow(sessions, perf.extraExpenseAmount || 0, {
+  const liveAllTime = liveAllTimeRaw?.allTimeTotals || null;
+  const currentMonthId = new Date().toISOString().slice(0, 7);
+
+  // Calculate recurring expenses total (applied every month)
+  const recurringExpenses = (expenses || []).filter(e => e.type === 'RECURRING');
+  const getRecurringTotal = (locationId?: string) => {
+    return recurringExpenses
+      .filter(e => !e.locationId || e.locationId === locationId)
+      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+  };
+
+  // Calculate one-time expenses per month/location
+  const getOneTimeExpenses = (monthId: string, locationId?: string) => {
+    return (expenses || [])
+      .filter(e => {
+        if (e.type === 'RECURRING') return false;
+        const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+        if (expMonth !== monthId) return false;
+        if (locationId && e.locationId && e.locationId !== locationId) return false;
+        return true;
+      })
+      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+  };
+
+  const processed = (performances || []).map((perf: any) => {
+    const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
+    const isCurrentMonth = perfMonthId === currentMonthId;
+
+    let sessions = perf.sessionCount;
+    let isLive = false;
+
+    if (isCurrentMonth && liveData?.citySplit?.cities) {
+      const cityName = perf.location.name.split(' ')[0];
+      const cityData = (liveData.citySplit?.cities as any)[cityName];
+      if (cityData) {
+        sessions = cityData.sessions;
+        isLive = true;
+      }
+    }
+>>>>>>> e7bee6f4cb8e375e2c7e6d0719a04003ea593237
+
+    const recurringTotal = getRecurringTotal(perf.location.id);
+    const oneTimeTotal = getOneTimeExpenses(perfMonthId, perf.location.id);
+    const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
+
+    const calc = calculateMonthlyCashFlow(sessions, totalExtraExpense, {
       sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
       fixedRent: perf.location.fixedRent, duesAmount: perf.location.duesAmount,
-      revenueShareRate: perf.location.revenueShareRate || 0,
+      revenueShareRate: perf.location.revenueShareRate || 15,
     });
 
     return {
@@ -48,15 +106,16 @@ export default async function ReportsPage({
       sessionCount: sessions,
       grossRevenue: calc.grossRevenue,
       totalAvmExpense: calc.totalAvmExpense,
-      iyzico: calc.iyzicoCommission,
-      nayax: calc.nayaxCommission,
-      extraExpense: perf.extraExpenseAmount || 0,
+      totalCommission: calc.totalCommission,
+      revenueShare: calc.revenueShare,
+      extraExpense: totalExtraExpense,
+      totalExpense: calc.totalExpense,
       netCash: calc.netCash,
       isLive: false,
     };
   });
 
-  const filteredData = processed.filter((row: any) => 
+  const filteredData = processed.filter((row: any) =>
     filterLocation === 'all' || row.locationId === filterLocation
   );
 
@@ -139,7 +198,7 @@ export default async function ReportsPage({
                     <td><span className="text-sm text-slate-700">{row.locationName}</span></td>
                     <td className="text-center"><span className="text-sm font-mono font-semibold text-slate-700">{row.sessionCount}</span></td>
                     <td className="text-right"><span className="text-sm font-semibold text-slate-900">₺{row.grossRevenue.toLocaleString('tr-TR')}</span></td>
-                    <td className="text-right"><span className="text-sm text-red-500 font-medium">₺{(row.totalAvmExpense + row.iyzico + row.nayax + row.extraExpense).toLocaleString('tr-TR')}</span></td>
+                    <td className="text-right"><span className="text-sm text-red-500 font-medium">₺{row.totalExpense.toLocaleString('tr-TR')}</span></td>
                     <td className={cn("text-right text-sm font-bold", row.netCash >= 0 ? "text-emerald-700" : "text-red-600")}>₺{row.netCash.toLocaleString('tr-TR')}</td>
                     <td className="text-center">
                       <button className="p-1.5 rounded-lg text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100">

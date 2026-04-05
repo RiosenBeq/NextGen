@@ -27,7 +27,6 @@ export default function ModernModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const { settings } = useSettings();
 
-  // Settings Mapping
   const isTopPosition = settings.SETTING_POPUP_POSITION === 1;
   const animSpeed = settings.SETTING_ANIMATION_SPEED;
   
@@ -37,7 +36,6 @@ export default function ModernModal({
     stiffness: animSpeed === 0 ? 500 : (animSpeed === 2 ? 150 : 350)
   };
 
-  // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -77,19 +75,19 @@ export default function ModernModal({
               exit={{ opacity: 0, scale: 0.95, y: isTopPosition ? -40 : 20 }}
               transition={transition}
               className={cn(
-                "w-full bg-[--surface] border border-[--border] rounded-2xl shadow-2xl pointer-events-auto overflow-hidden relative flex flex-col max-h-[90vh]",
+                "w-full bg-white border border-slate-200 rounded-2xl shadow-2xl pointer-events-auto overflow-hidden relative flex flex-col max-h-[90vh]",
                 maxWidth
               )}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               {title && (
-                <div className="px-6 py-5 border-b border-[--border] flex items-center justify-between bg-[--surface-alt]/50">
-                  <h3 className="text-base font-semibold text-[--text-primary] tracking-tight">{title}</h3>
+                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <h3 className="text-base font-semibold text-slate-900 tracking-tight">{title}</h3>
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="p-1.5 rounded-lg hover:bg-[--surface-alt] text-[--text-muted] hover:text-[--text-primary] transition-all"
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all"
                     >
                       <X size={18} strokeWidth={2.5} />
                     </button>
@@ -101,7 +99,7 @@ export default function ModernModal({
               {!title && showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-[--surface] shadow-md border border-[--border] text-[--text-muted] hover:text-[--text-primary] hover:border-[--border-strong] transition-all active:scale-95"
+                  className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white shadow-md border border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 transition-all active:scale-95"
                 >
                   <X size={16} strokeWidth={2.5} />
                 </button>

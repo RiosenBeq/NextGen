@@ -31,7 +31,7 @@ export default async function RootLayout({
     <html lang="tr" suppressHydrationWarning className={inter.variable}>
       <body
         suppressHydrationWarning
-        className={`${inter.className} bg-[--bg] text-[--text-primary] font-sans antialiased selection:bg-blue-100 ${isAuthenticated ? 'flex h-screen overflow-hidden' : ''}`}
+        className={`${inter.className} font-sans antialiased selection:bg-blue-100 ${isAuthenticated ? 'flex h-screen overflow-hidden' : ''}`}
       >
         {isAuthenticated ? (
           <SettingsProvider>

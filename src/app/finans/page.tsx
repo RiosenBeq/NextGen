@@ -1,6 +1,5 @@
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { kabinRapor } from '@/lib/kabinRapor';
 import * as motion from "framer-motion/client";
 import {
   TrendingUp, TrendingDown, BarChart3, Percent,
@@ -9,7 +8,6 @@ import {
 import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import SyncButton from './SyncButton';
 
 export const metadata = {
   title: 'Finansal Analiz — NextGenBox',
@@ -32,13 +30,11 @@ export default async function FinansalTablo({
   const [
     { data: locations },
     { data: performances },
-    { data: expenses },
-    liveData,
+    { data: expenses }
   ] = await Promise.all([
     supabase.from('Location').select('*').eq('isActive', true),
     supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: true }),
     supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
-    kabinRapor.getComprehensiveData('Bu Ay'),
   ]);
 
   const currentMonthId = new Date().toISOString().slice(0, 7);
@@ -74,20 +70,7 @@ export default async function FinansalTablo({
       const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
       if (filterMonth && perfMonthStr !== filterMonth) continue;
 
-      const isCurrentMonth = perfMonthStr === currentMonthId;
-      let sessions = perf.sessionCount;
-      let isLive = false;
-
-      // Override with live kabinRapor data for current month
-      if (isCurrentMonth && liveData?.citySplit?.cities) {
-        const cityName = loc.name.split(' ')[0];
-        const cityData = (liveData.citySplit.cities as any)[cityName];
-        if (cityData) {
-          sessions = cityData.sessions;
-          isLive = true;
-        }
-      }
-
+      const sessions = perf.sessionCount;
       const recurringTotal = getRecurringTotal(loc.id);
       const oneTimeTotal = getOneTimeExpenses(perfMonthStr, loc.id);
       const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
@@ -103,7 +86,7 @@ export default async function FinansalTablo({
           name: loc.name, totalSessions: 0, totalGrossRevenue: 0,
           totalCommission: 0, totalRevenueShare: 0, totalAvmExpense: 0,
           totalNetCash: 0, fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
-          totalIyzico: 0, totalNayax: 0, totalExtraExpense: 0, isLive: false,
+          totalIyzico: 0, totalNayax: 0, totalExtraExpense: 0, 
         };
       }
 
@@ -116,7 +99,6 @@ export default async function FinansalTablo({
       avmSummaries[loc.id].totalAvmExpense += calc.totalAvmExpense;
       avmSummaries[loc.id].totalExtraExpense += totalExtraExpense;
       avmSummaries[loc.id].totalNetCash += calc.netCash;
-      if (isLive) avmSummaries[loc.id].isLive = true;
     }
   }
 
@@ -126,7 +108,6 @@ export default async function FinansalTablo({
   const totalNayax = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNayax, 0);
   const totalAvmExpense = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0);
   const totalNetCash = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNetCash, 0);
-  const anyLive = Object.values(avmSummaries).some((a: any) => a.isLive);
 
   const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0);
   const netRevenuePerSession = sessionPrice * 0.96;
@@ -165,7 +146,6 @@ export default async function FinansalTablo({
             <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
               Tahmini Verimlilik
             </span>
-            {anyLive && <span className="live-dot text-[9px]">Canlı Veri</span>}
           </div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
             <Target className="w-6 h-6 text-slate-400" />
@@ -198,7 +178,6 @@ export default async function FinansalTablo({
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Bilet Fiyatı</span>
             <span className="text-sm font-bold text-slate-900">₺{sessionPrice}</span>
           </div>
-          <SyncButton />
         </div>
       </header>
 
@@ -243,7 +222,6 @@ export default async function FinansalTablo({
                 <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
                   <Zap className="w-4 h-4 text-blue-500" />
                   {loc.name}
-                  {locSummary?.isLive && <span className="live-dot text-[8px] ml-2">Canlı</span>}
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-2 border-b border-slate-100">

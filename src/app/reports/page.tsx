@@ -23,30 +23,15 @@ export default async function ReportsPage({
   const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
 
   const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
-<<<<<<< HEAD
-  const { data: performances } = await supabase
-    .from('MonthlyPerformance')
-    .select('*, location:Location(*)')
-    .order('month', { ascending: false });
-
-  const processed = (performances || []).map((perf: any) => {
-    const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
-    
-    let sessions = perf.sessionCount;
-=======
+  
   const [
     { data: performances },
-    { data: expenses },
-    liveData,
-    liveAllTimeRaw,
+    { data: expenses }
   ] = await Promise.all([
     supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false }),
     supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
-    kabinRapor.getComprehensiveData('Bu Ay'),
-    kabinRapor.getComprehensiveData('Tüm Zamanlar'),
   ]);
 
-  const liveAllTime = liveAllTimeRaw?.allTimeTotals || null;
   const currentMonthId = new Date().toISOString().slice(0, 7);
 
   // Calculate recurring expenses total (applied every month)
@@ -72,20 +57,9 @@ export default async function ReportsPage({
 
   const processed = (performances || []).map((perf: any) => {
     const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
-    const isCurrentMonth = perfMonthId === currentMonthId;
-
+    
     let sessions = perf.sessionCount;
     let isLive = false;
-
-    if (isCurrentMonth && liveData?.citySplit?.cities) {
-      const cityName = perf.location.name.split(' ')[0];
-      const cityData = (liveData.citySplit?.cities as any)[cityName];
-      if (cityData) {
-        sessions = cityData.sessions;
-        isLive = true;
-      }
-    }
->>>>>>> e7bee6f4cb8e375e2c7e6d0719a04003ea593237
 
     const recurringTotal = getRecurringTotal(perf.location.id);
     const oneTimeTotal = getOneTimeExpenses(perfMonthId, perf.location.id);

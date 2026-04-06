@@ -18,6 +18,7 @@ import {
   Upload
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
@@ -40,7 +41,7 @@ interface Invoice {
 interface FaturalarProps {
   invoices: Invoice[];
   avmExpenses: Invoice[];
-  locations: any[];
+  locations: Array<{ id: string; name: string }>;
 }
 
 export default function FaturalarClientUI({ invoices: initialInvoices, avmExpenses: initialAvmExpenses, locations }: FaturalarProps) {
@@ -83,8 +84,8 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
 
       await updateAvmExpenseStatus(expenseId, { isOfficial: true });
       setAvmExpenses((prev) => prev.map((item) => (item.id === expenseId ? { ...item, attachmentUrl: upload.publicUrl, isOfficial: true } : item)));
-    } catch (err: any) {
-      alert(err.message || 'Belge yükleme hatası.');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Belge yükleme hatası.');
     } finally {
       setUploadingAvmId(null);
     }
@@ -211,7 +212,11 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
              </motion.div>
            ) : (
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
-                {filteredInvoices.map((inv, idx) => (
+                {filteredInvoices.map((inv, idx) => {
+                  const attachmentUrl = inv.attachmentUrl ?? undefined;
+                  const isPdf = attachmentUrl?.toLowerCase().includes('.pdf') ?? false;
+
+                  return (
                   <motion.div
                     layout
                     key={inv.id}
@@ -222,7 +227,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                   >
                      {/* Preview Area */}
                      <div className="h-56 bg-slate-50 border-b border-slate-50 flex items-center justify-center relative group-hover:bg-blue-50/30 transition-colors overflow-hidden">
-                        {inv.attachmentUrl?.toLowerCase().includes('.pdf') ? (
+                        {isPdf ? (
                           <div className="flex flex-col items-center gap-4">
                              <div className="w-20 h-20 rounded-3xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 shadow-sm group-hover:rotate-6 transition-transform duration-500">
                                 <FileText size={40} strokeWidth={1.5} />
@@ -231,18 +236,29 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                           </div>
                         ) : (
                           <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700">
-                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                             <img src={inv.attachmentUrl} alt="Belge" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500" />
+                             {attachmentUrl ? (
+                               <Image
+                                 src={attachmentUrl}
+                                 alt="Belge"
+                                 fill
+                                 sizes="(max-width: 768px) 100vw, (max-width: 1536px) 33vw, 25vw"
+                                 className="object-cover opacity-60 group-hover:opacity-100 transition-all duration-500"
+                               />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-slate-400">
+                                 Önizleme bulunamadı
+                               </div>
+                             )}
                              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                        )}
 
                        {/* Floating Actions */}
                        <div className="absolute top-4 right-4 flex gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                          <Link href={inv.attachmentUrl} target="_blank" className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-blue-600 shadow-lg flex items-center justify-center transition-all hover:scale-110">
+                          <Link href={attachmentUrl || '#'} target="_blank" className={cn("w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 shadow-lg flex items-center justify-center transition-all", attachmentUrl ? "hover:text-blue-600 hover:scale-110" : "pointer-events-none opacity-40")}>
                              <Eye size={18} />
                           </Link>
-                          <Link href={inv.attachmentUrl} download target="_blank" className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-blue-600 shadow-lg flex items-center justify-center transition-all hover:scale-110">
+                          <Link href={attachmentUrl || '#'} download target="_blank" className={cn("w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 shadow-lg flex items-center justify-center transition-all", attachmentUrl ? "hover:text-blue-600 hover:scale-110" : "pointer-events-none opacity-40")}>
                              <Download size={18} />
                           </Link>
                           <button
@@ -312,7 +328,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                         </div>
                      </div>
                   </motion.div>
-                ))}
+                )})}
              </div>
            )}
          </AnimatePresence>

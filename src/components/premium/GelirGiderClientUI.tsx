@@ -420,7 +420,7 @@ function KPICard({ label, value, icon, color, subtitle, trend }: any) {
     <div className={cn("bg-white border border-slate-200 p-8 rounded-[32px] space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden", theme.border)}>
        <div className="flex items-center justify-between">
           <div className={cn("p-3.5 rounded-2xl transition-all shadow-inner", theme.iconBg)}>
-             {React.cloneElement(icon as React.ReactElement, { size: 24, strokeWidth: 2 })}
+             {React.cloneElement(icon as React.ReactElement<any>, { size: 24, strokeWidth: 2 })}
           </div>
           <div className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-widest", theme.trend)}>
              {trend}

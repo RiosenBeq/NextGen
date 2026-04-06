@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import FlipFinanceCard from '@/components/premium/FlipFinanceCard';
 import ScenarioAnalysisSection from '@/components/premium/ScenarioAnalysisSection';
+import FinanceSummaryCards from '@/components/premium/FinanceSummaryCards';
 
 export const metadata = {
   title: 'Finansal Analiz — NextGenBox',
@@ -201,6 +202,37 @@ export default async function FinansalTablo({
     : [];
   allMonths.sort().reverse();
 
+  const operationalItems = [
+    ...(expenses || [])
+      .filter((e) => {
+        if (!filterMonth || filterMonth === 'all') return true;
+        const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
+        return expMonth === filterMonth;
+      })
+      .map((e) => ({
+        id: `exp_${e.id}`,
+        label: e.description || 'Gider kaydı',
+        amount: Number(e.amountWithVat || 0),
+        month: e.month ? String(e.month).slice(0, 7) : undefined,
+        location: e.location?.name,
+        source: 'expense' as const,
+      })),
+    ...(performances || [])
+      .filter((p) => Number(p.extraExpenseAmount || 0) > 0)
+      .filter((p) => {
+        if (!filterMonth || filterMonth === 'all') return true;
+        return new Date(p.month).toISOString().slice(0, 7) === filterMonth;
+      })
+      .map((p) => ({
+        id: `manual_${p.id}`,
+        label: p.extraExpenseNotes || 'Manuel ekstra gider',
+        amount: Number(p.extraExpenseAmount || 0),
+        month: new Date(p.month).toISOString().slice(0, 7),
+        location: p.location?.name,
+        source: 'manual' as const,
+      })),
+  ].filter((item) => item.amount > 0);
+
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
 
@@ -255,30 +287,14 @@ export default async function FinansalTablo({
         </div>
       </header>
 
-      {/* KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
-          { label: "Toplam Ciro", value: totalGross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
-          { label: "Komisyonlar (%4)", value: totalIyzico + totalNayax, icon: CreditCard, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
-          { label: "AVM Gideri", value: totalAvmExpense, icon: Building2, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
-          { label: "Operasyonel Gider", value: totalExtraExpenseAll, icon: Zap, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
-          { label: "Reel Kazanç", value: totalNetCash, icon: BarChart3, cardClass: totalNetCash >= 0 ? "stat-card-green" : "stat-card-red", iconColor: totalNetCash >= 0 ? "text-emerald-600" : "text-red-600", iconBg: totalNetCash >= 0 ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200" },
-        ].map((kpi, idx) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className={cn("premium-card p-5 border", kpi.cardClass)}
-          >
-            <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center mb-3", kpi.iconBg)}>
-              <kpi.icon className={cn("w-4 h-4", kpi.iconColor)} />
-            </div>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{kpi.label}</p>
-            <h2 className="text-lg font-bold text-slate-900">₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
-          </motion.div>
-        ))}
-      </section>
+      <FinanceSummaryCards
+        totalGross={totalGross}
+        totalCommission={totalIyzico + totalNayax}
+        totalAvmExpense={totalAvmExpense}
+        totalOperational={totalExtraExpenseAll}
+        totalNetCash={totalNetCash}
+        operationalItems={operationalItems}
+      />
 
       {/* Fixed Expenses per AVM */}
       <section className="space-y-4">

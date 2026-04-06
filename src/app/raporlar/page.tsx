@@ -23,6 +23,7 @@ export default async function ReportsPage({
   const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
 
   const { data: locations } = await supabase.from('Location').select('*').eq('isActive', true);
+  const activeLocationCount = (locations || []).length || 1;
   
   const [
     { data: performances },
@@ -32,38 +33,64 @@ export default async function ReportsPage({
     supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
   ]);
 
-  // Calculate recurring expenses total (applied every month)
-  const recurringExpenses = (expenses || []).filter(e => e.type === 'RECURRING');
+  const recurringExpenses = (expenses || []).filter((e) => e.type === 'RECURRING');
   const getRecurringTotal = (locationId?: string) => {
-    return recurringExpenses
-      .filter(e => !e.locationId || e.locationId === locationId)
-      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+    return recurringExpenses.reduce((s, e) => {
+      if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+      if (e.locationId === locationId) return s + (e.amountWithVat || 0);
+      return s;
+    }, 0);
   };
 
-  // Calculate one-time expenses per month/location
   const getOneTimeExpenses = (monthId: string, locationId?: string) => {
     return (expenses || [])
-      .filter(e => {
+      .filter((e) => {
         if (e.type === 'RECURRING') return false;
-        const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+        const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
         if (expMonth !== monthId) return false;
-        if (locationId && e.locationId && e.locationId !== locationId) return false;
+        if (e.locationId && e.locationId !== locationId) return false;
         return true;
       })
-      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
+      .reduce((s, e) => {
+        if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+        return s + (e.amountWithVat || 0);
+      }, 0);
   };
 
-  const processed = (performances || []).map((perf: any) => {
+  const consolidatedMap = new Map<string, any>();
+  for (const perf of performances || []) {
+    if (!perf.location || !perf.month) continue;
+    const monthId = new Date(perf.month).toISOString().slice(0, 7);
+    const key = `${perf.locationId}_${monthId}`;
+    const existing = consolidatedMap.get(key);
+
+    if (!existing) {
+      consolidatedMap.set(key, {
+        ...perf,
+        month: `${monthId}-01T00:00:00.000Z`,
+        sessionCount: Number(perf.sessionCount || 0),
+        extraExpenseAmount: Number(perf.extraExpenseAmount || 0),
+      });
+    } else {
+      existing.sessionCount += Number(perf.sessionCount || 0);
+      existing.extraExpenseAmount += Number(perf.extraExpenseAmount || 0);
+    }
+  }
+
+  const processed = Array.from(consolidatedMap.values()).map((perf: any) => {
     const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
     const sessions = perf.sessionCount;
 
     const recurringTotal = getRecurringTotal(perf.location.id);
     const oneTimeTotal = getOneTimeExpenses(perfMonthId, perf.location.id);
-    const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
+    const totalExtraExpense = Number(perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
     const calc = calculateMonthlyCashFlow(sessions, totalExtraExpense, {
-      sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
-      fixedRent: perf.location.fixedRent, duesAmount: perf.location.duesAmount,
+      sessionPrice,
+      iyzicoCommissionRate: 2,
+      nayaxCommissionRate: 2,
+      fixedRent: perf.location.fixedRent,
+      duesAmount: perf.location.duesAmount,
       revenueShareRate: perf.location.revenueShareRate || 15,
     });
 

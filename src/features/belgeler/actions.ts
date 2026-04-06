@@ -16,11 +16,10 @@ export async function uploadDocument(formData: FormData) {
     }
 
     // Dosya adını benzersiz yap
-    const ext = file.name.split('.').pop();
     const uniqueName = `${relatedType}/${relatedId}/${Date.now()}_${file.name}`;
 
     // Supabase Storage'a yükle
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(uniqueName, file, {
         cacheControl: '3600',
@@ -43,19 +42,37 @@ export async function uploadDocument(formData: FormData) {
       .getPublicUrl(uniqueName);
 
     // DB'ye kaydet
+    const basePayload = {
+      id: `doc_${crypto.randomUUID()}`,
+      relatedType,
+      relatedId,
+      fileName: file.name,
+      fileUrl: publicUrl,
+    };
+
     const { error: dbError } = await supabase
       .from('Document')
       .insert({
-        id: `doc_${crypto.randomUUID()}`,
-        relatedType,
-        relatedId,
-        fileName: file.name,
-        fileUrl: publicUrl,
+        ...basePayload,
         fileSize: file.size,
         mimeType: file.type,
       });
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      const schemaCacheError = dbError.message?.toLowerCase().includes('schema cache');
+      const missingColumnError = dbError.message?.toLowerCase().includes('filesize')
+        || dbError.message?.toLowerCase().includes('mimetype');
+
+      if (schemaCacheError || missingColumnError) {
+        const { error: fallbackError } = await supabase
+          .from('Document')
+          .insert(basePayload);
+
+        if (fallbackError) throw fallbackError;
+      } else {
+        throw dbError;
+      }
+    }
 
     await createAuditLog('CREATE', 'Document', relatedId, { 
       fileName: file.name,
@@ -65,6 +82,7 @@ export async function uploadDocument(formData: FormData) {
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     revalidatePath('/belgeler');
+    revalidatePath('/avm-odemeleri');
     return { success: true };
   } catch (error: any) {
     console.error('Document upload error:', error);
@@ -111,6 +129,7 @@ export async function deleteDocument(id: string) {
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     revalidatePath('/belgeler');
+    revalidatePath('/avm-odemeleri');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

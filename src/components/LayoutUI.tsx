@@ -40,6 +40,7 @@ const navLinks = [
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finansal Analiz" },
   { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
   { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finansal Analiz" },
+  { href: "/avm-odemeleri", label: "AVM Ödeme Takibi", icon: Building2, category: "Finansal Analiz" },
   { href: "/notlar", label: "Notlar", icon: FileText, category: "Destek" },
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },

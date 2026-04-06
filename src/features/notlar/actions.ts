@@ -29,13 +29,16 @@ export async function getNotes() {
 export async function addNote(title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   const id = `note_${crypto.randomUUID()}`;
   
   const { data, error } = await supabase
     .from('Note')
     .insert([{ 
       id, 
-      userId: user?.id || null,
+      userId: user.id,
       title, 
       content, 
       color, 
@@ -58,13 +61,16 @@ export async function addNote(title: string, content: string = '', color: string
 export async function updateNote(id: string | number, title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   
   // Ensure we only update notes that belong to the user
   const { data, error } = await supabase
     .from('Note')
     .update({ title, content, color, updatedAt: new Date().toISOString() })
     .eq('id', id)
-    .eq('userId', user?.id || '')
+    .eq('userId', user.id)
     .select()
     .single();
 
@@ -81,12 +87,15 @@ export async function updateNote(id: string | number, title: string, content: st
 export async function deleteNote(id: string | number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   
   const { error } = await supabase
     .from('Note')
     .delete()
     .eq('id', id)
-    .eq('userId', user?.id || '');
+    .eq('userId', user.id);
 
   if (error) {
     console.error('deleteNote error:', error);

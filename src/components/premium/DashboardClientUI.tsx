@@ -22,7 +22,8 @@ import {
   Activity,
   Eye,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Calculator
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,9 @@ import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import { PremiumFlipCard } from './PremiumFlipCard';
 import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
 import { Loader2, Camera, UploadCloud } from 'lucide-react';
+
+import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
+import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
 
 interface DashboardProps {
   stats: {
@@ -45,9 +49,19 @@ interface DashboardProps {
   locations: any[];
   categories: any[];
   chartData?: { month: string, revenue: number, profit: number }[];
+  insights?: any[];
+  defaultParams?: any;
 }
 
-export default function DashboardClientUI({ stats, recentExpenses, locations, categories, chartData = [] }: DashboardProps) {
+export default function DashboardClientUI({ 
+  stats, 
+  recentExpenses, 
+  locations, 
+  categories, 
+  chartData = [],
+  insights = [],
+  defaultParams = {}
+}: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -83,64 +97,112 @@ export default function DashboardClientUI({ stats, recentExpenses, locations, ca
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-16 animate-in fade-in duration-700 pb-32">
       
-      {/* 1. TOP SECTION: SUMMAY CARDS (OLD ELITE STYLE) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* 1. TOP SECTION: SUMMAY CARDS */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard 
-          title="Brüt Ciro" 
+          title="Toplam Brüt Ciro" 
           value={formatCurrency(stats.revenue)} 
-          subtitle="Aylık Toplam Hacim"
-          trend="+12.4%"
+          subtitle="Platform Tüm Zamanlar"
+          trend="+14.2%"
           isPositive={true}
           icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
         />
         <StatCard 
-          title="Operasyonel Gider" 
+          title="Toplam Gider Payı" 
           value={formatCurrency(stats.expense)} 
-          subtitle="Yönetilebilir Maliyet"
-          trend="-2.1%"
+          subtitle="Tüm Operasyonel Çıkışlar"
+          trend="-3.1%"
           isPositive={false}
           icon={<TrendingDown className="w-5 h-5 text-rose-500" />}
         />
         <StatCard 
-          title="Net Kâr (P&L)" 
+          title="Kümülatif Net Kâr" 
           value={formatCurrency(stats.profit)} 
-          subtitle="Net İşletme Kazancı"
-          trend="+8.1%"
+          subtitle="Yatırım Geri Dönüş Payı"
+          trend="+9.4%"
           isPositive={true}
           icon={<Wallet className="w-5 h-5 text-blue-500" />}
         />
         <StatCard 
-          title="Verimlilik Skoru" 
+          title="Global ROI Oranı" 
           value={`%${stats.roi.toFixed(1)}`} 
-          subtitle="Yatırım Verimliliği"
-          trend="+0.4%"
+          subtitle="Maliyet / Verimlilik Dengesi"
+          trend="+1.2%"
           isPositive={true}
-          icon={<Target className="w-5 h-5 text-amber-500" />}
+          icon={<Target className="w-5 h-5 text-amber-400" />}
         />
       </section>
 
-      {/* RECENT TRANSACTIONS TABLE (VERCEL STYLE) */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-           <div className="space-y-1">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                 <Receipt className="w-5 h-5 text-slate-400" />
-                 Son Finansal Kayıtlar
-              </h2>
-              <p className="text-sm text-slate-500 font-medium">Platform genelindeki son 10 harcama verisi.</p>
-           </div>
-           <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all hover:scale-[1.02] shadow-lg shadow-slate-200"
-              >
-                 <Plus size={16} />
-                 Yeni Gider
-              </button>
+      {/* 2. STRATEGIC MATRIX & CHART (Elite Viz) */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
+        <div className="xl:col-span-4 flex flex-col gap-8">
+           <div className="premium-card p-10 bg-white border border-slate-200 rounded-[48px] h-full flex flex-col justify-between shadow-sm">
+              <div className="space-y-4">
+                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                    <Activity size={24} />
+                 </div>
+                 <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic">Operasyonel Nabız</h3>
+                 <p className="text-xs text-slate-400 font-bold italic leading-relaxed">Platform genelindeki gelir ve kâr trendinin aylık asenkron simülasyonu.</p>
+              </div>
+              
+              <div className="h-64 mt-10">
+                 <PremiumTrendChart data={chartData} />
+              </div>
+              
+              <div className="pt-6 border-t border-slate-50 mt-6 flex items-center justify-between">
+                 <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Gelir</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Net Kâr</span>
+                 </div>
+              </div>
            </div>
         </div>
+
+        <div className="xl:col-span-8">
+           <div className="space-y-4 mb-6 px-1">
+              <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
+                 <Target className="w-6 h-6 text-blue-500" />
+                 Şube Bazlı Stratejik Analiz
+              </h2>
+              <p className="text-sm text-slate-500 font-bold italic">Her lokasyonun kârlılık eşiği ve yatırım amortisman durumuna göre performans matrisi.</p>
+           </div>
+           <StrategicMatrix insights={insights} />
+        </div>
+      </section>
+
+      {/* 3. SIMULATOR & RECENT TRANSACTIONS */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-12">
+        <div className="xl:col-span-7 space-y-6">
+           <div className="flex items-center justify-between px-1">
+               <div className="space-y-1">
+                 <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
+                    <Calculator size={24} className="text-slate-400" />
+                    Finansal Projeksiyon & Senaryo
+                 </h2>
+                 <p className="text-xs text-slate-400 font-bold italic">Seans sayılarına göre gelecek kârlılık beklentisini simüle edin.</p>
+               </div>
+           </div>
+           <div className="p-1 rounded-[40px] bg-slate-900 shadow-2xl">
+              <FinancialSimulator defaultParams={defaultParams} />
+           </div>
+        </div>
+
+                <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg italic"
+                >
+                   <Plus size={16} strokeWidth={3} />
+                   Yeni Gider
+                </button>
+           </div>
+
+           <div className="bg-white border border-slate-200 rounded-[40px] overflow-hidden shadow-sm">
 
         <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
            <table className="w-full text-left border-collapse">

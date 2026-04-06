@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Plus, 
   ArrowUpRight, 
@@ -16,13 +16,19 @@ import {
   ChevronRight,
   ShieldCheck,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  UploadCloud,
+  Loader2,
+  FileText,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import PremiumExpenseTable from '@/components/premium/PremiumExpenseTable';
+import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
 
 interface ExpensesClientProps {
   expenses: any[];
@@ -37,9 +43,36 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
+
+  const handleLateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedExpense) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const upload = await uploadExpenseAttachment(formData);
+      if (!upload.success || !upload.publicUrl) throw new Error(upload.error || 'Yükleme başarısız');
+
+      const update = await updateExpenseAttachment(selectedExpense.id, upload.publicUrl);
+      if (!update.success) throw new Error(update.error);
+
+      alert('Belge başarıyla eklendi.');
+      setIsDrawerOpen(false);
+      window.location.reload();
+    } catch (err: any) {
+      alert('Hata: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
@@ -153,27 +186,64 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
                 </div>
              </div>
 
-             {/* Document/Receipt Section Placeholder */}
+             {/* Document/Receipt Section */}
              <div className="space-y-4 px-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic border-b border-slate-50 pb-2">Harcama Belgesi (Attachment)</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic border-b border-slate-50 pb-2 flex items-center gap-2">
+                   <FileText size={14} className="text-blue-500" />
+                   BELGE / KANIT DURUMU
+                </h4>
+                
                 {selectedExpense.attachmentUrl ? (
                    <a 
                      href={selectedExpense.attachmentUrl} 
                      target="_blank" 
-                     className="block w-full p-4 bg-white border border-slate-200 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-colors group shadow-sm"
+                     className="block w-full p-6 bg-emerald-50 border border-emerald-100 rounded-3xl flex items-center justify-between group shadow-sm transition-all hover:bg-emerald-100/50"
                    >
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <Download size={20} />
+                      <div className="flex items-center gap-4">
+                         <div className="p-3 bg-white text-emerald-600 rounded-2xl shadow-sm border border-emerald-100 group-hover:scale-110 transition-transform">
+                            <CheckCircle2 size={24} />
+                         </div>
+                         <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Belge Mevcut</span>
+                            <span className="text-[9px] font-bold text-emerald-600/70 uppercase">Cloud Store'da Güvenli</span>
+                         </div>
                       </div>
-                      <div className="flex flex-col">
-                         <span className="text-xs font-black text-slate-900 tracking-widest uppercase italic">Evrağı Görüntüle</span>
-                         <span className="text-[9px] font-medium text-slate-400 tracking-widest uppercase">Cloud Store'da Saklanıyor</span>
-                      </div>
+                      <ChevronRight size={20} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
                    </a>
                 ) : (
-                   <div className="p-10 border-2 border-dashed border-slate-100 rounded-[32px] flex flex-col items-center justify-center text-center space-y-3 bg-slate-50/30">
-                      <ShieldCheck size={40} className="text-slate-200" strokeWidth={1.5} />
-                      <p className="text-xs font-black text-slate-300 uppercase tracking-[0.2em]">Belge Yüklenmemiş</p>
+                   <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-5 rounded-3xl bg-rose-50 border border-rose-100">
+                         <AlertCircle size={20} className="text-rose-500" />
+                         <span className="text-[10px] font-black text-rose-700 uppercase tracking-widest">Henüz Belge Eklenmedi</span>
+                      </div>
+                      
+                      <input 
+                        type="file" 
+                        ref={fileRef} 
+                        onChange={handleLateUpload} 
+                        className="hidden" 
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      />
+                      
+                      <button 
+                        onClick={() => fileRef.current?.click()}
+                        disabled={isUploading}
+                        className="w-full flex items-center justify-center gap-4 py-6 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all text-[11px] font-black uppercase tracking-widest italic group"
+                      >
+                         {isUploading ? (
+                           <>
+                             <Loader2 size={18} className="animate-spin" />
+                             DOSYA BULUT KATMANINA YÜKLENİYOR...
+                           </>
+                         ) : (
+                           <>
+                             <div className="p-2 rounded-xl bg-slate-100 group-hover:bg-blue-100 transition-colors">
+                                <UploadCloud size={20} />
+                             </div>
+                             BELGE / FATURA EKLE (PDF/GÖRSEL)
+                           </>
+                         )}
+                      </button>
                    </div>
                 )}
              </div>

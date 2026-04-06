@@ -175,6 +175,14 @@ export default async function DashboardPage() {
     profit: data.profit
   })).slice(-6);
 
+  const defaultParams = {
+    sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
+    fixedRent: 40000, // Average or fallback
+    duesAmount: 6000,
+    revenueShareRate: 15,
+    investmentAmount: totalInvestment / activeLocationCount || 350000
+  };
+
   return (
     <DashboardClientUI 
       stats={stats} 
@@ -182,6 +190,8 @@ export default async function DashboardPage() {
       locations={activeLocations} 
       categories={[]} 
       chartData={chartData}
+      insights={insights}
+      defaultParams={defaultParams}
     />
   );
 }

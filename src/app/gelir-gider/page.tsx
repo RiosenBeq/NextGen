@@ -133,6 +133,7 @@ export default async function GelirGiderPage(props: {
       fixedRent: loc.fixedRent,
       duesAmount: loc.duesAmount,
       revenueShareRate: loc.revenueShareRate || 15,
+      month: perfMonthStr,
     });
 
     const entry = {

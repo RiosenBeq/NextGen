@@ -114,6 +114,7 @@ export default async function FinansalTablo({
         sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
         revenueShareRate: loc.revenueShareRate || 15,
+        month: perfMonthStr,
       });
 
       if (!avmSummaries[loc.id]) {
@@ -170,7 +171,8 @@ export default async function FinansalTablo({
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 40000,
         duesAmount: loc.duesAmount || 6000,
-        revenueShareRate: loc.revenueShareRate || 15
+        revenueShareRate: loc.revenueShareRate || 15,
+        month: filterMonth !== 'all' ? filterMonth : undefined,
       });
       const locRecurring = recurringGlobalTotal / locs.length;
       mockNetCash += (mockCalc.netCash - locRecurring);

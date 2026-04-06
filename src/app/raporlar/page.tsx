@@ -92,6 +92,7 @@ export default async function ReportsPage({
       fixedRent: perf.location.fixedRent,
       duesAmount: perf.location.duesAmount,
       revenueShareRate: perf.location.revenueShareRate || 15,
+      month: perfMonthId,
     });
 
     return {
@@ -165,4 +166,3 @@ export default async function ReportsPage({
     </div>
   );
 }
-

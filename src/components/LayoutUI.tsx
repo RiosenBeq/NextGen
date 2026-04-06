@@ -23,7 +23,6 @@ import {
   Zap,
   LogOut,
   Calendar,
-  Building2,
   Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +40,7 @@ const navLinks = [
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finansal Analiz" },
   { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
   { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finansal Analiz" },
+  { href: "/sozlesmeler", label: "Sözleşmeler", icon: FileText, category: "Finansal Analiz" },
   { href: "/notlar", label: "Notlar", icon: FileText, category: "Destek" },
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },

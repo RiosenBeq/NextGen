@@ -144,6 +144,7 @@ export default async function DashboardPage() {
       fixedRent: loc.fixedRent,
       duesAmount: loc.duesAmount,
       revenueShareRate: loc.revenueShareRate || 15,
+      month: perfMonthStr,
     });
 
     const monthKey = new Date(perf.month).toLocaleDateString('tr-TR', { month: 'short' });

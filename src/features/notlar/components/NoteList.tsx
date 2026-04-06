@@ -39,15 +39,12 @@ export default function NoteList({ initialNotes }: Props) {
     }
   };
 
-  const getCardColor = (color: string) => {
-    switch (color) {
-      case 'zinc': return 'bg-white border-slate-200';
-      case 'blue': return 'bg-blue-50/50 border-blue-100';
-      case 'emerald': return 'bg-emerald-50/50 border-emerald-100';
-      case 'amber': return 'bg-amber-50/50 border-amber-100';
-      case 'rose': return 'bg-rose-50/50 border-rose-100';
-      default: return 'bg-white border-slate-200';
-    }
+  const themes: Record<string, any> = {
+    zinc: { card: "bg-white border-slate-200", icon: "bg-slate-900", accent: "text-slate-900" },
+    blue: { card: "bg-blue-50/30 border-blue-100 backdrop-blur-sm", icon: "bg-blue-600", accent: "text-blue-600" },
+    emerald: { card: "bg-emerald-50/30 border-emerald-100 backdrop-blur-sm", icon: "bg-emerald-600", accent: "text-emerald-600" },
+    amber: { card: "bg-amber-50/30 border-amber-100 backdrop-blur-sm", icon: "bg-amber-600", accent: "text-amber-600" },
+    rose: { card: "bg-rose-50/30 border-rose-100 backdrop-blur-sm", icon: "bg-rose-600", accent: "text-rose-600" },
   };
 
   const filteredNotes = notes.filter(n => 
@@ -56,106 +53,125 @@ export default function NoteList({ initialNotes }: Props) {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 pb-20">
       
-      {/* Search & Add Bar */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-50 border border-slate-200 p-4 rounded-3xl">
-        <div className="relative flex-1 md:w-80 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+      {/* Search & Action Bar */}
+      <div className="flex flex-col lg:flex-row gap-6 justify-between items-center px-4">
+        <div className="relative flex-1 w-full lg:max-w-md group">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
+             <Search size={20} />
+          </div>
           <input 
             type="text" 
-            placeholder="Notlarda ara..." 
+            placeholder="Kurumsal hafızada ara..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
+            className="w-full pl-16 pr-8 py-4 bg-white border border-slate-200 rounded-[28px] text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all outline-none shadow-sm placeholder:text-slate-300"
           />
         </div>
-        <button 
-          onClick={() => setIsAdding(true)}
-          className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-        >
-          <Plus size={18} />
-          Yeni Not Ekle
-        </button>
+        
+        <div className="flex items-center gap-4 w-full lg:w-auto">
+           <button 
+             onClick={() => setIsAdding(true)}
+             className="flex-1 lg:flex-none px-8 h-14 bg-slate-900 text-white rounded-2xl text-[11px] font-bold uppercase tracking-[0.15em] shadow-xl shadow-slate-100 hover:bg-slate-800 transition-all flex items-center justify-center gap-3 active:scale-95"
+           >
+             <Plus size={18} />
+             YENİ PROTOKOL TANIMLA
+           </button>
+        </div>
       </div>
 
-      {/* Note Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {/* Staggered Masonry Grid */}
+      <div className="columns-1 md:columns-2 xl:columns-3 gap-8 space-y-8 px-4">
         <AnimatePresence mode="popLayout">
-          {filteredNotes.length === 0 && !isAdding && (
-            <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-[32px] bg-slate-50/50 flex flex-col items-center gap-3">
-              <Search size={32} className="text-slate-200" />
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Henüz bir kayıt bulunamadı.</p>
-            </div>
-          )}
+           {filteredNotes.length === 0 && !isAdding && (
+             <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               className="col-span-full py-32 text-center border-2 border-dashed border-slate-200 rounded-[48px] bg-slate-50/50 flex flex-col items-center gap-6"
+             >
+               <div className="w-20 h-20 rounded-3xl bg-white border border-slate-100 flex items-center justify-center text-slate-200 shadow-sm">
+                  <StickyNote size={32} />
+               </div>
+               <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-600 uppercase tracking-widest italic">Henüz Bir Veri Girişi Yapılmadı</p>
+                  <p className="text-[10px] font-medium text-slate-400">Sistem genelindeki tüm notlar burada listelenir.</p>
+               </div>
+             </motion.div>
+           )}
 
-          {filteredNotes.map((note, idx) => (
-            <motion.div
-              layout
-              key={note.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className={cn(
-                "group p-8 rounded-[32px] border shadow-sm transition-all duration-300 flex flex-col justify-between h-full min-h-[220px] relative",
-                getCardColor(note.color)
-              )}
-            >
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-lg", 
-                    note.color === 'blue' ? 'bg-blue-600 text-white' : 
-                    note.color === 'emerald' ? 'bg-emerald-600 text-white' :
-                    note.color === 'amber' ? 'bg-amber-600 text-white' :
-                    note.color === 'rose' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white'
-                  )}>
-                    <StickyNote size={20} />
-                  </div>
-                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setEditingNote(note); }}
-                      className="p-2 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
-                      className="p-2 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-rose-600 transition-all shadow-sm"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                   <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight line-clamp-1">{note.title}</h3>
-                   {note.content && (
-                     <p className="text-sm text-slate-500 font-medium leading-relaxed italic line-clamp-4">{note.content}</p>
-                   )}
-                </div>
-              </div>
+           {filteredNotes.map((note, idx) => {
+             const theme = themes[note.color] || themes.zinc;
+             return (
+               <motion.div
+                 layout
+                 key={note.id}
+                 initial={{ opacity: 0, y: 30 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.9 }}
+                 transition={{ duration: 0.4, delay: idx * 0.05 }}
+                 className={cn(
+                   "break-inside-avoid group p-8 rounded-[40px] border shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between relative",
+                   theme.card
+                 )}
+               >
+                 <div className="space-y-6">
+                   <div className="flex justify-between items-start">
+                     <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-6", theme.icon, "text-white")}>
+                       <StickyNote size={24} />
+                     </div>
+                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); setEditingNote(note); }}
+                         className="w-10 h-10 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm flex items-center justify-center"
+                       >
+                         <Edit2 size={16} />
+                       </button>
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
+                         className="w-10 h-10 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100 transition-all shadow-sm flex items-center justify-center"
+                       >
+                         <Trash2 size={16} />
+                       </button>
+                     </div>
+                   </div>
+                   
+                   <div className="space-y-3">
+                      <h3 className="font-bold text-slate-900 text-xl tracking-tight leading-tight">{note.title}</h3>
+                      {note.content && (
+                        <p className="text-sm text-slate-500 font-medium leading-relaxed italic">
+                           {note.content}
+                        </p>
+                      )}
+                   </div>
+                 </div>
 
-              <footer className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-slate-300" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
-                      {new Date(note.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-slate-300">#{note.color}</div>
-              </footer>
-            </motion.div>
-          ))}
+                 <footer className="mt-10 pt-6 border-t border-slate-100/50 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300">
+                          <Clock size={14} />
+                       </div>
+                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
+                         {new Date(note.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                       </span>
+                     </div>
+                     <div className={cn("text-[9px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full", theme.accent, "bg-white/50 border border-current opacity-20")}>
+                        {note.color}
+                     </div>
+                 </footer>
+               </motion.div>
+             );
+           })}
         </AnimatePresence>
       </div>
 
       <PremiumModal 
         isOpen={isAdding || !!editingNote} 
         onClose={() => { setIsAdding(false); setEditingNote(null); }} 
-        title={editingNote ? "Notu Düzenle" : "Yeni Not Tanımla"}
+        title={editingNote ? "Kaydı Güncelle" : "Yeni Sistem Notu"}
         maxWidth="max-w-xl"
       >
-        <div className="p-8">
+        <div className="p-2">
            <NoteForm 
              initialData={editingNote} 
              onClose={() => {

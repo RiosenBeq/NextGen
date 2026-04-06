@@ -23,12 +23,14 @@ import {
   Bell,
   Cpu,
   Monitor,
-  Loader2
+  Loader2,
+  User 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
 import { LocationSettingsForm } from '@/features/ledger/components/LocationSettingsForm';
+import { ProfileSettingsForm } from '@/features/auth/components/ProfileSettingsForm';
 import { createSystemUser, deleteSystemUser } from '@/features/auth/admin-actions';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 
@@ -40,7 +42,7 @@ interface SettingsClientProps {
 }
 
 export default function SettingsClientUI({ locations, parameters, users, currentUser }: SettingsClientProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'locations' | 'users'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'locations' | 'users' | 'profile'>('general');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -108,6 +110,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
                <TabButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} icon={<Sliders size={18} />} label="Genel Yapılandırma" />
                <TabButton active={activeTab === 'locations'} onClick={() => setActiveTab('locations')} icon={<MapPin size={18} />} label="Şube Ayarları" />
                <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="Erişim & Yetki" />
+               <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label="Profil Ayarları" />
             </div>
             
             <div className="pt-6 px-4">
@@ -210,6 +213,13 @@ export default function SettingsClientUI({ locations, parameters, users, current
                            </tbody>
                         </table>
                      </div>
+                  </motion.div>
+               )}
+
+               {activeTab === 'profile' && (
+                  <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                     <SectionHeader title="Kişisel Profilim" icon={<User className="text-blue-600" />} />
+                     <ProfileSettingsForm user={currentUser} />
                   </motion.div>
                )}
             </AnimatePresence>

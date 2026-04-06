@@ -118,7 +118,7 @@ export default function CashFlowClientUI({
         </div>
 
         <div className="bg-white border border-slate-200 rounded-[40px] overflow-hidden shadow-2xl">
-           <div className="overflow-x-auto no-scrollbar">
+           <div className="hidden md:block overflow-x-auto no-scrollbar">
               <table className="w-full text-left border-collapse">
                  <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -192,6 +192,42 @@ export default function CashFlowClientUI({
                     )}
                  </tbody>
               </table>
+           </div>
+
+           <div className="space-y-3 p-4 md:hidden">
+              {initialData.map((row: any, idx: number) => (
+                <div key={row.id || idx} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{row.month}</p>
+                      <p className="text-sm font-semibold text-slate-900">{row.locationName}</p>
+                    </div>
+                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700">{row.sessionCount} seans</span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <p className="text-slate-500">Brüt Ciro</p>
+                    <p className="text-right font-semibold text-slate-900">{formatCurrency(row.grossRevenue)}</p>
+                    <p className="text-slate-500">Toplam Gider</p>
+                    <p className="text-right font-semibold text-rose-600">{formatCurrency(row.totalExpense)}</p>
+                    <p className="text-slate-500">Net Nakit</p>
+                    <p className={cn("text-right font-bold", row.netCash >= 0 ? "text-emerald-700" : "text-rose-600")}>{formatCurrency(row.netCash)}</p>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button onClick={() => handleEdit(row)} className="rounded-lg border border-slate-200 p-2 text-slate-500">
+                      <Edit2 size={14} />
+                    </button>
+                    <button onClick={() => handleDelete(row.id)} disabled={isLoading} className="rounded-lg border border-slate-200 p-2 text-slate-500 disabled:opacity-50">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {initialData.length === 0 && (
+                <div className="py-10 text-center text-sm text-slate-400">Henüz bir kayıt bulunmuyor.</div>
+              )}
            </div>
         </div>
       </section>

@@ -8,6 +8,7 @@ import {
 import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import FlipFinanceCard from '@/components/premium/FlipFinanceCard';
 
 export const metadata = {
   title: 'Finansal Analiz — NextGenBox',
@@ -241,7 +242,7 @@ export default async function FinansalTablo({
       </header>
 
       {/* KPI Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "Toplam Ciro", value: totalGross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
           { label: "Komisyonlar (%4)", value: totalIyzico + totalNayax, icon: CreditCard, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
@@ -272,37 +273,17 @@ export default async function FinansalTablo({
           <div className="flex-1 section-divider" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {(locations || []).map((loc) => {
-            const locSummary = avmSummaries[loc.id];
             const recurringForLoc = getRecurringTotal(loc.id);
             return (
-              <motion.div key={loc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="premium-card p-5">
-                <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
-                  <Zap className="w-4 h-4" style={{ color: '#2F6BFF' }} />
-                  {loc.name}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                    <span className="text-xs font-medium text-slate-500">Kira (+%20 KDV)</span>
-                    <span className="font-semibold text-slate-900">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                    <span className="text-xs font-medium text-slate-500">Aidat</span>
-                    <span className="font-semibold text-slate-900">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
-                  </div>
-                  {recurringForLoc > 0 && (
-                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                      <span className="text-xs font-medium text-slate-500">Tekrarlayan Giderler</span>
-                      <span className="font-semibold text-red-500">₺{recurringForLoc.toLocaleString('tr-TR')}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Aylık Toplam</span>
-                    <span className="text-lg font-bold text-slate-900">₺{((loc.fixedRent * 1.20) + loc.duesAmount + recurringForLoc).toLocaleString('tr-TR')}</span>
-                  </div>
-                </div>
-              </motion.div>
+              <FlipFinanceCard
+                key={loc.id}
+                locationName={loc.name}
+                fixedRentWithVat={loc.fixedRent * 1.20}
+                duesAmount={loc.duesAmount}
+                recurringExpense={recurringForLoc}
+              />
             );
           })}
         </div>
@@ -322,7 +303,7 @@ export default async function FinansalTablo({
               AVM başına günlük <strong className="text-blue-600">~{Math.ceil(Math.ceil(breakEvenTotal / (locations?.length || 1)) / 30)} seans</strong> gereklidir.
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="data-table">
               <thead>
                 <tr>
@@ -352,6 +333,21 @@ export default async function FinansalTablo({
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
+            {scenarios.map((s: any) => (
+              <div key={s.sessions} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Aylık Oturum</p>
+                  <p className="text-lg font-bold text-slate-900">{s.sessions}</p>
+                </div>
+                <div className="mt-3 space-y-1 text-sm">
+                  <p className="flex items-center justify-between text-slate-600"><span>AVM Başına</span><span className="font-semibold">{Math.round(s.sessions / (locations?.length || 1))}</span></p>
+                  <p className="flex items-center justify-between text-slate-600"><span>Aylık Net Gelir</span><span className="font-semibold">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+                  <p className={cn("flex items-center justify-between font-semibold", s.monthlyProfit >= 0 ? "text-emerald-700" : "text-rose-600")}><span>Kâr / Zarar</span><span>₺{s.monthlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

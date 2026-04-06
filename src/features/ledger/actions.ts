@@ -6,20 +6,41 @@ import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, inves
 import { createAuditLog } from '@/lib/audit';
 import prisma from '@/lib/db';
 
+
+function normalizeMonthInput(monthInput: string | Date) {
+  const parsed = new Date(monthInput);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error('Geçerli bir ay bilgisi girilmelidir.');
+  }
+
+  const normalized = new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), 1, 0, 0, 0, 0));
+  const monthId = `${normalized.getUTCFullYear()}-${String(normalized.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  return {
+    normalizedMonth: normalized.toISOString(),
+    deterministicId: (locationId: string) => `perf_${monthId}_${locationId}`,
+  };
+}
+
 export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   try {
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
 
+    const { normalizedMonth, deterministicId } = normalizeMonthInput(validatedData.month);
+
     const { data: record, error } = await supabase
       .from('MonthlyPerformance')
-      .insert({
-        id: `perf_${crypto.randomUUID()}`,
+      .upsert({
+        id: deterministicId(validatedData.locationId),
         locationId: validatedData.locationId,
-        month: new Date(validatedData.month).toISOString(),
+        month: normalizedMonth,
         sessionCount: validatedData.sessionCount,
         extraExpenseAmount: validatedData.extraExpenseAmount || 0,
         extraExpenseNotes: validatedData.extraExpenseNotes,
+        updatedAt: new Date().toISOString(),
+      }, {
+        onConflict: 'id'
       })
       .select()
       .single();

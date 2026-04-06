@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, TrendingUp, CreditCard, Wallet, X, Repeat, PiggyBank, Landmark } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowUpRight, TrendingUp, CreditCard, Wallet, Repeat, PiggyBank, Landmark, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PremiumModal } from "@/components/premium/PremiumModal";
 
 export default function InteractiveKPICards({
   totalRevenue,
   totalExpense,
   totalInvestment,
+  investmentBreakdown,
   totalNetCash,
   expenses,
   allMonthCount = 1
@@ -16,8 +18,9 @@ export default function InteractiveKPICards({
   totalRevenue: number;
   totalExpense: number;
   totalInvestment: number;
+  investmentBreakdown: Record<string, number>;
   totalNetCash: number;
-  expenses: any[];
+  expenses: Array<{ id: string; description: string; amountWithVat: number; createdAt: string }>;
   allMonthCount?: number;
 }) {
   const absoluteNet = totalNetCash - totalInvestment;
@@ -30,6 +33,9 @@ export default function InteractiveKPICards({
   const [isExpenseFlipped, setIsExpenseFlipped] = useState(false);
   const [isInvestmentFlipped, setIsInvestmentFlipped] = useState(false);
   const [isNetProfitFlipped, setIsNetProfitFlipped] = useState(false);
+  const [isInvestmentModalOpen, setIsInvestmentModalOpen] = useState(false);
+
+  const investmentRows = Object.entries(investmentBreakdown || {}).sort((a, b) => b[1] - a[1]);
 
   // Son 5 gider
   const topExpenses = [...expenses]
@@ -37,6 +43,7 @@ export default function InteractiveKPICards({
     .slice(0, 5);
 
   return (
+    <>
     <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 perspective-1000">
       
       {/* 1. Toplam Ciro */}
@@ -44,7 +51,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="premium-card p-6 stat-card-green group hover:shadow-xl transition-all duration-300"
+        className="premium-card p-6 stat-card-green group hover:shadow-xl transition-all duration-300 min-h-[220px]"
       >
         <div className="flex items-start justify-between mb-6">
           <div className="w-12 h-12 rounded-2xl border flex items-center justify-center bg-emerald-50 border-emerald-100 group-hover:scale-110 transition-transform">
@@ -67,7 +74,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="relative h-full"
+        className="relative min-h-[220px]"
         style={{ perspective: "1000px" }}
       >
         <motion.div
@@ -97,7 +104,7 @@ export default function InteractiveKPICards({
           </div>
 
           {/* BACK FACE */}
-          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-rose-200 bg-gradient-to-b from-rose-50 to-white shadow-xl rotate-y-180">
+          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-rose-200 bg-gradient-to-b from-rose-50 to-white shadow-xl rotate-y-180 overflow-hidden">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-rose-100 pb-2 mb-2 flex items-center justify-between">
               Güncel Harcamalar
               <Repeat size={12} className="text-rose-400 opacity-50" />
@@ -121,7 +128,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="premium-card p-6 stat-card-blue group hover:shadow-xl transition-all duration-300"
+        className="premium-card p-6 stat-card-blue group hover:shadow-xl transition-all duration-300 min-h-[220px]"
       >
         <div className="flex items-start justify-between mb-6">
           <div className="w-12 h-12 rounded-2xl border flex items-center justify-center bg-blue-50 border-blue-100 group-hover:scale-110 transition-transform">
@@ -141,12 +148,12 @@ export default function InteractiveKPICards({
         </div>
       </motion.div>
 
-      {/* 4. Toplam Yatırım (FLIPPABLE) */}
+      {/* 4. Toplam Yatırım (FLIPPABLE + AÇIKLAMA MODAL) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="relative h-full"
+        className="relative min-h-[220px]"
         style={{ perspective: "1000px" }}
       >
         <motion.div
@@ -161,9 +168,21 @@ export default function InteractiveKPICards({
               <div className="w-12 h-12 rounded-2xl border flex items-center justify-center bg-amber-50 border-amber-100 group-hover:scale-110 transition-transform">
                 <Landmark className="w-6 h-6 text-amber-600" />
               </div>
-              <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter bg-amber-100 text-amber-700 flex items-center gap-1">
-                Detay İçin Çevir <Repeat size={10} />
-              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsInvestmentModalOpen(true);
+                  }}
+                  className="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter bg-blue-100 text-blue-700 flex items-center gap-1 hover:bg-blue-200 transition-colors"
+                >
+                  Hesaplama <Info size={10} />
+                </button>
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter bg-amber-100 text-amber-700 flex items-center gap-1">
+                  Detay İçin Çevir <Repeat size={10} />
+                </span>
+              </div>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Toplam Yatırım</p>
@@ -176,26 +195,25 @@ export default function InteractiveKPICards({
           </div>
 
           {/* BACK FACE */}
-          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-blue-200 bg-gradient-to-b from-blue-50 to-white shadow-xl rotate-y-180">
+          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-blue-200 bg-gradient-to-b from-blue-50 to-white shadow-xl rotate-y-180 overflow-hidden">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2 flex items-center justify-between">
               Yatırım Dağılımı
               <Repeat size={12} className="text-blue-400 opacity-50" />
             </h3>
             <div className="flex-1 space-y-3 mt-1">
-               <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
-                 <div className="flex flex-col">
-                   <span className="text-[10px] font-black text-slate-400 uppercase">Mavibahçe (İzmir)</span>
-                   <span className="text-xs font-bold text-slate-700">2 Adet Kabin</span>
-                 </div>
-                 <span className="font-black text-blue-600 text-sm">₺491.375</span>
-               </div>
-               <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
-                 <div className="flex flex-col">
-                   <span className="text-[10px] font-black text-slate-400 uppercase">Zafer Plaza (Bursa)</span>
-                   <span className="text-xs font-bold text-slate-700">1 Adet Kabin</span>
-                 </div>
-                 <span className="font-black text-blue-600 text-sm">₺349.125</span>
-               </div>
+               {investmentRows.length > 0 ? (
+                 investmentRows.map(([lokasyon, tutar]) => (
+                   <div key={lokasyon} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+                     <div className="flex flex-col">
+                       <span className="text-[10px] font-black text-slate-400 uppercase">{lokasyon}</span>
+                       <span className="text-xs font-bold text-slate-700">Toplam yatırım kalemi</span>
+                     </div>
+                     <span className="font-black text-blue-600 text-sm">₺{tutar.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span>
+                   </div>
+                 ))
+               ) : (
+                 <div className="text-xs text-slate-400 text-center mt-6">Yatırım kaydı bulunamadı.</div>
+               )}
             </div>
           </div>
         </motion.div>
@@ -206,7 +224,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="relative h-full"
+        className="relative min-h-[220px]"
         style={{ perspective: "1000px" }}
       >
          <motion.div
@@ -247,7 +265,7 @@ export default function InteractiveKPICards({
             </div>
 
             {/* BACK FACE */}
-            <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-5 border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white shadow-xl rotate-y-180">
+            <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-5 border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white shadow-xl rotate-y-180 overflow-hidden">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-indigo-100 pb-2 mb-3 flex items-center justify-between">
                 Sermaye Geri Dönüşü
                 <Repeat size={12} className="text-indigo-400 opacity-50" />
@@ -269,5 +287,31 @@ export default function InteractiveKPICards({
       </motion.div>
 
     </section>
+    
+    <PremiumModal
+      isOpen={isInvestmentModalOpen}
+      onClose={() => setIsInvestmentModalOpen(false)}
+      title="Toplam Yatırım Hesaplama Detayı"
+      maxWidth="max-w-lg"
+    >
+      <div className="p-6 space-y-4">
+        <p className="text-sm text-slate-600">
+          Toplam yatırım, <b>Investment</b> kayıtlarındaki <b>totalAmount</b> (yoksa amountWithoutVat) alanlarının toplamından hesaplanır.
+        </p>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Toplam Yatırım</p>
+          <p className="text-2xl font-black text-slate-900 mt-1">₺{totalInvestment.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
+        </div>
+        <div className="space-y-2 max-h-60 overflow-auto pr-1">
+          {investmentRows.map(([lokasyon, tutar]) => (
+            <div key={lokasyon} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+              <span className="text-xs font-semibold text-slate-700">{lokasyon}</span>
+              <span className="text-xs font-black text-slate-900">₺{tutar.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PremiumModal>
+    </>
   );
 }

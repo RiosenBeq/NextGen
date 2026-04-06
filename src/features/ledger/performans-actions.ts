@@ -2,7 +2,23 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import { createAuditLog } from '@/lib/audit';
+
+
+function normalizeMonthInput(monthInput: string) {
+  const parsed = new Date(monthInput);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error('Geçersiz ay bilgisi.');
+  }
+
+  const normalized = new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), 1, 0, 0, 0, 0));
+  const monthId = `${normalized.getUTCFullYear()}-${String(normalized.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  return {
+    normalizedMonth: normalized.toISOString(),
+    monthId,
+    deterministicId: (locationId: string) => `perf_${monthId}_${locationId}`,
+  };
+}
 
 export async function upsertDailyPerformance(data: {
   locationId: string;
@@ -69,15 +85,14 @@ async function syncMonthlyPerformance(locationId: string, dateStr: string) {
   const totalSessions = (dailies || []).reduce((acc, curr) => acc + (curr.sessionCount || 0), 0);
 
   // Update MonthlyPerformance (The Financial Table)
-  const monthId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  const deterministicId = `perf_${monthId}_${locationId}`;
+  const { normalizedMonth, deterministicId } = normalizeMonthInput(startOfMonth);
 
   const { error: upsertError } = await supabase
     .from('MonthlyPerformance')
     .upsert({
-      id: deterministicId,
+      id: deterministicId(locationId),
       locationId: locationId,
-      month: startOfMonth,
+      month: normalizedMonth,
       sessionCount: totalSessions,
       updatedAt: new Date().toISOString(),
     }, {
@@ -94,7 +109,7 @@ export async function getDailyPerformanceHistory(locationId: string, limit = 30)
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('DailyPerformance')
-      .select('*')
+      .select('*, location:Location(id,name)')
       .eq('locationId', locationId)
       .order('date', { ascending: false })
       .limit(limit);
@@ -120,27 +135,29 @@ export async function upsertMonthlyPerformance(data: {
   try {
     const supabase = await createClient();
     
-    // Deterministic ID if not provided
-    const date = new Date(data.month);
-    const monthId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const targetId = data.id || `perf_${monthId}_${data.locationId}`;
+    const { normalizedMonth, deterministicId } = normalizeMonthInput(data.month);
+    const targetId = deterministicId(data.locationId);
 
     const { data: record, error } = await supabase
       .from('MonthlyPerformance')
       .upsert({
         id: targetId,
         locationId: data.locationId,
-        month: data.month,
+        month: normalizedMonth,
         sessionCount: data.sessionCount,
         extraExpenseAmount: data.extraExpenseAmount || 0,
         updatedAt: new Date().toISOString(),
+      }, {
+        onConflict: 'id'
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    revalidatePath('/performans');
     revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
     revalidatePath('/');
     
     return { success: true, data: record };
@@ -156,7 +173,9 @@ export async function deleteMonthlyPerformance(id: string) {
     const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
     if (error) throw error;
 
+    revalidatePath('/performans');
     revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -178,8 +197,9 @@ export async function deleteDailyPerformance(id: string, locationId: string, dat
     await syncMonthlyPerformance(locationId, dateStr);
 
     revalidatePath('/performans');
-    revalidatePath('/');
     revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/');
     return { success: true };
   } catch (error: any) {
     console.error("Daily Delete Error:", error);

@@ -8,6 +8,9 @@ import {
 import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import FlipFinanceCard from '@/components/premium/FlipFinanceCard';
+import ScenarioAnalysisSection from '@/components/premium/ScenarioAnalysisSection';
+import FinanceSummaryCards from '@/components/premium/FinanceSummaryCards';
 
 export const metadata = {
   title: 'Finansal Analiz — NextGenBox',
@@ -111,6 +114,7 @@ export default async function FinansalTablo({
         sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
         revenueShareRate: loc.revenueShareRate || 15,
+        month: perfMonthStr,
       });
 
       if (!avmSummaries[loc.id]) {
@@ -151,7 +155,11 @@ export default async function FinansalTablo({
   const scenarios = [200, 370, 500, 750, 1000, 1500, 2000, 3000].map(totalSessions => {
     let mockNetCash = 0;
     let mockOkanShare = 0;
-    
+    let totalRevenueShare = 0;
+    let totalCommissions = 0;
+    let totalRentWithVat = 0;
+    let totalDues = 0;
+
     // Fallback if no locations found in db
     const locs = locations && locations.length > 0 ? locations : [{ fixedRent: 40000, duesAmount: 6000, revenueShareRate: 15 }];
     const sessionsPerLoc = Math.floor(totalSessions / locs.length);
@@ -163,12 +171,17 @@ export default async function FinansalTablo({
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 40000,
         duesAmount: loc.duesAmount || 6000,
-        revenueShareRate: loc.revenueShareRate || 15
+        revenueShareRate: loc.revenueShareRate || 15,
+        month: filterMonth !== 'all' ? filterMonth : undefined,
       });
-      // We deduct the recurring expenses for the simulation
       const locRecurring = recurringGlobalTotal / locs.length;
       mockNetCash += (mockCalc.netCash - locRecurring);
       mockOkanShare += ((mockCalc.netCash - locRecurring) * 0.25);
+
+      totalRevenueShare += mockCalc.revenueShare;
+      totalCommissions += mockCalc.totalCommission;
+      totalRentWithVat += (loc.fixedRent || 40000) * 1.2;
+      totalDues += (loc.duesAmount || 6000);
     }
 
     return {
@@ -177,6 +190,11 @@ export default async function FinansalTablo({
       monthlyProfit: mockNetCash,
       yearlyProfit: mockNetCash * 12,
       monthlyPerPartner: mockOkanShare,
+      totalRevenueShare,
+      totalCommissions,
+      totalRentWithVat,
+      totalDues,
+      totalRecurringOps: recurringGlobalTotal,
     };
   });
 
@@ -185,6 +203,37 @@ export default async function FinansalTablo({
     ? [...new Set(performances.map(p => new Date(p.month).toISOString().slice(0, 7)))]
     : [];
   allMonths.sort().reverse();
+
+  const operationalItems = [
+    ...(expenses || [])
+      .filter((e) => {
+        if (!filterMonth || filterMonth === 'all') return true;
+        const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
+        return expMonth === filterMonth;
+      })
+      .map((e) => ({
+        id: `exp_${e.id}`,
+        label: e.description || 'Gider kaydı',
+        amount: Number(e.amountWithVat || 0),
+        month: e.month ? String(e.month).slice(0, 7) : undefined,
+        location: e.location?.name,
+        source: 'expense' as const,
+      })),
+    ...(performances || [])
+      .filter((p) => Number(p.extraExpenseAmount || 0) > 0)
+      .filter((p) => {
+        if (!filterMonth || filterMonth === 'all') return true;
+        return new Date(p.month).toISOString().slice(0, 7) === filterMonth;
+      })
+      .map((p) => ({
+        id: `manual_${p.id}`,
+        label: p.extraExpenseNotes || 'Manuel ekstra gider',
+        amount: Number(p.extraExpenseAmount || 0),
+        month: new Date(p.month).toISOString().slice(0, 7),
+        location: p.location?.name,
+        source: 'manual' as const,
+      })),
+  ].filter((item) => item.amount > 0);
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
@@ -240,30 +289,14 @@ export default async function FinansalTablo({
         </div>
       </header>
 
-      {/* KPI Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
-          { label: "Toplam Ciro", value: totalGross, icon: TrendingUp, cardClass: "stat-card-green", iconColor: "text-emerald-600", iconBg: "bg-emerald-100 border-emerald-200" },
-          { label: "Komisyonlar (%4)", value: totalIyzico + totalNayax, icon: CreditCard, cardClass: "stat-card-red", iconColor: "text-red-600", iconBg: "bg-red-100 border-red-200" },
-          { label: "AVM Gideri", value: totalAvmExpense, icon: Building2, cardClass: "stat-card-amber", iconColor: "text-amber-600", iconBg: "bg-amber-100 border-amber-200" },
-          { label: "Operasyonel Gider", value: totalExtraExpenseAll, icon: Zap, cardClass: "stat-card-blue", iconColor: "text-blue-600", iconBg: "bg-blue-100 border-blue-200" },
-          { label: "Reel Kazanç", value: totalNetCash, icon: BarChart3, cardClass: totalNetCash >= 0 ? "stat-card-green" : "stat-card-red", iconColor: totalNetCash >= 0 ? "text-emerald-600" : "text-red-600", iconBg: totalNetCash >= 0 ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200" },
-        ].map((kpi, idx) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className={cn("premium-card p-5 border", kpi.cardClass)}
-          >
-            <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center mb-3", kpi.iconBg)}>
-              <kpi.icon className={cn("w-4 h-4", kpi.iconColor)} />
-            </div>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{kpi.label}</p>
-            <h2 className="text-lg font-bold text-slate-900">₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
-          </motion.div>
-        ))}
-      </section>
+      <FinanceSummaryCards
+        totalGross={totalGross}
+        totalCommission={totalIyzico + totalNayax}
+        totalAvmExpense={totalAvmExpense}
+        totalOperational={totalExtraExpenseAll}
+        totalNetCash={totalNetCash}
+        operationalItems={operationalItems}
+      />
 
       {/* Fixed Expenses per AVM */}
       <section className="space-y-4">
@@ -272,89 +305,27 @@ export default async function FinansalTablo({
           <div className="flex-1 section-divider" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {(locations || []).map((loc) => {
-            const locSummary = avmSummaries[loc.id];
             const recurringForLoc = getRecurringTotal(loc.id);
             return (
-              <motion.div key={loc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="premium-card p-5">
-                <h3 className="text-sm font-bold text-slate-900 mb-5 flex items-center gap-2">
-                  <Zap className="w-4 h-4" style={{ color: '#2F6BFF' }} />
-                  {loc.name}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                    <span className="text-xs font-medium text-slate-500">Kira (+%20 KDV)</span>
-                    <span className="font-semibold text-slate-900">₺{(loc.fixedRent * 1.20).toLocaleString('tr-TR')}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                    <span className="text-xs font-medium text-slate-500">Aidat</span>
-                    <span className="font-semibold text-slate-900">₺{loc.duesAmount.toLocaleString('tr-TR')}</span>
-                  </div>
-                  {recurringForLoc > 0 && (
-                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                      <span className="text-xs font-medium text-slate-500">Tekrarlayan Giderler</span>
-                      <span className="font-semibold text-red-500">₺{recurringForLoc.toLocaleString('tr-TR')}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Aylık Toplam</span>
-                    <span className="text-lg font-bold text-slate-900">₺{((loc.fixedRent * 1.20) + loc.duesAmount + recurringForLoc).toLocaleString('tr-TR')}</span>
-                  </div>
-                </div>
-              </motion.div>
+              <FlipFinanceCard
+                key={loc.id}
+                locationName={loc.name}
+                fixedRentWithVat={loc.fixedRent * 1.20}
+                duesAmount={loc.duesAmount}
+                recurringExpense={recurringForLoc}
+              />
             );
           })}
         </div>
       </section>
 
-      {/* Scenario Table */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Senaryo Analizi & Projeksiyon</h2>
-          <div className="flex-1 section-divider" />
-        </div>
-
-        <div className="premium-card overflow-hidden">
-          <div className="p-5 border-b border-slate-100 bg-slate-50">
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Tüm resmi vergiler hariç reel nakit tablosu. Başabaş noktası: <strong className="text-amber-600">{breakEvenTotal} oturum/ay</strong>.
-              AVM başına günlük <strong className="text-blue-600">~{Math.ceil(Math.ceil(breakEvenTotal / (locations?.length || 1)) / 30)} seans</strong> gereklidir.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Aylık Oturum</th>
-                  <th className="text-center">AVM Başına</th>
-                  <th className="text-right">Aylık Net Gelir</th>
-                  <th className="text-right">Aylık Kâr/Zarar</th>
-                  <th className="text-right">Kişi Başı / Ay</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scenarios.map((s: any) => {
-                  const isBreakEven = Math.abs(s.sessions - breakEvenTotal) < 30;
-                  return (
-                    <tr key={s.sessions} className={cn(isBreakEven && "bg-amber-50")}>
-                      <td className="font-semibold text-slate-900">{s.sessions}</td>
-                      <td className="text-center text-slate-500 font-medium">{Math.round(s.sessions / (locations?.length || 1))}</td>
-                      <td className="text-right font-medium text-slate-700">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</td>
-                      <td className={cn("text-right font-bold", s.monthlyProfit >= 0 ? 'text-emerald-700' : 'text-red-600')}>
-                        ₺{s.monthlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                      </td>
-                      <td className={cn("text-right font-bold", s.monthlyPerPartner >= 0 ? 'text-blue-700' : 'text-red-600')}>
-                        ₺{s.monthlyPerPartner.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+      <ScenarioAnalysisSection
+        scenarios={scenarios}
+        breakEvenTotal={breakEvenTotal}
+        locationCount={locations?.length || 1}
+      />
 
       {/* FAQ Section */}
       <section className="space-y-4 pb-8">

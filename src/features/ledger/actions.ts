@@ -644,7 +644,6 @@ export async function toggleExpenseSettled(id: string, currentDesc: string) {
   if (error) return { success: false, error: error.message };
   
   revalidatePath('/giderler');
-  revalidatePath('/avm-odemeleri');
   return { success: true };
 }
 

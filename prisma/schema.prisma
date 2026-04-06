@@ -27,6 +27,7 @@ model Location {
   dailyPerformances DailyPerformance[]
   expenses         Expense[]
   investments      Investment[]
+  avmInvoices      AvmInvoice[]
 }
 
 model DailyPerformance {
@@ -124,4 +125,20 @@ model Document {
   relatedType String   // expense, investment
   relatedId   String
   uploadedAt  DateTime @default(now())
+}
+
+model AvmInvoice {
+  id          String    @id @default(cuid())
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id])
+  invoiceType String
+  amount      Float
+  invoiceDate DateTime
+  dueDate     DateTime?
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime?
+  attachmentUrl String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

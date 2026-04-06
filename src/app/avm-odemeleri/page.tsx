@@ -8,20 +8,20 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-const AVM_KEYWORDS = ['avm', 'kira', 'aidat', 'ciro payı'];
-
 export default async function AvmOdemeleriPage() {
   const supabase = await createClient();
 
-  const { data: expenses } = await supabase
-    .from('Expense')
-    .select('id, description, amountWithVat, paidBy, month, createdAt, location:Location(name)')
-    .order('createdAt', { ascending: false });
+  const [{ data: invoices }, { data: locations }] = await Promise.all([
+    supabase
+      .from('AvmInvoice')
+      .select('id, locationId, invoiceType, amount, invoiceDate, dueDate, isPaid, paidAt, attachmentUrl, notes, createdAt, location:Location(name)')
+      .order('invoiceDate', { ascending: false }),
+    supabase
+      .from('Location')
+      .select('id, name')
+      .eq('isActive', true)
+      .order('name', { ascending: true }),
+  ]);
 
-  const avmExpenses = (expenses || []).filter((item) => {
-    const normalized = (item.description || '').toLowerCase();
-    return AVM_KEYWORDS.some((keyword) => normalized.includes(keyword));
-  });
-
-  return <AvmOdemeleriClientUI expenses={avmExpenses} />;
+  return <AvmOdemeleriClientUI invoices={invoices || []} locations={locations || []} />;
 }

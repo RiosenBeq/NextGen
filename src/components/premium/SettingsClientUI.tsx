@@ -8,31 +8,26 @@ import {
   Users, 
   MapPin, 
   Sliders, 
-  ChevronRight, 
   HelpCircle,
-  Plus,
   Trash2,
   Mail,
   UserPlus,
   Shield,
-  Activity,
   Zap,
   KeySquare,
   Lock,
-  Globe,
-  Bell,
-  Cpu,
-  Monitor,
   Loader2,
-  User 
+  User,
+  Save,
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
 import { LocationSettingsForm } from '@/features/ledger/components/LocationSettingsForm';
 import { ProfileSettingsForm } from '@/features/auth/components/ProfileSettingsForm';
-import { createSystemUser, deleteSystemUser } from '@/features/auth/admin-actions';
-import { PremiumModal, PremiumDrawer } from './PremiumModal';
+import { createSystemUser, deleteSystemUser, updateSystemUserAccess } from '@/features/auth/admin-actions';
+import { PremiumModal } from './PremiumModal';
 
 interface SettingsClientProps {
   locations: any[];
@@ -52,6 +47,15 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'superadmin' | 'user'>('user');
   const [formError, setFormError] = useState('');
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [draftProfiles, setDraftProfiles] = useState<Record<string, { fullName: string; role: 'superadmin' | 'user' }>>(() =>
+    (users || []).reduce((acc: Record<string, { fullName: string; role: 'superadmin' | 'user' }>, user: any) => {
+      acc[user.id] = { fullName: user.fullName || '', role: user.role === 'superadmin' ? 'superadmin' : 'user' };
+      return acc;
+    }, {})
+  );
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +77,42 @@ export default function SettingsClientUI({ locations, parameters, users, current
       window.location.reload();
     }
   };
+
+  const handleDraftChange = (userId: string, key: 'fullName' | 'role', value: string) => {
+    setDraftProfiles((prev) => ({
+      ...prev,
+      [userId]: {
+        fullName: key === 'fullName' ? value : (prev[userId]?.fullName || ''),
+        role: key === 'role' ? (value as 'superadmin' | 'user') : (prev[userId]?.role || 'user'),
+      },
+    }));
+  };
+
+  const handleSaveUser = async (id: string) => {
+    const draft = draftProfiles[id];
+    if (!draft?.fullName?.trim()) {
+      alert('Ad soyad alanı boş bırakılamaz.');
+      return;
+    }
+
+    setSavingUserId(id);
+    const res = await updateSystemUserAccess({
+      userId: id,
+      fullName: draft.fullName.trim(),
+      role: draft.role,
+    });
+
+    if (res.success) {
+      setEditingUserId(null);
+      window.location.reload();
+      return;
+    }
+
+    alert(res.error || 'Kullanıcı güncellenemedi.');
+    setSavingUserId(null);
+  };
+
+  const selectedProfile = users.find((u: any) => u.id === selectedProfileId);
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
@@ -181,32 +221,78 @@ export default function SettingsClientUI({ locations, parameters, users, current
                                              {user.fullName ? user.fullName.substring(0, 2).toUpperCase() : 'US'}
                                           </div>
                                           <div className="flex flex-col">
-                                             <span className="text-sm font-bold text-slate-900 tracking-tight">{user.fullName || '—'}</span>
+                                             {editingUserId === user.id ? (
+                                                <input
+                                                  value={draftProfiles[user.id]?.fullName || ''}
+                                                  onChange={(e) => handleDraftChange(user.id, 'fullName', e.target.value)}
+                                                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                />
+                                             ) : (
+                                                <span className="text-sm font-bold text-slate-900 tracking-tight">{user.fullName || '—'}</span>
+                                             )}
                                              <span className="text-[11px] font-medium text-slate-400">{user.email}</span>
                                           </div>
                                        </div>
                                     </td>
                                     <td className="px-6 py-6 text-center">
-                                       <span className={cn(
-                                          "inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm", 
-                                          user.role === 'superadmin' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                                       )}>
-                                          {user.role === 'superadmin' ? <Shield size={12} /> : <Users size={12} />}
-                                          {user.role === 'superadmin' ? 'SÜPER ADMİN' : 'STANDART YETKİLİ'}
-                                       </span>
+                                       {editingUserId === user.id ? (
+                                          <select
+                                            value={draftProfiles[user.id]?.role || 'user'}
+                                            onChange={(e) => handleDraftChange(user.id, 'role', e.target.value)}
+                                            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-[11px] font-bold uppercase tracking-wider"
+                                          >
+                                            <option value="user">Standart Yetkili</option>
+                                            <option value="superadmin">Süper Admin</option>
+                                          </select>
+                                       ) : (
+                                          <span className={cn(
+                                            "inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm", 
+                                            user.role === 'superadmin' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                          )}>
+                                            {user.role === 'superadmin' ? <Shield size={12} /> : <Users size={12} />}
+                                            {user.role === 'superadmin' ? 'SÜPER ADMİN' : 'STANDART YETKİLİ'}
+                                          </span>
+                                       )}
                                     </td>
                                     <td className="px-8 py-6 text-right">
-                                       {user.id !== currentUser?.id ? (
-                                          <button 
-                                             onClick={() => handleDeleteUser(user.id)} 
-                                             className="p-3 rounded-xl border border-slate-100 text-slate-300 hover:text-rose-600 hover:bg-white hover:border-rose-100 transition-all opacity-0 group-hover:opacity-100"
-                                             title="Erişimi Kaldır"
+                                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <button
+                                            onClick={() => setSelectedProfileId(user.id)}
+                                            className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200"
+                                            title="Profili görüntüle"
                                           >
-                                             <Trash2 size={18} />
+                                            <Eye size={16} />
                                           </button>
-                                       ) : (
-                                          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest italic pr-4">SİZİN HESABINIZ</span>
-                                       )}
+                                          {editingUserId === user.id ? (
+                                            <button
+                                              onClick={() => handleSaveUser(user.id)}
+                                              disabled={savingUserId === user.id}
+                                              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-60"
+                                            >
+                                              {savingUserId === user.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                              Kaydet
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={() => setEditingUserId(user.id)}
+                                              className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-900"
+                                              title="Yetkiyi düzenle"
+                                            >
+                                              <ShieldCheck size={16} />
+                                            </button>
+                                          )}
+                                          {user.id !== currentUser?.id ? (
+                                            <button 
+                                              onClick={() => handleDeleteUser(user.id)} 
+                                              className="p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100"
+                                              title="Erişimi Kaldır"
+                                            >
+                                              <Trash2 size={16} />
+                                            </button>
+                                          ) : (
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest italic px-2">SİZ</span>
+                                          )}
+                                       </div>
                                     </td>
                                  </tr>
                               ))}
@@ -260,6 +346,56 @@ export default function SettingsClientUI({ locations, parameters, users, current
          </form>
       </PremiumModal>
 
+      <PremiumModal
+        isOpen={Boolean(selectedProfile)}
+        onClose={() => setSelectedProfileId(null)}
+        title="Profil Yönetimi"
+        maxWidth="max-w-lg"
+      >
+        {selectedProfile && (
+          <div className="p-6 space-y-6">
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-sm",
+                selectedProfile.role === 'superadmin' ? 'bg-slate-900 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'
+              )}>
+                {selectedProfile.fullName ? selectedProfile.fullName.substring(0, 2).toUpperCase() : 'US'}
+              </div>
+              <div>
+                <p className="text-base font-bold text-slate-900">{selectedProfile.fullName || 'İsimsiz Kullanıcı'}</p>
+                <p className="text-xs text-slate-500">{selectedProfile.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <InfoItem label="Rol" value={selectedProfile.role === 'superadmin' ? 'Süper Admin' : 'Standart Yetkili'} />
+              <InfoItem
+                label="Son Giriş"
+                value={selectedProfile.lastSignIn ? new Date(selectedProfile.lastSignIn).toLocaleString('tr-TR') : 'Kayıt Yok'}
+              />
+              <InfoItem
+                label="Kayıt Tarihi"
+                value={selectedProfile.createdAt ? new Date(selectedProfile.createdAt).toLocaleDateString('tr-TR') : '—'}
+              />
+              <InfoItem label="Kullanıcı ID" value={selectedProfile.id.slice(0, 8)} />
+            </div>
+
+            <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3">
+              Yetki ve ad-soyad güncellemeleri için kullanıcı satırındaki <b>kalkan</b> ikonunu kullanabilirsiniz.
+            </p>
+          </div>
+        )}
+      </PremiumModal>
+
+    </div>
+  );
+}
+
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3">
+      <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">{label}</p>
+      <p className="text-sm font-semibold text-slate-800 mt-1 break-words">{value}</p>
     </div>
   );
 }

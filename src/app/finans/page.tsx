@@ -9,6 +9,7 @@ import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import FlipFinanceCard from '@/components/premium/FlipFinanceCard';
+import ScenarioAnalysisSection from '@/components/premium/ScenarioAnalysisSection';
 
 export const metadata = {
   title: 'Finansal Analiz — NextGenBox',
@@ -289,68 +290,11 @@ export default async function FinansalTablo({
         </div>
       </section>
 
-      {/* Scenario Table */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Senaryo Analizi & Projeksiyon</h2>
-          <div className="flex-1 section-divider" />
-        </div>
-
-        <div className="premium-card overflow-hidden">
-          <div className="p-5 border-b border-slate-100 bg-slate-50">
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Tüm resmi vergiler hariç reel nakit tablosu. Başabaş noktası: <strong className="text-amber-600">{breakEvenTotal} oturum/ay</strong>.
-              AVM başına günlük <strong className="text-blue-600">~{Math.ceil(Math.ceil(breakEvenTotal / (locations?.length || 1)) / 30)} seans</strong> gereklidir.
-            </p>
-          </div>
-          <div className="hidden md:block overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Aylık Oturum</th>
-                  <th className="text-center">AVM Başına</th>
-                  <th className="text-right">Aylık Net Gelir</th>
-                  <th className="text-right">Aylık Kâr/Zarar</th>
-                  <th className="text-right">Kişi Başı / Ay</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scenarios.map((s: any) => {
-                  const isBreakEven = Math.abs(s.sessions - breakEvenTotal) < 30;
-                  return (
-                    <tr key={s.sessions} className={cn(isBreakEven && "bg-amber-50")}>
-                      <td className="font-semibold text-slate-900">{s.sessions}</td>
-                      <td className="text-center text-slate-500 font-medium">{Math.round(s.sessions / (locations?.length || 1))}</td>
-                      <td className="text-right font-medium text-slate-700">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</td>
-                      <td className={cn("text-right font-bold", s.monthlyProfit >= 0 ? 'text-emerald-700' : 'text-red-600')}>
-                        ₺{s.monthlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                      </td>
-                      <td className={cn("text-right font-bold", s.monthlyPerPartner >= 0 ? 'text-blue-700' : 'text-red-600')}>
-                        ₺{s.monthlyPerPartner.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
-            {scenarios.map((s: any) => (
-              <div key={s.sessions} className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Aylık Oturum</p>
-                  <p className="text-lg font-bold text-slate-900">{s.sessions}</p>
-                </div>
-                <div className="mt-3 space-y-1 text-sm">
-                  <p className="flex items-center justify-between text-slate-600"><span>AVM Başına</span><span className="font-semibold">{Math.round(s.sessions / (locations?.length || 1))}</span></p>
-                  <p className="flex items-center justify-between text-slate-600"><span>Aylık Net Gelir</span><span className="font-semibold">₺{s.monthlyNet.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
-                  <p className={cn("flex items-center justify-between font-semibold", s.monthlyProfit >= 0 ? "text-emerald-700" : "text-rose-600")}><span>Kâr / Zarar</span><span>₺{s.monthlyProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ScenarioAnalysisSection
+        scenarios={scenarios}
+        breakEvenTotal={breakEvenTotal}
+        locationCount={locations?.length || 1}
+      />
 
       {/* FAQ Section */}
       <section className="space-y-4 pb-8">

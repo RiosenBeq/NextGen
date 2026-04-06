@@ -51,7 +51,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="premium-card p-6 stat-card-green group hover:shadow-xl transition-all duration-300"
+        className="premium-card p-6 stat-card-green group hover:shadow-xl transition-all duration-300 min-h-[220px]"
       >
         <div className="flex items-start justify-between mb-6">
           <div className="w-12 h-12 rounded-2xl border flex items-center justify-center bg-emerald-50 border-emerald-100 group-hover:scale-110 transition-transform">
@@ -74,7 +74,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="relative h-full"
+        className="relative min-h-[220px]"
         style={{ perspective: "1000px" }}
       >
         <motion.div
@@ -104,7 +104,7 @@ export default function InteractiveKPICards({
           </div>
 
           {/* BACK FACE */}
-          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-rose-200 bg-gradient-to-b from-rose-50 to-white shadow-xl rotate-y-180">
+          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-rose-200 bg-gradient-to-b from-rose-50 to-white shadow-xl rotate-y-180 overflow-hidden">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-rose-100 pb-2 mb-2 flex items-center justify-between">
               Güncel Harcamalar
               <Repeat size={12} className="text-rose-400 opacity-50" />
@@ -128,7 +128,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="premium-card p-6 stat-card-blue group hover:shadow-xl transition-all duration-300"
+        className="premium-card p-6 stat-card-blue group hover:shadow-xl transition-all duration-300 min-h-[220px]"
       >
         <div className="flex items-start justify-between mb-6">
           <div className="w-12 h-12 rounded-2xl border flex items-center justify-center bg-blue-50 border-blue-100 group-hover:scale-110 transition-transform">
@@ -153,7 +153,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="relative h-full"
+        className="relative min-h-[220px]"
         style={{ perspective: "1000px" }}
       >
         <motion.div
@@ -195,7 +195,7 @@ export default function InteractiveKPICards({
           </div>
 
           {/* BACK FACE */}
-          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-blue-200 bg-gradient-to-b from-blue-50 to-white shadow-xl rotate-y-180">
+          <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-4 border border-blue-200 bg-gradient-to-b from-blue-50 to-white shadow-xl rotate-y-180 overflow-hidden">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2 flex items-center justify-between">
               Yatırım Dağılımı
               <Repeat size={12} className="text-blue-400 opacity-50" />
@@ -224,7 +224,7 @@ export default function InteractiveKPICards({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="relative h-full"
+        className="relative min-h-[220px]"
         style={{ perspective: "1000px" }}
       >
          <motion.div
@@ -265,7 +265,7 @@ export default function InteractiveKPICards({
             </div>
 
             {/* BACK FACE */}
-            <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-5 border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white shadow-xl rotate-y-180">
+            <div className="absolute inset-0 backface-hidden flex flex-col premium-card p-5 border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white shadow-xl rotate-y-180 overflow-hidden">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-indigo-100 pb-2 mb-3 flex items-center justify-between">
                 Sermaye Geri Dönüşü
                 <Repeat size={12} className="text-indigo-400 opacity-50" />

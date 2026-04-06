@@ -300,7 +300,7 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
   try {
     const supabase = await createClient();
     
-    // 1. Update the Expense record
+    // 1. Always persist attachment on expense first.
     const { error: updateError } = await supabase
       .from('Expense')
       .update({ attachmentUrl: fileUrl })
@@ -308,7 +308,8 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
 
     if (updateError) throw updateError;
 
-    // 2. Create the Document record for traceability
+    // 2. Best-effort: keep a Document shadow record for traceability.
+    //    In some deployments this table/policy may be missing or restricted.
     const { error: docError } = await supabase
       .from('Document')
       .insert({
@@ -318,18 +319,22 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
         relatedId: id
       });
 
-    if (docError) throw docError;
+    if (docError) {
+      console.warn('Document insert skipped after successful attachment update:', docError.message);
+    }
 
     await createAuditLog('UPDATE', 'Expense', id, {
        action: 'ATTACH_DOCUMENT',
-       fileUrl
+       fileUrl,
+       documentSynced: !docError,
     });
 
+    revalidatePath('/faturalar');
     revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
     
-    return { success: true };
+    return { success: true, warning: docError ? 'Belge dosyaya bağlandı; Document kaydı oluşturulamadı.' : undefined };
   } catch (error: any) {
     console.error("Update Attachment Error:", error);
     return { success: false, error: String(error?.message || 'Bağlantı hatası.') };

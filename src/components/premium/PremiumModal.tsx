@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +9,7 @@ interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   children: React.ReactNode;
   maxWidth?: string;
 }
@@ -17,19 +18,22 @@ export function PremiumModal({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
-  maxWidth = 'max-w-lg',
+  maxWidth = 'max-w-2xl',
 }: PremiumModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
     };
+
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
+
     return () => {
       window.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
@@ -39,47 +43,49 @@ export function PremiumModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop Blur Layer */}
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-md"
+            aria-hidden
           />
 
-          {/* Modal Content */}
-          <motion.div
-            ref={modalRef}
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+          <motion.section
+            role="dialog"
+            aria-modal="true"
+            ref={contentRef}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 260 }}
             className={cn(
-              "relative w-full bg-white rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col border border-slate-100",
-              maxWidth
+              'relative w-full rounded-3xl border border-slate-200 bg-white shadow-[0_32px_80px_-24px_rgba(2,6,23,0.35)] overflow-hidden',
+              maxWidth,
             )}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
-            {/* Header */}
-            <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100/50">
-               {title ? (
-                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">{title}</h3>
-               ) : <div />}
-               <button
-                 onClick={onClose}
-                 className="p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all active:scale-95 group"
-               >
-                 <X size={20} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-300" />
-               </button>
+            <div className="relative px-6 md:px-8 py-5 md:py-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+              <div className="pr-12">
+                {title && <h3 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">{title}</h3>}
+                {subtitle && <p className="text-xs md:text-sm text-slate-500 mt-1">{subtitle}</p>}
+              </div>
+
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 md:right-5 md:top-5 p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                aria-label="Pencereyi kapat"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* Content Body */}
-            <div className="flex-1 p-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
+            <div className="max-h-[82vh] overflow-y-auto custom-scrollbar px-6 md:px-8 py-6 md:py-8">
               {children}
             </div>
-          </motion.div>
+          </motion.section>
         </div>
       )}
     </AnimatePresence>
@@ -90,57 +96,64 @@ export function PremiumDrawer({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
 }: {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    if (isOpen) document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
-          {/* Backdrop Blur Layer */}
+        <div className="fixed inset-0 z-[120] flex justify-end">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/20 backdrop-blur-[4px]"
           />
 
-          {/* Drawer Content */}
-          <motion.div
-            initial={{ x: "100%" }}
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-lg bg-white shadow-2xl h-full flex flex-col border-l border-slate-100"
-            onClick={(e) => e.stopPropagation()}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+            className="relative h-full w-full max-w-2xl bg-white border-l border-slate-200 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.4)] flex flex-col"
+            onClick={(event) => event.stopPropagation()}
           >
-            {/* Header */}
-            <div className="px-10 py-8 flex items-center justify-between border-b border-slate-50">
-               <div>
-                  <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{title || 'Detaylar'}</h3>
-                  <p className="text-sm text-slate-400 font-medium mt-1 italic">Finansal kayıt ve operasyon analizi</p>
-               </div>
-               <button
-                 onClick={onClose}
-                 className="p-2.5 rounded-xl border border-slate-100 text-slate-400 hover:text-slate-600 hover:border-slate-200 transition-all active:scale-95 group"
-               >
-                 <X size={24} strokeWidth={2} className="group-hover:rotate-90 transition-transform duration-300" />
-               </button>
-            </div>
+            <header className="px-6 md:px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <div className="pr-12">
+                <h3 className="text-lg md:text-xl font-bold text-slate-900">{title || 'Detay Paneli'}</h3>
+                <p className="text-xs md:text-sm text-slate-500 mt-1">{subtitle || 'Kayıt detayları ve belge yönetimi'}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 md:right-5 md:top-5 p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                aria-label="Paneli kapat"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </header>
 
-            {/* Content Body */}
-            <div className="flex-1 p-10 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 md:px-8 py-6">
               {children}
             </div>
-          </motion.div>
+          </motion.aside>
         </div>
       )}
     </AnimatePresence>
   );
 }
-

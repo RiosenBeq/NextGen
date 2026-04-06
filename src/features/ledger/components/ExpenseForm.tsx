@@ -180,38 +180,34 @@ export default function ExpenseForm({
   };
 
   return (
-    <div className="bg-white rounded-[32px] overflow-hidden w-full">
-      {/* Refined "Airy" Header */}
-      <div className="px-8 py-8 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
-            <Receipt className="w-6 h-6" />
+    <div className="bg-white rounded-2xl overflow-hidden w-full">
+      <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-700 border border-slate-200">
+            <Receipt className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-lg font-semibold text-slate-900">
               {initialData ? 'Gideri Güncelle' : 'Yeni Gider Kaydı'}
             </h2>
-            <p className="text-sm text-slate-400 font-medium lowercase italic">Operasyonel maliyet ve fiş girişi</p>
+            <p className="text-xs text-slate-500">Operasyonel maliyet ve fiş girişi</p>
           </div>
         </div>
         
         {onClose && (
           <button 
             onClick={onClose} 
-            className="w-10 h-10 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center border border-slate-100 active:scale-95 group"
+            className="w-9 h-9 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center border border-slate-100"
           >
-            <X size={18} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-300" />
+            <X size={18} />
           </button>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+      <form onSubmit={handleSubmit} className="p-5 space-y-6">
         {/* Step 1: Basic Info */}
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">01</div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest italic">TEMEL BİLGİLER</h3>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-700">Temel Bilgiler</h3>
           
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">İşlem Açıklaması <span className="text-rose-500">*</span></label>
@@ -219,7 +215,7 @@ export default function ExpenseForm({
               type="text"
               required
               placeholder="Örn: Kırtasiye alımı, Tamir masrafı..."
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-semibold text-slate-900 shadow-sm"
+              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
@@ -233,7 +229,7 @@ export default function ExpenseForm({
                 <input
                   type="date"
                   required
-                  className="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 cursor-pointer shadow-sm"
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-slate-900 cursor-pointer"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 />
@@ -245,7 +241,7 @@ export default function ExpenseForm({
               <div className="relative group">
                 <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-colors group-focus-within:text-blue-600" />
                 <select
-                  className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
+                  className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-slate-900 appearance-none cursor-pointer"
                   value={formData.locationId}
                   onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 >

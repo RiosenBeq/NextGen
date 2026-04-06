@@ -1,7 +1,6 @@
 import { getNotes } from '@/features/notlar/actions';
 import NoteList from '@/features/notlar/components/NoteList';
-import * as motion from "framer-motion/client";
-import { StickyNote, MessageSquareText } from 'lucide-react';
+import { StickyNote, Clock3 } from 'lucide-react';
 
 export const metadata = {
   title: 'Notlar & Dökümanlar - NextGenBox',
@@ -14,34 +13,37 @@ export default async function NotesPage() {
   const notes = await getNotes();
 
   return (
-    <div className="page-wrapper space-y-8 animate-fade-in">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg inline-block mb-3">Kurumsal Hafıza</span>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-            <StickyNote className="w-6 h-6 text-slate-400" />
-            Sistem Notları & Ajanda
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-xl">
-            Kurumsal hafıza, stratejik kararlar ve operasyonel protokoller.
-          </p>
-        </div>
+    <div className="page-wrapper space-y-8 animate-fade-in pb-16">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 md:p-8 shadow-sm">
+        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-indigo-200/20 blur-3xl" />
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+              <StickyNote className="w-3.5 h-3.5" />
+              Kurumsal Hafıza Merkezi
+            </span>
+            <h1 className="mt-3 text-3xl md:text-4xl font-black tracking-tight text-slate-900">Sistem Notları & Ajanda</h1>
+            <p className="mt-2 max-w-2xl text-sm md:text-base text-slate-500">
+              Operasyonel kararları, protokolleri ve ekip notlarını tek noktadan yönetin. Tüm içerikler size özel ve güvenli şekilde saklanır.
+            </p>
+          </div>
 
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200 rounded-xl">
-           <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200 flex items-center gap-3">
-              <MessageSquareText className="w-4 h-4 text-indigo-500" />
-              <span className="text-sm font-bold text-slate-900">{notes.length} Aktif Kayıt</span>
-           </div>
+          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Aktif Kayıt</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">{notes.length}</p>
+            </div>
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-500">Son Durum</p>
+              <p className="mt-1 text-sm font-bold text-indigo-700 inline-flex items-center gap-1"><Clock3 className="w-4 h-4" /> Güncel</p>
+            </div>
+          </div>
         </div>
-      </header>
+      </section>
 
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <section>
         <NoteList initialNotes={notes} />
-      </motion.section>
+      </section>
     </div>
   );
 }

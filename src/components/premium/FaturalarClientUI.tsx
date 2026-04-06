@@ -12,21 +12,25 @@ import {
   Plus,
   ArrowRight,
   Trash2,
-  Loader2
+  Loader2,
+  CheckSquare,
+  Square,
+  Upload
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
-import { deleteExpenseAttachment } from '@/features/ledger/actions';
+import { deleteExpenseAttachment, updateAvmExpenseStatus, uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
 
 interface Invoice {
   id: string;
   description: string;
   amountWithVat: number;
-  attachmentUrl: string;
+  attachmentUrl?: string | null;
   isOfficial: boolean;
+  isSettled?: boolean;
   paidBy: string;
   createdAt: string;
   location?: { name: string };
@@ -35,20 +39,56 @@ interface Invoice {
 
 interface FaturalarProps {
   invoices: Invoice[];
+  avmExpenses: Invoice[];
   locations: any[];
 }
 
-export default function FaturalarClientUI({ invoices: initialInvoices, locations }: FaturalarProps) {
+export default function FaturalarClientUI({ invoices: initialInvoices, avmExpenses: initialAvmExpenses, locations }: FaturalarProps) {
   const [invoices, setInvoices] = useState(initialInvoices);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [avmExpenses, setAvmExpenses] = useState(initialAvmExpenses);
+  const [uploadingAvmId, setUploadingAvmId] = useState<string | null>(null);
 
   const filteredInvoices = invoices.filter(inv => 
     inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    inv.location?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (inv.location?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     inv.paidBy.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+
+  const handleToggleAvm = async (id: string, field: 'isSettled' | 'isOfficial', current: boolean) => {
+    const res = await updateAvmExpenseStatus(id, { [field]: !current });
+    if (!res.success) {
+      alert(res.error || 'Durum güncellenemedi.');
+      return;
+    }
+
+    setAvmExpenses((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: !current } : item)));
+  };
+
+  const handleUploadAvmInvoice = async (expenseId: string, file: File | null) => {
+    if (!file) return;
+
+    setUploadingAvmId(expenseId);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const upload = await uploadExpenseAttachment(fd);
+      if (!upload.success || !upload.publicUrl) throw new Error(upload.error || 'Dosya yüklenemedi.');
+
+      const update = await updateExpenseAttachment(expenseId, upload.publicUrl);
+      if (!update.success) throw new Error(update.error || 'Belge kaydı güncellenemedi.');
+
+      await updateAvmExpenseStatus(expenseId, { isOfficial: true });
+      setAvmExpenses((prev) => prev.map((item) => (item.id === expenseId ? { ...item, attachmentUrl: upload.publicUrl, isOfficial: true } : item)));
+    } catch (err: any) {
+      alert(err.message || 'Belge yükleme hatası.');
+    } finally {
+      setUploadingAvmId(null);
+    }
+  };
 
   const handleDelete = async (invoiceId: string) => {
     if (!confirm('Bu belgeyi silmek istediğinize emin misiniz?')) return;
@@ -105,6 +145,52 @@ export default function FaturalarClientUI({ invoices: initialInvoices, locations
           </button>
         </div>
       </header>
+
+
+      {/* AVM GİDER TAKİBİ */}
+      <section className="rounded-[32px] border border-slate-200 bg-white p-5 sm:p-7 shadow-sm space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-black text-slate-900 tracking-tight">AVM Giderleri</h2>
+            <p className="text-xs text-slate-500">Kira / aidat / ciro payı ödemelerini işaretleyin, fatura gelince yükleyin.</p>
+          </div>
+          <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Otomatik kira kayıtları desteklenir</span>
+        </div>
+
+        {avmExpenses.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">Bu ay için AVM gider kaydı bulunamadı.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {avmExpenses.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-slate-200 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 line-clamp-2">{item.description}</p>
+                    <p className="text-xs text-slate-500">{item.location?.name || 'Genel'} • ₺{item.amountWithVat?.toLocaleString('tr-TR')}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => handleToggleAvm(item.id, 'isSettled', Boolean(item.isSettled))} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
+                    {Boolean(item.isSettled) ? <CheckSquare size={14} className="text-emerald-600" /> : <Square size={14} />}
+                    Ödeme Yapıldı
+                  </button>
+                  <button type="button" onClick={() => handleToggleAvm(item.id, 'isOfficial', item.isOfficial)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
+                    {item.isOfficial ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} />}
+                    Fatura Geldi
+                  </button>
+
+                  <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
+                    <Upload size={14} />
+                    {uploadingAvmId === item.id ? 'Yükleniyor...' : 'Fatura Yükle'}
+                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)} />
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* 2. DOCUMENT GRID */}
       <section>

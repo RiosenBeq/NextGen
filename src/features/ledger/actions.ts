@@ -706,6 +706,30 @@ export async function resetSystemParameters() {
   }
 }
 
+
+export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: boolean; isOfficial?: boolean }) {
+  try {
+    const payload: Record<string, boolean> = {};
+    if (typeof updates.isSettled === 'boolean') payload.isSettled = updates.isSettled;
+    if (typeof updates.isOfficial === 'boolean') payload.isOfficial = updates.isOfficial;
+
+    if (Object.keys(payload).length === 0) {
+      return { success: false, error: 'Güncellenecek alan bulunamadı.' };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('Expense').update(payload).eq('id', id);
+    if (error) throw error;
+
+    revalidatePath('/faturalar');
+    revalidatePath('/giderler');
+    revalidatePath('/gelir-gider');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function toggleExpenseSettled(id: string, currentDesc: string) {
   const isSettled = currentDesc.includes('[MAHSUP]');
   const newDesc = isSettled 

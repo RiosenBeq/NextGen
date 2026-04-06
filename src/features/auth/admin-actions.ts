@@ -30,6 +30,12 @@ const newUserSchema = z.object({
   fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır.").optional()
 });
 
+const updateUserSchema = z.object({
+  userId: z.string().min(1, 'Kullanıcı ID zorunludur.'),
+  role: z.enum(['superadmin', 'user']),
+  fullName: z.string().min(2, 'Ad Soyad en az 2 karakter olmalıdır.'),
+});
+
 /**
  * Yeni bir kullanıcı oluşturur (Sadece Super Admin yetkisi gerektirir)
  * Bu metod, işlemi gerçekleştiren admin kullanıcısının session'unu kapatmadan yeni kullanıcı açabilmesini sağlar.
@@ -113,5 +119,43 @@ export async function deleteSystemUser(userId: string) {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+export async function updateSystemUserAccess(data: any) {
+  try {
+    const validatedData = updateUserSchema.parse(data);
+    const adminAuthClient = getAdminClient();
+
+    const { data: userData, error: getUserError } = await adminAuthClient.auth.admin.getUserById(validatedData.userId);
+    if (getUserError) throw getUserError;
+
+    const currentMetadata = userData.user?.user_metadata || {};
+    const { error: updateError } = await adminAuthClient.auth.admin.updateUserById(validatedData.userId, {
+      user_metadata: {
+        ...currentMetadata,
+        role: validatedData.role,
+        full_name: validatedData.fullName,
+      },
+    });
+
+    if (updateError) throw updateError;
+
+    await createAuditLog('UPDATE', 'AuthUser', validatedData.userId, {
+      role: validatedData.role,
+      fullName: validatedData.fullName,
+      action: 'UPDATE_ACCESS_PROFILE',
+    });
+
+    revalidatePath('/ayarlar');
+    revalidatePath('/kullanicilar');
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Update User Access Error:', error);
+    if (error.name === 'ZodError') {
+      return { success: false, error: error.errors[0].message };
+    }
+    return { success: false, error: String(error?.message || 'Kullanıcı güncellenemedi.') };
   }
 }

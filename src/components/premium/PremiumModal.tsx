@@ -18,7 +18,7 @@ export function PremiumModal({
   onClose,
   title,
   children,
-  maxWidth = 'max-w-lg',
+  maxWidth = 'max-w-2xl',
 }: PremiumModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -26,10 +26,12 @@ export function PremiumModal({
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
+
     return () => {
       window.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
@@ -39,47 +41,44 @@ export function PremiumModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop Blur Layer */}
+        <div className="fixed inset-0 z-[1000]">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-slate-900/40"
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
           />
 
-          {/* Modal Content */}
-          <motion.div
-            ref={modalRef}
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-            className={cn(
-              "relative w-full bg-white rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col border border-slate-100",
-              maxWidth
-            )}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100/50">
-               {title ? (
-                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">{title}</h3>
-               ) : <div />}
-               <button
-                 onClick={onClose}
-                 className="p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all active:scale-95 group"
-               >
-                 <X size={20} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-300" />
-               </button>
-            </div>
+          <div className="absolute inset-0 overflow-y-auto p-3 sm:p-6">
+            <div className="mx-auto flex min-h-full w-full items-start sm:items-center justify-center">
+              <motion.div
+                ref={modalRef}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.18 }}
+                className={cn(
+                  'relative mt-6 sm:mt-0 w-full rounded-2xl border border-slate-200 bg-white shadow-2xl',
+                  'max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden flex flex-col',
+                  maxWidth
+                )}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-900">{title || 'Form'}</h3>
+                  <button
+                    onClick={onClose}
+                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
 
-            {/* Content Body */}
-            <div className="flex-1 p-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
-              {children}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-5">{children}</div>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>
@@ -100,47 +99,44 @@ export function PremiumDrawer({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
-          {/* Backdrop Blur Layer */}
+        <div className="fixed inset-0 z-[1000]">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/20 backdrop-blur-[4px]"
+            className="absolute inset-0 bg-slate-900/40"
           />
 
-          {/* Drawer Content */}
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-lg bg-white shadow-2xl h-full flex flex-col border-l border-slate-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-10 py-8 flex items-center justify-between border-b border-slate-50">
-               <div>
-                  <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{title || 'Detaylar'}</h3>
-                  <p className="text-sm text-slate-400 font-medium mt-1 italic">Finansal kayıt ve operasyon analizi</p>
-               </div>
-               <button
-                 onClick={onClose}
-                 className="p-2.5 rounded-xl border border-slate-100 text-slate-400 hover:text-slate-600 hover:border-slate-200 transition-all active:scale-95 group"
-               >
-                 <X size={24} strokeWidth={2} className="group-hover:rotate-90 transition-transform duration-300" />
-               </button>
-            </div>
+          <div className="absolute inset-0 overflow-y-auto p-3 sm:p-6">
+            <div className="mx-auto flex min-h-full w-full items-start sm:items-center justify-center">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.18 }}
+                className="relative mt-6 sm:mt-0 w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900">{title || 'Detaylar'}</h3>
+                    <p className="text-xs text-slate-500">Kayıt detayları ve düzenleme alanı</p>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
 
-            {/* Content Body */}
-            <div className="flex-1 p-10 overflow-y-auto custom-scrollbar">
-              {children}
+                <div className="max-h-[calc(100dvh-8rem)] overflow-y-auto p-3 sm:p-5">{children}</div>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>
   );
 }
-

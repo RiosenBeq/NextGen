@@ -46,6 +46,9 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
   });
 
 
+  const selectedLocationId = form.watch('locationId');
+  const selectedLocationName = locations.find((loc) => loc.id === selectedLocationId)?.name;
+
   const onSubmit = async (values: PerformanceFormValues) => {
     setLoading(true);
     try {
@@ -83,6 +86,11 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight">Günlük Performans Girişi</h2>
           <p className="text-xs text-slate-500 font-medium italic">Sistemi manuel verilerle besle</p>
+          {selectedLocationName && (
+            <p className="mt-1 inline-flex items-center rounded-lg border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+              Şube: {selectedLocationName}
+            </p>
+          )}
         </div>
       </div>
 

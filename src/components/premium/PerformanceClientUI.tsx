@@ -2,24 +2,12 @@
 
 import React, { useState } from 'react';
 import { 
-  BarChart3, 
-  Calendar, 
-  CheckCircle2, 
-  TrendingUp, 
-  Beaker, 
-  Plus, 
-  ChevronRight,
-  ArrowRight,
+  BarChart3,
   Activity,
   History as HistoryIcon,
-  Info,
-  MoreHorizontal,
-  MoreVertical,
   Edit2,
-  Trash2,
-  Edit
+  Trash2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import DailyPerformanceForm from '@/features/ledger/components/DailyPerformanceForm';
 import { PremiumDrawer, PremiumModal } from './PremiumModal';
@@ -59,6 +47,11 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
     setIsEditModalOpen(true);
   };
 
+
+  const totalSessions = history.reduce((acc, row) => acc + Number(row.sessionCount || 0), 0);
+  const totalTests = history.reduce((acc, row) => acc + Number(row.testCount || 0), 0);
+  const avgSessionPerDay = history.length > 0 ? Math.round(totalSessions / history.length) : 0;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       
@@ -76,6 +69,12 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
            Manuel Mod Aktif
         </div>
       </header>
+
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard label="Toplam Oturum" value={totalSessions.toLocaleString('tr-TR')} subtitle="Filtrelenen kayıtlar" />
+        <StatCard label="Toplam Test" value={totalTests.toLocaleString('tr-TR')} subtitle="Operasyon takibi" />
+        <StatCard label="Günlük Ortalama" value={avgSessionPerDay.toLocaleString('tr-TR')} subtitle="Oturum / gün" />
+      </section>
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -137,8 +136,8 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                               <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-xs font-mono font-bold">{row.testCount}</span></td>
                               <td className="px-6 py-5 text-right opacity-0 group-hover:opacity-100 transition-all">
                                  <div className="flex items-center justify-end gap-2">
-                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-white transition-all"><Edit2 size={14} /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-white transition-all"><Trash2 size={14} /></button>
+                                    <button disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleEdit(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"><Edit2 size={14} /></button>
+                                    <button disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"><Trash2 size={14} /></button>
                                  </div>
                               </td>
                            </tr>
@@ -183,5 +182,15 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
 function FilterLink({ href, active, label }: { href: string, active: boolean, label: string }) {
   return (
     <a href={href} className={cn("px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all", active ? "bg-slate-900 text-white shadow-sm" : "text-slate-400 hover:text-slate-600")}>{label}</a>
+  );
+}
+
+function StatCard({ label, value, subtitle }: { label: string; value: string; subtitle: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+      <p className="text-xs font-medium text-slate-500">{subtitle}</p>
+    </div>
   );
 }

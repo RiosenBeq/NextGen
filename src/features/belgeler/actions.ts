@@ -4,9 +4,18 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAuditLog } from '@/lib/audit';
 
+async function getAdminSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) return null;
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+  return createSupabaseClient(supabaseUrl, supabaseServiceKey);
+}
+
 export async function uploadDocument(formData: FormData) {
   try {
     const supabase = await createClient();
+    const adminSupabase = await getAdminSupabase();
     const file = formData.get('file') as File;
     const relatedType = formData.get('relatedType') as string;
     const relatedId = formData.get('relatedId') as string;
@@ -20,7 +29,8 @@ export async function uploadDocument(formData: FormData) {
     const uniqueName = `${relatedType}/${relatedId}/${Date.now()}_${file.name}`;
 
     // Supabase Storage'a yükle
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const storageClient = adminSupabase || supabase;
+    const { data: uploadData, error: uploadError } = await storageClient.storage
       .from('documents')
       .upload(uniqueName, file, {
         cacheControl: '3600',
@@ -38,12 +48,12 @@ export async function uploadDocument(formData: FormData) {
     }
 
     // Public URL al
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = storageClient.storage
       .from('documents')
       .getPublicUrl(uniqueName);
 
     // DB'ye kaydet
-    const { error: dbError } = await supabase
+    const { error: dbError } = await (adminSupabase || supabase)
       .from('Document')
       .insert({
         id: `doc_${crypto.randomUUID()}`,
@@ -92,20 +102,22 @@ export async function getDocuments(relatedType?: string, relatedId?: string) {
 export async function deleteDocument(id: string) {
   try {
     const supabase = await createClient();
+    const adminSupabase = await getAdminSupabase();
 
     // Önce DB'den dosya URL'sini al
-    const { data: doc } = await supabase.from('Document').select('fileUrl').eq('id', id).single();
+    const dbClient = adminSupabase || supabase;
+    const { data: doc } = await dbClient.from('Document').select('fileUrl').eq('id', id).single();
 
     if (doc?.fileUrl) {
       // Storage'dan sil
       const path = doc.fileUrl.split('/documents/')[1];
       if (path) {
-        await supabase.storage.from('documents').remove([path]);
+        await (adminSupabase || supabase).storage.from('documents').remove([path]);
       }
     }
 
     // DB'den sil
-    const { error } = await supabase.from('Document').delete().eq('id', id);
+    const { error } = await dbClient.from('Document').delete().eq('id', id);
     if (error) throw error;
 
     revalidatePath('/giderler');

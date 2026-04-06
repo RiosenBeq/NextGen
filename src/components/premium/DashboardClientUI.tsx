@@ -4,28 +4,13 @@ import React, { useState } from 'react';
 import { 
   Plus, 
   ChevronRight, 
-  Wallet, 
   Receipt,
   FileText,
-  TrendingUp,
-  TrendingDown,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Download,
-  Calendar,
-  PieChart,
-  Activity,
-  Eye,
   CheckCircle2,
   AlertCircle,
   Loader2,
   UploadCloud
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
@@ -45,10 +30,9 @@ interface DashboardProps {
   };
   recentExpenses: any[];
   locations: any[];
-  categories: any[];
-  chartData?: { month: string, revenue: number, profit: number }[];
   notes?: any[];
   totalInvestment: number;
+  investmentBreakdown: Record<string, number>;
   allMonthCount: number;
   allExpenses: any[];
 }
@@ -57,10 +41,9 @@ export default function DashboardClientUI({
   stats, 
   recentExpenses, 
   locations, 
-  categories, 
-  chartData = [],
   notes = [],
   totalInvestment,
+  investmentBreakdown,
   allMonthCount,
   allExpenses
 }: DashboardProps) {
@@ -68,7 +51,9 @@ export default function DashboardClientUI({
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAverageExpenseModalOpen, setIsAverageExpenseModalOpen] = useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const [flippedInsight, setFlippedInsight] = useState<string | null>(null);
 
   const handleLateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,19 +83,29 @@ export default function DashboardClientUI({
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
+  const ortalamaGider = allExpenses.length > 0
+    ? allExpenses.reduce((toplam: number, gider: any) => toplam + (gider.amountWithVat || 0), 0) / allExpenses.length
+    : 0;
+
+  const resmiOran = allExpenses.length > 0
+    ? (allExpenses.filter((gider: any) => gider.isOfficial).length / allExpenses.length) * 100
+    : 0;
+
+  const belgesizKayit = recentExpenses.filter((gider: any) => !gider.attachmentUrl).length;
+
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
           <p className="text-sm text-slate-500 font-medium italic">Sistem genelindeki finansal performans ve analiz merkezi.</p>
         </div>
         <div className="flex items-center gap-3">
            <button 
              onClick={() => setIsModalOpen(true)}
-             className="inline-flex items-center gap-2.5 px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
+             className="inline-flex items-center gap-2.5 px-4 sm:px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
            >
               <Plus size={20} />
               Yeni Gider Girişi
@@ -123,32 +118,99 @@ export default function DashboardClientUI({
         totalRevenue={stats.revenue}
         totalExpense={stats.expense}
         totalInvestment={totalInvestment}
+        investmentBreakdown={investmentBreakdown}
         totalNetCash={stats.profit}
         expenses={allExpenses}
         allMonthCount={allMonthCount}
       />
 
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            id: 'growth',
+            title: 'Büyüme Notu',
+            front: `%${stats.monthlyGrowth.toFixed(1)} aylık trend`,
+            back: 'Trend değeri son dönem performans eğiliminden üretilir. Düzenli oturum artışı pozitif etki sağlar.',
+          },
+          {
+            id: 'roi',
+            title: 'ROI İzleme',
+            front: `${stats.sessions.toLocaleString('tr-TR')} toplam seans`,
+            back: 'Seans hacmi arttıkça amortisman etkisi azalır ve yatırım geri dönüş süresi kısalır.',
+          },
+          {
+            id: 'cash',
+            title: 'Nakit Uyarısı',
+            front: formatCurrency(stats.profit),
+            back: 'Net nakit negatif olduğunda gider kırılımını kontrol edip bir sonraki ay için sabit maliyet optimizasyonu yapın.',
+          },
+        ].map((card) => {
+          const isFlipped = flippedInsight === card.id;
+          return (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => setFlippedInsight(isFlipped ? null : card.id)}
+              className="relative h-40 w-full [perspective:1000px]"
+            >
+              <div
+                className={cn(
+                  'relative h-full w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-transform duration-500 [transform-style:preserve-3d]',
+                  isFlipped ? '[transform:rotateY(180deg)]' : ''
+                )}
+              >
+                <div className="absolute inset-0 rounded-2xl p-5 [backface-visibility:hidden]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{card.title}</p>
+                  <p className="mt-3 text-lg font-bold text-slate-900">{card.front}</p>
+                  <p className="mt-6 text-xs text-blue-600">Detay için karta dokunun</p>
+                </div>
+                <div className="absolute inset-0 rounded-2xl bg-slate-900 p-5 text-white [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-300">{card.title} · Detay</p>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-100">{card.back}</p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </section>
+
       {/* Main Content Grid */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Trend Chart */}
-        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col justify-between min-h-[450px]">
-           <div className="flex items-center justify-between mb-8">
-              <div className="space-y-1">
-                 <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                    <Activity size={20} className="text-blue-600" />
-                    Finansal Trend
-                 </h3>
-                 <p className="text-xs text-slate-500 font-medium italic">Aylık bazda ciro ve kârlılık değişimi.</p>
-              </div>
-              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
-                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Ciro</div>
-                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Net Kâr</div>
-              </div>
-           </div>
-           
-           <div className="flex-1 min-h-[300px]">
-              <ProfessionalTrendChart data={chartData} />
-           </div>
+        {/* Analiz Merkezi */}
+        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-sm">
+          <div className="space-y-1 mb-6">
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Finansal Analiz Merkezi</h3>
+            <p className="text-xs text-slate-500 font-medium italic">Trend grafiği yerine aksiyon alınabilir analiz kartları.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AnalyzerCard
+              title="Ortalama Gider"
+              value={formatCurrency(ortalamaGider)}
+              description="Son kayıtlar baz alınarak ortalama gider tutarı."
+              tone="blue"
+              onClick={() => setIsAverageExpenseModalOpen(true)}
+              clickable
+            />
+            <AnalyzerCard
+              title="Resmi Evrak Oranı"
+              value={`%${resmiOran.toFixed(1)}`}
+              description="Kayıtların resmi evrak ile işlenme oranı."
+              tone="emerald"
+            />
+            <AnalyzerCard
+              title="Belgesiz Son Kayıt"
+              value={`${belgesizKayit}`}
+              description="Son kayıtlar içinde belgesi eksik olan gider adedi."
+              tone="rose"
+            />
+            <AnalyzerCard
+              title="Net Nakit Durumu"
+              value={formatCurrency(stats.profit)}
+              description="Toplam gelir-gider sonrası kalan net nakit."
+              tone={stats.profit >= 0 ? 'emerald' : 'rose'}
+            />
+          </div>
         </div>
 
         {/* Recent Transactions */}
@@ -204,7 +266,7 @@ export default function DashboardClientUI({
       </section>
       
       {/* User Notes Section */}
-      <section className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-[32px] p-5 sm:p-8 shadow-sm">
         <div className="flex items-center gap-3 mb-8">
            <FileText size={20} className="text-blue-600" />
            <div>
@@ -272,6 +334,31 @@ export default function DashboardClientUI({
           </div>
         )}
       </PremiumDrawer>
+
+      <PremiumModal
+        isOpen={isAverageExpenseModalOpen}
+        onClose={() => setIsAverageExpenseModalOpen(false)}
+        title="Ortalama Gider Hesaplaması"
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Gösterilen Değer</p>
+            <p className="mt-1 text-2xl font-black text-slate-900">{formatCurrency(ortalamaGider)}</p>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Bu değer, sistemdeki tüm gider kayıtlarının <b>KDV dahil toplam tutarlarının</b> ortalamasıdır.
+          </p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-sm">
+            <p className="font-semibold text-slate-700">Formül</p>
+            <p className="text-slate-600">Ortalama Gider = Toplam Gider Tutarı / Gider Kayıt Adedi</p>
+            <p className="text-xs text-slate-500">
+              Toplam Tutar: <b>{formatCurrency(allExpenses.reduce((toplam: number, gider: any) => toplam + (gider.amountWithVat || 0), 0))}</b> •
+              Kayıt Adedi: <b>{allExpenses.length}</b>
+            </p>
+          </div>
+        </div>
+      </PremiumModal>
     </div>
   );
 }
@@ -285,43 +372,43 @@ function DetailRow({ label, value }: { label: string, value: string }) {
   );
 }
 
-function ProfessionalTrendChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-300 font-bold text-xs uppercase italic bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">Yeterli Veri Yok</div>;
-
-  const padding = 40;
-  const height = 300;
-  const width = 1000;
-  const maxVal = Math.max(...data.map(d => Math.max(d.revenue, d.profit)), 1) * 1.1;
-
-  const points = data.map((d, i) => ({
-    x: padding + (i * (width - 2 * padding) / (data.length - 1 || 1)),
-    revY: height - padding - (d.revenue / maxVal * (height - 2 * padding)),
-    proY: height - padding - (d.profit / maxVal * (height - 2 * padding)),
-  }));
-
-  const revPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.revY}`).join(' ');
-  const proPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.proY}`).join(' ');
+function AnalyzerCard({
+  title,
+  value,
+  description,
+  tone,
+  onClick,
+  clickable = false,
+}: {
+  title: string;
+  value: string;
+  description: string;
+  tone: 'blue' | 'emerald' | 'rose';
+  onClick?: () => void;
+  clickable?: boolean;
+}) {
+  const toneMap = {
+    blue: 'border-blue-200 bg-blue-50/50',
+    emerald: 'border-emerald-200 bg-emerald-50/50',
+    rose: 'border-rose-200 bg-rose-50/50',
+  };
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563EB" stopOpacity="0.1"/><stop offset="100%" stopColor="#2563EB" stopOpacity="0"/></linearGradient>
-        <linearGradient id="proG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.1"/><stop offset="100%" stopColor="#10B981" stopOpacity="0"/></linearGradient>
-      </defs>
-      {[0, 0.5, 1].map((p, i) => (
-        <line key={i} x1={padding} y1={padding + p * (height - 2 * padding)} x2={width - padding} y2={padding + p * (height - 2 * padding)} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
-      ))}
-      <path d={revPath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`} fill="url(#revG)" />
-      <path d={proPath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`} fill="url(#proG)" />
-      <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} d={revPath} fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.2 }} d={proPath} fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      {points.map((p, i) => (
-        <React.Fragment key={i}>
-          <circle cx={p.x} cy={p.revY} r="4" fill="#2563EB" />
-          <circle cx={p.x} cy={p.proY} r="4" fill="#10B981" />
-          <text x={p.x} y={height - 5} textAnchor="middle" fill="#94A3B8" className="text-[10px] font-bold uppercase tracking-widest">{data[i].month}</text>
-        </React.Fragment>
-      ))}
-    </svg>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-2xl border p-4 text-left w-full transition-all',
+        toneMap[tone],
+        clickable ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'cursor-default'
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
+        {clickable && <span className="text-[10px] font-bold text-blue-600 uppercase">Detay</span>}
+      </div>
+      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
+      <p className="mt-1 text-xs text-slate-600">{description}</p>
+    </button>
   );
 }

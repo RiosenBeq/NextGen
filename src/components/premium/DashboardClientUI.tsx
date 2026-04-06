@@ -54,7 +54,13 @@ interface DashboardProps {
   recentExpenses: RecentExpense[];
   locations: LocationItem[];
   chartData?: DashboardChartPoint[];
-  notes?: unknown[];
+  notes?: Array<{
+    id: string | number;
+    title: string;
+    content?: string;
+    color: string;
+    createdAt: string;
+  }>;
   totalInvestment: number;
   allMonthCount: number;
   allExpenses: Array<{ amountWithVat?: number; isOfficial?: boolean }>;

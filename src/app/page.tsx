@@ -44,6 +44,15 @@ interface SystemParam {
   value: number;
 }
 
+interface NoteRow {
+  id: string | number;
+  userId?: string | null;
+  title: string;
+  content?: string;
+  color: string;
+  createdAt: string;
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -165,7 +174,12 @@ export default async function DashboardPage() {
     getActiveLocations(),
   ]);
 
-  const notes = (latestNotes || []).filter((item) => item.userId === authUser.user?.id);
+  const notes = ((latestNotes || []) as NoteRow[]).filter((item) => item.userId === authUser.user?.id);
+
+  const normalizedRecentExpenses = ((latestExpenses || []) as ExpenseRow[]).map((item) => ({
+    ...item,
+    isOfficial: Boolean(item.isOfficial),
+  }));
 
   const chartData = Object.entries(monthlyTotals)
     .map(([month, values]) => ({ month, revenue: values.revenue, profit: values.profit }))
@@ -174,7 +188,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClientUI
       stats={stats}
-      recentExpenses={(latestExpenses || []) as ExpenseRow[]}
+      recentExpenses={normalizedRecentExpenses}
       locations={activeLocations || []}
       chartData={chartData}
       notes={notes}

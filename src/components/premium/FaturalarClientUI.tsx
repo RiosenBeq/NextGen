@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Receipt, 
-  FileText, 
-  Download, 
-  Calendar, 
-  MapPin, 
-  Search, 
-  Eye, 
+import {
+  Receipt,
+  FileText,
+  Download,
+  Calendar,
+  MapPin,
+  Search,
+  Eye,
   Plus,
   ArrowRight,
   Trash2,
@@ -51,7 +51,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   const [avmExpenses, setAvmExpenses] = useState(initialAvmExpenses);
   const [uploadingAvmId, setUploadingAvmId] = useState<string | null>(null);
 
-  const filteredInvoices = invoices.filter(inv => 
+  const filteredInvoices = invoices.filter(inv =>
     inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (inv.location?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     inv.paidBy.toLowerCase().includes(searchQuery.toLowerCase())
@@ -107,7 +107,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32">
-      
+
       {/* 1. ELITE HEADER */}
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-slate-100">
         <div className="space-y-4">
@@ -124,19 +124,19 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
             Sisteme yüklenen tüm gider evrakları, PDF faturalar ve ödeme dekontları burada asenkron olarak saklanır.
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
           <div className="relative w-full sm:w-80 group">
              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-             <input 
-               type="text" 
-               placeholder="Belge veya şube ara..." 
+             <input
+               type="text"
+               placeholder="Belge veya şube ara..."
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
                className="w-full pl-11 pr-5 py-4 bg-white border border-slate-200 rounded-[22px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-sm placeholder:text-slate-300"
              />
           </div>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-[22px] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 italic"
           >
@@ -196,7 +196,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       <section>
          <AnimatePresence mode="popLayout">
            {filteredInvoices.length === 0 ? (
-             <motion.div 
+             <motion.div
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
                className="py-32 text-center border-2 border-dashed border-slate-100 rounded-[48px] bg-slate-50/30 flex flex-col items-center gap-6"
@@ -212,9 +212,9 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
            ) : (
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
                 {filteredInvoices.map((inv, idx) => (
-                  <motion.div 
+                  <motion.div
                     layout
-                    key={inv.id} 
+                    key={inv.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.05 }}
@@ -236,7 +236,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                        )}
-                       
+
                        {/* Floating Actions */}
                        <div className="absolute top-4 right-4 flex gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
                           <Link href={inv.attachmentUrl} target="_blank" className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-blue-600 shadow-lg flex items-center justify-center transition-all hover:scale-110">
@@ -254,26 +254,26 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                             {deletingId === inv.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={18} />}
                           </button>
                        </div>
-                       
+
                        <div className="absolute top-4 left-4">
                           <span className={cn(
                             "px-3 py-1.5 rounded-xl backdrop-blur-md shadow-sm text-[9px] font-black uppercase tracking-widest border transition-colors",
-                            inv.isOfficial 
-                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                            inv.isOfficial
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                               : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                           )}>
                              {inv.isOfficial ? "RESMİ FATURA" : "DEKONT / FİŞ"}
                           </span>
                        </div>
                      </div>
-                     
+
                      {/* Info Area */}
                      <div className="p-8 flex flex-col flex-1 space-y-6">
                         <div className="flex justify-between items-start gap-4">
                           <h4 className="font-black text-slate-900 text-lg tracking-tighter uppercase italic line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">{inv.description}</h4>
                           <span className="font-black text-rose-600 text-lg italic tracking-tighter shrink-0">₺{inv.amountWithVat?.toLocaleString('tr-TR')}</span>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4 mt-auto">
                            <div className="space-y-1">
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">LOKASYON</p>
@@ -319,21 +319,19 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       </section>
 
       {/* 3. MODALS */}
-      <PremiumModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <PremiumModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         title="Yeni Belge & Gider Kaydı"
         maxWidth="max-w-xl"
       >
-        <div className="p-4">
-           <ExpenseForm 
-              locations={locations} 
-              onClose={() => {
-                setIsModalOpen(false);
-                window.location.reload();
-              }} 
-           />
-        </div>
+        <ExpenseForm
+          locations={locations}
+          onClose={() => {
+            setIsModalOpen(false);
+            window.location.reload();
+          }}
+        />
       </PremiumModal>
 
     </div>

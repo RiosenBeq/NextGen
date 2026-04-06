@@ -99,13 +99,13 @@ export default function DashboardClientUI({
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
           <p className="text-sm text-slate-500 font-medium italic">Sistem genelindeki finansal performans ve analiz merkezi.</p>
         </div>
         <div className="flex items-center gap-3">
            <button 
              onClick={() => setIsModalOpen(true)}
-             className="inline-flex items-center gap-2.5 px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
+             className="inline-flex items-center gap-2.5 px-4 sm:px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
            >
               <Plus size={20} />
               Yeni Gider Girişi
@@ -177,7 +177,7 @@ export default function DashboardClientUI({
       {/* Main Content Grid */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         {/* Analiz Merkezi */}
-        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-sm">
           <div className="space-y-1 mb-6">
             <h3 className="text-lg font-bold text-slate-900 tracking-tight">Finansal Analiz Merkezi</h3>
             <p className="text-xs text-slate-500 font-medium italic">Trend grafiği yerine aksiyon alınabilir analiz kartları.</p>
@@ -266,7 +266,7 @@ export default function DashboardClientUI({
       </section>
       
       {/* User Notes Section */}
-      <section className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-[32px] p-5 sm:p-8 shadow-sm">
         <div className="flex items-center gap-3 mb-8">
            <FileText size={20} className="text-blue-600" />
            <div>

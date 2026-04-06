@@ -109,7 +109,7 @@ export async function getDailyPerformanceHistory(locationId: string, limit = 30)
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('DailyPerformance')
-      .select('*')
+      .select('*, location:Location(id,name)')
       .eq('locationId', locationId)
       .order('date', { ascending: false })
       .limit(limit);

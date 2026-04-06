@@ -39,97 +39,93 @@ export function LocationSettingsForm({ location }: Props) {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-10 bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-sm rounded-3xl"
+      className="p-8 bg-white border border-slate-200 shadow-sm rounded-[32px] overflow-hidden"
     >
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
-            <Building size={20} className="text-slate-600" />
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+            <Building size={24} />
           </div>
-          <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase">{location.name}</h3>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{location.id}</p>
+          <div className="space-y-0.5">
+            <h3 className="text-xl font-bold text-slate-900 tracking-tight">{location.name}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{location.id}</p>
           </div>
         </div>
         {success && (
-          <div className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-black uppercase tracking-widest animate-pulse">
-            AYARLAR GÜNCELLENDİ
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            GÜNCELLENDİ
+          </motion.div>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <DollarSign size={12} /> Sabit Kira (₺)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <DollarSign size={14} className="text-slate-400" /> Sabit Kira (₺)
             </label>
             <input 
               name="fixedRent" 
               type="number" 
               defaultValue={location.fixedRent} 
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
-              style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as any}
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="0.00" 
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Building size={12} /> Aidat / Ortak Gider (₺)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <Building size={14} className="text-slate-400" /> Aidat / Ortak Gider (₺)
             </label>
             <input 
               name="duesAmount" 
               type="number" 
               defaultValue={location.duesAmount} 
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner"
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300"
               placeholder="0.00" 
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-               Kira KDV Oranı (%)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">
+              Kira KDV Oranı (%)
             </label>
             <input 
               name="rentVatRate" 
               type="number" 
               defaultValue={location.rentVatRate} 
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="20" 
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Percent size={12} /> Ciro Payı Oranı (%)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <Percent size={14} /> Ciro Payı Oranı (%)
             </label>
             <input 
               name="revenueShareRate" 
               type="number" 
               defaultValue={location.revenueShareRate} 
-              className="w-full px-5 py-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-sm outline-none transition-all placeholder:text-emerald-400 font-bold text-emerald-900 shadow-inner focus:bg-white focus:ring-4 focus:border-emerald-400" 
-              style={{ '--tw-ring-color': 'rgba(16,185,129,0.2)' } as any}
+              className="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-sm font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition-all placeholder:text-emerald-300" 
               placeholder="0" 
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 flex items-center gap-2">
-               Ciro Eşiği (₺)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest pl-1">
+              Ciro Eşiği (₺)
             </label>
             <input 
               name="revenueThreshold" 
               type="number" 
               defaultValue={location.revenueThreshold} 
-              className="w-full px-5 py-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-sm outline-none transition-all placeholder:text-emerald-400 font-bold text-emerald-900 shadow-inner focus:bg-white focus:ring-4 focus:border-emerald-400" 
-              style={{ '--tw-ring-color': 'rgba(16,185,129,0.2)' } as any}
+              className="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-sm font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition-all placeholder:text-emerald-300" 
               placeholder="0.00" 
             />
           </div>
@@ -138,11 +134,10 @@ export function LocationSettingsForm({ location }: Props) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-5 flex items-center justify-center gap-3 transition-transform active:scale-[0.98] rounded-2xl font-black text-xs tracking-widest text-white shadow-md hover:shadow-lg"
-          style={{ background: '#1E2A44' }}
+          className="w-full h-16 flex items-center justify-center gap-3 bg-slate-900 text-white rounded-2xl font-bold text-xs tracking-widest shadow-xl shadow-slate-200 uppercase transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
         >
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} />}
-          DEĞİŞİKLİKLERİ KAYDET VE UYGULA
+          LOKASYON AYARLARINI KAYDET
         </button>
       </form>
     </motion.div>

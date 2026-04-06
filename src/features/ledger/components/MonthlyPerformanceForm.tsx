@@ -48,55 +48,61 @@ export default function MonthlyPerformanceForm({ id, initialData, onClose, onDel
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+    <form onSubmit={handleSubmit} className="space-y-8">
       
-      {/* Header Info */}
-      <div className="p-6 rounded-[32px] bg-slate-900 text-white space-y-1 relative overflow-hidden shadow-xl">
-         <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Save size={80} />
+      {/* Refined "Airy" Header Info */}
+      <div className="p-8 rounded-3xl bg-blue-50 border border-blue-100/50 space-y-2 relative overflow-hidden shadow-sm">
+         <div className="absolute top-0 right-0 p-8 opacity-5 text-blue-600">
+            <Save size={100} />
          </div>
-         <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">{initialData.month}</p>
-         <p className="text-xl font-black italic tracking-tighter uppercase">{initialData.locationName}</p>
+         <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{initialData.month}</span>
+         </div>
+         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{initialData.locationName}</h2>
+         <p className="text-sm text-slate-400 font-medium italic">Aylık performans ve operasyonel veri güncelleme</p>
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-black uppercase tracking-widest flex items-center gap-3 italic">
-           <AlertCircle size={16} />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold uppercase tracking-widest flex items-center gap-3 shadow-sm">
+           <AlertCircle size={18} />
            {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-           <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Aylık Toplam Seans</label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-3">
+           <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Aylık Toplam Seans <span className="text-rose-500">*</span></label>
            <input 
              name="sessions" 
              type="number" 
              defaultValue={initialData.sessions}
              required
-             className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-[22px] text-lg font-black italic tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-inner"
+             className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-bold tracking-tight text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all shadow-sm"
+             placeholder="0"
            />
         </div>
 
-        <div className="space-y-2">
-           <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Ekstra Masraf (₺)</label>
+        <div className="space-y-3">
+           <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Ekstra Masraf (₺)</label>
            <input 
              name="extraExpense" 
              type="number" 
              defaultValue={initialData.extraExpense}
-             className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-[22px] text-lg font-black italic tracking-tighter text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-50 focus:border-rose-500 transition-all shadow-inner"
+             className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-bold tracking-tight text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 focus:border-rose-500 transition-all shadow-sm"
+             placeholder="0.00"
            />
         </div>
       </div>
 
-      <div className="space-y-2">
-         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Operasyonal Notlar</label>
+      <div className="space-y-3">
+         <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Operasyonel Notlar</label>
          <textarea 
            name="extraNotes" 
            defaultValue={initialData.extraNotes}
            rows={4}
-           className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-[22px] text-sm font-bold italic tracking-tight text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-inner resize-none"
-           placeholder="Bu ay için özel bir durum var mı?"
+           className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold tracking-tight text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all shadow-sm resize-none"
+           placeholder="Bu ay için özel bir durum veya açıklama var mı?"
          />
       </div>
 
@@ -104,10 +110,10 @@ export default function MonthlyPerformanceForm({ id, initialData, onClose, onDel
         <button 
           type="submit"
           disabled={isPending}
-          className="flex-1 py-5 bg-blue-600 text-white rounded-[24px] text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+          className="flex-1 py-5 bg-slate-900 text-white rounded-2xl text-sm font-bold uppercase tracking-widest shadow-xl shadow-slate-200 transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
         >
           {isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          VERİLERİ GÜNCELLE
+          Değişiklikleri Kaydet
         </button>
 
         {onDelete && (
@@ -115,9 +121,10 @@ export default function MonthlyPerformanceForm({ id, initialData, onClose, onDel
             type="button"
             onClick={() => onDelete(id)}
             disabled={isPending}
-            className="px-8 py-5 bg-white border border-slate-200 text-rose-500 rounded-[24px] text-xs font-black uppercase tracking-[0.2em] transition-all hover:bg-rose-50 hover:border-rose-200 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+            className="w-full sm:w-16 py-5 bg-white border border-slate-200 text-slate-400 rounded-2xl transition-all hover:bg-rose-50 hover:border-rose-200 hover:text-rose-500 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+            title="Kaydı Sil"
           >
-            <Trash2 size={18} />
+            <Trash2 size={20} />
           </button>
         )}
       </div>

@@ -41,69 +41,68 @@ export function SystemParametersForm({ parameters }: Props) {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-10 bg-white border border-slate-200 transition-all shadow-sm rounded-3xl"
+      className="p-8 bg-white border border-slate-200 shadow-sm rounded-[32px] overflow-hidden"
     >
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center border" style={{ background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
-            <Settings2 size={20} style={{ color: '#2F6BFF' }} />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 text-blue-600 border border-blue-100">
+            <Settings2 size={24} />
           </div>
-          <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase">Genel Finans Değişkenleri</h3>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SİSTEM PARAMETRELERİ</p>
+          <div className="space-y-0.5">
+            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Finansal Yapılandırma</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">SİSTEM GENELİ PARAMETRELER</p>
           </div>
         </div>
         {success && (
-          <div className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-black uppercase tracking-widest animate-pulse">
-            DEĞİŞKENLER GÜNCELLENDİ
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            BAŞARIYLA GÜNCELLENDİ
+          </motion.div>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <DollarSign size={12} /> Oturum Fiyatı (₺)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <DollarSign size={14} className="text-slate-400" /> Oturum Fiyatı (₺)
             </label>
             <input 
               name="SESSION_PRICE_INCL_VAT" 
               type="number" 
               defaultValue={parameters['SESSION_PRICE_INCL_VAT'] || 300} 
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="300" 
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Percent size={12} /> Genel KDV Oranı (%) 
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <Percent size={14} className="text-slate-400" /> Genel KDV Oranı (%) 
             </label>
             <input 
               name="VAT_RATE" 
               type="number" 
               defaultValue={parameters['VAT_RATE'] || 0} 
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="0" 
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Percent size={12} /> Kurumlar Vergisi (%)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <Percent size={14} className="text-slate-400" /> Kurumlar Vergisi (%)
             </label>
             <input 
               name="CORP_TAX_RATE" 
               type="number" 
               defaultValue={parameters['CORP_TAX_RATE'] || 0} 
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold text-slate-900 shadow-inner" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="0" 
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 4px rgba(47,107,255,0.2)"; e.currentTarget.style.borderColor = "rgba(47,107,255,0.5)"; e.currentTarget.style.backgroundColor = "white"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.backgroundColor = "#F8FAFC"; }}
             />
           </div>
         </div>
@@ -111,13 +110,10 @@ export function SystemParametersForm({ parameters }: Props) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-4 flex items-center justify-center gap-3 transition-transform active:scale-[0.98] rounded-2xl font-black text-[11px] tracking-[0.2em] shadow-sm uppercase border"
-          style={{ background: 'rgba(47,107,255,0.1)', color: '#2F6BFF', borderColor: 'rgba(47,107,255,0.3)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(47,107,255,0.2)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(47,107,255,0.1)'; }}
+          className="w-full h-16 flex items-center justify-center gap-3 bg-slate-900 text-white rounded-2xl font-bold text-xs tracking-widest shadow-xl shadow-slate-200 uppercase transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
         >
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} />}
-          GENEL PARAMETRELERİ KAYDET
+          DEĞİŞİKLİKLERİ SİSTEME İŞLE
         </button>
       </form>
     </motion.div>

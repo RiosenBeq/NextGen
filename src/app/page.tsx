@@ -191,6 +191,9 @@ export default async function DashboardPage() {
       categories={[]} 
       chartData={chartData}
       notes={latestNotes || []}
+      totalInvestment={totalInvestment}
+      allMonthCount={allMonthCount}
+      allExpenses={expensesData || []}
     />
   );
 }

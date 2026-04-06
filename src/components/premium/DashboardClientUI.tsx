@@ -32,6 +32,7 @@ import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
 import NoteList from '@/features/notlar/components/NoteList';
+import InteractiveKPICards from '@/features/ledger/components/InteractiveKPICards';
 
 interface DashboardProps {
   stats: {
@@ -47,6 +48,9 @@ interface DashboardProps {
   categories: any[];
   chartData?: { month: string, revenue: number, profit: number }[];
   notes?: any[];
+  totalInvestment: number;
+  allMonthCount: number;
+  allExpenses: any[];
 }
 
 export default function DashboardClientUI({ 
@@ -55,7 +59,10 @@ export default function DashboardClientUI({
   locations, 
   categories, 
   chartData = [],
-  notes = []
+  notes = [],
+  totalInvestment,
+  allMonthCount,
+  allExpenses
 }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
@@ -95,57 +102,31 @@ export default function DashboardClientUI({
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
-          <p className="text-sm text-slate-500 font-medium italic">Sistem genelindeki finansal durum ve operasyonel veriler.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
+          <p className="text-sm text-slate-500 font-medium italic">Sistem genelindeki finansal performans ve analiz merkezi.</p>
         </div>
         <div className="flex items-center gap-3">
            <button 
              onClick={() => setIsModalOpen(true)}
-             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+             className="inline-flex items-center gap-2.5 px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
            >
-              <Plus size={18} />
-              Yeni Gider
+              <Plus size={20} />
+              Yeni Gider Girişi
            </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Brüt Ciro" 
-          value={formatCurrency(stats.revenue)} 
-          subtitle="Tüm Zamanlar Toplam"
-          trend="+14.2%"
-          isPositive={true}
-          icon={<TrendingUp className="w-5 h-5 text-blue-600" />}
-        />
-        <StatCard 
-          title="Operasyonel Gider" 
-          value={formatCurrency(stats.expense)} 
-          subtitle="Tüm Gider Kalemleri"
-          trend="-3.1%"
-          isPositive={false}
-          icon={<TrendingDown className="w-5 h-5 text-rose-600" />}
-        />
-        <StatCard 
-          title="Net Nakit Akışı" 
-          value={formatCurrency(stats.profit)} 
-          subtitle="Vergi ve Komisyon Dahil"
-          trend="+9.4%"
-          isPositive={true}
-          icon={<Wallet className="w-5 h-5 text-emerald-600" />}
-        />
-        <StatCard 
-          title="Verimlilik (ROI)" 
-          value={`%${stats.roi.toFixed(1)}`} 
-          subtitle="Yatırım Geri Dönüş Oranı"
-          trend="+1.2%"
-          isPositive={true}
-          icon={<Target className="w-5 h-5 text-amber-600" />}
-        />
-      </section>
+      {/* Summary Cards - Flipping KPIs */}
+      <InteractiveKPICards 
+        totalRevenue={stats.revenue}
+        totalExpense={stats.expense}
+        totalInvestment={totalInvestment}
+        totalNetCash={stats.profit}
+        expenses={allExpenses}
+        allMonthCount={allMonthCount}
+      />
 
       {/* Main Content Grid */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
@@ -291,25 +272,6 @@ export default function DashboardClientUI({
           </div>
         )}
       </PremiumDrawer>
-    </div>
-  );
-}
-
-function StatCard({ title, value, subtitle, trend, isPositive, icon }: any) {
-  return (
-    <div className="bg-white border border-slate-200 p-6 rounded-3xl space-y-4 shadow-sm hover:shadow-md transition-all group">
-      <div className="flex items-center justify-between">
-         <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 transition-colors group-hover:bg-white shadow-inner">{icon}</div>
-         <div className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight", isPositive ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100")}>
-           {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-           {trend}
-         </div>
-      </div>
-      <div className="space-y-1">
-         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</h4>
-         <p className="text-2xl font-bold text-slate-900 tabular-nums tracking-tighter italic">{value}</p>
-      </div>
-      <p className="text-[10px] text-slate-400 font-medium italic">{subtitle}</p>
     </div>
   );
 }

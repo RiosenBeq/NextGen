@@ -150,6 +150,8 @@ export default async function GelirGiderPage(props: {
     margin: totalGrossSum > 0 ? (totalNetCashSum / totalGrossSum) * 100 : 0
   };
 
+  const availableMonths = Array.from(new Set(monthlyEntries.map(e => e.monthId))).sort().reverse();
+
   return (
     <GelirGiderClientUI 
       summary={summary}
@@ -158,6 +160,7 @@ export default async function GelirGiderPage(props: {
       categories={[]}
       filters={{ month: filterMonth, location: filterLocation, category: filterCategory }}
       breakdown={expenseBreakdownData}
+      availableMonths={availableMonths}
     />
   );
 }

@@ -61,8 +61,6 @@ export async function uploadDocument(formData: FormData) {
         relatedId,
         fileName: file.name,
         fileUrl: publicUrl,
-        fileSize: file.size,
-        mimeType: file.type,
       });
 
     if (dbError) throw dbError;
@@ -85,7 +83,7 @@ export async function uploadDocument(formData: FormData) {
 export async function getDocuments(relatedType?: string, relatedId?: string) {
   try {
     const supabase = await createClient();
-    let query = supabase.from('Document').select('*').order('uploadedAt', { ascending: false });
+    let query = supabase.from('Document').select('*').order('createdAt', { ascending: false });
 
     if (relatedType) query = query.eq('relatedType', relatedType);
     if (relatedId) query = query.eq('relatedId', relatedId);

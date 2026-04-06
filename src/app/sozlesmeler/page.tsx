@@ -12,9 +12,9 @@ export default async function SozlesmelerPage() {
   const [{ data: contracts }, { data: locations }] = await Promise.all([
     supabase
       .from('Document')
-      .select('id, fileName, fileUrl, relatedId, uploadedAt, createdAt')
+      .select('id, fileName, fileUrl, relatedId, createdAt')
       .eq('relatedType', 'contract')
-      .order('uploadedAt', { ascending: false }),
+      .order('createdAt', { ascending: false }),
     supabase.from('Location').select('id, name').eq('isActive', true).order('name', { ascending: true }),
   ]);
 

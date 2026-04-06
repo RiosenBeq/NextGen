@@ -29,11 +29,69 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
     revalidatePath('/performans');
     revalidatePath('/');
     revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
 
     return { success: true };
   } catch (error: any) {
     console.error("Hata:", error);
     return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+  }
+}
+
+export async function updateMonthlyPerformance(id: string, data: any) {
+  try {
+    const supabase = await createClient();
+    const validatedData = monthlyPerformanceSchema.parse(data);
+
+    const { data: record, error } = await supabase
+      .from('MonthlyPerformance')
+      .update({
+        sessionCount: validatedData.sessionCount,
+        extraExpenseAmount: validatedData.extraExpenseAmount || 0,
+        extraExpenseNotes: validatedData.extraExpenseNotes,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await createAuditLog('UPDATE', 'MonthlyPerformance', id, {
+      sessions: validatedData.sessionCount,
+      extra: validatedData.extraExpenseAmount
+    });
+
+    revalidatePath('/performans');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/raporlar');
+    revalidatePath('/finans');
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Update Performance Error:", error);
+    return { success: false, error: String(error?.message || 'Güncelleme hatası.') };
+  }
+}
+
+export async function deleteMonthlyPerformance(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
+    if (error) throw error;
+    
+    await createAuditLog('DELETE', 'MonthlyPerformance', id);
+
+    revalidatePath('/performans');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/raporlar');
+    revalidatePath('/finans');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }
 

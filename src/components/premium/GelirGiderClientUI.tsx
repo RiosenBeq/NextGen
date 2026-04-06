@@ -23,7 +23,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
+import MonthlyPerformanceForm from '@/features/ledger/components/MonthlyPerformanceForm';
+import { deleteMonthlyPerformance } from '@/features/ledger/actions';
 import Link from 'next/link';
+import { Trash2, Edit2, Zap } from 'lucide-react';
 
 interface GelirGiderProps {
   summary: {
@@ -47,9 +50,22 @@ export default function GelirGiderClientUI({ summary, entries, categories, locat
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
+
+  const handleDelete = async (perfId: string) => {
+    if (confirm("Bu performans kaydını silmek istediğinize emin misiniz? Tüm hesaplamalar etkilenecektir.")) {
+      const res = await deleteMonthlyPerformance(perfId);
+      if (res.success) {
+        setIsDrawerOpen(false);
+        window.location.reload();
+      } else {
+        alert("Silme hatası: " + res.error);
+      }
+    }
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-32">
@@ -238,56 +254,98 @@ export default function GelirGiderClientUI({ summary, entries, categories, locat
 
       <PremiumDrawer 
         isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
-        title="Dönem Analizi"
+        onClose={() => { setIsDrawerOpen(false); setIsEditing(false); }} 
+        title={isEditing ? "Veriyi Güncelle" : "Dönem Analizi"}
       >
         {selectedEntry && (
           <div className="space-y-12 py-6">
-             <div className="p-8 rounded-[40px] bg-slate-950 text-white space-y-6 relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 p-8 opacity-10 blur-xl">
-                   <PieChart size={120} />
-                </div>
-                <div className="relative space-y-1">
-                   <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">{selectedEntry.month}</p>
-                   <p className="text-4xl font-black italic tracking-tighter">{selectedEntry.locationName}</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-8 pt-4">
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Brüt Gelir</p>
-                      <p className="text-xl font-bold italic tracking-tight">{formatCurrency(selectedEntry.grossRevenue)}</p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Toplam Seans</p>
-                      <p className="text-xl font-bold italic tracking-tight">{selectedEntry.sessions}</p>
-                   </div>
-                </div>
-             </div>
+             {isEditing ? (
+               <MonthlyPerformanceForm 
+                 id={selectedEntry.perfId}
+                 initialData={{
+                   sessions: selectedEntry.sessions,
+                   extraExpense: selectedEntry.extraExpense,
+                   extraNotes: selectedEntry.extraNotes,
+                   month: selectedEntry.monthId,
+                   locationName: selectedEntry.locationName
+                 }}
+                 onClose={() => setIsEditing(false)}
+                 onDelete={handleDelete}
+               />
+             ) : (
+               <>
+                 <div className="p-8 rounded-[40px] bg-slate-950 text-white space-y-6 relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 blur-xl">
+                       <PieChart size={120} />
+                    </div>
+                    <div className="relative space-y-1">
+                       <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">{selectedEntry.month}</p>
+                       <p className="text-4xl font-black italic tracking-tighter">{selectedEntry.locationName}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-8 pt-4">
+                       <div className="space-y-1">
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Brüt Gelir</p>
+                          <p className="text-xl font-bold italic tracking-tight">{formatCurrency(selectedEntry.grossRevenue)}</p>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Toplam Seans</p>
+                          <p className="text-xl font-bold italic tracking-tight">{selectedEntry.sessions}</p>
+                       </div>
+                    </div>
+                 </div>
 
-             <div className="space-y-8 px-2">
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] italic border-b border-slate-50 pb-2">Gidert Kalemleri</h4>
-                <div className="space-y-6">
-                   <DetailMetric label="Sözleşme Ciro Payı" value={formatCurrency(selectedEntry.revenueShare)} icon={<HandCoins size={14} />} />
-                   <DetailMetric label="AVM Sabit Giderler" value={formatCurrency(selectedEntry.avmExpense - selectedEntry.revenueShare)} icon={<Building2 size={14} />} />
-                   <DetailMetric label="Ödeme Sistemleri Kesintisi" value={formatCurrency(selectedEntry.totalCommission)} icon={<CreditCard size={14} />} />
-                </div>
-             </div>
+                 <div className="space-y-8 px-2">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] italic">Gider Kalemleri</h4>
+                       <div className="flex gap-2">
+                          <button 
+                            onClick={() => setIsEditing(true)}
+                            className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-white transition-all shadow-sm"
+                          >
+                             <Edit2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(selectedEntry.perfId)}
+                            className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-600 hover:bg-white transition-all shadow-sm"
+                          >
+                             <Trash2 size={16} />
+                          </button>
+                       </div>
+                    </div>
+                    <div className="space-y-6">
+                       <DetailMetric label="Sözleşme Ciro Payı" value={formatCurrency(selectedEntry.revenueShare)} icon={<HandCoins size={14} />} />
+                       <DetailMetric label="AVM Sabit Giderler" value={formatCurrency(selectedEntry.avmExpense - selectedEntry.revenueShare)} icon={<Building2 size={14} />} />
+                       <DetailMetric label="Ödeme Sistemleri Kesintisi" value={formatCurrency(selectedEntry.totalCommission)} icon={<CreditCard size={14} />} />
+                       {selectedEntry.extraExpense > 0 && (
+                         <DetailMetric label="Operasyonel Ekstra" value={formatCurrency(selectedEntry.extraExpense)} icon={<Zap size={14} />} />
+                       )}
+                    </div>
+                    {selectedEntry.extraNotes && (
+                      <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100/50">
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 italic">NOTLAR</p>
+                        <p className="text-xs font-bold text-amber-900/80 italic">{selectedEntry.extraNotes}</p>
+                      </div>
+                    )}
+                 </div>
 
-             <div className="pt-8 px-2 border-t border-slate-50 flex items-center justify-between">
-                <div className="flex flex-col">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dönem Kârı</span>
-                   <span className={cn(
-                      "text-2xl font-black tracking-tighter italic",
-                      selectedEntry.netCash >= 0 ? "text-emerald-600" : "text-rose-600"
-                   )}>{formatCurrency(selectedEntry.netCash)}</span>
-                </div>
-                <div className={cn(
-                   "w-12 h-12 rounded-2xl flex items-center justify-center border shadow-sm",
-                   selectedEntry.netCash >= 0 ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
-                )}>
-                   {selectedEntry.netCash >= 0 ? <TrendingUp /> : <TrendingDown />}
-                </div>
-             </div>
+                 <div className="pt-8 px-2 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex flex-col">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dönem Kârı</span>
+                       <span className={cn(
+                          "text-2xl font-black tracking-tighter italic",
+                          selectedEntry.netCash >= 0 ? "text-emerald-600" : "text-rose-600"
+                       )}>{formatCurrency(selectedEntry.netCash)}</span>
+                    </div>
+                    <div className={cn(
+                       "w-12 h-12 rounded-2xl flex items-center justify-center border shadow-sm",
+                       selectedEntry.netCash >= 0 ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
+                    )}>
+                       {selectedEntry.netCash >= 0 ? <TrendingUp /> : <TrendingDown />}
+                    </div>
+                 </div>
+               </>
+             )}
           </div>
         )}
       </PremiumDrawer>

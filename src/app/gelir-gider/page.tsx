@@ -95,11 +95,14 @@ export default async function GelirGiderPage(props: {
       });
 
       const entry = {
+        perfId: perf.id,
         monthId: perfMonthStr,
         month: formatMonthSafe(perfMonthStr),
         locationName: loc.name,
         locationId: loc.id,
         sessions: perf.sessionCount,
+        extraExpense: perf.extraExpenseAmount || 0,
+        extraNotes: perf.extraExpenseNotes || '',
         grossRevenue: calc.grossRevenue,
         totalExpense: calc.totalExpense,
         netCash: calc.netCash,

@@ -32,6 +32,7 @@ interface DashboardProps {
   locations: any[];
   notes?: any[];
   totalInvestment: number;
+  investmentBreakdown: Record<string, number>;
   allMonthCount: number;
   allExpenses: any[];
 }
@@ -42,6 +43,7 @@ export default function DashboardClientUI({
   locations, 
   notes = [],
   totalInvestment,
+  investmentBreakdown,
   allMonthCount,
   allExpenses
 }: DashboardProps) {
@@ -114,6 +116,7 @@ export default function DashboardClientUI({
         totalRevenue={stats.revenue}
         totalExpense={stats.expense}
         totalInvestment={totalInvestment}
+        investmentBreakdown={investmentBreakdown}
         totalNetCash={stats.profit}
         expenses={allExpenses}
         allMonthCount={allMonthCount}

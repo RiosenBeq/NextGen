@@ -54,6 +54,10 @@ export default async function DashboardPage() {
     .select('*')
     .limit(100);
 
+  const { data: investmentData } = await supabase
+    .from('Investment')
+    .select('id, totalAmount, amountWithoutVat, locationId, location:Location(name)');
+
   const { data: paramsData } = await supabase
     .from('SystemParameter')
     .select('*');
@@ -144,7 +148,17 @@ export default async function DashboardPage() {
   const trueGlobalNetCash = totalManualNetCash;
   const totalGlobalOperationalExpense = totalManualOperationalExpense;
   const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
-  const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
+  const totalInvestment = (investmentData || []).reduce((acc: number, inv: any) => {
+    const tutar = Number(inv.totalAmount ?? inv.amountWithoutVat ?? 0);
+    return acc + (Number.isFinite(tutar) ? tutar : 0);
+  }, 0);
+
+  const investmentBreakdown = (investmentData || []).reduce((acc: Record<string, number>, inv: any) => {
+    const lokasyon = inv.location?.name || 'Belirtilmemiş';
+    const tutar = Number(inv.totalAmount ?? inv.amountWithoutVat ?? 0);
+    acc[lokasyon] = (acc[lokasyon] || 0) + (Number.isFinite(tutar) ? tutar : 0);
+    return acc;
+  }, {});
   const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
 
   // New Data Fetching for UI
@@ -181,6 +195,7 @@ export default async function DashboardPage() {
       locations={activeLocations} 
       notes={latestNotes || []}
       totalInvestment={totalInvestment}
+      investmentBreakdown={investmentBreakdown}
       allMonthCount={allMonthCount}
       allExpenses={expensesData || []}
     />

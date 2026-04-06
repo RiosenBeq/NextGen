@@ -2,25 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { getAuditLogs } from '@/features/audit/actions';
-import {
-  Activity,
-  Shield,
-  Search,
-  Calendar,
-  FilterX,
-  Clock3,
-  Globe,
-  ChevronDown,
-  ChevronUp,
-  Database,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Calendar, FilterX, Clock3, Globe, Database, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
 
-type AuditLog = {
+type LogKaydi = {
   id: string;
   action: 'CREATE' | 'UPDATE' | 'DELETE' | string;
   entity: string;
@@ -31,256 +17,186 @@ type AuditLog = {
   createdAt: string;
 };
 
-const actionMeta = {
-  CREATE: {
-    label: 'Oluşturma',
-    icon: Database,
-    chip: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    side: 'before:bg-emerald-500',
-  },
-  UPDATE: {
-    label: 'Güncelleme',
-    icon: Pencil,
-    chip: 'bg-blue-50 text-blue-700 border-blue-200',
-    side: 'before:bg-blue-500',
-  },
-  DELETE: {
-    label: 'Silme',
-    icon: Trash2,
-    chip: 'bg-rose-50 text-rose-700 border-rose-200',
-    side: 'before:bg-rose-500',
-  },
-} as const;
+const ISLEM_ETIKETLERI = {
+  CREATE: { ad: 'Oluşturma', sinif: 'bg-emerald-50 border-emerald-200 text-emerald-700', ikon: Database },
+  UPDATE: { ad: 'Güncelleme', sinif: 'bg-blue-50 border-blue-200 text-blue-700', ikon: Pencil },
+  DELETE: { ad: 'Silme', sinif: 'bg-rose-50 border-rose-200 text-rose-700', ikon: Trash2 },
+};
 
-function parseDetails(details: string | null) {
-  if (!details) return { display: '-', technical: null as string | null };
-  if (!details.includes('| Veri:')) return { display: details, technical: null as string | null };
-  const [display, technical] = details.split('| Veri:');
-  return { display: display.trim(), technical: technical.trim() };
+function detayAyir(detay: string | null) {
+  if (!detay) return { ozet: '-', teknik: null as string | null };
+  if (!detay.includes('| Veri:')) return { ozet: detay, teknik: null as string | null };
+  const [ozet, teknik] = detay.split('| Veri:');
+  return { ozet: ozet.trim(), teknik: teknik.trim() };
 }
 
-export default function LogsPage() {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [filterAction, setFilterAction] = useState<'ALL' | 'CREATE' | 'UPDATE' | 'DELETE'>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+export default function GunluklerSayfasi() {
+  const [loglar, setLoglar] = useState<LogKaydi[]>([]);
+  const [arama, setArama] = useState('');
+  const [tarih, setTarih] = useState('');
+  const [islemFiltresi, setIslemFiltresi] = useState<'ALL' | 'CREATE' | 'UPDATE' | 'DELETE'>('ALL');
+  const [acikKayitId, setAcikKayitId] = useState<string | null>(null);
   const { settings } = useSettings();
 
   useEffect(() => {
-    async function fetchLogs() {
-      const data = await getAuditLogs();
-      setLogs((data || []) as AuditLog[]);
+    async function getir() {
+      const veri = await getAuditLogs();
+      setLoglar((veri || []) as LogKaydi[]);
     }
-    fetchLogs();
+    getir();
   }, []);
 
-  const filteredLogs = useMemo(() => {
-    return logs.filter((log) => {
-      if (filterAction !== 'ALL' && log.action !== filterAction) return false;
-      if (dateFilter && !log.createdAt.startsWith(dateFilter)) return false;
+  const filtreliLoglar = useMemo(() => {
+    return loglar.filter((log) => {
+      if (islemFiltresi !== 'ALL' && log.action !== islemFiltresi) return false;
+      if (tarih && !log.createdAt.startsWith(tarih)) return false;
 
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const inDetails = log.details?.toLowerCase().includes(q);
-        const inEntity = log.entity?.toLowerCase().includes(q);
-        const inIp = log.ipAddress?.toLowerCase().includes(q);
-        if (!inDetails && !inEntity && !inIp) return false;
+      if (arama.trim()) {
+        const q = arama.toLowerCase();
+        const detayda = log.details?.toLowerCase().includes(q);
+        const varlikta = log.entity?.toLowerCase().includes(q);
+        const ipde = log.ipAddress?.toLowerCase().includes(q);
+        if (!detayda && !varlikta && !ipde) return false;
       }
+
       return true;
     });
-  }, [logs, filterAction, dateFilter, searchQuery]);
+  }, [loglar, arama, tarih, islemFiltresi]);
 
-  const summary = useMemo(() => {
-    const total = filteredLogs.length;
-    const createCount = filteredLogs.filter((l) => l.action === 'CREATE').length;
-    const updateCount = filteredLogs.filter((l) => l.action === 'UPDATE').length;
-    const deleteCount = filteredLogs.filter((l) => l.action === 'DELETE').length;
-    return { total, createCount, updateCount, deleteCount };
-  }, [filteredLogs]);
-
-  const clearFilters = () => {
-    setFilterAction('ALL');
-    setSearchQuery('');
-    setDateFilter('');
+  const filtreTemizle = () => {
+    setArama('');
+    setTarih('');
+    setIslemFiltresi('ALL');
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 p-4 pb-20 md:p-8">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 md:p-8 shadow-sm">
-        <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-blue-200/25 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
-              <Shield className="h-3.5 w-3.5" />
-              Güvenlik İzleme Merkezi
-            </div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Sistem Log Kayıtları</h1>
-            <p className="max-w-2xl text-sm text-slate-500 md:text-base">
-              Tüm kritik operasyonları, kullanıcı aksiyonlarını ve veri değişikliklerini tek bir profesyonel görünümde takip edin.
-            </p>
-          </div>
+    <div className="mx-auto max-w-7xl p-4 md:p-8 space-y-6 pb-20">
+      <header className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
+        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">Sistem Log</h1>
+        <p className="text-sm text-slate-500 mt-1">Tüm kayıtlar sade görünümde listelenir. Filtrelerle hızlıca daraltabilirsiniz.</p>
 
-          <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:w-auto">
-            <SummaryCard label="Toplam" value={summary.total} tone="slate" />
-            <SummaryCard label="Oluşturma" value={summary.createCount} tone="emerald" />
-            <SummaryCard label="Güncelleme" value={summary.updateCount} tone="blue" />
-            <SummaryCard label="Silme" value={summary.deleteCount} tone="rose" />
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-400 focus-within:bg-white">
-            <Search className="h-4 w-4 text-slate-400" />
+        <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Loglarda ara: varlık, detay, IP..."
-              className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+              value={arama}
+              onChange={(e) => setArama(e.target.value)}
+              placeholder="Kayıt ara (varlık, detay, IP)"
+              className="w-full h-10 rounded-lg border border-slate-200 pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5">
-              <Calendar className="h-4 w-4 text-slate-400" />
+            <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 h-10">
+              <Calendar className="w-4 h-4 text-slate-400" />
               <input
                 type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-transparent text-sm text-slate-700 outline-none [color-scheme:light]"
+                value={tarih}
+                onChange={(e) => setTarih(e.target.value)}
+                className="text-sm outline-none [color-scheme:light]"
               />
             </div>
 
-            {(['ALL', 'CREATE', 'UPDATE', 'DELETE'] as const).map((action) => (
+            {(['ALL', 'CREATE', 'UPDATE', 'DELETE'] as const).map((islem) => (
               <button
-                key={action}
-                onClick={() => setFilterAction(action)}
+                key={islem}
+                onClick={() => setIslemFiltresi(islem)}
                 className={cn(
-                  'rounded-xl border px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition-all',
-                  filterAction === action
-                    ? 'border-blue-200 bg-blue-50 text-blue-700'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                  'h-10 px-3 rounded-lg border text-[11px] font-bold uppercase tracking-wide',
+                  islemFiltresi === islem
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
                 )}
               >
-                {action === 'ALL' ? 'Tümü' : action}
+                {islem === 'ALL' ? 'Tümü' : islem}
               </button>
             ))}
 
-            {(filterAction !== 'ALL' || searchQuery || dateFilter) && (
+            {(arama || tarih || islemFiltresi !== 'ALL') && (
               <button
-                onClick={clearFilters}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:text-blue-600"
+                onClick={filtreTemizle}
+                className="h-10 px-3 rounded-lg border border-slate-200 text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:text-blue-600 inline-flex items-center gap-1"
               >
-                <FilterX className="h-4 w-4" />
+                <FilterX className="w-4 h-4" />
                 Temizle
               </button>
             )}
           </div>
         </div>
-      </section>
+      </header>
 
-      <section className="space-y-3">
-        {filteredLogs.map((log, idx) => {
-          const { display, technical } = parseDetails(log.details);
-          const isExpanded = expandedId === log.id;
-          const meta = actionMeta[log.action as keyof typeof actionMeta] || actionMeta.UPDATE;
-          const ActionIcon = meta.icon;
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 md:px-6 py-3 border-b border-slate-100 text-xs text-slate-500 font-semibold">
+          Toplam {filtreliLoglar.length} kayıt
+        </div>
 
-          return (
-            <motion.article
-              key={log.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.01 }}
-              className={cn(
-                'relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm before:absolute before:bottom-0 before:left-0 before:top-0 before:w-1 before:rounded-l-2xl',
-                meta.side,
-                technical ? 'cursor-pointer' : 'cursor-default'
-              )}
-              onClick={() => technical && setExpandedId(isExpanded ? null : log.id)}
-            >
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={cn('inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider', meta.chip)}>
-                    <ActionIcon className="h-3 w-3" />
-                    {meta.label}
-                  </span>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">{log.entity}</span>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] text-slate-500">{log.entityId.slice(0, 10)}</span>
+        <div className="divide-y divide-slate-100">
+          {filtreliLoglar.map((log) => {
+            const { ozet, teknik } = detayAyir(log.details);
+            const meta = ISLEM_ETIKETLERI[log.action as keyof typeof ISLEM_ETIKETLERI] || ISLEM_ETIKETLERI.UPDATE;
+            const Ikon = meta.ikon;
+            const acikMi = acikKayitId === log.id;
+
+            return (
+              <article key={log.id} className="p-4 md:p-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={cn('inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wide', meta.sinif)}>
+                        <Ikon className="w-3 h-3" />
+                        {meta.ad}
+                      </span>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 break-all">{log.entity}</span>
+                      <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-1 rounded">{log.entityId.slice(0, 10)}</span>
+                    </div>
+
+                    <p className="text-sm text-slate-700 leading-relaxed break-words">{ozet}</p>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 text-xs text-slate-500">
+                      <div className="inline-flex items-center gap-1 rounded-md bg-slate-50 px-2 py-1.5 min-w-0">
+                        <Globe className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="font-mono break-all">{log.ipAddress || '127.0.0.1'}</span>
+                      </div>
+                      <div className="rounded-md bg-slate-50 px-2 py-1.5 truncate" title={log.userAgent || ''}>
+                        {log.userAgent || '-'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-500 md:text-right whitespace-nowrap">
+                    <p className="inline-flex items-center gap-1"><Clock3 className="w-3.5 h-3.5" />{new Date(log.createdAt).toLocaleDateString('tr-TR')}</p>
+                    <p>{new Date(log.createdAt).toLocaleTimeString('tr-TR')}</p>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-[11px] text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <Clock3 className="h-3.5 w-3.5" />
-                    {new Date(log.createdAt).toLocaleDateString('tr-TR')} {new Date(log.createdAt).toLocaleTimeString('tr-TR')}
-                  </span>
-                </div>
-              </div>
+                {teknik && settings.SETTING_LOG_DETAIL_LEVEL === 1 && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setAcikKayitId(acikMi ? null : log.id)}
+                      className="text-[11px] font-bold uppercase tracking-wide text-blue-600"
+                    >
+                      {acikMi ? 'Teknik veriyi gizle' : 'Teknik veriyi göster'}
+                    </button>
 
-              <p className="text-sm leading-relaxed text-slate-700 break-words">{display}</p>
-
-              <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-slate-500 md:grid-cols-2">
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1.5">
-                  <Globe className="h-3.5 w-3.5 text-blue-600" />
-                  <span className="font-mono break-all">{log.ipAddress || '127.0.0.1'}</span>
-                </span>
-                <span className="truncate rounded-lg bg-slate-50 px-2.5 py-1.5 text-right" title={log.userAgent || ''}>
-                  {log.userAgent || '-'}
-                </span>
-              </div>
-
-              {technical && settings.SETTING_LOG_DETAIL_LEVEL === 1 && (
-                <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-blue-600">
-                  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  {isExpanded ? 'Teknik veriyi gizle' : 'Teknik veriyi göster'}
-                </div>
-              )}
-
-              <AnimatePresence>
-                {isExpanded && technical && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-600">
-                      {JSON.stringify(JSON.parse(technical), null, 2)}
-                    </pre>
-                  </motion.div>
+                    {acikMi && (
+                      <pre className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600 overflow-x-auto whitespace-pre-wrap break-all">
+                        {JSON.stringify(JSON.parse(teknik), null, 2)}
+                      </pre>
+                    )}
+                  </div>
                 )}
-              </AnimatePresence>
-            </motion.article>
-          );
-        })}
+              </article>
+            );
+          })}
 
-        {filteredLogs.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
-            <Activity className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-4 text-sm font-semibold text-slate-700">Seçili filtrelere uygun log kaydı bulunamadı.</p>
-            <p className="mt-1 text-xs text-slate-500">Filtreleri temizleyerek tüm kayıtları tekrar görebilirsiniz.</p>
-          </div>
-        )}
+          {filtreliLoglar.length === 0 && (
+            <div className="p-16 text-center">
+              <p className="text-sm font-semibold text-slate-700">Kayıt bulunamadı</p>
+              <p className="text-xs text-slate-500 mt-1">Filtreleri temizleyip tekrar deneyin.</p>
+            </div>
+          )}
+        </div>
       </section>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value, tone }: { label: string; value: number; tone: 'slate' | 'emerald' | 'blue' | 'rose' }) {
-  const classes = {
-    slate: 'border-slate-200 bg-white text-slate-700',
-    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    blue: 'border-blue-200 bg-blue-50 text-blue-700',
-    rose: 'border-rose-200 bg-rose-50 text-rose-700',
-  };
-
-  return (
-    <div className={cn('rounded-2xl border px-4 py-3', classes[tone])}>
-      <p className="text-[10px] font-bold uppercase tracking-wider">{label}</p>
-      <p className="mt-1 text-2xl font-black leading-none">{value}</p>
     </div>
   );
 }

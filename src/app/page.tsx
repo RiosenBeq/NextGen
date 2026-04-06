@@ -140,9 +140,6 @@ export default async function DashboardPage() {
     }
   }
 
-  const chartEntries = Object.entries(monthlyTotals).slice(-6);
-  const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
-
   const displayAllTimeRevenue = totalManualRevenue;
   const trueGlobalNetCash = totalManualNetCash;
   const totalGlobalOperationalExpense = totalManualOperationalExpense;
@@ -177,19 +174,11 @@ export default async function DashboardPage() {
     .order('createdAt', { ascending: false })
     .limit(10);
 
-  const chartData = Object.entries(monthlyTotals).map(([month, data]) => ({
-    month,
-    revenue: data.revenue,
-    profit: data.profit
-  })).slice(-6);
-
   return (
     <DashboardClientUI 
       stats={stats} 
       recentExpenses={latestExpenses || []} 
       locations={activeLocations} 
-      categories={[]} 
-      chartData={chartData}
       notes={latestNotes || []}
       totalInvestment={totalInvestment}
       allMonthCount={allMonthCount}

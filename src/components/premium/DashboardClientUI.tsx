@@ -4,28 +4,13 @@ import React, { useState } from 'react';
 import { 
   Plus, 
   ChevronRight, 
-  Wallet, 
   Receipt,
   FileText,
-  TrendingUp,
-  TrendingDown,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Download,
-  Calendar,
-  PieChart,
-  Activity,
-  Eye,
   CheckCircle2,
   AlertCircle,
   Loader2,
   UploadCloud
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
@@ -45,8 +30,6 @@ interface DashboardProps {
   };
   recentExpenses: any[];
   locations: any[];
-  categories: any[];
-  chartData?: { month: string, revenue: number, profit: number }[];
   notes?: any[];
   totalInvestment: number;
   allMonthCount: number;
@@ -57,8 +40,6 @@ export default function DashboardClientUI({
   stats, 
   recentExpenses, 
   locations, 
-  categories, 
-  chartData = [],
   notes = [],
   totalInvestment,
   allMonthCount,
@@ -98,6 +79,16 @@ export default function DashboardClientUI({
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
+  const ortalamaGider = allExpenses.length > 0
+    ? allExpenses.reduce((toplam: number, gider: any) => toplam + (gider.amountWithVat || 0), 0) / allExpenses.length
+    : 0;
+
+  const resmiOran = allExpenses.length > 0
+    ? (allExpenses.filter((gider: any) => gider.isOfficial).length / allExpenses.length) * 100
+    : 0;
+
+  const belgesizKayit = recentExpenses.filter((gider: any) => !gider.attachmentUrl).length;
+
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       
@@ -130,25 +121,39 @@ export default function DashboardClientUI({
 
       {/* Main Content Grid */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Trend Chart */}
-        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col justify-between min-h-[450px]">
-           <div className="flex items-center justify-between mb-8">
-              <div className="space-y-1">
-                 <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                    <Activity size={20} className="text-blue-600" />
-                    Finansal Trend
-                 </h3>
-                 <p className="text-xs text-slate-500 font-medium italic">Aylık bazda ciro ve kârlılık değişimi.</p>
-              </div>
-              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
-                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Ciro</div>
-                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Net Kâr</div>
-              </div>
-           </div>
-           
-           <div className="flex-1 min-h-[300px]">
-              <ProfessionalTrendChart data={chartData} />
-           </div>
+        {/* Analiz Merkezi */}
+        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+          <div className="space-y-1 mb-6">
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Finansal Analiz Merkezi</h3>
+            <p className="text-xs text-slate-500 font-medium italic">Trend grafiği yerine aksiyon alınabilir analiz kartları.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AnalyzerCard
+              title="Ortalama Gider"
+              value={formatCurrency(ortalamaGider)}
+              description="Son kayıtlar baz alınarak ortalama gider tutarı."
+              tone="blue"
+            />
+            <AnalyzerCard
+              title="Resmi Evrak Oranı"
+              value={`%${resmiOran.toFixed(1)}`}
+              description="Kayıtların resmi evrak ile işlenme oranı."
+              tone="emerald"
+            />
+            <AnalyzerCard
+              title="Belgesiz Son Kayıt"
+              value={`${belgesizKayit}`}
+              description="Son kayıtlar içinde belgesi eksik olan gider adedi."
+              tone="rose"
+            />
+            <AnalyzerCard
+              title="Net Nakit Durumu"
+              value={formatCurrency(stats.profit)}
+              description="Toplam gelir-gider sonrası kalan net nakit."
+              tone={stats.profit >= 0 ? 'emerald' : 'rose'}
+            />
+          </div>
         </div>
 
         {/* Recent Transactions */}
@@ -285,43 +290,28 @@ function DetailRow({ label, value }: { label: string, value: string }) {
   );
 }
 
-function ProfessionalTrendChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-300 font-bold text-xs uppercase italic bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">Yeterli Veri Yok</div>;
-
-  const padding = 40;
-  const height = 300;
-  const width = 1000;
-  const maxVal = Math.max(...data.map(d => Math.max(d.revenue, d.profit)), 1) * 1.1;
-
-  const points = data.map((d, i) => ({
-    x: padding + (i * (width - 2 * padding) / (data.length - 1 || 1)),
-    revY: height - padding - (d.revenue / maxVal * (height - 2 * padding)),
-    proY: height - padding - (d.profit / maxVal * (height - 2 * padding)),
-  }));
-
-  const revPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.revY}`).join(' ');
-  const proPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.proY}`).join(' ');
+function AnalyzerCard({
+  title,
+  value,
+  description,
+  tone,
+}: {
+  title: string;
+  value: string;
+  description: string;
+  tone: 'blue' | 'emerald' | 'rose';
+}) {
+  const toneMap = {
+    blue: 'border-blue-200 bg-blue-50/50',
+    emerald: 'border-emerald-200 bg-emerald-50/50',
+    rose: 'border-rose-200 bg-rose-50/50',
+  };
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563EB" stopOpacity="0.1"/><stop offset="100%" stopColor="#2563EB" stopOpacity="0"/></linearGradient>
-        <linearGradient id="proG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.1"/><stop offset="100%" stopColor="#10B981" stopOpacity="0"/></linearGradient>
-      </defs>
-      {[0, 0.5, 1].map((p, i) => (
-        <line key={i} x1={padding} y1={padding + p * (height - 2 * padding)} x2={width - padding} y2={padding + p * (height - 2 * padding)} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
-      ))}
-      <path d={revPath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`} fill="url(#revG)" />
-      <path d={proPath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`} fill="url(#proG)" />
-      <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} d={revPath} fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.2 }} d={proPath} fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      {points.map((p, i) => (
-        <React.Fragment key={i}>
-          <circle cx={p.x} cy={p.revY} r="4" fill="#2563EB" />
-          <circle cx={p.x} cy={p.proY} r="4" fill="#10B981" />
-          <text x={p.x} y={height - 5} textAnchor="middle" fill="#94A3B8" className="text-[10px] font-bold uppercase tracking-widest">{data[i].month}</text>
-        </React.Fragment>
-      ))}
-    </svg>
+    <div className={cn('rounded-2xl border p-4', toneMap[tone])}>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
+      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
+      <p className="mt-1 text-xs text-slate-600">{description}</p>
+    </div>
   );
 }

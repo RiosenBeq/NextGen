@@ -44,69 +44,66 @@ export function NoteForm({ initialData, onClose }: Props) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
-      <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 italic">Not Protokol Başlığı</label>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Not Başlığı</label>
         <input
           autoFocus
           type="text"
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Stratejik başlık giriniz..."
-          className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-6 py-4 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-black italic uppercase tracking-tighter text-lg shadow-inner"
+          placeholder="Başlık giriniz..."
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-bold text-lg outline-none"
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 italic">Dokümantasyon & Detaylar</label>
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Not Detayları</label>
         <textarea
           required
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Protokol detaylarını, kararları veya hatırlatıcıları buraya asenkron olarak not düşebilirsiniz..."
+          placeholder="Hafızaya alınacak detaylar, kararlar veya hatırlatıcılar..."
           rows={6}
-          className="w-full bg-slate-50 border border-slate-200 rounded-[24px] px-6 py-4 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold italic leading-relaxed resize-none shadow-inner"
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium leading-relaxed resize-none outline-none"
         />
       </div>
 
       <div className="space-y-4">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 italic text-center block">Kategori Renk Segmentasyonu</label>
-        <div className="flex justify-center gap-4">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-center block">Kategori Rengi</label>
+        <div className="flex justify-center gap-3">
           {colors.map((c) => (
             <button
               key={c.id}
               type="button"
               onClick={() => setColor(c.id)}
-              className={`w-12 h-12 rounded-2xl border-2 transition-all flex items-center justify-center relative shadow-sm ${
-                color === c.id ? `scale-110 -translate-y-1 shadow-lg ${c.border}` : 'border-transparent grayscale opacity-40 hover:opacity-100 hover:grayscale-0'
+              className={`w-10 h-10 rounded-xl border-2 transition-all flex items-center justify-center relative ${
+                color === c.id ? `scale-110 -translate-y-0.5 border-blue-500 shadow-lg ${c.bg}` : 'border-slate-100 bg-white opacity-40 hover:opacity-100'
               } ${c.bg}`}
             >
               {color === c.id && (
-                <motion.div 
-                   layoutId="activeColor"
-                   className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-slate-900" 
-                />
+                <motion.div layoutId="activeColor" className="absolute -bottom-1 w-1 h-1 rounded-full bg-blue-600" />
               )}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="pt-6 grid grid-cols-2 gap-4">
+      <div className="pt-4 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="group px-8 py-4 bg-white border border-slate-200 text-slate-500 font-black text-[10px] tracking-[0.2em] rounded-[22px] transition-all hover:bg-slate-50 uppercase italic"
+            className="px-6 py-3 bg-white border border-slate-200 text-slate-500 font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all hover:bg-slate-50"
           >
             Vazgeç
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="group px-8 py-4 bg-slate-900 text-white font-black text-[10px] tracking-[0.2em] rounded-[22px] transition-all hover:bg-slate-800 shadow-xl shadow-slate-200 uppercase italic disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3 active:scale-95"
+            className="px-6 py-3 bg-blue-600 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? 'Senkronize Ediliyor...' : (initialData ? 'Protokolü Güncelle' : 'Kaydı Tamamla')}
+            {isSubmitting ? 'Kaydediliyor...' : (initialData ? 'Notu Güncelle' : 'Notu Kaydet')}
           </button>
       </div>
     </form>

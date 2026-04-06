@@ -9,7 +9,6 @@ import {
   FileText,
   TrendingUp,
   TrendingDown,
-  BrainCircuit,
   ArrowUpRight,
   ArrowDownRight,
   Target,
@@ -23,18 +22,16 @@ import {
   Eye,
   CheckCircle2,
   AlertCircle,
-  Calculator
+  Loader2,
+  UploadCloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
-import { PremiumFlipCard } from './PremiumFlipCard';
 import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
-import { Loader2, Camera, UploadCloud } from 'lucide-react';
-
-import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
-import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
+import NoteList from '@/features/notlar/components/NoteList';
 
 interface DashboardProps {
   stats: {
@@ -49,8 +46,7 @@ interface DashboardProps {
   locations: any[];
   categories: any[];
   chartData?: { month: string, revenue: number, profit: number }[];
-  insights?: any[];
-  defaultParams?: any;
+  notes?: any[];
 }
 
 export default function DashboardClientUI({ 
@@ -59,8 +55,7 @@ export default function DashboardClientUI({
   locations, 
   categories, 
   chartData = [],
-  insights = [],
-  defaultParams = {}
+  notes = []
 }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
@@ -97,359 +92,244 @@ export default function DashboardClientUI({
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-700 pb-32">
+    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       
-      {/* 1. TOP SECTION: SUMMAY CARDS */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
+          <p className="text-sm text-slate-500 font-medium italic">Sistem genelindeki finansal durum ve operasyonel veriler.</p>
+        </div>
+        <div className="flex items-center gap-3">
+           <button 
+             onClick={() => setIsModalOpen(true)}
+             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+           >
+              <Plus size={18} />
+              Yeni Gider
+           </button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Toplam Brüt Ciro" 
+          title="Brüt Ciro" 
           value={formatCurrency(stats.revenue)} 
-          subtitle="Platform Tüm Zamanlar"
+          subtitle="Tüm Zamanlar Toplam"
           trend="+14.2%"
           isPositive={true}
-          icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
+          icon={<TrendingUp className="w-5 h-5 text-blue-600" />}
         />
         <StatCard 
-          title="Toplam Gider Payı" 
+          title="Operasyonel Gider" 
           value={formatCurrency(stats.expense)} 
-          subtitle="Tüm Operasyonel Çıkışlar"
+          subtitle="Tüm Gider Kalemleri"
           trend="-3.1%"
           isPositive={false}
-          icon={<TrendingDown className="w-5 h-5 text-rose-500" />}
+          icon={<TrendingDown className="w-5 h-5 text-rose-600" />}
         />
         <StatCard 
-          title="Kümülatif Net Kâr" 
+          title="Net Nakit Akışı" 
           value={formatCurrency(stats.profit)} 
-          subtitle="Yatırım Geri Dönüş Payı"
+          subtitle="Vergi ve Komisyon Dahil"
           trend="+9.4%"
           isPositive={true}
-          icon={<Wallet className="w-5 h-5 text-blue-500" />}
+          icon={<Wallet className="w-5 h-5 text-emerald-600" />}
         />
         <StatCard 
-          title="Global ROI Oranı" 
+          title="Verimlilik (ROI)" 
           value={`%${stats.roi.toFixed(1)}`} 
-          subtitle="Maliyet / Verimlilik Dengesi"
+          subtitle="Yatırım Geri Dönüş Oranı"
           trend="+1.2%"
           isPositive={true}
-          icon={<Target className="w-5 h-5 text-amber-400" />}
+          icon={<Target className="w-5 h-5 text-amber-600" />}
         />
       </section>
 
-      {/* 2. STRATEGIC MATRIX & CHART (Elite Viz) */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
-        <div className="xl:col-span-4 flex flex-col gap-8">
-           <div className="premium-card p-10 bg-white border border-slate-200 rounded-[48px] h-full flex flex-col justify-between shadow-sm">
-              <div className="space-y-4">
-                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                    <Activity size={24} />
-                 </div>
-                 <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic">Operasyonel Nabız</h3>
-                 <p className="text-xs text-slate-400 font-bold italic leading-relaxed">Platform genelindeki gelir ve kâr trendinin aylık asenkron simülasyonu.</p>
+      {/* Main Content Grid */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Trend Chart */}
+        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col justify-between min-h-[450px]">
+           <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                 <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <Activity size={20} className="text-blue-600" />
+                    Finansal Trend
+                 </h3>
+                 <p className="text-xs text-slate-500 font-medium italic">Aylık bazda ciro ve kârlılık değişimi.</p>
               </div>
-              
-              <div className="h-64 mt-10">
-                 <PremiumTrendChart data={chartData} />
+              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
+                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Ciro</div>
+                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Net Kâr</div>
               </div>
-              
-              <div className="pt-6 border-t border-slate-50 mt-6 flex items-center justify-between">
-                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Gelir</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Net Kâr</span>
-                 </div>
-              </div>
+           </div>
+           
+           <div className="flex-1 min-h-[300px]">
+              <ProfessionalTrendChart data={chartData} />
            </div>
         </div>
 
-        <div className="xl:col-span-8">
-           <div className="space-y-4 mb-6 px-1">
-              <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
-                 <Target className="w-6 h-6 text-blue-500" />
-                 Şube Bazlı Stratejik Analiz
-              </h2>
-              <p className="text-sm text-slate-500 font-bold italic">Her lokasyonun kârlılık eşiği ve yatırım amortisman durumuna göre performans matrisi.</p>
+        {/* Recent Transactions */}
+        <div className="xl:col-span-4 bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm flex flex-col">
+           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                 <Receipt size={20} className="text-slate-400" />
+                 Son Kayıtlar
+              </h3>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">AUDIT</span>
            </div>
-           <StrategicMatrix insights={insights} />
-        </div>
-      </section>
-
-      {/* 3. SIMULATOR & RECENT TRANSACTIONS */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-12">
-        <div className="xl:col-span-7 space-y-6">
-           <div className="flex items-center justify-between px-1">
-               <div className="space-y-1">
-                 <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
-                    <Calculator size={24} className="text-slate-400" />
-                    Finansal Projeksiyon & Senaryo
-                 </h2>
-                 <p className="text-xs text-slate-400 font-bold italic">Seans sayılarına göre gelecek kârlılık beklentisini simüle edin.</p>
-               </div>
-           </div>
-           <div className="p-1 rounded-[40px] bg-slate-900 shadow-2xl">
-              <FinancialSimulator defaultParams={defaultParams} />
-           </div>
-        </div>
-
-                <button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg italic"
-                >
-                   <Plus size={16} strokeWidth={3} />
-                   Yeni Gider
-                </button>
-           </div>
-
-           <div className="bg-white border border-slate-200 rounded-[40px] overflow-hidden shadow-sm">
-
-        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-           <table className="w-full text-left border-collapse">
-              <thead>
-                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Açıklama & Kategori</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Tutar</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Durum</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tarih</th>
-                    <th className="px-6 py-4"></th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                 {recentExpenses.map((exp, idx) => (
-                    <tr 
-                       key={exp.id || idx} 
-                       className="group hover:bg-slate-50/50 transition-all cursor-pointer"
-                       onClick={() => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
-                    >
-                       <td className="px-6 py-5">
-                          <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white transition-colors">
-                                <FileIcon type={exp.type} />
-                             </div>
-                             <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight italic underline decoration-slate-200 underline-offset-4 decoration-1">{exp.description}</span>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{exp.location?.name || 'Tümü'}</span>
-                                   <span className="w-1 h-1 rounded-full bg-slate-200" />
-                                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">{exp.category?.name || 'Genel'}</span>
+           
+           <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                 <tbody className="divide-y divide-slate-50">
+                    {recentExpenses.length === 0 ? (
+                       <tr><td className="py-20 text-center text-xs font-medium text-slate-400 italic">Kayıt bulunamadı.</td></tr>
+                    ) : (
+                       recentExpenses.map((exp, idx) => (
+                          <tr 
+                            key={exp.id || idx} 
+                            className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                            onClick={() => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
+                          >
+                             <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                   <span className="text-sm font-bold text-slate-800 line-clamp-1">{exp.description}</span>
+                                   <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{exp.location?.name || 'Genel'}</span>
+                                      <span className="w-0.5 h-0.5 rounded-full bg-slate-200" />
+                                      <span className="text-[10px] font-medium text-slate-400 lowercase">{exp.createdAt ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '-'}</span>
+                                   </div>
                                 </div>
-                             </div>
-                          </div>
-                       </td>
-                       <td className="px-6 py-5 text-right font-mono text-sm tabular-nums font-bold text-slate-900 tracking-tighter">
-                          {formatCurrency(exp.amountWithVat)}
-                       </td>
-                       <td className="px-6 py-5 text-center">
-                          <StatusBadge isOfficial={exp.isOfficial} />
-                       </td>
-                       <td className="px-12 py-5">
-                          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
-                             {exp.createdAt ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '-'}
-                          </span>
-                       </td>
-                       <td className="px-6 py-5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-2 rounded-lg hover:bg-white text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-200 transition-all shadow-sm">
-                             <ChevronRight size={16} />
-                          </button>
-                       </td>
-                    </tr>
-                 ))}
-                 {recentExpenses.length === 0 && (
-                   <tr>
-                     <td colSpan={5} className="py-20 text-center text-slate-400 font-medium">Bize ait kayıt bulunmuyor.</td>
-                   </tr>
-                 )}
-              </tbody>
-           </table>
+                             </td>
+                             <td className="px-6 py-4 text-right">
+                                <span className={cn("text-sm font-bold tabular-nums tracking-tighter italic", exp.isOfficial ? "text-slate-900" : "text-slate-500")}>
+                                   {formatCurrency(exp.amountWithVat)}
+                                </span>
+                             </td>
+                          </tr>
+                       ))
+                    )}
+                 </tbody>
+              </table>
+           </div>
+           
+           <div className="p-4 border-t border-slate-100 text-center">
+              <Link href="/gelir-gider" className="text-[11px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors flex items-center justify-center gap-2">
+                 Tümünü Görüntüle <ChevronRight size={14} />
+              </Link>
+           </div>
         </div>
       </section>
+      
+      {/* User Notes Section */}
+      <section className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-8">
+           <FileText size={20} className="text-blue-600" />
+           <div>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Kişisel Notlar</h3>
+              <p className="text-xs text-slate-500 font-medium italic mt-0.5">Operasyonel notlar ve hatırlatıcılar.</p>
+           </div>
+        </div>
+        <NoteList initialNotes={notes} />
+      </section>
 
-      {/* 3. NEW EXPENSE MODAL */}
-      <PremiumModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title="Yeni Finansal Gider Tanımla"
-        maxWidth="max-w-xl"
-      >
-        <ExpenseForm 
-          locations={locations} 
-          onClose={() => { setIsModalOpen(false); window.location.reload(); }} 
-        />
+      {/* Modals & Drawers */}
+      <PremiumModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Gider Tanımla" maxWidth="max-w-xl">
+        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); window.location.reload(); }} />
       </PremiumModal>
 
-      {/* 4. DETAIL DRAWER (SLIDE OVER) */}
-      <PremiumDrawer 
-        isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
-        title="Gider Detayı"
-      >
+      <PremiumDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="İşlem Detayı">
         {selectedExpense && (
-          <div className="space-y-10 py-4 animate-in slide-in-from-right-10 duration-500">
-             <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Net Ödeme Tutarı</p>
-                <p className="text-4xl font-black text-slate-900 tabular-nums tracking-tighter italic">
+          <div className="space-y-8 py-4 animate-in slide-in-from-right-5 duration-500">
+             <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Net Tutar</p>
+                <p className="text-4xl font-bold text-slate-900 tabular-nums tracking-tighter italic">
                   {formatCurrency(selectedExpense.amountWithVat)}
                 </p>
              </div>
 
-             <div className="space-y-6">
+             <div className="space-y-5 px-1">
                 <DetailRow label="Açıklama" value={selectedExpense.description} />
-                <DetailRow label="Ödeme Tipi" value={selectedExpense.type === 'RECURRING' ? 'Mükerrer (Aylık)' : 'Tek Seferlik'} />
-                <DetailRow label="Vergi Durumu" value={selectedExpense.isOfficial ? 'Resmi (Fatura Var)' : 'Gayri Resmi (Elden / Nakit)'} />
-                <DetailRow label="KDV Dahil Mi?" value={`%${selectedExpense.vatRate || 0} Oranında Dahil`} />
+                <DetailRow label="Tip" value={selectedExpense.type === 'RECURRING' ? 'Mükerrer' : 'Tek Seferlik'} />
+                <DetailRow label="Durum" value={selectedExpense.isOfficial ? 'Resmi Evrak' : 'Gayri Resmi'} />
                 <DetailRow label="Lokasyon" value={selectedExpense.location?.name || 'Tümü'} />
-                <DetailRow label="Kategori" value={selectedExpense.category?.name || 'Genel'} />
-                <DetailRow label="Kayıt Tarihi" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
+                <DetailRow label="Tarih" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
                 
-                {/* LATE ATTACHMENT SECTION */}
-                <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
-                      <FileText size={14} className="text-blue-500" />
-                      BELGE / KANIT DURUMU
+                <div className="pt-6 border-t border-slate-100 space-y-4">
+                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+                      <FileText size={14} className="text-slate-400" />
+                      Belge Durumu
                    </p>
                    
                    {selectedExpense.attachmentUrl ? (
-                     <a 
-                       href={selectedExpense.attachmentUrl} 
-                       target="_blank" 
-                       rel="noopener"
-                       className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100 group/link"
-                     >
+                     <a href={selectedExpense.attachmentUrl} target="_blank" rel="noopener" className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100 group">
                         <div className="flex items-center gap-3">
-                           <div className="bg-white p-2 rounded-xl text-emerald-600 shadow-sm">
-                              <CheckCircle2 size={16} />
-                           </div>
-                           <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Belge Mevcut</span>
+                           <div className="bg-white p-2 rounded-xl text-emerald-600 shadow-sm border border-emerald-100"><CheckCircle2 size={16} /></div>
+                           <span className="text-sm font-bold text-emerald-800">Belge Mevcut</span>
                         </div>
-                        <ChevronRight size={16} className="text-emerald-400 group-hover/link:translate-x-1 transition-transform" />
+                        <ChevronRight size={16} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
                      </a>
                    ) : (
                      <div className="space-y-4">
                         <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100">
                            <AlertCircle size={16} className="text-rose-500" />
-                           <span className="text-[10px] font-black text-rose-700 uppercase tracking-widest">Henüz Belge Eklenmedi</span>
+                           <span className="text-sm font-bold text-rose-800">Belge Bulunmuyor</span>
                         </div>
-                        
-                        <input 
-                          type="file" 
-                          ref={fileRef} 
-                          onChange={handleLateUpload} 
-                          className="hidden" 
-                          accept=".pdf,.jpg,.jpeg,.png,.webp"
-                        />
-                        
-                        <button 
-                          onClick={() => fileRef.current?.click()}
-                          disabled={isUploading}
-                          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all text-[10px] font-black uppercase tracking-widest italic"
-                        >
-                           {isUploading ? (
-                             <>
-                               <Loader2 size={16} className="animate-spin" />
-                               DOSYA YÜKLENİYOR...
-                             </>
-                           ) : (
-                             <>
-                               <UploadCloud size={16} />
-                               BELGE YÜKLE (PDF/GÖRSEL)
-                             </>
-                           )}
+                        <input type="file" ref={fileRef} onChange={handleLateUpload} className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" />
+                        <button onClick={() => fileRef.current?.click()} disabled={isUploading} className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-white transition-all text-sm font-bold">
+                           {isUploading ? <><Loader2 size={18} className="animate-spin" /> Yükleniyor...</> : <><UploadCloud size={18} /> Belge Ekle</>}
                         </button>
                      </div>
                    )}
                 </div>
              </div>
 
-             <div className="pt-10 border-t border-slate-50">
-                <button 
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 transition-all hover:scale-[1.02]"
-                >
-                  Pencereyi Kapat
-                </button>
-             </div>
+             <button onClick={() => setIsDrawerOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-bold transition-all hover:bg-slate-800 active:scale-[0.98] shadow-xl">
+               Pencereyi Kapat
+             </button>
           </div>
         )}
       </PremiumDrawer>
-
     </div>
   );
 }
 
-/* HELPER COMPONENTS */
-
-function StatCard({ title, value, subtitle, trend, isPositive, icon, highlight = false }: any) {
+function StatCard({ title, value, subtitle, trend, isPositive, icon }: any) {
   return (
-    <div className={cn(
-      "bg-white border border-slate-200 p-7 rounded-[32px] space-y-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 group",
-      highlight && "ring-1 ring-blue-500/20 border-blue-500/30"
-    )}>
+    <div className="bg-white border border-slate-200 p-6 rounded-3xl space-y-4 shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-center justify-between">
-         <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 transition-colors group-hover:bg-white shadow-inner">
-            {icon}
-         </div>
-         <div className={cn(
-           "flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight",
-           isPositive ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100"
-         )}>
+         <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 transition-colors group-hover:bg-white shadow-inner">{icon}</div>
+         <div className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight", isPositive ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100")}>
            {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
            {trend}
          </div>
       </div>
       <div className="space-y-1">
-         <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</h4>
-         <p className="text-2xl font-black text-slate-900 tabular-nums tracking-tighter italic">{value}</p>
+         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</h4>
+         <p className="text-2xl font-bold text-slate-900 tabular-nums tracking-tighter italic">{value}</p>
       </div>
-      <p className="text-[10px] text-slate-400 font-medium italic underline decoration-slate-100 underline-offset-4">{subtitle}</p>
-    </div>
-  );
-}
-
-function FileIcon({ type }: { type: string }) {
-  if (type === 'RECURRING') return <Calendar className="w-5 h-5 text-indigo-500" />;
-  return <TrendingDown className="w-5 h-5 text-slate-400" />;
-}
-
-function StatusBadge({ isOfficial }: { isOfficial: boolean }) {
-  if (isOfficial) {
-     return (
-       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-[10px] font-black uppercase tracking-widest italic">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          Resmi
-       </div>
-     );
-  }
-  return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest italic">
-       Gayri Resmi
+      <p className="text-[10px] text-slate-400 font-medium italic">{subtitle}</p>
     </div>
   );
 }
 
 function DetailRow({ label, value }: { label: string, value: string }) {
   return (
-    <div className="flex flex-col gap-1">
-       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-       <p className="text-sm font-bold text-slate-900 tracking-tight leading-relaxed">{value}</p>
+    <div className="flex flex-col gap-0.5">
+       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+       <p className="text-sm font-bold text-slate-900">{value}</p>
     </div>
   );
 }
 
-function PremiumTrendChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-         <BarChart3 size={40} strokeWidth={1} />
-         <p className="text-[10px] font-black uppercase tracking-widest italic">YETERLİ VERİ TOPLANAMADI</p>
-      </div>
-    )
-  }
+function ProfessionalTrendChart({ data }: { data: any[] }) {
+  if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-300 font-bold text-xs uppercase italic bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">Yeterli Veri Yok</div>;
 
   const padding = 40;
   const height = 300;
-  const width = 1000; // Refers to SVG coordinate space
-  const maxVal = Math.max(...data.map(d => Math.max(d.revenue, d.profit)), 1) * 1.2;
+  const width = 1000;
+  const maxVal = Math.max(...data.map(d => Math.max(d.revenue, d.profit)), 1) * 1.1;
 
   const points = data.map((d, i) => ({
     x: padding + (i * (width - 2 * padding) / (data.length - 1 || 1)),
@@ -459,89 +339,27 @@ function PremiumTrendChart({ data }: { data: any[] }) {
 
   const revPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.revY}`).join(' ');
   const proPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.proY}`).join(' ');
-  
-  const revArea = revPath + ` L ${points[points.length-1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
-  const proArea = proPath + ` L ${points[points.length-1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
-      {/* Grids */}
-      {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
-        <line 
-          key={i} 
-          x1={padding} y1={padding + p * (height - 2 * padding)} 
-          x2={width - padding} y2={padding + p * (height - 2 * padding)} 
-          stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" 
-        />
+      <defs>
+        <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563EB" stopOpacity="0.1"/><stop offset="100%" stopColor="#2563EB" stopOpacity="0"/></linearGradient>
+        <linearGradient id="proG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.1"/><stop offset="100%" stopColor="#10B981" stopOpacity="0"/></linearGradient>
+      </defs>
+      {[0, 0.5, 1].map((p, i) => (
+        <line key={i} x1={padding} y1={padding + p * (height - 2 * padding)} x2={width - padding} y2={padding + p * (height - 2 * padding)} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
       ))}
-
-      {/* Areas */}
-      <motion.path 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 0.1 }} 
-        transition={{ duration: 1 }}
-        d={revArea} fill="url(#revGradient)" 
-      />
-      <motion.path 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 0.2 }} 
-        transition={{ duration: 1, delay: 0.2 }}
-        d={proArea} fill="url(#proGradient)" 
-      />
-
-      {/* Lines */}
-      <motion.path 
-        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} 
-        transition={{ duration: 2, ease: "easeInOut" }}
-        d={revPath} fill="none" stroke="#2563EB" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" 
-      />
-      <motion.path 
-        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} 
-        transition={{ duration: 2, delay: 0.3, ease: "easeInOut" }}
-        d={proPath} fill="none" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" 
-      />
-
-      {/* Points */}
+      <path d={revPath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`} fill="url(#revG)" />
+      <path d={proPath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`} fill="url(#proG)" />
+      <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} d={revPath} fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.2 }} d={proPath} fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((p, i) => (
         <React.Fragment key={i}>
-          <motion.circle 
-            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.5 + i * 0.1 }}
-            cx={p.x} cy={p.revY} r="6" fill="#2563EB" stroke="white" strokeWidth="3" 
-            className="drop-shadow-lg"
-          />
-          <motion.circle 
-            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.8 + i * 0.1 }}
-            cx={p.x} cy={p.proY} r="6" fill="#10B981" stroke="white" strokeWidth="3" 
-            className="drop-shadow-lg"
-          />
-          
-          {/* Month Labels */}
-          <text 
-            x={p.x} y={height - 5} 
-            textAnchor="middle" fill="#94A3B8" 
-            className="text-[12px] font-black uppercase tracking-tighter italic"
-          >
-            {data[i].month}
-          </text>
+          <circle cx={p.x} cy={p.revY} r="4" fill="#2563EB" />
+          <circle cx={p.x} cy={p.proY} r="4" fill="#10B981" />
+          <text x={p.x} y={height - 5} textAnchor="middle" fill="#94A3B8" className="text-[10px] font-bold uppercase tracking-widest">{data[i].month}</text>
         </React.Fragment>
       ))}
-
-      <defs>
-        <linearGradient id="revGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2563EB" />
-          <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="proGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#10B981" />
-          <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-        </linearGradient>
-      </defs>
     </svg>
   );
-}
-
-function BarChart3(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-  )
 }

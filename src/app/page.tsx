@@ -169,19 +169,19 @@ export default async function DashboardPage() {
     .order('createdAt', { ascending: false })
     .limit(10);
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: latestNotes } = await supabase
+    .from('Note')
+    .select('*')
+    .eq('userId', user?.id)
+    .order('createdAt', { ascending: false })
+    .limit(10);
+
   const chartData = Object.entries(monthlyTotals).map(([month, data]) => ({
     month,
     revenue: data.revenue,
     profit: data.profit
   })).slice(-6);
-
-  const defaultParams = {
-    sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
-    fixedRent: 40000, // Average or fallback
-    duesAmount: 6000,
-    revenueShareRate: 15,
-    investmentAmount: totalInvestment / activeLocationCount || 350000
-  };
 
   return (
     <DashboardClientUI 
@@ -190,8 +190,7 @@ export default async function DashboardPage() {
       locations={activeLocations} 
       categories={[]} 
       chartData={chartData}
-      insights={insights}
-      defaultParams={defaultParams}
+      notes={latestNotes || []}
     />
   );
 }

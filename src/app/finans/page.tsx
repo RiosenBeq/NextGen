@@ -153,7 +153,11 @@ export default async function FinansalTablo({
   const scenarios = [200, 370, 500, 750, 1000, 1500, 2000, 3000].map(totalSessions => {
     let mockNetCash = 0;
     let mockOkanShare = 0;
-    
+    let totalRevenueShare = 0;
+    let totalCommissions = 0;
+    let totalRentWithVat = 0;
+    let totalDues = 0;
+
     // Fallback if no locations found in db
     const locs = locations && locations.length > 0 ? locations : [{ fixedRent: 40000, duesAmount: 6000, revenueShareRate: 15 }];
     const sessionsPerLoc = Math.floor(totalSessions / locs.length);
@@ -167,10 +171,14 @@ export default async function FinansalTablo({
         duesAmount: loc.duesAmount || 6000,
         revenueShareRate: loc.revenueShareRate || 15
       });
-      // We deduct the recurring expenses for the simulation
       const locRecurring = recurringGlobalTotal / locs.length;
       mockNetCash += (mockCalc.netCash - locRecurring);
       mockOkanShare += ((mockCalc.netCash - locRecurring) * 0.25);
+
+      totalRevenueShare += mockCalc.revenueShare;
+      totalCommissions += mockCalc.totalCommission;
+      totalRentWithVat += (loc.fixedRent || 40000) * 1.2;
+      totalDues += (loc.duesAmount || 6000);
     }
 
     return {
@@ -179,6 +187,11 @@ export default async function FinansalTablo({
       monthlyProfit: mockNetCash,
       yearlyProfit: mockNetCash * 12,
       monthlyPerPartner: mockOkanShare,
+      totalRevenueShare,
+      totalCommissions,
+      totalRentWithVat,
+      totalDues,
+      totalRecurringOps: recurringGlobalTotal,
     };
   });
 

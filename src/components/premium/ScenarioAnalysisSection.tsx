@@ -10,6 +10,11 @@ type Scenario = {
   monthlyProfit: number;
   yearlyProfit: number;
   monthlyPerPartner: number;
+  totalRevenueShare: number;
+  totalCommissions: number;
+  totalRentWithVat: number;
+  totalDues: number;
+  totalRecurringOps: number;
 };
 
 export default function ScenarioAnalysisSection({
@@ -117,6 +122,17 @@ export default function ScenarioAnalysisSection({
               <Metric label="Kişi Başı / Ay" value={selected.monthlyPerPartner} tone={selected.monthlyPerPartner >= 0 ? 'positive' : 'negative'} />
               <Metric label="Yıllık Kâr / Zarar" value={selected.yearlyProfit} tone={selected.yearlyProfit >= 0 ? 'positive' : 'negative'} />
             </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Gider Kırılımı (Senaryo)</p>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <p className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2"><span>Kira (+KDV)</span><span className="font-semibold">₺{selected.totalRentWithVat.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+                <p className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2"><span>Aidat</span><span className="font-semibold">₺{selected.totalDues.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+                <p className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2"><span>AVM Ciro Payı</span><span className="font-semibold">₺{selected.totalRevenueShare.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+                <p className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2"><span>Komisyon</span><span className="font-semibold">₺{selected.totalCommissions.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+                <p className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2 sm:col-span-2"><span>Tekrarlayan Operasyonel</span><span className="font-semibold">₺{selected.totalRecurringOps.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</span></p>
+              </div>
+            </div>
+
             <p className="text-sm text-slate-600">
               Bu senaryo, mevcut maliyet parametreleri ve komisyon oranlarıyla hesaplanmıştır. Oturum artışı en çok net kârlılığı ve yatırım geri dönüş hızını etkiler.
             </p>

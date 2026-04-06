@@ -53,6 +53,7 @@ export default function DashboardClientUI({
   const [isUploading, setIsUploading] = useState(false);
   const [isAverageExpenseModalOpen, setIsAverageExpenseModalOpen] = useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const [flippedInsight, setFlippedInsight] = useState<string | null>(null);
 
   const handleLateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,6 +123,56 @@ export default function DashboardClientUI({
         expenses={allExpenses}
         allMonthCount={allMonthCount}
       />
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            id: 'growth',
+            title: 'Büyüme Notu',
+            front: `%${stats.monthlyGrowth.toFixed(1)} aylık trend`,
+            back: 'Trend değeri son dönem performans eğiliminden üretilir. Düzenli oturum artışı pozitif etki sağlar.',
+          },
+          {
+            id: 'roi',
+            title: 'ROI İzleme',
+            front: `${stats.sessions.toLocaleString('tr-TR')} toplam seans`,
+            back: 'Seans hacmi arttıkça amortisman etkisi azalır ve yatırım geri dönüş süresi kısalır.',
+          },
+          {
+            id: 'cash',
+            title: 'Nakit Uyarısı',
+            front: formatCurrency(stats.profit),
+            back: 'Net nakit negatif olduğunda gider kırılımını kontrol edip bir sonraki ay için sabit maliyet optimizasyonu yapın.',
+          },
+        ].map((card) => {
+          const isFlipped = flippedInsight === card.id;
+          return (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => setFlippedInsight(isFlipped ? null : card.id)}
+              className="relative h-40 w-full [perspective:1000px]"
+            >
+              <div
+                className={cn(
+                  'relative h-full w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-transform duration-500 [transform-style:preserve-3d]',
+                  isFlipped ? '[transform:rotateY(180deg)]' : ''
+                )}
+              >
+                <div className="absolute inset-0 rounded-2xl p-5 [backface-visibility:hidden]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{card.title}</p>
+                  <p className="mt-3 text-lg font-bold text-slate-900">{card.front}</p>
+                  <p className="mt-6 text-xs text-blue-600">Detay için karta dokunun</p>
+                </div>
+                <div className="absolute inset-0 rounded-2xl bg-slate-900 p-5 text-white [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-300">{card.title} · Detay</p>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-100">{card.back}</p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </section>
 
       {/* Main Content Grid */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">

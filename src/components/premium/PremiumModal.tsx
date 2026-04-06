@@ -51,7 +51,7 @@ export function PremiumModal({
           />
 
           <div className="absolute inset-0 overflow-y-auto p-3 sm:p-6">
-            <div className="mx-auto flex min-h-full w-full items-start sm:items-center justify-center">
+            <div className="mx-auto flex min-h-full w-full items-center justify-center">
               <motion.div
                 ref={modalRef}
                 initial={{ opacity: 0, y: 12 }}
@@ -59,7 +59,7 @@ export function PremiumModal({
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.18 }}
                 className={cn(
-                  'relative mt-6 sm:mt-0 w-full rounded-2xl border border-slate-200 bg-white shadow-2xl',
+                  'relative w-full rounded-2xl border border-slate-200 bg-white shadow-2xl',
                   'max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden flex flex-col',
                   maxWidth
                 )}
@@ -109,13 +109,13 @@ export function PremiumDrawer({
           />
 
           <div className="absolute inset-0 overflow-y-auto p-3 sm:p-6">
-            <div className="mx-auto flex min-h-full w-full items-start sm:items-center justify-center">
+            <div className="mx-auto flex min-h-full w-full items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.18 }}
-                className="relative mt-6 sm:mt-0 w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+                className="relative w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">

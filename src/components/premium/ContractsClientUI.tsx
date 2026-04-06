@@ -122,20 +122,13 @@ export default function ContractsClientUI({
           <div className="space-y-2">
             {contracts.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
-                {(() => {
-                  const uploadedDate = doc.uploadedAt || doc.createdAt;
-                  return (
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-900 truncate">{doc.fileName}</p>
                   <p className="text-xs text-slate-500">
                     {doc.relatedId === 'global' ? 'Genel' : locationNameMap.get(doc.relatedId) || 'Lokasyon'} •{' '}
-                    {uploadedDate
-                      ? new Date(uploadedDate).toLocaleDateString('tr-TR')
-                      : 'Tarih yok'}
+                    {formatDocumentDate(doc)}
                   </p>
                 </div>
-                  );
-                })()}
 
                 <div className="flex items-center gap-2">
                   <Link
@@ -161,4 +154,10 @@ export default function ContractsClientUI({
       </section>
     </div>
   );
+}
+
+function formatDocumentDate(doc: { uploadedAt?: string; createdAt?: string }) {
+  const dateValue = doc.uploadedAt ?? doc.createdAt;
+  if (!dateValue) return 'Tarih yok';
+  return new Date(dateValue).toLocaleDateString('tr-TR');
 }

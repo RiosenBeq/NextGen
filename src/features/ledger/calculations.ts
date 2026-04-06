@@ -48,12 +48,12 @@ export function calculateMonthlyCashFlow(
   const totalCommission = iyzicoCommission + nayaxCommission;
 
   // 3. AVM Gideri — Kira Sonrası Cirodan Pay (Kullanıcı İsteği: Ciro - Kira > 0 ise %15)
-  // İSTİSNA: Her yıl Mart ayında (YYYY-03) Ciro Payı ödenmeyecek.
+  // İSTİSNA: Sadece 2025-03 için Ciro Payı ödenmeyecek.
   let revenueShare = 0;
   const monthId = params.month?.slice(0, 7);
-  const isMarch = Boolean(monthId && monthId.endsWith('-03'));
+  const isMarch2025 = monthId === '2025-03';
   
-  if (!isMarch) {
+  if (!isMarch2025) {
     const revenueAboveRent = Math.max(0, grossRevenue - params.fixedRent);
     revenueShare = revenueAboveRent * (params.revenueShareRate / 100);
   }

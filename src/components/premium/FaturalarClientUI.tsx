@@ -8,18 +8,18 @@ import {
   Calendar, 
   MapPin, 
   Search, 
-  Grid, 
   Eye, 
   Plus,
   ArrowRight,
-  Filter,
-  MoreHorizontal
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
+import { deleteExpenseAttachment } from '@/features/ledger/actions';
 
 interface Invoice {
   id: string;
@@ -42,12 +42,28 @@ export default function FaturalarClientUI({ invoices: initialInvoices, locations
   const [invoices, setInvoices] = useState(initialInvoices);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredInvoices = invoices.filter(inv => 
     inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     inv.location?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     inv.paidBy.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDelete = async (invoiceId: string) => {
+    if (!confirm('Bu belgeyi silmek istediğinize emin misiniz?')) return;
+
+    setDeletingId(invoiceId);
+    const res = await deleteExpenseAttachment(invoiceId);
+
+    if (res.success) {
+      setInvoices((prev) => prev.filter((invoice) => invoice.id !== invoiceId));
+      return;
+    }
+
+    alert(res.error || 'Belge silinirken bir hata oluştu.');
+    setDeletingId(null);
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32">
@@ -143,6 +159,14 @@ export default function FaturalarClientUI({ invoices: initialInvoices, locations
                           <Link href={inv.attachmentUrl} download target="_blank" className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-blue-600 shadow-lg flex items-center justify-center transition-all hover:scale-110">
                              <Download size={18} />
                           </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(inv.id)}
+                            disabled={deletingId === inv.id}
+                            className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-rose-600 disabled:text-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                          >
+                            {deletingId === inv.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={18} />}
+                          </button>
                        </div>
                        
                        <div className="absolute top-4 left-4">
@@ -186,8 +210,18 @@ export default function FaturalarClientUI({ invoices: initialInvoices, locations
                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">KAYIT KAYNAĞI</span>
                               <span className="text-[10px] uppercase font-black text-slate-900 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">{inv.paidBy}</span>
                            </div>
-                           <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
-                              <ArrowRight size={16} />
+                           <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(inv.id)}
+                                disabled={deletingId === inv.id}
+                                className="px-3 py-2 rounded-xl border border-rose-100 bg-rose-50/60 text-rose-600 hover:bg-rose-100 transition-colors text-[10px] font-black uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {deletingId === inv.id ? 'SİLİNİYOR...' : 'BELGEYİ SİL'}
+                              </button>
+                              <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                                <ArrowRight size={16} />
+                              </div>
                            </div>
                         </div>
                      </div>

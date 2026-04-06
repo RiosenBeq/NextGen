@@ -315,6 +315,58 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
   }
 }
 
+export async function deleteExpenseAttachment(id: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: expense, error: expenseError } = await supabase
+      .from('Expense')
+      .select('id, attachmentUrl')
+      .eq('id', id)
+      .single();
+
+    if (expenseError) throw expenseError;
+
+    const attachmentUrl = expense?.attachmentUrl;
+    if (attachmentUrl) {
+      const path = attachmentUrl.split('/documents/')[1];
+      if (path) {
+        await supabase.storage.from('documents').remove([path]);
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('Expense')
+      .update({ attachmentUrl: null })
+      .eq('id', id);
+
+    if (updateError) throw updateError;
+
+    const { error: documentDeleteError } = await supabase
+      .from('Document')
+      .delete()
+      .eq('relatedType', 'expense')
+      .eq('relatedId', id);
+
+    if (documentDeleteError) throw documentDeleteError;
+
+    await createAuditLog('UPDATE', 'Expense', id, {
+      action: 'REMOVE_DOCUMENT',
+      attachmentRemoved: Boolean(attachmentUrl),
+    });
+
+    revalidatePath('/faturalar');
+    revalidatePath('/giderler');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/');
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Delete Attachment Error:', error);
+    return { success: false, error: String(error?.message || 'Belge silinemedi.') };
+  }
+}
+
 export async function deleteExpense(id: string) {
   try {
     const supabase = await createClient();

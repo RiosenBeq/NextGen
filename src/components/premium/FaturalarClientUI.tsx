@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
-import { deleteExpenseAttachment, updateAvmExpenseStatus, uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
+import { deleteExpenseAttachment, updateAvmExpenseFinancials, updateAvmExpenseStatus, uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
 
 interface Invoice {
   id: string;
@@ -51,6 +51,8 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [avmExpenses, setAvmExpenses] = useState(initialAvmExpenses);
   const [uploadingAvmId, setUploadingAvmId] = useState<string | null>(null);
+  const [savingAvmId, setSavingAvmId] = useState<string | null>(null);
+  const [avmDrafts, setAvmDrafts] = useState<Record<string, { amountWithVat: number; paidBy: string }>>({});
 
   const filteredInvoices = invoices.filter(inv =>
     inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -106,6 +108,36 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
     setDeletingId(null);
   };
 
+  const getAvmDraft = (item: Invoice) => {
+    return avmDrafts[item.id] || {
+      amountWithVat: Number(item.amountWithVat || 0),
+      paidBy: item.paidBy || 'Ortak Hesap',
+    };
+  };
+
+  const handleSaveAvmFinancials = async (item: Invoice) => {
+    const draft = getAvmDraft(item);
+    setSavingAvmId(item.id);
+    const res = await updateAvmExpenseFinancials(item.id, {
+      amountWithVat: Number(draft.amountWithVat || 0),
+      paidBy: draft.paidBy,
+    });
+    if (!res.success) {
+      alert(res.error || 'AVM gider bilgisi güncellenemedi.');
+      setSavingAvmId(null);
+      return;
+    }
+
+    setAvmExpenses((prev) =>
+      prev.map((row) =>
+        row.id === item.id
+          ? { ...row, amountWithVat: Number(draft.amountWithVat || 0), paidBy: draft.paidBy || 'Ortak Hesap' }
+          : row
+      )
+    );
+    setSavingAvmId(null);
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32">
 
@@ -148,12 +180,12 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       </header>
 
 
-      {/* AVM GİDER TAKİBİ */}
+      {/* AVM FATURA / ÖDEME TAKİBİ (HESAPLAMADAN AYRI) */}
       <section className="rounded-[32px] border border-slate-200 bg-white p-5 sm:p-7 shadow-sm space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">AVM Giderleri</h2>
-            <p className="text-xs text-slate-500">Kira / aidat / ciro payı ödemelerini işaretleyin, fatura gelince yükleyin.</p>
+            <h2 className="text-lg font-black text-slate-900 tracking-tight">AVM Fatura & Ödeme Takibi</h2>
+            <p className="text-xs text-slate-500">Kira / aidat / ciro payı kayıtlarını buradan fatura tutarına göre güncelleyin. Bu bölüm operasyonel hesaplardan ayrı takip içindir.</p>
           </div>
           <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Otomatik kira kayıtları desteklenir</span>
         </div>
@@ -186,6 +218,42 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                     {uploadingAvmId === item.id ? 'Yükleniyor...' : 'Fatura Yükle'}
                     <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)} />
                   </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={getAvmDraft(item).amountWithVat}
+                    onChange={(e) =>
+                      setAvmDrafts((prev) => ({
+                        ...prev,
+                        [item.id]: { ...getAvmDraft(item), amountWithVat: Number(e.target.value || 0) },
+                      }))
+                    }
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    placeholder="Fatura Tutarı (KDV Dahil)"
+                  />
+                  <input
+                    type="text"
+                    value={getAvmDraft(item).paidBy}
+                    onChange={(e) =>
+                      setAvmDrafts((prev) => ({
+                        ...prev,
+                        [item.id]: { ...getAvmDraft(item), paidBy: e.target.value },
+                      }))
+                    }
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    placeholder="Ödeyen Hesap"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSaveAvmFinancials(item)}
+                    disabled={savingAvmId === item.id}
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 disabled:opacity-60"
+                  >
+                    {savingAvmId === item.id ? 'Kaydediliyor...' : 'Tutar/Ödeyen Güncelle'}
+                  </button>
                 </div>
               </div>
             ))}

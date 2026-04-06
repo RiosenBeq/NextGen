@@ -735,6 +735,49 @@ export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: 
   }
 }
 
+export async function updateAvmExpenseFinancials(id: string, updates: { amountWithVat?: number; paidBy?: string }) {
+  try {
+    const payload: Record<string, string | number> = {};
+
+    if (typeof updates.amountWithVat === 'number' && Number.isFinite(updates.amountWithVat)) {
+      const safeAmount = Math.max(0, updates.amountWithVat);
+      const supabase = await createClient();
+      const { data: row, error: fetchError } = await supabase
+        .from('Expense')
+        .select('vatRate')
+        .eq('id', id)
+        .single();
+      if (fetchError) throw fetchError;
+
+      const vatRate = Number(row?.vatRate || 0);
+      const amountWithoutVat = vatRate >= 0 ? safeAmount / (1 + vatRate / 100) : safeAmount;
+      payload.amountWithVat = safeAmount;
+      payload.amountWithoutVat = amountWithoutVat;
+    }
+
+    if (typeof updates.paidBy === 'string') {
+      payload.paidBy = updates.paidBy.trim() || 'Ortak Hesap';
+    }
+
+    if (Object.keys(payload).length === 0) {
+      return { success: false, error: 'Güncellenecek finansal alan bulunamadı.' };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('Expense').update(payload).eq('id', id);
+    if (error) throw error;
+
+    revalidatePath('/faturalar');
+    revalidatePath('/giderler');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
+    revalidatePath('/raporlar');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function toggleExpenseSettled(id: string, currentDesc: string) {
   const isSettled = currentDesc.includes('[MAHSUP]');
   const newDesc = isSettled 

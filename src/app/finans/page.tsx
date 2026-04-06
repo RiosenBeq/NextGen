@@ -64,6 +64,8 @@ export default async function FinansalTablo({
     return (expenses || [])
       .filter(e => {
         if (e.type === 'RECURRING') return false;
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
         const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
         if (expMonth !== monthId) return false;
         if (locationId && e.locationId && e.locationId !== locationId) return false;
@@ -98,6 +100,8 @@ export default async function FinansalTablo({
       const oneTimeTotal = (expenses || [])
         .filter(e => {
           if (e.type === 'RECURRING') return false;
+          const d = e.description || '';
+          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
           const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
           if (expMonth !== perfMonthStr) return false;
           if (e.locationId && e.locationId !== loc.id) return false;
@@ -207,6 +211,8 @@ export default async function FinansalTablo({
   const operationalItems = [
     ...(expenses || [])
       .filter((e) => {
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
         if (!filterMonth || filterMonth === 'all') return true;
         const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
         return expMonth === filterMonth;

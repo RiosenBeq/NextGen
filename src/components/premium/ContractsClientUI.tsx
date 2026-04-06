@@ -122,15 +122,20 @@ export default function ContractsClientUI({
           <div className="space-y-2">
             {contracts.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
+                {(() => {
+                  const uploadedDate = doc.uploadedAt || doc.createdAt;
+                  return (
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-900 truncate">{doc.fileName}</p>
                   <p className="text-xs text-slate-500">
                     {doc.relatedId === 'global' ? 'Genel' : locationNameMap.get(doc.relatedId) || 'Lokasyon'} •{' '}
-                    {doc.uploadedAt || doc.createdAt
-                      ? new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString('tr-TR')
+                    {uploadedDate
+                      ? new Date(uploadedDate).toLocaleDateString('tr-TR')
                       : 'Tarih yok'}
                   </p>
                 </div>
+                  );
+                })()}
 
                 <div className="flex items-center gap-2">
                   <Link

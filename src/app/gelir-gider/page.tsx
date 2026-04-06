@@ -114,6 +114,8 @@ export default async function GelirGiderPage(props: {
     const oneTimeTotal = (expenses || [])
       .filter((e) => {
         if (e.type === 'RECURRING') return false;
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
         const expMonth = e.month ? monthIdOf(String(e.month)) : '';
         if (expMonth !== perfMonthStr) return false;
         if (e.locationId && e.locationId !== loc.id) return false;

@@ -46,6 +46,8 @@ export default async function ReportsPage({
     return (expenses || [])
       .filter((e) => {
         if (e.type === 'RECURRING') return false;
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
         const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
         if (expMonth !== monthId) return false;
         if (e.locationId && e.locationId !== locationId) return false;

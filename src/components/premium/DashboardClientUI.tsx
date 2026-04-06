@@ -51,6 +51,7 @@ export default function DashboardClientUI({
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAverageExpenseModalOpen, setIsAverageExpenseModalOpen] = useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const handleLateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +138,8 @@ export default function DashboardClientUI({
               value={formatCurrency(ortalamaGider)}
               description="Son kayıtlar baz alınarak ortalama gider tutarı."
               tone="blue"
+              onClick={() => setIsAverageExpenseModalOpen(true)}
+              clickable
             />
             <AnalyzerCard
               title="Resmi Evrak Oranı"
@@ -280,6 +283,31 @@ export default function DashboardClientUI({
           </div>
         )}
       </PremiumDrawer>
+
+      <PremiumModal
+        isOpen={isAverageExpenseModalOpen}
+        onClose={() => setIsAverageExpenseModalOpen(false)}
+        title="Ortalama Gider Hesaplaması"
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Gösterilen Değer</p>
+            <p className="mt-1 text-2xl font-black text-slate-900">{formatCurrency(ortalamaGider)}</p>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Bu değer, sistemdeki tüm gider kayıtlarının <b>KDV dahil toplam tutarlarının</b> ortalamasıdır.
+          </p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-sm">
+            <p className="font-semibold text-slate-700">Formül</p>
+            <p className="text-slate-600">Ortalama Gider = Toplam Gider Tutarı / Gider Kayıt Adedi</p>
+            <p className="text-xs text-slate-500">
+              Toplam Tutar: <b>{formatCurrency(allExpenses.reduce((toplam: number, gider: any) => toplam + (gider.amountWithVat || 0), 0))}</b> •
+              Kayıt Adedi: <b>{allExpenses.length}</b>
+            </p>
+          </div>
+        </div>
+      </PremiumModal>
     </div>
   );
 }
@@ -298,11 +326,15 @@ function AnalyzerCard({
   value,
   description,
   tone,
+  onClick,
+  clickable = false,
 }: {
   title: string;
   value: string;
   description: string;
   tone: 'blue' | 'emerald' | 'rose';
+  onClick?: () => void;
+  clickable?: boolean;
 }) {
   const toneMap = {
     blue: 'border-blue-200 bg-blue-50/50',
@@ -311,10 +343,21 @@ function AnalyzerCard({
   };
 
   return (
-    <div className={cn('rounded-2xl border p-4', toneMap[tone])}>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-2xl border p-4 text-left w-full transition-all',
+        toneMap[tone],
+        clickable ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'cursor-default'
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
+        {clickable && <span className="text-[10px] font-bold text-blue-600 uppercase">Detay</span>}
+      </div>
       <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
       <p className="mt-1 text-xs text-slate-600">{description}</p>
-    </div>
+    </button>
   );
 }

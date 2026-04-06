@@ -19,7 +19,11 @@ import {
   Loader2,
   User,
   Save,
-  Eye
+  Eye,
+  Cloud,
+  Server,
+  Gauge,
+  Workflow
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -37,7 +41,7 @@ interface SettingsClientProps {
 }
 
 export default function SettingsClientUI({ locations, parameters, users, currentUser }: SettingsClientProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'locations' | 'users' | 'profile'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'locations' | 'users' | 'profile' | 'integrations'>('general');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -113,6 +117,8 @@ export default function SettingsClientUI({ locations, parameters, users, current
   };
 
   const selectedProfile = users.find((u: any) => u.id === selectedProfileId);
+  const superAdminCount = users.filter((user: any) => user.role === 'superadmin').length;
+  const liveMode = parameters?.SETTING_ANIMATION_SPEED === 2 ? 'Premium' : parameters?.SETTING_ANIMATION_SPEED === 1 ? 'Standart' : 'Hızlı';
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
@@ -142,6 +148,13 @@ export default function SettingsClientUI({ locations, parameters, users, current
         </div>
       </header>
 
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatusCard label="Aktif Şube" value={`${locations.length}`} description="Sistemde tanımlı lokasyon" icon={<MapPin size={16} />} tone="blue" />
+        <StatusCard label="Kullanıcı" value={`${users.length}`} description="Yetkili hesap adedi" icon={<Users size={16} />} tone="slate" />
+        <StatusCard label="Süper Admin" value={`${superAdminCount}`} description="Yüksek yetkili hesaplar" icon={<ShieldCheck size={16} />} tone="amber" />
+        <StatusCard label="Çalışma Modu" value={liveMode} description="Arayüz davranış profili" icon={<Gauge size={16} />} tone="emerald" />
+      </section>
+
       {/* Tabs Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
          
@@ -151,6 +164,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
                <TabButton active={activeTab === 'locations'} onClick={() => setActiveTab('locations')} icon={<MapPin size={18} />} label="Şube Ayarları" />
                <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="Erişim & Yetki" />
                <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label="Profil Ayarları" />
+               <TabButton active={activeTab === 'integrations'} onClick={() => setActiveTab('integrations')} icon={<Workflow size={18} />} label="Entegrasyonlar" />
             </div>
             
             <div className="pt-6 px-4">
@@ -306,6 +320,44 @@ export default function SettingsClientUI({ locations, parameters, users, current
                   <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                      <SectionHeader title="Kişisel Profilim" icon={<User className="text-blue-600" />} />
                      <ProfileSettingsForm user={currentUser} />
+                  </motion.div>
+               )}
+
+               {activeTab === 'integrations' && (
+                  <motion.div key="integrations" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                     <SectionHeader title="Supabase & Vercel Entegrasyonu" icon={<Cloud className="text-blue-600" />} />
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-3">
+                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">VERİ SERVİSİ</p>
+                           <p className="text-sm font-black text-slate-900 inline-flex items-center gap-2"><Server size={16} className="text-emerald-600" /> Supabase</p>
+                           <p className="text-xs text-slate-500 leading-relaxed">
+                              Notlar, giderler, loglar ve kullanıcı metadata verileri Supabase üzerinde yönetiliyor.
+                           </p>
+                           <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
+                              Supabase panelini aç
+                           </a>
+                        </div>
+
+                        <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-3">
+                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">YAYIN ORTAMI</p>
+                           <p className="text-sm font-black text-slate-900 inline-flex items-center gap-2"><Cloud size={16} className="text-slate-700" /> Vercel</p>
+                           <p className="text-xs text-slate-500 leading-relaxed">
+                              Uygulama dağıtımı ve çalışma zamanı Vercel altyapısında devam ediyor.
+                           </p>
+                           <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
+                              Vercel panelini aç
+                           </a>
+                        </div>
+                     </div>
+
+                     <div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-2">Gelişmiş Ayar Notu</p>
+                        <p className="text-sm text-blue-900/80 leading-relaxed">
+                           Bu panelde yapılan kullanıcı, profil ve parametre değişiklikleri tüm sistem ekranlarına anlık olarak yansıtılır.
+                           Özellikle log görüntüleme, dashboard analizleri ve not yönetimi bu ayarlara bağlı çalışır.
+                        </p>
+                     </div>
                   </motion.div>
                )}
             </AnimatePresence>
@@ -474,5 +526,37 @@ function RoleButton({ active, label, icon, onClick, isDark }: any) {
        </div>
        <span className="text-[11px] font-bold uppercase tracking-widest">{label}</span>
     </button>
+  );
+}
+
+function StatusCard({
+  label,
+  value,
+  description,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  description: string;
+  icon: React.ReactNode;
+  tone: 'blue' | 'slate' | 'amber' | 'emerald';
+}) {
+  const tones = {
+    blue: 'border-blue-200 bg-blue-50',
+    slate: 'border-slate-200 bg-white',
+    amber: 'border-amber-200 bg-amber-50',
+    emerald: 'border-emerald-200 bg-emerald-50',
+  };
+
+  return (
+    <div className={cn('rounded-2xl border p-4 shadow-sm', tones[tone])}>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+        <span className="text-slate-500">{icon}</span>
+      </div>
+      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
+      <p className="mt-1 text-xs text-slate-500">{description}</p>
+    </div>
   );
 }

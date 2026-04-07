@@ -1,0 +1,221 @@
+'use client';
+
+import React, { useState } from 'react';
+import { 
+  Receipt, 
+  FileText, 
+  Download, 
+  Calendar, 
+  MapPin, 
+  Search, 
+  Grid, 
+  Eye, 
+  Plus,
+  ArrowRight,
+  Filter,
+  MoreHorizontal
+} from 'lucide-react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { PremiumModal } from './PremiumModal';
+import ExpenseForm from '@/features/ledger/components/ExpenseForm';
+
+interface Invoice {
+  id: string;
+  description: string;
+  amountWithVat: number;
+  attachmentUrl: string;
+  isOfficial: boolean;
+  paidBy: string;
+  createdAt: string;
+  location?: { name: string };
+  category?: { name: string };
+}
+
+interface FaturalarProps {
+  invoices: Invoice[];
+  locations: any[];
+}
+
+export default function FaturalarClientUI({ invoices: initialInvoices, locations }: FaturalarProps) {
+  const [invoices, setInvoices] = useState(initialInvoices);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredInvoices = invoices.filter(inv => 
+    inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    inv.location?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    inv.paidBy.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-10 animate-in fade-in duration-700 pb-32">
+      
+      {/* 1. ELITE HEADER */}
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-slate-100">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+             <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-100">
+                <Receipt size={24} strokeWidth={2.5} />
+             </div>
+             <div>
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] italic">Kurumsal Belge Arşivi</span>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">E-Faturalar ve Dekontlar</h1>
+             </div>
+          </div>
+          <p className="text-sm text-slate-500 font-bold italic max-w-xl">
+            Sisteme yüklenen tüm gider evrakları, PDF faturalar ve ödeme dekontları burada asenkron olarak saklanır.
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+          <div className="relative w-full sm:w-80 group">
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+             <input 
+               type="text" 
+               placeholder="Belge veya şube ara..." 
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               className="w-full pl-11 pr-5 py-4 bg-white border border-slate-200 rounded-[22px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-sm placeholder:text-slate-300"
+             />
+          </div>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-[22px] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 italic"
+          >
+            <Plus size={18} strokeWidth={3} />
+            YENİ BELGE EKLE
+          </button>
+        </div>
+      </header>
+
+      {/* 2. DOCUMENT GRID */}
+      <section>
+         <AnimatePresence mode="popLayout">
+           {filteredInvoices.length === 0 ? (
+             <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               className="py-32 text-center border-2 border-dashed border-slate-100 rounded-[48px] bg-slate-50/30 flex flex-col items-center gap-6"
+             >
+                <div className="w-20 h-20 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-200 shadow-sm">
+                   <FileText size={40} strokeWidth={1} />
+                </div>
+                <div className="space-y-1">
+                   <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">Henüz Belge Bulunmuyor</h3>
+                   <p className="text-sm text-slate-400 font-bold italic">Aramaya uygun bir evrak bulunamadı veya henüz yükleme yapılmadı.</p>
+                </div>
+             </motion.div>
+           ) : (
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
+                {filteredInvoices.map((inv, idx) => (
+                  <motion.div 
+                    layout
+                    key={inv.id} 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="group bg-white rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-100/50 hover:border-blue-200 transition-all duration-500 overflow-hidden flex flex-col h-full active:scale-[0.98]"
+                  >
+                     {/* Preview Area */}
+                     <div className="h-56 bg-slate-50 border-b border-slate-50 flex items-center justify-center relative group-hover:bg-blue-50/30 transition-colors overflow-hidden">
+                        {inv.attachmentUrl?.toLowerCase().includes('.pdf') ? (
+                          <div className="flex flex-col items-center gap-4">
+                             <div className="w-20 h-20 rounded-3xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 shadow-sm group-hover:rotate-6 transition-transform duration-500">
+                                <FileText size={40} strokeWidth={1.5} />
+                             </div>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">PDF ARŞİVİ</span>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700">
+                             {/* eslint-disable-next-line @next/next/no-img-element */}
+                             <img src={inv.attachmentUrl} alt="Belge" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500" />
+                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                       )}
+                       
+                       {/* Floating Actions */}
+                       <div className="absolute top-4 right-4 flex gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
+                          <Link href={inv.attachmentUrl} target="_blank" className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-blue-600 shadow-lg flex items-center justify-center transition-all hover:scale-110">
+                             <Eye size={18} />
+                          </Link>
+                          <Link href={inv.attachmentUrl} download target="_blank" className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-blue-600 shadow-lg flex items-center justify-center transition-all hover:scale-110">
+                             <Download size={18} />
+                          </Link>
+                       </div>
+                       
+                       <div className="absolute top-4 left-4">
+                          <span className={cn(
+                            "px-3 py-1.5 rounded-xl backdrop-blur-md shadow-sm text-[9px] font-black uppercase tracking-widest border transition-colors",
+                            inv.isOfficial 
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                              : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          )}>
+                             {inv.isOfficial ? "RESMİ FATURA" : "DEKONT / FİŞ"}
+                          </span>
+                       </div>
+                     </div>
+                     
+                     {/* Info Area */}
+                     <div className="p-8 flex flex-col flex-1 space-y-6">
+                        <div className="flex justify-between items-start gap-4">
+                          <h4 className="font-black text-slate-900 text-lg tracking-tighter uppercase italic line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">{inv.description}</h4>
+                          <span className="font-black text-rose-600 text-lg italic tracking-tighter shrink-0">₺{inv.amountWithVat?.toLocaleString('tr-TR')}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mt-auto">
+                           <div className="space-y-1">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">LOKASYON</p>
+                              <div className="flex items-center gap-2 text-[11px] text-slate-700 font-bold italic truncate">
+                                 <MapPin size={12} className="text-blue-500" />
+                                 {inv.location?.name || 'GENEL MERKEZ'}
+                              </div>
+                           </div>
+                           <div className="space-y-1">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">TARİH</p>
+                              <div className="flex items-center gap-2 text-[11px] text-slate-700 font-bold italic">
+                                 <Calendar size={12} className="text-blue-500" />
+                                 {new Date(inv.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
+                           <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">KAYIT KAYNAĞI</span>
+                              <span className="text-[10px] uppercase font-black text-slate-900 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">{inv.paidBy}</span>
+                           </div>
+                           <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                              <ArrowRight size={16} />
+                           </div>
+                        </div>
+                     </div>
+                  </motion.div>
+                ))}
+             </div>
+           )}
+         </AnimatePresence>
+      </section>
+
+      {/* 3. MODALS */}
+      <PremiumModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="Yeni Belge & Gider Kaydı"
+        maxWidth="max-w-xl"
+      >
+        <div className="p-4">
+           <ExpenseForm 
+              locations={locations} 
+              onClose={() => {
+                setIsModalOpen(false);
+                window.location.reload();
+              }} 
+           />
+        </div>
+      </PremiumModal>
+
+    </div>
+  );
+}

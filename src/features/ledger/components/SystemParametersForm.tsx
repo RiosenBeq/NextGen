@@ -41,62 +41,67 @@ export function SystemParametersForm({ parameters }: Props) {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="premium-card p-10 bg-indigo-950/10 border-indigo-500/20 hover:border-indigo-500/30 transition-all"
+      className="p-8 bg-white border border-slate-200 shadow-sm rounded-[32px] overflow-hidden"
     >
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-            <Settings2 size={20} className="text-indigo-400" />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 text-blue-600 border border-blue-100">
+            <Settings2 size={24} />
           </div>
-          <div>
-            <h3 className="text-xl font-black text-white tracking-tighter uppercase">Genel Finans Değişkenleri</h3>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">SİSTEM PARAMETRELERİ</p>
+          <div className="space-y-0.5">
+            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Finansal Yapılandırma</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">SİSTEM GENELİ PARAMETRELER</p>
           </div>
         </div>
         {success && (
-          <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
-            DEĞİŞKENLER GÜNCELLENDİ
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            BAŞARIYLA GÜNCELLENDİ
+          </motion.div>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <DollarSign size={12} /> Oturum Fiyatı (₺)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <DollarSign size={14} className="text-slate-400" /> Oturum Fiyatı (₺)
             </label>
             <input 
               name="SESSION_PRICE_INCL_VAT" 
               type="number" 
               defaultValue={parameters['SESSION_PRICE_INCL_VAT'] || 300} 
-              className="elite-input" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="300" 
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Percent size={12} /> Genel KDV Oranı (%) 
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <Percent size={14} className="text-slate-400" /> Genel KDV Oranı (%) 
             </label>
             <input 
               name="VAT_RATE" 
               type="number" 
               defaultValue={parameters['VAT_RATE'] || 0} 
-              className="elite-input" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="0" 
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Percent size={12} /> Kurumlar Vergisi (%)
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <Percent size={14} className="text-slate-400" /> Kurumlar Vergisi (%)
             </label>
             <input 
               name="CORP_TAX_RATE" 
               type="number" 
               defaultValue={parameters['CORP_TAX_RATE'] || 0} 
-              className="elite-input" 
+              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
               placeholder="0" 
             />
           </div>
@@ -105,10 +110,10 @@ export function SystemParametersForm({ parameters }: Props) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="elite-button-secondary w-full py-5 flex items-center justify-center gap-3 transition-transform active:scale-[0.98] border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10"
+          className="w-full h-16 flex items-center justify-center gap-3 bg-slate-900 text-white rounded-2xl font-bold text-xs tracking-widest shadow-xl shadow-slate-200 uppercase transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
         >
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} />}
-          GENEL PARAMETRELERİ KAYDET
+          DEĞİŞİKLİKLERİ SİSTEME İŞLE
         </button>
       </form>
     </motion.div>

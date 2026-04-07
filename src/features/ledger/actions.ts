@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import { monthlyPerformanceSchema, MonthlyPerformanceInput } from './schema';
+import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
 import prisma from '@/lib/db';
 
@@ -26,9 +26,11 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
     if (error) throw error;
 
-    revalidatePath('/performance');
+    revalidatePath('/performans');
     revalidatePath('/');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
 
     return { success: true };
   } catch (error: any) {
@@ -37,53 +39,110 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   }
 }
 
+export async function updateMonthlyPerformance(id: string, data: any) {
+  try {
+    const supabase = await createClient();
+    const validatedData = monthlyPerformanceSchema.parse(data);
+
+    const { data: record, error } = await supabase
+      .from('MonthlyPerformance')
+      .update({
+        sessionCount: validatedData.sessionCount,
+        extraExpenseAmount: validatedData.extraExpenseAmount || 0,
+        extraExpenseNotes: validatedData.extraExpenseNotes,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await createAuditLog('UPDATE', 'MonthlyPerformance', id, {
+      sessions: validatedData.sessionCount,
+      extra: validatedData.extraExpenseAmount
+    });
+
+    revalidatePath('/performans');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/raporlar');
+    revalidatePath('/finans');
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Update Performance Error:", error);
+    return { success: false, error: String(error?.message || 'Güncelleme hatası.') };
+  }
+}
+
+export async function deleteMonthlyPerformance(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
+    if (error) throw error;
+    
+    await createAuditLog('DELETE', 'MonthlyPerformance', id);
+
+    revalidatePath('/performans');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/raporlar');
+    revalidatePath('/finans');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function addExpense(data: any) {
   try {
-    // Input validation
-    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
-      return { success: false, error: 'Açıklama alanı zorunludur.' };
-    }
-    if (!data.type || !['ONE_TIME', 'RECURRING'].includes(data.type)) {
-      return { success: false, error: 'Geçersiz ödeme tipi.' };
-    }
-    const description = data.description.trim().slice(0, 500);
+    const validatedData = expenseSchema.parse(data);
+    const amountWithoutVat = Math.max(0, validatedData.amount || 0);
+    const vatRate = Math.max(0, Math.min(100, validatedData.vatRate || 0));
+    const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const supabase = await createClient();
-    const vatRate = Math.max(0, Math.min(100, parseFloat(data.vatRate) || 0));
-    const amountWithoutVat = Math.max(0, parseFloat(data.amount) || 0);
-    const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const { data: record, error } = await supabase
       .from('Expense')
       .insert({
         id: `exp_${crypto.randomUUID()}`,
-        locationId: data.locationId || null,
-        description,
-        type: data.type,
+        locationId: validatedData.locationId || null,
+        description: validatedData.description,
+        type: validatedData.type,
         amountWithoutVat,
         amountWithVat,
         vatRate,
-        isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
-        month: data.month || null,
-        paidBy: data.paidBy || 'Ortak Hesap',
-        categoryId: data.categoryId || null,
-        attachmentUrl: data.attachmentUrl || null,
+        isOfficial: validatedData.isOfficial,
+        month: validatedData.month || null,
+        paidBy: validatedData.paidBy || 'Ortak Hesap',
+        categoryId: validatedData.categoryId || null,
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    if (validatedData.attachmentUrl) {
+      await supabase.from('Document').insert({
+        fileUrl: validatedData.attachmentUrl,
+        fileName: 'Fatura / Belge',
+        relatedType: 'expense',
+        relatedId: record.id
+      });
+    }
+
     await createAuditLog('CREATE', 'Expense', record.id, {
-      description: data.description,
+      description: validatedData.description,
       amount: amountWithVat,
-      locationId: data.locationId
+      locationId: validatedData.locationId
     });
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: any) {
     console.error("Add Expense Error:", error);
@@ -93,25 +152,25 @@ export async function addExpense(data: any) {
 
 export async function updateExpense(id: string, data: any) {
   try {
+    const validatedData = expenseSchema.parse(data);
     const supabase = await createClient();
-    const vatRate = parseFloat(data.vatRate) || 0;
-    const amountWithoutVat = parseFloat(data.amount) || 0;
+    const vatRate = Math.max(0, Math.min(100, validatedData.vatRate || 0));
+    const amountWithoutVat = Math.max(0, validatedData.amount || 0);
     const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
     const { data: record, error } = await supabase
       .from('Expense')
       .update({
-        locationId: data.locationId || null,
-        description: data.description,
-        type: data.type,
+        locationId: validatedData.locationId || null,
+        description: validatedData.description,
+        type: validatedData.type,
         amountWithoutVat: amountWithoutVat,
         amountWithVat: amountWithVat,
         vatRate: vatRate,
-        isOfficial: data.isOfficial === 'true' || data.isOfficial === true,
-        month: data.month || null,
-        paidBy: data.paidBy || 'Ortak Hesap',
-        categoryId: data.categoryId || null,
-        attachmentUrl: data.attachmentUrl || null,
+        isOfficial: validatedData.isOfficial,
+        month: validatedData.month || null,
+        paidBy: validatedData.paidBy || 'Ortak Hesap',
+        categoryId: validatedData.categoryId || null,
       })
       .eq('id', id)
       .select()
@@ -119,15 +178,24 @@ export async function updateExpense(id: string, data: any) {
 
     if (error) throw error;
 
+    if (validatedData.attachmentUrl) {
+      await supabase.from('Document').insert({
+        fileUrl: validatedData.attachmentUrl,
+        fileName: 'Fatura / Belge (Grup)',
+        relatedType: 'expense',
+        relatedId: id
+      });
+    }
+
     await createAuditLog('UPDATE', 'Expense', id, {
-      description: data.description,
+      description: validatedData.description,
       amount: amountWithVat
     });
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
-    revalidatePath('/reports');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: any) {
     console.error("Update Expense Error:", error);
@@ -137,7 +205,16 @@ export async function updateExpense(id: string, data: any) {
 
 export async function uploadExpenseAttachment(formData: FormData) {
   try {
-    const supabase = await createClient();
+    // 1. Sunucu taraflı güvenli yükleme için Admin yetkisini kullan (Bypass RLS on upload)
+    const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return { success: false, error: 'Sistem Hatası: Supabase url veya yetki anahtarı bulunamadı.' };
+    }
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const adminSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
     const file = formData.get('file') as File;
     if (!file) return { success: false, error: 'Dosya seçilmedi.' };
 
@@ -146,7 +223,6 @@ export async function uploadExpenseAttachment(formData: FormData) {
       return { success: false, error: `Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum 15MB yüklenebilir.` };
     }
 
-    // Determine the correct MIME type
     const allowedTypes: Record<string, string> = {
       'application/pdf': 'pdf',
       'image/jpeg': 'jpg',
@@ -168,43 +244,76 @@ export async function uploadExpenseAttachment(formData: FormData) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `expenses/${fileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // 2. Eksik bucket problemini otomatik çöz: 
+    const { data: buckets } = await adminSupabase.storage.listBuckets();
+    if (!buckets?.find(b => b.name === 'documents')) {
+       // Bucket yoksa Public olarak hemen yarat
+       await adminSupabase.storage.createBucket('documents', { public: true });
+    }
+
+    // 3. Dosyayı doğrudan Admin servisi ile yükle (RLS engeline takılmaz)
+    const { data: uploadData, error: uploadError } = await adminSupabase.storage
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
-        contentType: mimeType,  // ← Explicitly set content type
+        contentType: mimeType,
       });
 
     if (uploadError) {
-      console.error("Supabase Storage Error:", uploadError);
-      const msg = uploadError.message?.toLowerCase() || '';
-      if (msg.includes('bucket not found')) {
-        return { 
-          success: false, 
-          error: 'Eksik Yapılandırma: Supabase üzerinde "documents" bucket\'ı bulunamadı. Lütfen Storage panelinden bu isimle bir public bucket oluşturun.' 
-        };
-      }
-      if (msg.includes('security policy') || msg.includes('unauthorized') || msg.includes('new row violates row-level security')) {
-        return { 
-          success: false, 
-          error: 'HATA: "documents" bucket\'ı için yazma izni (RLS Policy) bulunamadı. Lütfen Supabase panelinden anonim kullanıcılar için INSERT/SELECT izinlerini tanımlayın.' 
-        };
-      }
-      throw uploadError;
+      console.error("Storage Error:", uploadError);
+      return { success: false, error: `Yükleme hatası: ${uploadError.message}` };
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminSupabase.storage
       .from('documents')
       .getPublicUrl(filePath);
 
     return { success: true, publicUrl };
   } catch (error: any) {
     console.error("Upload Error:", error);
-    return { success: false, error: `Yükleme hatası: ${error.message}` };
+    return { success: false, error: `Sunucu hatası: ${error.message}` };
   }
 }
+export async function updateExpenseAttachment(id: string, fileUrl: string) {
+  try {
+    const supabase = await createClient();
+    
+    // 1. Update the Expense record
+    const { error: updateError } = await supabase
+      .from('Expense')
+      .update({ attachmentUrl: fileUrl })
+      .eq('id', id);
 
+    if (updateError) throw updateError;
+
+    // 2. Create the Document record for traceability
+    const { error: docError } = await supabase
+      .from('Document')
+      .insert({
+        fileUrl: fileUrl,
+        fileName: 'Fatura / Belge (Sonradan Eklendi)',
+        relatedType: 'expense',
+        relatedId: id
+      });
+
+    if (docError) throw docError;
+
+    await createAuditLog('UPDATE', 'Expense', id, {
+       action: 'ATTACH_DOCUMENT',
+       fileUrl
+    });
+
+    revalidatePath('/giderler');
+    revalidatePath('/');
+    revalidatePath('/gelir-gider');
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Update Attachment Error:", error);
+    return { success: false, error: String(error?.message || 'Bağlantı hatası.') };
+  }
+}
 
 export async function deleteExpense(id: string) {
   try {
@@ -214,9 +323,11 @@ export async function deleteExpense(id: string) {
     
     await createAuditLog('DELETE', 'Expense', id);
 
-    revalidatePath('/expenses');
+    revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
+    revalidatePath('/raporlar');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -225,44 +336,34 @@ export async function deleteExpense(id: string) {
 
 export async function addInvestment(data: any) {
   try {
-    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
-      return { success: false, error: 'Yatırım açıklaması zorunludur.' };
-    }
-    if (!data.locationId) {
-      return { success: false, error: 'Lokasyon seçimi zorunludur.' };
-    }
-    const amount = Math.max(0, parseFloat(data.amount) || 0);
+    const validatedData = investmentSchema.parse(data);
+    const amount = Math.max(0, validatedData.amount || 0);
     if (amount <= 0) {
       return { success: false, error: 'Geçerli bir tutar giriniz.' };
     }
-    const description = data.description.trim().slice(0, 500);
-    const currency = ['TL', 'USD', 'EUR'].includes(data.currency) ? data.currency : 'TL';
-    const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 1000) : '';
 
     const supabase = await createClient();
     const { error } = await supabase
       .from('Investment')
       .insert({
         id: `inv_${crypto.randomUUID()}`,
-        locationId: data.locationId,
-        description,
-        currency,
+        locationId: validatedData.locationId,
+        description: validatedData.description,
+        currency: validatedData.currency,
         amountWithoutVat: amount,
         totalAmount: amount,
-        notes,
+        notes: validatedData.notes || '',
       });
 
     if (error) throw error;
 
-    // We don't have the generated record easily from insert without select
-    // but the ID prefix is inv_ + uuid which we can pre-generate or extract
     await createAuditLog('CREATE', 'Investment', 'new', { 
-      description: data.description, 
-      amount: data.amount 
+      description: validatedData.description, 
+      amount: amount 
     });
 
-    revalidatePath('/investments');
-    revalidatePath('/expenses');
+    revalidatePath('/yatirimlar');
+    revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -275,33 +376,31 @@ export async function updateInvestment(id: string, data: any) {
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz yatırım ID.' };
     }
-    const amount = Math.max(0, parseFloat(data.amount) || 0);
-    const description = (data.description || '').trim().slice(0, 500);
-    const currency = ['TL', 'USD', 'EUR'].includes(data.currency) ? data.currency : 'TL';
-    const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 1000) : '';
+    const validatedData = investmentSchema.parse(data);
+    const amount = Math.max(0, validatedData.amount || 0);
 
     const supabase = await createClient();
     const { error } = await supabase
       .from('Investment')
       .update({
-        locationId: data.locationId,
-        description,
-        currency,
+        locationId: validatedData.locationId,
+        description: validatedData.description,
+        currency: validatedData.currency,
         amountWithoutVat: amount,
         totalAmount: amount,
-        notes,
+        notes: validatedData.notes || '',
       })
       .eq('id', id);
 
     if (error) throw error;
 
     await createAuditLog('UPDATE', 'Investment', id, { 
-      description: data.description, 
-      amount: data.amount 
+      description: validatedData.description, 
+      amount: amount 
     });
 
-    revalidatePath('/investments');
-    revalidatePath('/expenses');
+    revalidatePath('/yatirimlar');
+    revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -317,8 +416,8 @@ export async function deleteInvestment(id: string) {
     
     await createAuditLog('DELETE', 'Investment', id);
 
-    revalidatePath('/investments');
-    revalidatePath('/expenses');
+    revalidatePath('/yatirimlar');
+    revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -331,11 +430,13 @@ export async function updateLocationParameters(id: string, data: any) {
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz lokasyon ID.' };
     }
-    const fixedRent = Math.max(0, parseFloat(data.fixedRent) || 0);
-    const duesAmount = Math.max(0, parseFloat(data.duesAmount) || 0);
-    const revenueShareRate = Math.max(0, Math.min(100, parseFloat(data.revenueShareRate) || 0));
-    const revenueThreshold = Math.max(0, parseFloat(data.revenueThreshold) || 0);
-    const rentVatRate = Math.max(0, Math.min(100, parseFloat(data.rentVatRate) || 0));
+    const validatedData = locationParamsSchema.parse(data);
+    
+    const fixedRent = Math.max(0, validatedData.fixedRent);
+    const duesAmount = Math.max(0, validatedData.duesAmount);
+    const revenueShareRate = Math.max(0, Math.min(100, validatedData.revenueShareRate));
+    const revenueThreshold = Math.max(0, validatedData.revenueThreshold);
+    const rentVatRate = Math.max(0, Math.min(100, validatedData.rentVatRate));
 
     const supabase = await createClient();
     const { error } = await supabase
@@ -350,8 +451,11 @@ export async function updateLocationParameters(id: string, data: any) {
       .eq('id', id);
 
     if (error) throw error;
-    revalidatePath('/settings');
+    revalidatePath('/ayarlar');
     revalidatePath('/');
+    revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -404,6 +508,7 @@ export async function getLocationInsights() {
            fixedRent: loc.fixedRent,
            duesAmount: loc.duesAmount,
            revenueShareRate: loc.revenueShareRate || 15,
+           month: perf.month
         });
         cumulativeNetCash += pCalc.netCash;
       });
@@ -458,51 +563,104 @@ export async function getSystemParameters() {
   }
 }
 
-export async function getKabinRaporSessions(locationId: string, monthStr: string) {
+export async function updateSystemParameter(key: string, value: number) {
   try {
-    const { kabinRapor } = await import('@/lib/kabinRapor');
-    const supabase = await createClient();
-    const { data: location } = await supabase.from('Location').select('name').eq('id', locationId).single();
-    if (!location) throw new Error('Lokasyon bulunamadı');
+    const allowedKeys = [
+      'SESSION_PRICE_INCL_VAT', 
+      'VAT_RATE', 
+      'CORP_TAX_RATE',
+      'SETTING_POPUP_POSITION',
+      'SETTING_LOG_DETAIL_LEVEL',
+      'SETTING_DEFAULT_PAGE',
+      'SETTING_ANIMATION_SPEED'
+    ];
+    if (!allowedKeys.includes(key)) {
+      return { success: false, error: 'Geçersiz parametre anahtarı.' };
+    }
+    const safeValue = parseFloat(String(value));
 
-    const cityName = location.name.split(' ')[0]; // Zafer, Mavi, vb.
-    const monthId = monthStr.slice(0, 7);
-    const currentMonthId = new Date().toISOString().slice(0, 7);
+    // Use Prisma for reliable ID generation and upsert handling
+    await prisma.systemParameter.upsert({
+      where: { key },
+      update: { value: safeValue },
+      create: { key, value: safeValue },
+    });
+
+    await createAuditLog('UPDATE', 'SystemParameter', key, { newValue: safeValue });
     
-    // API: 'Bu Ay' or 'YYYY-MM'
-    const range = monthId === currentMonthId ? 'Bu Ay' : monthId;
-    const liveData = await kabinRapor.getCitySplittedData(range as any);
-    
-    if (!liveData) throw new Error('API verisi alınamadı');
-    const cityData = (liveData.cities as any)[cityName];
-    const foundSessionCount = cityData?.sessions || 0;
-    
-    return { success: true, sessions: foundSessionCount };
+    revalidatePath('/ayarlar');
+    revalidatePath('/');
+    revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
+    return { success: true };
   } catch (error: any) {
-    console.error("fetchKabinError:", error);
+    console.error("Update System Param Error:", error);
     return { success: false, error: error.message };
   }
 }
 
-export async function updateSystemParameter(key: string, value: number) {
+export async function resetSystemParameters() {
   try {
-    const allowedKeys = ['SESSION_PRICE_INCL_VAT', 'VAT_RATE', 'CORP_TAX_RATE'];
-    if (!allowedKeys.includes(key)) {
-      return { success: false, error: 'Geçersiz parametre anahtarı.' };
+    const defaults = {
+      'SESSION_PRICE_INCL_VAT': 300,
+      'VAT_RATE': 20,
+      'CORP_TAX_RATE': 25,
+      'SETTING_POPUP_POSITION': 0,
+      'SETTING_LOG_DETAIL_LEVEL': 0,
+      'SETTING_DEFAULT_PAGE': 0,
+      'SETTING_ANIMATION_SPEED': 1
+    };
+
+    for (const [key, value] of Object.entries(defaults)) {
+      await prisma.systemParameter.upsert({
+        where: { key },
+        update: { value: (value as number) },
+        create: { key, value: (value as number) },
+      });
     }
-    const safeValue = Math.max(0, parseFloat(String(value)) || 0);
 
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('SystemParameter')
-      .upsert({ key, value: safeValue }, { onConflict: 'key' });
+    await createAuditLog('UPDATE', 'SystemParameter', 'ALL', 'Ayarlar varsayılana sıfırlandı.');
 
-    if (error) throw error;
-    revalidatePath('/settings');
+    revalidatePath('/ayarlar');
     revalidatePath('/');
+    revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
 
+export async function toggleExpenseSettled(id: string, currentDesc: string) {
+  const isSettled = currentDesc.includes('[MAHSUP]');
+  const newDesc = isSettled 
+    ? currentDesc.replace('[MAHSUP] ', '')
+    : `[MAHSUP] ${currentDesc}`;
+    
+  const supabase = await createClient();
+  const { error } = await supabase.from('Expense').update({ description: newDesc }).eq('id', id);
+  if (error) return { success: false, error: error.message };
+  
+  revalidatePath('/giderler');
+  return { success: true };
+}
+
+export async function autoSettleOldExpenses() {
+  const supabase = await createClient();
+  const { data: expenses } = await supabase.from('Expense').select('id, description');
+  
+  if (!expenses) return { success: true };
+
+  let count = 0;
+  for (const exp of expenses) {
+    const d = exp.description.toLowerCase();
+    if (!d.includes('[mahsup]') && !d.includes('eren') && !d.includes('murat')) {
+      await supabase.from('Expense').update({ description: `[MAHSUP] ${exp.description}` }).eq('id', exp.id);
+      count++;
+    }
+  }
+  revalidatePath('/giderler');
+  return { success: true, count };
+}

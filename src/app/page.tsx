@@ -4,7 +4,8 @@ import { getLocationInsights } from '@/features/ledger/actions';
 import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
 import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
 import ExpenseBreakdown from '@/features/ledger/components/ExpenseBreakdown';
-import { kabinRapor } from '@/lib/kabinRapor';
+import PerformanceComparison from '@/features/ledger/components/PerformanceComparison';
+import InteractiveKPICards from '@/features/ledger/components/InteractiveKPICards';
 import { 
   TrendingUp, CreditCard, Wallet, Activity, 
   ArrowUpRight, Radio, LayoutDashboard, BarChart3, 
@@ -13,25 +14,35 @@ import {
 import * as motion from "framer-motion/client";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import DashboardClientUI from '@/components/premium/DashboardClientUI';
+import { getActiveLocations } from '@/features/ledger/actions';
 
 export const metadata = {
-  title: 'Dashboard — NextGenBox',
+  title: 'Panel — NextGenBox',
   robots: 'noindex, nofollow',
 };
 
 export const dynamic = 'force-dynamic';
 
+import { redirect } from 'next/navigation';
+
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const insights = await getLocationInsights();
+  
+  // Check for default page setting
+  const { data: defaultPageParam } = await supabase
+    .from('SystemParameter')
+    .select('value')
+    .eq('key', 'SETTING_DEFAULT_PAGE')
+    .single();
 
-  // Live Data from kabinrapor.com
-  let liveData: any = null;
-  try {
-    liveData = await kabinRapor.getComprehensiveData('Tüm Zamanlar');
-  } catch (error) {
-    console.error("Failed to fetch live kabin data:", error);
+  if (defaultPageParam) {
+    const val = parseInt(String(defaultPageParam.value));
+    if (val === 1) redirect('/performans');
+    if (val === 2) redirect('/gelir-gider');
   }
+
+  const insights = await getLocationInsights();
 
   const { data: performances } = await supabase
     .from('MonthlyPerformance')
@@ -52,23 +63,67 @@ export default async function DashboardPage() {
     return acc;
   }, {});
 
+  const activeLocationCount = (performances
+    ? [...new Set(performances.map((p: any) => p.locationId))].length
+    : 1) || 1;
+
   const monthlyTotals: Record<string, any> = {};
   let totalManualRevenue = 0;
   let totalManualNetCash = 0;
   let totalManualCommission = 0;
+  let totalManualAvmExpense = 0;
+  let totalManualOperationalExpense = 0;
 
   if (performances) {
     for (const perf of performances) {
+      const loc = perf.location;
+      const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
+      
+      // Recurring: global split + location-specific full
+      const recurringTotal = (expensesData || [])
+        .filter((e: any) => {
+          if (e.type !== 'RECURRING') return false;
+          const d = e.description || '';
+          // Skip AVM fixed costs that are already calculated automatically
+          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+          return true;
+        })
+        .reduce((s: number, e: any) => {
+          if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+          if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
+          return s;
+        }, 0);
+
+      // One-time: global split + location-specific full
+      const oneTimeTotal = (expensesData || [])
+        .filter((e: any) => {
+          if (e.type === 'RECURRING') return false;
+          const d = e.description || '';
+          // Skip AVM fixed costs that are already calculated automatically
+          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+          
+          const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
+          if (expMonth !== perfMonthStr) return false;
+          if (e.locationId && e.locationId !== loc.id) return false;
+          return true;
+        })
+        .reduce((s: number, e: any) => {
+          if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+          return s + (e.amountWithVat || 0);
+        }, 0);
+
+      const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
+
       const calc = calculateMonthlyCashFlow(
         perf.sessionCount,
-        perf.extraExpenseAmount,
+        totalExtraExpense,
         {
           sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
           iyzicoCommissionRate: 2,
           nayaxCommissionRate: 2,
-          fixedRent: perf.location.fixedRent,
-          duesAmount: perf.location.duesAmount,
-          revenueShareRate: perf.location.revenueShareRate || 15,
+          fixedRent: loc.fixedRent,
+          duesAmount: loc.duesAmount,
+          revenueShareRate: loc.revenueShareRate || 15,
         }
       );
 
@@ -79,262 +134,66 @@ export default async function DashboardPage() {
 
       totalManualRevenue += calc.grossRevenue;
       totalManualNetCash += calc.netCash;
-      totalManualCommission += (calc.totalCommission + calc.revenueShare);
+      totalManualCommission += calc.totalCommission;
+      totalManualAvmExpense += calc.totalAvmExpense;
+      totalManualOperationalExpense += (calc.totalCommission + calc.totalAvmExpense + totalExtraExpense);
     }
   }
 
   const chartEntries = Object.entries(monthlyTotals).slice(-6);
   const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
 
-  const allTimeTotal = liveData?.allTimeTotals;
-  const citySplit = liveData?.citySplit;
-  const thisMonthTotal = liveData?.thisMonthTotals;
-
-  const displayMonthlyRevenue = thisMonthTotal ? thisMonthTotal.total_revenue : totalManualRevenue;
-  
-  // Use KabinRapor All-Time revenue if available
-  const displayAllTimeRevenue = allTimeTotal?.total_revenue || totalManualRevenue;
-  const displayTotalSessions = allTimeTotal 
-    ? allTimeTotal.total_paid_sessions 
-    : (performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0);
-
-  // Total Investment (ayrı gösterilir, nakit akışından düşülmez)
+  const displayAllTimeRevenue = totalManualRevenue;
+  const trueGlobalNetCash = totalManualNetCash;
+  const totalGlobalOperationalExpense = totalManualOperationalExpense;
+  const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
   const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
-  const globalCommission = displayAllTimeRevenue * 0.04;
-
-  // AVM Expenses: Kira(+KDV) + Aidat per month per location
-  const totalManualAvmExpense = performances?.reduce((acc, perf) => {
-    return acc + (perf.location.fixedRent * 1.20) + perf.location.duesAmount;
-  }, 0) || 0;
-
-  // Expense table: recurring + one-time expenses
-  const totalRecurringExpenses = (expensesData || [])
-    .filter((e: any) => e.type === 'RECURRING')
-    .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
   const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
-  const totalOneTimeExpenses = (expensesData || [])
-    .filter((e: any) => e.type !== 'RECURRING')
-    .reduce((s: number, e: any) => s + (e.amountWithVat || 0), 0);
 
-  const totalGlobalOperationalExpense = globalCommission + totalManualAvmExpense + (totalRecurringExpenses * Math.max(allMonthCount, 1)) + totalOneTimeExpenses;
-  // Net nakit akışı: Gelir - Operasyonel Giderler (yatırım dahil değil, Excel Nakit_Akis ile uyumlu)
-  const trueGlobalNetCash = displayAllTimeRevenue - totalGlobalOperationalExpense;
+  // New Data Fetching for UI
+  const activeLocations = await getActiveLocations() || [];
+  
+  // Stats preparation for Premium UI
+  const stats = {
+    revenue: displayAllTimeRevenue,
+    expense: totalGlobalOperationalExpense,
+    profit: trueGlobalNetCash,
+    roi: insights[0]?.roi || 0,
+    sessions: displayTotalSessions,
+    monthlyGrowth: 12.5 // Mock for now or calculate if data allows
+  };
 
-  const kpis = [
-    {
-      label: "Toplam Ciro",
-      sublabel: "Canlı Senkron",
-      value: `₺${displayAllTimeRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
-      icon: TrendingUp,
-      trend: allTimeTotal ? "API Güncel" : "Manuel Kayıt",
-      iconColor: "text-emerald-600",
-      iconBg: "bg-emerald-50 border-emerald-100",
-      cardClass: "stat-card-green",
-      positive: true
-    },
-    {
-      label: "Toplam Gider",
-      sublabel: "Komisyon + AVM + Diğer",
-      value: `₺${totalGlobalOperationalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
-      icon: CreditCard,
-      iconColor: "text-red-600",
-      iconBg: "bg-red-50 border-red-100",
-      cardClass: "stat-card-red",
-      trend: "Tüm Zamanlar",
-      positive: false
-    },
-    {
-      label: "Net Nakit Akışı",
-      sublabel: "Tüm Operasyonel Giderler Sonrası",
-      value: `₺${trueGlobalNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
-      icon: Wallet,
-      iconColor: trueGlobalNetCash >= 0 ? "text-blue-600" : "text-amber-600",
-      iconBg: trueGlobalNetCash >= 0 ? "bg-blue-50 border-blue-100" : "bg-amber-50 border-amber-100",
-      cardClass: trueGlobalNetCash >= 0 ? "stat-card-blue" : "stat-card-amber",
-      trend: `Yatırım: ₺${totalInvestment.toLocaleString('tr-TR')}`,
-      positive: trueGlobalNetCash >= 0
-    },
-  ];
+  const { data: latestExpenses } = await supabase
+    .from('Expense')
+    .select('*, location:Location(name)')
+    .order('createdAt', { ascending: false })
+    .limit(10);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: latestNotes } = await supabase
+    .from('Note')
+    .select('*')
+    .eq('userId', user?.id)
+    .order('createdAt', { ascending: false })
+    .limit(10);
+
+  const chartData = Object.entries(monthlyTotals).map(([month, data]) => ({
+    month,
+    revenue: data.revenue,
+    profit: data.profit
+  })).slice(-6);
 
   return (
-    <div className="page-wrapper space-y-8 animate-fade-in">
-      
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            {liveData ? (
-              <span className="live-dot">Canlı Akış</span>
-            ) : (
-              <span className="text-xs text-amber-600 font-semibold">Manuel Mod</span>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-            <LayoutDashboard className="w-6 h-6 text-slate-400" />
-            Performans Paneli
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">Finansal akış ve stratejik konumlandırma özeti.</p>
-        </div>
-        
-        <Link href="/kabin" className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl premium-card hover:shadow-md transition-all text-sm">
-          <div className={cn("w-2 h-2 rounded-full", liveData ? "bg-emerald-500 animate-pulse" : "bg-amber-400")} />
-          <span className="font-medium text-slate-700">
-            {liveData ? "Sistem Aktif" : "Bağlantı Bekleniyor"}
-          </span>
-          <ArrowUpRight className="w-4 h-4 text-slate-400" />
-        </Link>
-      </header>
-
-      {/* KPI Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {kpis.map((kpi, idx) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.07 }}
-            className={cn("premium-card p-5 border", kpi.cardClass)}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center", kpi.iconBg)}>
-                <kpi.icon className={cn("w-5 h-5", kpi.iconColor)} />
-              </div>
-              <span className={cn(
-                "metric-pill",
-                kpi.positive ? "metric-pill-green" : "metric-pill-red"
-              )}>
-                {kpi.trend}
-              </span>
-            </div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{kpi.label}</p>
-            <p className="text-slate-400 text-[10px] mb-2">{kpi.sublabel}</p>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{kpi.value}</h2>
-          </motion.div>
-        ))}
-      </section>
-
-      {/* Insights + Expense Breakdown */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <section className="xl:col-span-8 space-y-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Stratejik Performans Matrisi</h2>
-            <div className="flex-1 section-divider" />
-          </div>
-          <StrategicMatrix insights={insights} />
-        </section>
-
-        <section className="xl:col-span-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Gider Dağılımı</h2>
-            <div className="flex-1 section-divider" />
-          </div>
-          <div className="premium-card p-5">
-            <ExpenseBreakdown expenses={expensesData || []} />
-          </div>
-        </section>
-      </div>
-
-      {/* Performance Score */}
-      <section className="grid grid-cols-1 gap-6">
-        <div className="premium-card p-6 flex flex-col md:flex-row items-center gap-8">
-          <div className="relative shrink-0">
-            <svg className="w-28 h-28 transform -rotate-90">
-              <circle cx="56" cy="56" r="48" stroke="#E2E8F0" strokeWidth="8" fill="transparent" />
-              <motion.circle 
-                cx="56" cy="56" r="48" stroke="#2563EB" strokeWidth="9" fill="transparent" 
-                strokeDasharray={301.6}
-                initial={{ strokeDashoffset: 301.6 }}
-                animate={{ strokeDashoffset: 301.6 - (301.6 * 0.85) }}
-                transition={{ duration: 1.8, ease: "easeOut" }}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold text-slate-900">85</span>
-              <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Skor</span>
-            </div>
-          </div>
-          <div className="space-y-3 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-2">
-              <ShieldCheck size={16} className="text-blue-500" />
-              <h3 className="text-base font-bold text-slate-900">Performans İndeksi</h3>
-            </div>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-2xl">
-              Sistem verimliliği <span className="text-blue-600 font-bold">%85</span> seviyesinde. 
-              iyzico/Nayax kesintileri senaryosunda reel getiri hedeflenen projeksiyonların üzerinde seyrediyor.
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-4">
-              <span className="metric-pill metric-pill-green">Sistem Stabil</span>
-              <span className="metric-pill metric-pill-blue">Kâr Odaklı</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Simulator */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Hacim Simülatörü</h2>
-          <div className="flex-1 section-divider" />
-        </div>
-        <div className="premium-card p-6">
-          <FinancialSimulator 
-            defaultParams={{
-              sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
-              kdvRate: paramMap['VAT_RATE'] || 20,
-              investmentAmount: insights[0]?.totalInvestment || 250000,
-            }} 
-          />
-        </div>
-      </section>
-
-      {/* Chart */}
-      <section className="pb-4">
-        <div className="premium-card p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Momentum Analizi</h3>
-              <p className="text-xs text-slate-400 mt-1">Aylık ciro ve net nakit akışı değişimi</p>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-slate-200" />
-                <span className="text-xs font-medium text-slate-500">Ciro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-blue-500" />
-                <span className="text-xs font-medium text-slate-500">Net Kâr</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="h-[280px] flex items-end justify-between gap-3 md:gap-6 px-2">
-            {chartEntries.map(([month, data], i) => {
-              const h_rev = (data.revenue / maxVal) * 100;
-              const h_prof = Math.max(0, (data.profit / maxVal) * 100);
-              return (
-                <div key={month} className="flex-1 flex flex-col items-center gap-3 group h-full justify-end">
-                  <div className="w-full flex items-end justify-center gap-1.5 grow">
-                    <motion.div 
-                      initial={{ height: 0 }} animate={{ height: `${h_rev}%` }}
-                      transition={{ duration: 0.9, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full max-w-[28px] bg-slate-100 rounded-t-lg group-hover:bg-slate-200 transition-colors border border-slate-200"
-                    />
-                    <motion.div 
-                      initial={{ height: 0 }} animate={{ height: `${h_prof}%` }}
-                      transition={{ duration: 1, delay: i * 0.09, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full max-w-[28px] bg-blue-500 rounded-t-lg shadow-sm group-hover:bg-blue-600 transition-colors"
-                    />
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide group-hover:text-slate-600 transition-colors">
-                    {month}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    </div>
+    <DashboardClientUI 
+      stats={stats} 
+      recentExpenses={latestExpenses || []} 
+      locations={activeLocations} 
+      categories={[]} 
+      chartData={chartData}
+      notes={latestNotes || []}
+      totalInvestment={totalInvestment}
+      allMonthCount={allMonthCount}
+      allExpenses={expensesData || []}
+    />
   );
 }

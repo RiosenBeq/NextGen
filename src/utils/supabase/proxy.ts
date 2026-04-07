@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -27,8 +27,30 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Bu satırlar session tazeleme/auth kontrolü içindir
-  // const { data: { user } } = await supabase.auth.getUser()
+  // Session tazeleme + Auth kontrolü
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const isLoginPage = request.nextUrl.pathname === '/login'
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+
+  // API rotaları için auth kontrolü yapma (kendi içlerinde yapacaklar)
+  if (isApiRoute) {
+    return supabaseResponse
+  }
+
+  // Kullanıcı giriş yapmamış ve login sayfasında değilse → login'e yönlendir
+  if (!user && !isLoginPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Kullanıcı giriş yapmış ve login sayfasındaysa → dashboard'a yönlendir
+  if (user && isLoginPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }

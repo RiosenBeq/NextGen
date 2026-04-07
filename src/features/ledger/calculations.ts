@@ -7,6 +7,7 @@ export interface CalculationParams {
   revenueShareRate: number; // Ciro Payı %
   investmentAmount?: number; // Toplam yatırım (ROI için)
   defaultVatRate?: number; // 20% by default
+  month?: string; // YYYY-MM
 }
 
 export interface CalculationResult {
@@ -46,11 +47,15 @@ export function calculateMonthlyCashFlow(
   const nayaxCommission = grossRevenue * (params.nayaxCommissionRate / 100);
   const totalCommission = iyzicoCommission + nayaxCommission;
 
-  // 3. AVM Gideri — Max(Sabit Kira, Ciro * Pay) Mantığı
-  const calculatedRevenueShare = grossRevenue * (params.revenueShareRate / 100);
-  const revenueShare = calculatedRevenueShare > params.fixedRent 
-    ? calculatedRevenueShare - params.fixedRent
-    : 0;
+  // 3. AVM Gideri — Kira Sonrası Cirodan Pay (Kullanıcı İsteği: Ciro - Kira > 0 ise %15)
+  // İSTİSNA: Mart 2026 ayı için Ciro Payı ödenmeyecek. (Kullanıcı Talebi #252)
+  let revenueShare = 0;
+  const isMarch2026 = params.month === '2026-03' || (params.month && params.month.startsWith('2026-03'));
+  
+  if (!isMarch2026) {
+    const revenueAboveRent = Math.max(0, grossRevenue - params.fixedRent);
+    revenueShare = revenueAboveRent * (params.revenueShareRate / 100);
+  }
 
   // 4. Toplam AVM Gideri (Ham Kira + %20 KDV + Aidat + Kirayı Aşan Ciro Payı)
   const fixedRentWithVat = params.fixedRent * 1.20;

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PiggyBank, Search, Edit2, Trash2 } from 'lucide-react';
 import { InvestmentForm } from './InvestmentForm';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import { deleteInvestment } from '../actions';
 
 interface Location {
@@ -151,10 +152,15 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
         </table>
       </div>
 
-      {/* Edit Modal */}
-      {editingInvestment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4 animate-in fade-in zoom-in duration-300">
-          <div className="w-full max-w-lg shadow-[0_0_100px_rgba(0,0,0,0.5)] rounded-3xl overflow-hidden border border-white/10">
+      {/* Edit Modal Refactored */}
+      <PremiumModal
+        isOpen={!!editingInvestment}
+        onClose={() => setEditingInvestment(null)}
+        maxWidth="max-w-2xl"
+        title="Yatırım Kalemini Düzenle"
+      >
+        <div className="p-8">
+          {editingInvestment && (
             <InvestmentForm 
               locations={locations} 
               initialData={{
@@ -164,9 +170,10 @@ export default function InvestmentList({ initialInvestments, locations }: Props)
               }} 
               onClose={() => setEditingInvestment(null)} 
             />
-          </div>
+          )}
         </div>
-      )}
+      </PremiumModal>
     </motion.section>
   );
 }
+

@@ -15,18 +15,33 @@ model SystemParameter {
 }
 
 model Location {
-  id               String               @id @default(cuid())
+  id               String             @id @default(cuid())
   name             String
   fixedRent        Float
   duesAmount       Float
   rentVatRate      Float
-  revenueShareRate Float                @default(0) // Ciro Payı %
-  revenueThreshold Float                @default(0) // Ciro Eşiği (TL)
-  isActive         Boolean              @default(true)
+  revenueShareRate Float              @default(0) // Ciro Payı %
+  revenueThreshold Float              @default(0) // Ciro Eşiği (TL)
+  isActive         Boolean            @default(true)
   performances     MonthlyPerformance[]
+  dailyPerformances DailyPerformance[]
   expenses         Expense[]
   investments      Investment[]
-  cabins           Cabin[]
+}
+
+model DailyPerformance {
+  id           String   @id @default(cuid())
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+  date         DateTime
+  sessionCount Int      @default(0)
+  testCount    Int      @default(0)
+  extraMetrics Json?    // To store custom fields dynamically
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([locationId, date])
 }
 
 model MonthlyPerformance {
@@ -40,7 +55,8 @@ model MonthlyPerformance {
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-  lastSyncAt         DateTime? // Tracks KabinRapor auto-sync
+
+  @@unique([locationId, month])
 }
 
 model Expense {
@@ -59,6 +75,7 @@ model Expense {
 
   createdAt        DateTime  @default(now())
   attachmentUrl    String?
+  isSettled        Boolean   @default(false)
 }
 
 model Investment {
@@ -77,40 +94,9 @@ model Investment {
   createdAt        DateTime @default(now())
 }
 
-model Cabin {
-  id                 String             @id @default(cuid())
-  cabinId            Int                @unique // Original ID from osessensin API
-  firmId             Int                
-  cabinName          String
-  cabinLocation      String
-  locationId         String?            // Linked AVM Location
-  location           Location?          @relation(fields: [locationId], references: [id])
-  cabinPrice         Float
-  startDate          DateTime?
-  macAddresses       String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  
-  dailyStats         CabinDailyStat[]
-}
-
-model CabinDailyStat {
-  id                 String   @id @default(cuid())
-  cabinId            String
-  cabin              Cabin    @relation(fields: [cabinId], references: [id])
-  date               String   // YYYY-MM-DD
-  todayRevenue       Float
-  paidSessions       Int
-  incomingCustomer   Int
-  
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  @@unique([cabinId, date])
-}
-
 model Note {
   id        String   @id @default(cuid())
+  userId    String?  // The user who owns this note
   title     String
   content   String?
   color     String   @default("zinc") // To store tag/color info
@@ -123,7 +109,7 @@ model AuditLog {
   action    String   // CREATE, UPDATE, DELETE
   entity    String   // Expense, Investment, etc.
   entityId  String
-  details   String?  // JSON string
+  details   String?  // JSON string or formatted text
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())

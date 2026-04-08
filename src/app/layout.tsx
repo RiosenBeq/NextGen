@@ -1,14 +1,7 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientShell from "./ClientShell";
 import { SettingsProvider } from "@/providers/SettingsProvider";
 import { createClient } from "@/utils/supabase/server";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 export const metadata = {
   title: 'NextGenBox — Finansal Kontrol',
@@ -28,10 +21,10 @@ export default async function RootLayout({
   const isAuthenticated = !!user;
 
   return (
-    <html lang="tr" suppressHydrationWarning className={inter.variable}>
+    <html lang="tr" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.className} font-sans antialiased selection:bg-blue-100 ${isAuthenticated ? 'flex h-screen overflow-hidden' : ''}`}
+        className={`font-sans antialiased selection:bg-blue-100 ${isAuthenticated ? 'flex h-screen overflow-hidden' : ''}`}
       >
         {isAuthenticated ? (
           <SettingsProvider>

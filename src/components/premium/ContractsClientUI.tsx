@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Upload, Trash2, Loader2 } from 'lucide-react';
+import { FileText, Upload, Trash2, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { deleteDocument, uploadDocument } from '@/features/belgeler/actions';
 
 type ContractDoc = {
@@ -19,6 +19,9 @@ type LocationOption = {
   name: string;
 };
 
+const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_SIZE_MB = 15;
+
 export default function ContractsClientUI({
   initialContracts,
   locations,
@@ -31,6 +34,8 @@ export default function ContractsClientUI({
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
+  const [successMsg, setSuccessMsg] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const locationNameMap = useMemo(
     () => new Map(locations.map((loc) => [loc.id, loc.name])),
@@ -39,8 +44,24 @@ export default function ContractsClientUI({
 
   const handleUpload = async (file: File | null) => {
     if (!file) return;
-    setUploading(true);
     setError('');
+    setSuccessMsg('');
+
+    // Client-side validation
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError(`Desteklenmeyen dosya türü. Yalnızca PDF, JPG, PNG ve WebP kabul edilmektedir.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > MAX_SIZE_MB) {
+      setError(`Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum ${MAX_SIZE_MB}MB yüklenebilir.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setUploading(true);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -48,13 +69,29 @@ export default function ContractsClientUI({
     formData.append('relatedId', locationId);
 
     const res = await uploadDocument(formData);
+
     if (!res.success) {
       setError(res.error || 'Sözleşme yüklenemedi.');
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    window.location.reload();
+    // Add new contract to list without page reload
+    const newDoc: ContractDoc = {
+      id: `doc_temp_${Date.now()}`,
+      fileName: file.name,
+      fileUrl: res.publicUrl || '',
+      relatedId: locationId,
+      createdAt: new Date().toISOString(),
+    };
+    setContracts((prev) => [newDoc, ...prev]);
+    setSuccessMsg(`"${file.name}" başarıyla yüklendi.`);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    // Clear success message after 4 seconds
+    setTimeout(() => setSuccessMsg(''), 4000);
   };
 
   const handleDelete = async (id: string) => {
@@ -72,6 +109,7 @@ export default function ContractsClientUI({
 
   return (
     <div className="space-y-6">
+      {/* Upload Section */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
@@ -79,7 +117,9 @@ export default function ContractsClientUI({
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-900">Sözleşme Yükle</h2>
-            <p className="text-xs text-slate-500">Lokasyon bazlı veya genel sözleşmeleri yükleyebilirsiniz.</p>
+            <p className="text-xs text-slate-500">
+              Lokasyon bazlı veya genel sözleşmeleri yükleyebilirsiniz. (PDF, JPG, PNG — Maks {MAX_SIZE_MB}MB)
+            </p>
           </div>
         </div>
 
@@ -87,7 +127,7 @@ export default function ContractsClientUI({
           <select
             value={locationId}
             onChange={(e) => setLocationId(e.target.value)}
-            className="sm:col-span-2 rounded-xl border border-slate-200 px-3 py-2 text-sm"
+            className="sm:col-span-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
           >
             <option value="global">Genel Sözleşme</option>
             {locations.map((loc) => (
@@ -97,11 +137,12 @@ export default function ContractsClientUI({
             ))}
           </select>
 
-          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white">
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition-colors">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {uploading ? 'Yükleniyor...' : 'Dosya Seç'}
             <input
               type="file"
+              ref={fileInputRef}
               className="hidden"
               accept=".pdf,.jpg,.jpeg,.png,.webp"
               disabled={uploading}
@@ -109,40 +150,65 @@ export default function ContractsClientUI({
             />
           </label>
         </div>
-        {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <AlertCircle size={16} className="text-rose-500 shrink-0" />
+            <p className="text-xs text-rose-700 font-semibold">{error}</p>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+            <p className="text-xs text-emerald-700 font-semibold">{successMsg}</p>
+          </div>
+        )}
       </section>
 
+      {/* Contracts List */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Yüklü Sözleşmeler</h3>
+        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">
+          Yüklü Sözleşmeler ({contracts.length})
+        </h3>
         {contracts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">
-            Henüz sözleşme yüklenmedi.
+          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center">
+            <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm text-slate-400 font-semibold">Henüz sözleşme yüklenmedi.</p>
+            <p className="text-xs text-slate-400 mt-1">Yukarıdaki formu kullanarak sözleşme yükleyebilirsiniz.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {contracts.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">{doc.fileName}</p>
-                  <p className="text-xs text-slate-500">
-                    {doc.relatedId === 'global' ? 'Genel' : locationNameMap.get(doc.relatedId) || 'Lokasyon'} •{' '}
-                    {formatDocumentDate(doc)}
-                  </p>
+              <div key={doc.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50/50 transition-colors">
+                <div className="min-w-0 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{doc.fileName}</p>
+                    <p className="text-xs text-slate-500">
+                      {doc.relatedId === 'global' ? 'Genel' : locationNameMap.get(doc.relatedId) || 'Lokasyon'} •{' '}
+                      {formatDocumentDate(doc)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={doc.fileUrl}
-                    target="_blank"
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                  >
-                    Görüntüle
-                  </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  {doc.fileUrl && (
+                    <Link
+                      href={doc.fileUrl}
+                      target="_blank"
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      Görüntüle
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDelete(doc.id)}
                     disabled={deletingId === doc.id}
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 disabled:opacity-60"
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition-colors disabled:opacity-60"
                   >
                     {deletingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>

@@ -4,10 +4,10 @@ import React, { useState, useEffect, useTransition } from "react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  Settings,
   User,
   TrendingUp,
   CreditCard,
@@ -23,7 +23,8 @@ import {
   Zap,
   LogOut,
   Calendar,
-  Target
+  Target,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/actions/auth";
@@ -40,7 +41,7 @@ const navLinks = [
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finansal Analiz" },
   { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
   { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finansal Analiz" },
-  { href: "/avm-odemeleri", label: "AVM Ödeme Takibi", icon: Receipt, category: "Finansal Analiz" },
+  { href: "/avm-odemeleri", label: "AVM Ödeme Takibi", icon: Building2, category: "Finansal Analiz" },
   { href: "/sozlesmeler", label: "Sözleşmeler", icon: FileText, category: "Finansal Analiz" },
   { href: "/notlar", label: "Notlar", icon: FileText, category: "Destek" },
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },

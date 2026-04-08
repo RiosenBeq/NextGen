@@ -164,6 +164,7 @@ export async function addExpense(data: any) {
     revalidatePath('/');
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
+    revalidatePath('/faturalar');
     return { success: true };
   } catch (error: any) {
     console.error("Add Expense Error:", error);
@@ -217,6 +218,7 @@ export async function updateExpense(id: string, data: any) {
     revalidatePath('/');
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
+    revalidatePath('/faturalar');
     return { success: true };
   } catch (error: any) {
     console.error("Update Expense Error:", error);
@@ -265,11 +267,14 @@ export async function uploadExpenseAttachment(formData: FormData) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `expenses/${fileName}`;
 
-    // 2. Eksik bucket problemini otomatik çöz: 
-    const { data: buckets } = await adminSupabase.storage.listBuckets();
-    if (!buckets?.find(b => b.name === 'documents')) {
-       // Bucket yoksa Public olarak hemen yarat
-       await adminSupabase.storage.createBucket('documents', { public: true });
+    // 2. Eksik bucket problemini otomatik çöz:
+    try {
+      const { data: buckets } = await adminSupabase.storage.listBuckets();
+      if (!buckets?.find((b: { name: string }) => b.name === 'documents')) {
+        await adminSupabase.storage.createBucket('documents', { public: true });
+      }
+    } catch (bucketErr) {
+      console.warn('Bucket check/create warning (devam ediliyor):', bucketErr);
     }
 
     // 3. Dosyayı doğrudan Admin servisi ile yükle (RLS engeline takılmaz)
@@ -406,6 +411,7 @@ export async function deleteExpense(id: string) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/finans');
+    revalidatePath('/faturalar');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

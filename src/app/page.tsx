@@ -26,6 +26,10 @@ export const dynamic = 'force-dynamic';
 
 import { redirect } from 'next/navigation';
 
+function monthIdOf(value: string) {
+  return value.includes('T') ? value.split('T')[0].slice(0, 7) : value.slice(0, 7);
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   
@@ -54,6 +58,10 @@ export default async function DashboardPage() {
     .select('*')
     .limit(100);
 
+  const { data: investmentData } = await supabase
+    .from('Investment')
+    .select('id, totalAmount, amountWithoutVat, locationId, location:Location(name)');
+
   const { data: paramsData } = await supabase
     .from('SystemParameter')
     .select('*');
@@ -70,85 +78,101 @@ export default async function DashboardPage() {
   const monthlyTotals: Record<string, any> = {};
   let totalManualRevenue = 0;
   let totalManualNetCash = 0;
-  let totalManualCommission = 0;
-  let totalManualAvmExpense = 0;
   let totalManualOperationalExpense = 0;
 
-  if (performances) {
-    for (const perf of performances) {
-      const loc = perf.location;
-      const perfMonthStr = new Date(perf.month).toISOString().slice(0, 7);
-      
-      // Recurring: global split + location-specific full
-      const recurringTotal = (expensesData || [])
-        .filter((e: any) => {
-          if (e.type !== 'RECURRING') return false;
-          const d = e.description || '';
-          // Skip AVM fixed costs that are already calculated automatically
-          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
-          return true;
-        })
-        .reduce((s: number, e: any) => {
-          if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
-          if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
-          return s;
-        }, 0);
+  const consolidatedMap = new Map<string, any>();
+  for (const perf of performances || []) {
+    const loc = perf.location;
+    if (!loc || !perf.month) continue;
 
-      // One-time: global split + location-specific full
-      const oneTimeTotal = (expensesData || [])
-        .filter((e: any) => {
-          if (e.type === 'RECURRING') return false;
-          const d = e.description || '';
-          // Skip AVM fixed costs that are already calculated automatically
-          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
-          
-          const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
-          if (expMonth !== perfMonthStr) return false;
-          if (e.locationId && e.locationId !== loc.id) return false;
-          return true;
-        })
-        .reduce((s: number, e: any) => {
-          if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
-          return s + (e.amountWithVat || 0);
-        }, 0);
+    const monthId = monthIdOf(String(perf.month));
+    const key = `${perf.locationId}_${monthId}`;
+    const existing = consolidatedMap.get(key);
 
-      const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
-
-      const calc = calculateMonthlyCashFlow(
-        perf.sessionCount,
-        totalExtraExpense,
-        {
-          sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
-          iyzicoCommissionRate: 2,
-          nayaxCommissionRate: 2,
-          fixedRent: loc.fixedRent,
-          duesAmount: loc.duesAmount,
-          revenueShareRate: loc.revenueShareRate || 15,
-        }
-      );
-
-      const monthKey = new Date(perf.month).toLocaleDateString('tr-TR', { month: 'short' });
-      if (!monthlyTotals[monthKey]) monthlyTotals[monthKey] = { revenue: 0, profit: 0 };
-      monthlyTotals[monthKey].revenue += calc.grossRevenue;
-      monthlyTotals[monthKey].profit += calc.netCash;
-
-      totalManualRevenue += calc.grossRevenue;
-      totalManualNetCash += calc.netCash;
-      totalManualCommission += calc.totalCommission;
-      totalManualAvmExpense += calc.totalAvmExpense;
-      totalManualOperationalExpense += (calc.totalCommission + calc.totalAvmExpense + totalExtraExpense);
+    if (!existing) {
+      consolidatedMap.set(key, {
+        ...perf,
+        month: `${monthId}-01T00:00:00.000Z`,
+        sessionCount: Number(perf.sessionCount || 0),
+        extraExpenseAmount: Number(perf.extraExpenseAmount || 0),
+      });
+    } else {
+      existing.sessionCount += Number(perf.sessionCount || 0);
+      existing.extraExpenseAmount += Number(perf.extraExpenseAmount || 0);
     }
   }
 
-  const chartEntries = Object.entries(monthlyTotals).slice(-6);
-  const maxVal = Math.max(...chartEntries.map(([_, v]) => v.revenue), 1);
+  for (const perf of consolidatedMap.values()) {
+    const loc = perf.location;
+    const perfMonthStr = monthIdOf(String(perf.month));
+
+    const recurringTotal = (expensesData || [])
+      .filter((e: any) => {
+        if (e.type !== 'RECURRING') return false;
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+        return true;
+      })
+      .reduce((s: number, e: any) => {
+        if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+        if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
+        return s;
+      }, 0);
+
+    const oneTimeTotal = (expensesData || [])
+      .filter((e: any) => {
+        if (e.type === 'RECURRING') return false;
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+
+        const expMonth = e.month ? monthIdOf(String(e.month)) : '';
+        if (expMonth !== perfMonthStr) return false;
+        if (e.locationId && e.locationId !== loc.id) return false;
+        return true;
+      })
+      .reduce((s: number, e: any) => {
+        if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
+        return s + (e.amountWithVat || 0);
+      }, 0);
+
+    const totalExtraExpense = Number(perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
+
+    const calc = calculateMonthlyCashFlow(perf.sessionCount, totalExtraExpense, {
+      sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
+      iyzicoCommissionRate: 2,
+      nayaxCommissionRate: 2,
+      fixedRent: loc.fixedRent,
+      duesAmount: loc.duesAmount,
+      revenueShareRate: loc.revenueShareRate || 15,
+      month: perfMonthStr,
+    });
+
+    const monthKey = new Date(perf.month).toLocaleDateString('tr-TR', { month: 'short' });
+    if (!monthlyTotals[monthKey]) monthlyTotals[monthKey] = { revenue: 0, profit: 0 };
+    monthlyTotals[monthKey].revenue += calc.grossRevenue;
+    monthlyTotals[monthKey].profit += calc.netCash;
+
+    totalManualRevenue += calc.grossRevenue;
+    totalManualNetCash += calc.netCash;
+    totalManualOperationalExpense += calc.totalCommission + calc.totalAvmExpense + totalExtraExpense;
+  }
 
   const displayAllTimeRevenue = totalManualRevenue;
   const trueGlobalNetCash = totalManualNetCash;
   const totalGlobalOperationalExpense = totalManualOperationalExpense;
-  const displayTotalSessions = performances?.reduce((acc: number, p: any) => acc + p.sessionCount, 0) || 0;
-  const totalInvestment = insights.reduce((acc, loc) => acc + loc.totalInvestment, 0);
-  const allMonthCount = performances ? new Set(performances.map((p: any) => new Date(p.month).toISOString().slice(0, 7))).size : 1;
+  const displayTotalSessions = Array.from(consolidatedMap.values()).reduce((acc: number, p: any) => acc + Number(p.sessionCount || 0), 0);
+  const totalInvestment = (investmentData || []).reduce((acc: number, inv: any) => {
+    const tutar = Number(inv.totalAmount ?? inv.amountWithoutVat ?? 0);
+    return acc + (Number.isFinite(tutar) ? tutar : 0);
+  }, 0);
+
+  const investmentBreakdown = (investmentData || []).reduce((acc: Record<string, number>, inv: any) => {
+    const lokasyon = inv.location?.name || 'Belirtilmemiş';
+    const tutar = Number(inv.totalAmount ?? inv.amountWithoutVat ?? 0);
+    acc[lokasyon] = (acc[lokasyon] || 0) + (Number.isFinite(tutar) ? tutar : 0);
+    return acc;
+  }, {});
+  const allMonthCount = consolidatedMap.size > 0 ? new Set(Array.from(consolidatedMap.values()).map((p: any) => monthIdOf(String(p.month)))).size : 1;
 
   // New Data Fetching for UI
   const activeLocations = await getActiveLocations() || [];
@@ -177,21 +201,14 @@ export default async function DashboardPage() {
     .order('createdAt', { ascending: false })
     .limit(10);
 
-  const chartData = Object.entries(monthlyTotals).map(([month, data]) => ({
-    month,
-    revenue: data.revenue,
-    profit: data.profit
-  })).slice(-6);
-
   return (
     <DashboardClientUI 
       stats={stats} 
       recentExpenses={latestExpenses || []} 
       locations={activeLocations} 
-      categories={[]} 
-      chartData={chartData}
       notes={latestNotes || []}
       totalInvestment={totalInvestment}
+      investmentBreakdown={investmentBreakdown}
       allMonthCount={allMonthCount}
       allExpenses={expensesData || []}
     />

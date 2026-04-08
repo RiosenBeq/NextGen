@@ -27,6 +27,7 @@ model Location {
   dailyPerformances DailyPerformance[]
   expenses         Expense[]
   investments      Investment[]
+  avmPayments      AvmPayment[]
 }
 
 model DailyPerformance {
@@ -113,6 +114,19 @@ model AuditLog {
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
+}
+
+model AvmPayment {
+  id          String    @id @default(cuid())
+  locationId  String
+  location    Location  @relation(fields: [locationId], references: [id])
+  month       String    // YYYY-MM format
+  paymentType String    // "Kira", "Aidat", "CiroPay", "Diger"
+  description String?
+  amount      Float
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
 }
 
 model Document {

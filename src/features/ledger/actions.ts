@@ -6,20 +6,41 @@ import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, inves
 import { createAuditLog } from '@/lib/audit';
 import prisma from '@/lib/db';
 
+
+function normalizeMonthInput(monthInput: string | Date) {
+  const parsed = new Date(monthInput);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error('Geçerli bir ay bilgisi girilmelidir.');
+  }
+
+  const normalized = new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), 1, 0, 0, 0, 0));
+  const monthId = `${normalized.getUTCFullYear()}-${String(normalized.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  return {
+    normalizedMonth: normalized.toISOString(),
+    deterministicId: (locationId: string) => `perf_${monthId}_${locationId}`,
+  };
+}
+
 export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   try {
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
 
+    const { normalizedMonth, deterministicId } = normalizeMonthInput(validatedData.month);
+
     const { data: record, error } = await supabase
       .from('MonthlyPerformance')
-      .insert({
-        id: `perf_${crypto.randomUUID()}`,
+      .upsert({
+        id: deterministicId(validatedData.locationId),
         locationId: validatedData.locationId,
-        month: new Date(validatedData.month).toISOString(),
+        month: normalizedMonth,
         sessionCount: validatedData.sessionCount,
         extraExpenseAmount: validatedData.extraExpenseAmount || 0,
         extraExpenseNotes: validatedData.extraExpenseNotes,
+        updatedAt: new Date().toISOString(),
+      }, {
+        onConflict: 'id'
       })
       .select()
       .single();
@@ -114,7 +135,7 @@ export async function addExpense(data: any) {
         amountWithoutVat,
         amountWithVat,
         vatRate,
-        isOfficial: validatedData.isOfficial,
+        isOfficial: validatedData.isOfficial || Boolean(validatedData.attachmentUrl),
         month: validatedData.month || null,
         paidBy: validatedData.paidBy || 'Ortak Hesap',
         categoryId: validatedData.categoryId || null,
@@ -143,6 +164,7 @@ export async function addExpense(data: any) {
     revalidatePath('/');
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
+    revalidatePath('/faturalar');
     return { success: true };
   } catch (error: any) {
     console.error("Add Expense Error:", error);
@@ -167,7 +189,7 @@ export async function updateExpense(id: string, data: any) {
         amountWithoutVat: amountWithoutVat,
         amountWithVat: amountWithVat,
         vatRate: vatRate,
-        isOfficial: validatedData.isOfficial,
+        isOfficial: validatedData.isOfficial || Boolean(validatedData.attachmentUrl),
         month: validatedData.month || null,
         paidBy: validatedData.paidBy || 'Ortak Hesap',
         categoryId: validatedData.categoryId || null,
@@ -196,6 +218,7 @@ export async function updateExpense(id: string, data: any) {
     revalidatePath('/');
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
+    revalidatePath('/faturalar');
     return { success: true };
   } catch (error: any) {
     console.error("Update Expense Error:", error);
@@ -244,11 +267,14 @@ export async function uploadExpenseAttachment(formData: FormData) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `expenses/${fileName}`;
 
-    // 2. Eksik bucket problemini otomatik çöz: 
-    const { data: buckets } = await adminSupabase.storage.listBuckets();
-    if (!buckets?.find(b => b.name === 'documents')) {
-       // Bucket yoksa Public olarak hemen yarat
-       await adminSupabase.storage.createBucket('documents', { public: true });
+    // 2. Eksik bucket problemini otomatik çöz:
+    try {
+      const { data: buckets } = await adminSupabase.storage.listBuckets();
+      if (!buckets?.find((b: { name: string }) => b.name === 'documents')) {
+        await adminSupabase.storage.createBucket('documents', { public: true });
+      }
+    } catch (bucketErr) {
+      console.warn('Bucket check/create warning (devam ediliyor):', bucketErr);
     }
 
     // 3. Dosyayı doğrudan Admin servisi ile yükle (RLS engeline takılmaz)
@@ -279,15 +305,16 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
   try {
     const supabase = await createClient();
     
-    // 1. Update the Expense record
+    // 1. Always persist attachment on expense first.
     const { error: updateError } = await supabase
       .from('Expense')
-      .update({ attachmentUrl: fileUrl })
+      .update({ attachmentUrl: fileUrl, isOfficial: true })
       .eq('id', id);
 
     if (updateError) throw updateError;
 
-    // 2. Create the Document record for traceability
+    // 2. Best-effort: keep a Document shadow record for traceability.
+    //    In some deployments this table/policy may be missing or restricted.
     const { error: docError } = await supabase
       .from('Document')
       .insert({
@@ -297,21 +324,77 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
         relatedId: id
       });
 
-    if (docError) throw docError;
+    if (docError) {
+      console.warn('Document insert skipped after successful attachment update:', docError.message);
+    }
 
     await createAuditLog('UPDATE', 'Expense', id, {
        action: 'ATTACH_DOCUMENT',
-       fileUrl
+       fileUrl,
+       documentSynced: !docError,
     });
 
+    revalidatePath('/faturalar');
     revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
     
-    return { success: true };
+    return { success: true, warning: docError ? 'Belge dosyaya bağlandı; Document kaydı oluşturulamadı.' : undefined };
   } catch (error: any) {
     console.error("Update Attachment Error:", error);
     return { success: false, error: String(error?.message || 'Bağlantı hatası.') };
+  }
+}
+
+export async function deleteExpenseAttachment(id: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: expense, error: expenseError } = await supabase
+      .from('Expense')
+      .select('id, attachmentUrl')
+      .eq('id', id)
+      .single();
+
+    if (expenseError) throw expenseError;
+
+    const attachmentUrl = expense?.attachmentUrl;
+    if (attachmentUrl) {
+      const path = attachmentUrl.split('/documents/')[1];
+      if (path) {
+        await supabase.storage.from('documents').remove([path]);
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('Expense')
+      .update({ attachmentUrl: null })
+      .eq('id', id);
+
+    if (updateError) throw updateError;
+
+    const { error: documentDeleteError } = await supabase
+      .from('Document')
+      .delete()
+      .eq('relatedType', 'expense')
+      .eq('relatedId', id);
+
+    if (documentDeleteError) throw documentDeleteError;
+
+    await createAuditLog('UPDATE', 'Expense', id, {
+      action: 'REMOVE_DOCUMENT',
+      attachmentRemoved: Boolean(attachmentUrl),
+    });
+
+    revalidatePath('/faturalar');
+    revalidatePath('/giderler');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/');
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Delete Attachment Error:', error);
+    return { success: false, error: String(error?.message || 'Belge silinemedi.') };
   }
 }
 
@@ -328,6 +411,7 @@ export async function deleteExpense(id: string) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/finans');
+    revalidatePath('/faturalar');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -627,6 +711,73 @@ export async function resetSystemParameters() {
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+
+export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: boolean; isOfficial?: boolean }) {
+  try {
+    const payload: Record<string, boolean> = {};
+    if (typeof updates.isSettled === 'boolean') payload.isSettled = updates.isSettled;
+    if (typeof updates.isOfficial === 'boolean') payload.isOfficial = updates.isOfficial;
+
+    if (Object.keys(payload).length === 0) {
+      return { success: false, error: 'Güncellenecek alan bulunamadı.' };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('Expense').update(payload).eq('id', id);
+    if (error) throw error;
+
+    revalidatePath('/faturalar');
+    revalidatePath('/giderler');
+    revalidatePath('/gelir-gider');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateAvmExpenseFinancials(id: string, updates: { amountWithVat?: number; paidBy?: string }) {
+  try {
+    const payload: Record<string, string | number> = {};
+
+    if (typeof updates.amountWithVat === 'number' && Number.isFinite(updates.amountWithVat)) {
+      const safeAmount = Math.max(0, updates.amountWithVat);
+      const supabase = await createClient();
+      const { data: row, error: fetchError } = await supabase
+        .from('Expense')
+        .select('vatRate')
+        .eq('id', id)
+        .single();
+      if (fetchError) throw fetchError;
+
+      const vatRate = Number(row?.vatRate || 0);
+      const amountWithoutVat = vatRate >= 0 ? safeAmount / (1 + vatRate / 100) : safeAmount;
+      payload.amountWithVat = safeAmount;
+      payload.amountWithoutVat = amountWithoutVat;
+    }
+
+    if (typeof updates.paidBy === 'string') {
+      payload.paidBy = updates.paidBy.trim() || 'Ortak Hesap';
+    }
+
+    if (Object.keys(payload).length === 0) {
+      return { success: false, error: 'Güncellenecek finansal alan bulunamadı.' };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('Expense').update(payload).eq('id', id);
+    if (error) throw error;
+
+    revalidatePath('/faturalar');
+    revalidatePath('/giderler');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

@@ -4,9 +4,31 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAuditLog } from '@/lib/audit';
 
+async function getAdminSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing SUPABASE_SERVICE_ROLE_KEY – uploads will use the regular client and may fail due to RLS.');
+    return null;
+  }
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+  return createSupabaseClient(supabaseUrl, supabaseServiceKey);
+}
+
+const ALLOWED_MIME_TYPES: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+const MAX_FILE_SIZE_MB = 15;
+
 export async function uploadDocument(formData: FormData) {
   try {
     const supabase = await createClient();
+    const adminSupabase = await getAdminSupabase();
     const file = formData.get('file') as File;
     const relatedType = formData.get('relatedType') as string;
     const relatedId = formData.get('relatedId') as string;
@@ -15,35 +37,60 @@ export async function uploadDocument(formData: FormData) {
       return { success: false, error: 'Dosya, tip ve ilgili kayıt ID gerekli.' };
     }
 
-    // Dosya adını benzersiz yap
-    const ext = file.name.split('.').pop();
+    // File size validation
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > MAX_FILE_SIZE_MB) {
+      return {
+        success: false,
+        error: `Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum ${MAX_FILE_SIZE_MB}MB yüklenebilir.`,
+      };
+    }
+
+    // File type validation
+    const mimeType = file.type || 'application/octet-stream';
+    if (!ALLOWED_MIME_TYPES[mimeType]) {
+      return {
+        success: false,
+        error: `Desteklenmeyen dosya türü: ${mimeType}. Yalnızca PDF, JPG, PNG ve WebP kabul edilmektedir.`,
+      };
+    }
+
+    const storageClient = adminSupabase || supabase;
+
+    // Auto-create bucket if it doesn't exist
+    try {
+      const { data: buckets } = await storageClient.storage.listBuckets();
+      if (!buckets?.find((b: { name: string }) => b.name === 'documents')) {
+        await storageClient.storage.createBucket('documents', { public: true });
+      }
+    } catch (bucketErr) {
+      console.warn('Bucket check/create warning:', bucketErr);
+    }
+
+    // Generate unique file path
     const uniqueName = `${relatedType}/${relatedId}/${Date.now()}_${file.name}`;
 
-    // Supabase Storage'a yükle
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // Upload to Supabase Storage with contentType
+    const { error: uploadError } = await storageClient.storage
       .from('documents')
       .upload(uniqueName, file, {
         cacheControl: '3600',
         upsert: false,
+        contentType: mimeType,
       });
 
     if (uploadError) {
-      if (uploadError.message?.toLowerCase().includes('bucket not found')) {
-        return { 
-          success: false, 
-          error: 'Eksik Yapılandırma: Supabase üzerinde "documents" bucket\'ı bulunamadı. Lütfen Storage panelinden bu isimle bir public bucket oluşturun.' 
-        };
-      }
-      throw uploadError;
+      console.error('Storage upload error:', uploadError);
+      return { success: false, error: `Yükleme hatası: ${uploadError.message}` };
     }
 
-    // Public URL al
-    const { data: { publicUrl } } = supabase.storage
+    // Get public URL
+    const { data: { publicUrl } } = storageClient.storage
       .from('documents')
       .getPublicUrl(uniqueName);
 
-    // DB'ye kaydet
-    const { error: dbError } = await supabase
+    // Save to DB
+    const { error: dbError } = await (adminSupabase || supabase)
       .from('Document')
       .insert({
         id: `doc_${crypto.randomUUID()}`,
@@ -51,31 +98,31 @@ export async function uploadDocument(formData: FormData) {
         relatedId,
         fileName: file.name,
         fileUrl: publicUrl,
-        fileSize: file.size,
-        mimeType: file.type,
       });
 
     if (dbError) throw dbError;
 
-    await createAuditLog('CREATE', 'Document', relatedId, { 
+    await createAuditLog('CREATE', 'Document', relatedId, {
       fileName: file.name,
-      fileType: relatedType 
+      fileType: relatedType
     });
 
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
-    revalidatePath('/belgeler');
-    return { success: true };
-  } catch (error: any) {
+    revalidatePath('/sozlesmeler');
+    revalidatePath('/faturalar');
+    return { success: true, publicUrl };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Dosya yüklenemedi.';
     console.error('Document upload error:', error);
-    return { success: false, error: error.message || 'Dosya yüklenemedi.' };
+    return { success: false, error: message };
   }
 }
 
 export async function getDocuments(relatedType?: string, relatedId?: string) {
   try {
     const supabase = await createClient();
-    let query = supabase.from('Document').select('*').order('uploadedAt', { ascending: false });
+    let query = supabase.from('Document').select('*').order('createdAt', { ascending: false });
 
     if (relatedType) query = query.eq('relatedType', relatedType);
     if (relatedId) query = query.eq('relatedId', relatedId);
@@ -83,7 +130,7 @@ export async function getDocuments(relatedType?: string, relatedId?: string) {
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Document fetch error:', error);
     return [];
   }
@@ -91,28 +138,32 @@ export async function getDocuments(relatedType?: string, relatedId?: string) {
 
 export async function deleteDocument(id: string) {
   try {
+    const adminSupabase = await getAdminSupabase();
     const supabase = await createClient();
+    const dbClient = adminSupabase || supabase;
 
-    // Önce DB'den dosya URL'sini al
-    const { data: doc } = await supabase.from('Document').select('fileUrl').eq('id', id).single();
+    // Get file URL from DB first
+    const { data: doc } = await dbClient.from('Document').select('fileUrl').eq('id', id).single();
 
     if (doc?.fileUrl) {
-      // Storage'dan sil
+      // Delete from storage
       const path = doc.fileUrl.split('/documents/')[1];
       if (path) {
-        await supabase.storage.from('documents').remove([path]);
+        await (adminSupabase || supabase).storage.from('documents').remove([path]);
       }
     }
 
-    // DB'den sil
-    const { error } = await supabase.from('Document').delete().eq('id', id);
+    // Delete from DB
+    const { error } = await dbClient.from('Document').delete().eq('id', id);
     if (error) throw error;
 
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
-    revalidatePath('/belgeler');
+    revalidatePath('/sozlesmeler');
+    revalidatePath('/faturalar');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Belge silinemedi.';
+    return { success: false, error: message };
   }
 }

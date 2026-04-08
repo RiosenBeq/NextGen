@@ -1,60 +1,62 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter as FilterIcon, 
-  ChevronRight, 
-  MoreHorizontal, 
-  Trash2, 
-  CheckCircle2, 
-  AlertCircle,
-  Clock,
-  Calendar,
-  Building2,
-  MoreVertical,
-  X,
-  FileText,
-  User,
-  ArrowRight,
-  Receipt
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo, useState } from 'react';
+import { Search, Calendar, Receipt, User, CheckCircle2, Trash2, Edit2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { deleteExpense, toggleExpenseSettled } from '@/features/ledger/actions';
-import { Edit2 } from 'lucide-react';
 
 interface PremiumExpenseTableProps {
-  expenses: any[];
-  locations: any[];
-  documents: any[];
-  onView: (exp: any) => void;
-  onEdit: (exp: any) => void;
+  expenses: ExpenseItem[];
+  locations: LocationItem[];
+  documents: DocumentItem[];
+  onView: (exp: ExpenseItem) => void;
+  onEdit: (exp: ExpenseItem) => void;
 }
 
-export default function PremiumExpenseTable({ expenses, locations, documents, onView, onEdit }: PremiumExpenseTableProps) {
-  const [filterType, setFilterType] = useState('ALL');
+interface ExpenseItem {
+  id: string;
+  description: string;
+  amountWithVat: number;
+  type: 'RECURRING' | 'ONE_TIME';
+  isOfficial: boolean;
+  createdAt: string;
+  locationId?: string | null;
+  paidBy?: string;
+  location?: { name?: string | null } | null;
+}
+
+interface LocationItem {
+  id: string;
+  name: string;
+}
+
+interface DocumentItem {
+  id: string;
+}
+
+export default function PremiumExpenseTable({ expenses, locations, onView, onEdit }: PremiumExpenseTableProps) {
+  const [filterType, setFilterType] = useState<'ALL' | 'RECURRING' | 'ONE_TIME'>('ALL');
   const [filterLocation, setFilterLocation] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
+  const filtered = useMemo(() => {
+    return expenses.filter((exp) => {
+      if (filterType !== 'ALL' && exp.type !== filterType) return false;
+      if (filterLocation !== 'all' && exp.locationId !== filterLocation) return false;
+      if (searchQuery.trim() && !String(exp.description || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
+  }, [expenses, filterType, filterLocation, searchQuery]);
 
-  const filtered = expenses.filter((exp) => {
-    if (filterType !== 'ALL' && exp.type !== filterType) return false;
-    if (filterLocation !== 'all' && exp.locationId !== filterLocation) return false;
-    if (searchQuery && !exp.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  const filteredTotal = filtered.reduce((sum, exp) => sum + (exp.amountWithVat || 0), 0);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Bu harcama kaydını veri tabanından kalıcı olarak silmek istediğinize emin misiniz?")) {
-      setDeletingId(id);
-      await deleteExpense(id);
-      window.location.reload();
-    }
+    if (!confirm('Bu gider kaydını kalıcı olarak silmek istediğinize emin misiniz?')) return;
+    setDeletingId(id);
+    await deleteExpense(id);
+    window.location.reload();
   };
 
   const handleToggleSettled = async (id: string, currentDesc: string, e: React.MouseEvent) => {
@@ -63,216 +65,163 @@ export default function PremiumExpenseTable({ expenses, locations, documents, on
     window.location.reload();
   };
 
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
-      {/* 1. FILTERS TOOLBAR (PREMIUM BLUR STYLE) */}
-      <div className="p-1.5 bg-slate-100 border border-slate-200 rounded-[28px] flex flex-col md:flex-row md:items-center gap-3 backdrop-blur-sm shadow-sm">
-         
-         {/* Search Box */}
-         <div className="relative flex-1 group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-               <Search size={18} />
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Gider açıklaması ara..."
+              className="w-full h-10 rounded-lg border border-slate-200 pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <SelectFilter
+              value={filterLocation}
+              onChange={setFilterLocation}
+              options={[{ value: 'all', label: 'Tüm Şubeler' }, ...locations.map((loc) => ({ value: loc.id, label: loc.name }))]}
+            />
+            <div className="flex items-center gap-1 rounded-lg border border-slate-200 p-1">
+              <TypeChip active={filterType === 'ALL'} onClick={() => setFilterType('ALL')} label="Tümü" />
+              <TypeChip active={filterType === 'RECURRING'} onClick={() => setFilterType('RECURRING')} label="Aylık" />
+              <TypeChip active={filterType === 'ONE_TIME'} onClick={() => setFilterType('ONE_TIME')} label="Tek Sefer" />
             </div>
-            <input 
-               type="text" 
-               placeholder="Gider açıklaması veya kayıt no ara..." 
-               className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-[22px] text-xs font-bold uppercase tracking-widest text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-            />
-         </div>
+          </div>
+        </div>
+      </section>
 
-         {/* Location Filter */}
-         <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-[22px] overflow-hidden">
-            <FilterButton 
-               active={filterLocation === 'all'} 
-               onClick={() => setFilterLocation('all')} 
-               label="TÜM ŞUBELER" 
-            />
-            {locations.map(loc => (
-              <FilterButton 
-                 key={loc.id} 
-                 active={filterLocation === loc.id} 
-                 onClick={() => setFilterLocation(loc.id)} 
-                 label={loc.name} 
-              />
-            ))}
-         </div>
-
-         {/* Type Filter */}
-         <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-[22px]">
-            <FilterButton 
-               active={filterType === 'ALL'} 
-               onClick={() => setFilterType('ALL')} 
-               label="TÜM TÜRLER" 
-            />
-            <FilterButton 
-               active={filterType === 'RECURRING'} 
-               onClick={() => setFilterType('RECURRING')} 
-               label="AYLIK" 
-            />
-            <FilterButton 
-               active={filterType === 'ONE_TIME'} 
-               onClick={() => setFilterType('ONE_TIME')} 
-               label="TEK SEFER" 
-            />
-         </div>
-      </div>
-
-      {/* 2. DATA TABLE (ELITE STYLE) */}
-      <div className="bg-white border border-slate-200 rounded-[40px] overflow-hidden shadow-sm">
-         <table className="w-full text-left border-collapse">
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[920px]">
             <thead>
-               <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Harcama & Kategori</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Ödeyen / Mahsup</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Tutar</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Durum</th>
-                  <th className="px-8 py-5"></th>
-               </tr>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Gider</th>
+                <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Şube / Ödeyen</th>
+                <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Tarih</th>
+                <th className="text-right px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Tutar</th>
+                <th className="text-center px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Durum</th>
+                <th className="text-right px-5 py-3" />
+              </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-               {filtered.map((exp, idx) => (
-                  <tr 
-                     key={exp.id || idx} 
-                     className="group hover:bg-slate-50/30 transition-all cursor-pointer relative"
-                     onClick={() => onView(exp)}
-                  >
-                     <td className="px-8 py-6">
-                        <div className="flex items-center gap-5">
-                           <div className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center transition-all bg-slate-100 group-hover:bg-white border border-transparent group-hover:border-slate-200 group-hover:shadow-sm",
-                              exp.type === 'RECURRING' ? "text-blue-500" : "text-slate-400"
-                           )}>
-                              {exp.type === 'RECURRING' ? <Calendar size={20} /> : <Receipt size={20} />}
-                           </div>
-                           <div className="flex flex-col gap-1">
-                              <span className="text-[13px] font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase italic tracking-tighter decoration-slate-200 underline decoration-1 underline-offset-4">{exp.description}</span>
-                              <div className="flex items-center gap-2">
-                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{exp.location?.name || 'GENEL'}</span>
-                                 <span className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest italic">{exp.categoryId || 'GENEL GİDER'}</span>
-                              </div>
-                           </div>
-                        </div>
-                     </td>
-                     
-                     <td className="px-8 py-6 text-center">
-                        <div className="flex flex-col items-center gap-1.5">
-                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100">
-                              <User size={10} className="text-slate-400" />
-                              <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{exp.paidBy || 'ORTAK'}</span>
-                           </div>
-                           {exp.description.includes('[MAHSUP]') && (
-                             <div className="flex items-center gap-1 text-emerald-600">
-                                <CheckCircle2 size={10} />
-                                <span className="text-[8px] font-black uppercase">Tamamlandı</span>
-                             </div>
-                           )}
-                        </div>
-                     </td>
+              {filtered.map((exp) => (
+                <tr key={exp.id} className="hover:bg-slate-50/70 transition-colors cursor-pointer" onClick={() => onView(exp)}>
+                  <td className="px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
+                        <Receipt size={16} className="text-slate-500" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{exp.description}</p>
+                        <p className="text-[11px] text-slate-500">{exp.type === 'RECURRING' ? 'Aylık Gider' : 'Tek Seferlik Gider'}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <p className="text-sm font-medium text-slate-800">{exp.location?.name || 'Genel'}</p>
+                    <p className="text-[11px] text-slate-500 inline-flex items-center gap-1"><User size={12} /> {exp.paidBy || 'Ortak'}</p>
+                  </td>
+                  <td className="px-5 py-4 text-sm text-slate-600">
+                    <p className="inline-flex items-center gap-1"><Calendar size={14} /> {new Date(exp.createdAt).toLocaleDateString('tr-TR')}</p>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <p className="text-sm font-bold text-slate-900">{formatCurrency(exp.amountWithVat || 0)}</p>
+                    <p className="text-[11px] text-slate-500">KDV dahil</p>
+                  </td>
+                  <td className="px-5 py-4 text-center">
+                    <span className={cn(
+                      'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-bold uppercase',
+                      exp.isOfficial ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-100 border-slate-200 text-slate-600'
+                    )}>
+                      {exp.isOfficial ? 'Resmi' : 'Belgesiz'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={(e) => { e.stopPropagation(); onEdit(exp); }} className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-blue-600">
+                        <Edit2 size={14} />
+                      </button>
+                      <button onClick={(e) => handleToggleSettled(exp.id, exp.description, e)} className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-emerald-600">
+                        <CheckCircle2 size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(exp.id, e)}
+                        disabled={deletingId === exp.id}
+                        className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-rose-600 disabled:opacity-50"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); onView(exp); }} className="p-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800">
+                        <Eye size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
 
-                     <td className="px-8 py-6 text-right">
-                        <div className="flex flex-col items-end">
-                           <span className="text-sm font-black text-slate-900 tabular-nums italic tracking-tighter">
-                              {formatCurrency(exp.amountWithVat)}
-                           </span>
-                           <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">KDV Dahil</span>
-                        </div>
-                     </td>
-
-                     <td className="px-8 py-6 text-center">
-                        <StatusBadge isOfficial={exp.isOfficial} />
-                     </td>
-
-                     <td className="px-8 py-6 text-right">
-                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                               onClick={(e) => { e.stopPropagation(); onEdit(exp); }}
-                               className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                            >
-                               <Edit2 size={16} strokeWidth={2.5} />
-                            </button>
-                            <button 
-                               onClick={(e) => handleToggleSettled(exp.id, exp.description, e)}
-                               title={exp.description.includes('[MAHSUP]') ? "Mahsup Kaldır" : "Mahsup Olarak İşaretle"}
-                               className={cn(
-                                  "p-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 shadow-sm",
-                                  exp.description.includes('[MAHSUP]') ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                               )}
-                            >
-                               <CheckCircle2 size={16} strokeWidth={2.5} />
-                            </button>
-                            <button 
-                               onClick={(e) => handleDelete(exp.id, e)}
-                               className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 border border-slate-100 hover:border-rose-100 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                            >
-                               <Trash2 size={16} strokeWidth={2.5} />
-                            </button>
-                            <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200 ml-2">
-                               <ChevronRight size={14} strokeWidth={3} />
-                            </div>
-                         </div>
-                     </td>
-                  </tr>
-               ))}
-               {filtered.length === 0 && (
-                  <tr>
-                     <td colSpan={5} className="py-24 text-center">
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                           <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-200">
-                              <FileText size={32} />
-                           </div>
-                           <p className="text-xs font-black text-slate-300 uppercase tracking-[0.3em] italic">Aranan kriterlere uygun harcama kaydı bulunamadı.</p>
-                        </div>
-                     </td>
-                  </tr>
-               )}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <p className="text-sm font-semibold text-slate-700">Filtreye uygun gider bulunamadı.</p>
+                    <p className="text-xs text-slate-500 mt-1">Arama veya filtre kriterlerini değiştirin.</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
-         </table>
-      </div>
-      
-      {/* 3. PAGINATION PLACEHOLDER/TOTALS */}
-      <div className="flex items-center justify-between px-8 text-slate-400">
-         <p className="text-[10px] font-black uppercase tracking-[0.3em]">TOPLAM {filtered.length} KAYIT</p>
-         <div className="flex items-center gap-1.5 font-black italic tracking-tighter text-slate-900">
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest not-italic font-bold">Filtrelenmiş Toplam:</span>
-            <span className="text-lg">{formatCurrency(filtered.reduce((s, e) => s + (e.amountWithVat || 0), 0))}</span>
-         </div>
-      </div>
+          </table>
+        </div>
+
+        <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+          <span>{filtered.length} kayıt listeleniyor</span>
+          <span className="font-semibold">Filtreli Toplam: {formatCurrency(filteredTotal)}</span>
+        </div>
+      </section>
     </div>
   );
 }
 
-function FilterButton({ active, label, onClick }: { active: boolean, label: string, onClick: () => void }) {
+function TypeChip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
-    <button 
-       onClick={onClick}
-       className={cn(
-          "px-4 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-[0.1em] transition-all",
-          active 
-             ? "bg-slate-900 text-white shadow-lg shadow-slate-200" 
-             : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-       )}
+    <button
+      onClick={onClick}
+      className={cn(
+        'h-8 px-3 rounded-md text-[11px] font-bold uppercase',
+        active ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'
+      )}
     >
-       {label}
+      {label}
     </button>
   );
 }
 
-function StatusBadge({ isOfficial }: { isOfficial: boolean }) {
-  if (isOfficial) {
-     return (
-       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-xl text-[9px] font-black uppercase tracking-widest italic shadow-sm">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          Fatura/E-Arşiv
-       </div>
-     );
-  }
+function SelectFilter({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
   return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl text-[9px] font-black uppercase tracking-widest italic opacity-60">
-       Nakit/Belgesiz
-    </div>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 bg-white"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }

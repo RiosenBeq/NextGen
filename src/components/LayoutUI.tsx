@@ -4,10 +4,10 @@ import React, { useState, useEffect, useTransition } from "react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  Settings,
   User,
   TrendingUp,
   CreditCard,
@@ -23,12 +23,13 @@ import {
   Zap,
   LogOut,
   Calendar,
-  Building2,
-  Target
+  Target,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { logout, updateProfile } from "@/app/actions/auth";
+import { logout } from "@/app/actions/auth";
 import { PremiumModal } from "./premium/PremiumModal";
+import { ProfileSettingsForm } from "@/features/auth/components/ProfileSettingsForm";
 
 const navLinks = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Ana Panel" },
@@ -40,6 +41,8 @@ const navLinks = [
   { href: "/finans", label: "Finansal Tablo", icon: BarChart3, category: "Finansal Analiz" },
   { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
   { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finansal Analiz" },
+  { href: "/avm-odemeleri", label: "AVM Ödeme Takibi", icon: Building2, category: "Finansal Analiz" },
+  { href: "/sozlesmeler", label: "Sözleşmeler", icon: FileText, category: "Finansal Analiz" },
   { href: "/notlar", label: "Notlar", icon: FileText, category: "Destek" },
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
@@ -174,7 +177,6 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
 export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole }: { onToggleMenu?: () => void, isOpen?: boolean, userEmail?: string, userFullName?: string, userRole?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const pathname = usePathname();
 
   const displayName = userFullName || (userEmail
@@ -257,46 +259,17 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
         </div>
       </header>
 
-      <PremiumModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title="Profil Ayarları" maxWidth="max-w-md">
-        <div className="p-8">
-          <form action={async (formData) => {
-            setIsUpdating(true);
-            const res = await updateProfile(formData);
-            setIsUpdating(false);
-            if (res.success) {
-               setProfileModalOpen(false);
-               window.location.reload();
-            } else {
-               alert((res as any).error || "Bir hata oluştu.");
-            }
-          }} className="space-y-6">
-            <div className="space-y-2">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Ad Soyad (Sistem Kimliği)</label>
-               <input 
-                  type="text" 
-                  name="fullName"
-                  required
-                  defaultValue={userFullName || ''}
-                  className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-[22px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-inner"
-                  placeholder="İsminizi giriniz..."
-               />
-            </div>
-            <div className="space-y-2 opacity-50 pointer-events-none">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">E-Posta (Yalnızca Okuma)</label>
-               <div className="w-full px-6 py-4 bg-slate-100 border border-slate-200 rounded-[22px] text-sm font-bold text-slate-400 italic">
-                  {userEmail}
-               </div>
-            </div>
-            <div className="pt-6">
-               <button 
-                 type="submit"
-                 disabled={isUpdating}
-                 className="w-full py-5 bg-blue-600 text-white rounded-[24px] text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
-               >
-                 {isUpdating ? 'Senkronize Ediliyor...' : 'Profil Ayarlarını Uygula'}
-               </button>
-            </div>
-          </form>
+      <PremiumModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title="Profil Ayarları" maxWidth="max-w-3xl">
+        <div className="p-4">
+          <ProfileSettingsForm
+            user={{
+              id: 'aktif-kullanici',
+              email: userEmail || '',
+              fullName: userFullName || '',
+              role: userRole || 'user',
+              birthDate: '',
+            }}
+          />
         </div>
       </PremiumModal>
 

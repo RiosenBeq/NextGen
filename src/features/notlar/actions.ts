@@ -3,21 +3,29 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 
+function userIdColumnMissing(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  return String(error.message || '').includes("Could not find the 'userId' column of 'Note'");
+}
+
 export async function getNotes() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
-  let query = supabase.from('Note').select('*');
-  
-  if (user) {
-    // Filter by the user's specific notes
-    query = query.eq('userId', user.id);
-  } else {
-    // If no user, return nothing or public notes (currently none have userId)
-    query = query.is('userId', null);
-  }
 
-  const { data, error } = await query.order('createdAt', { ascending: false });
+  let query = supabase.from('Note').select('*');
+  if (user) query = query.eq('userId', user.id);
+
+  let { data, error } = await query.order('createdAt', { ascending: false });
+
+  // Eski şemalarda userId kolonu yoksa fallback
+  if (error && userIdColumnMissing(error)) {
+    const fallback = await supabase
+      .from('Note')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error('getNotes error:', error);
@@ -29,13 +37,16 @@ export async function getNotes() {
 export async function addNote(title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   const id = `note_${crypto.randomUUID()}`;
   
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('Note')
     .insert([{ 
       id, 
-      userId: user?.id || null,
+      userId: user.id,
       title, 
       content, 
       color, 
@@ -44,6 +55,23 @@ export async function addNote(title: string, content: string = '', color: string
     }])
     .select()
     .single();
+
+  if (error && userIdColumnMissing(error)) {
+    const fallback = await supabase
+      .from('Note')
+      .insert([{
+        id,
+        title,
+        content,
+        color,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }])
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error('addNote error details:', error);
@@ -58,15 +86,29 @@ export async function addNote(title: string, content: string = '', color: string
 export async function updateNote(id: string | number, title: string, content: string = '', color: string = 'blue') {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   
   // Ensure we only update notes that belong to the user
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('Note')
     .update({ title, content, color, updatedAt: new Date().toISOString() })
     .eq('id', id)
-    .eq('userId', user?.id || '')
+    .eq('userId', user.id)
     .select()
     .single();
+
+  if (error && userIdColumnMissing(error)) {
+    const fallback = await supabase
+      .from('Note')
+      .update({ title, content, color, updatedAt: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error('updateNote error:', error);
@@ -81,12 +123,23 @@ export async function updateNote(id: string | number, title: string, content: st
 export async function deleteNote(id: string | number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   
-  const { error } = await supabase
+  let { error } = await supabase
     .from('Note')
     .delete()
     .eq('id', id)
-    .eq('userId', user?.id || '');
+    .eq('userId', user.id);
+
+  if (error && userIdColumnMissing(error)) {
+    const fallback = await supabase
+      .from('Note')
+      .delete()
+      .eq('id', id);
+    error = fallback.error;
+  }
 
   if (error) {
     console.error('deleteNote error:', error);

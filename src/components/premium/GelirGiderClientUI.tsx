@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  TrendingUp, 
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
+import {
+  TrendingUp,
   TrendingDown, 
   Wallet, 
   PieChart, 
@@ -58,6 +60,8 @@ export default function GelirGiderClientUI({
   breakdown,
   availableMonths
 }: GelirGiderProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -71,9 +75,9 @@ export default function GelirGiderClientUI({
       const res = await deleteMonthlyPerformance(perfId);
       if (res.success) {
         setIsDrawerOpen(false);
-        window.location.reload();
+        router.refresh();
       } else {
-        alert("Silme hatası: " + res.error);
+        toast.error("Silme hatası: " + res.error);
       }
     }
   };
@@ -314,7 +318,7 @@ export default function GelirGiderClientUI({
       </div>
 
       <PremiumModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Gider Girişi" maxWidth="max-w-xl">
-        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); window.location.reload(); }} />
+        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); router.refresh(); }} />
       </PremiumModal>
 
       <PremiumDrawer isOpen={isDrawerOpen} onClose={() => { setIsDrawerOpen(false); setIsEditing(false); }} title={isEditing ? "Verileri Güncelle" : "Dönem Finansal Detayı"}>

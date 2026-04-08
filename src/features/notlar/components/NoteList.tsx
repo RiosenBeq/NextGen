@@ -8,6 +8,7 @@ import { NoteForm } from './NoteForm';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 
 type Note = {
   id: string | number;
@@ -31,6 +32,7 @@ const THEMES: Record<string, { card: string; badge: string; dot: string }> = {
 
 export default function NoteList({ initialNotes }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [notes, setNotes] = useState(initialNotes);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -50,7 +52,7 @@ export default function NoteList({ initialNotes }: Props) {
     if (!confirm('Bu notu silmek istediğinize emin misiniz?')) return;
     const result = await deleteNote(id);
     if (!result.success) {
-      alert(result.error || 'Not silinemedi.');
+      toast.error(result.error || 'Not silinemedi.');
       return;
     }
     setNotes((prev) => prev.filter((n) => n.id !== id));

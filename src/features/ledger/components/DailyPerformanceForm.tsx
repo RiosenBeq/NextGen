@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react';
+import { useToast } from '@/components/ui/Toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,6 +32,7 @@ interface DailyPerformanceFormProps {
 }
 
 export default function DailyPerformanceForm({ locations, initialData, onSuccess, onCancel }: DailyPerformanceFormProps) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showExtra, setShowExtra] = useState(!!initialData?.extraMetrics?.notlar);
 
@@ -70,7 +72,7 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
         });
         onSuccess?.();
       } else {
-        alert(res.error);
+        toast.error(res.error || 'Bir hata oluştu.');
       }
     } finally {
       setLoading(false);

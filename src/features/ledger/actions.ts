@@ -146,12 +146,16 @@ export async function addExpense(data: any) {
     if (error) throw error;
 
     if (validatedData.attachmentUrl) {
-      await supabase.from('Document').insert({
+      const { error: docError } = await supabase.from('Document').insert({
+        id: `doc_${crypto.randomUUID()}`,
         fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge',
         relatedType: 'expense',
         relatedId: record.id
       });
+      if (docError) {
+        console.warn('Document insert warning:', docError.message);
+      }
     }
 
     await createAuditLog('CREATE', 'Expense', record.id, {
@@ -201,12 +205,16 @@ export async function updateExpense(id: string, data: any) {
     if (error) throw error;
 
     if (validatedData.attachmentUrl) {
-      await supabase.from('Document').insert({
+      const { error: docError } = await supabase.from('Document').insert({
+        id: `doc_${crypto.randomUUID()}`,
         fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge (Grup)',
         relatedType: 'expense',
         relatedId: id
       });
+      if (docError) {
+        console.warn('Document insert warning:', docError.message);
+      }
     }
 
     await createAuditLog('UPDATE', 'Expense', id, {
@@ -566,12 +574,14 @@ export async function getLocationInsights() {
     const params = await getSystemParameters();
 
     const insights = (locations || []).map(loc => {
-      const totalInvestment = loc.investments.reduce((acc: number, inv: any) => acc + (inv.totalAmount || 0), 0);
-      
-      const totalSessions = loc.performances.reduce((acc: number, perf: any) => acc + (perf.sessionCount || 0), 0);
-      const totalExtraExpense = loc.performances.reduce((acc: number, perf: any) => acc + (perf.extraExpenseAmount || 0), 0);
-      const avgSessions = loc.performances.length > 0 ? totalSessions / loc.performances.length : 0;
-      const avgExtraExpense = loc.performances.length > 0 ? totalExtraExpense / loc.performances.length : 0;
+      const investments = loc.investments || [];
+      const performances = loc.performances || [];
+      const totalInvestment = investments.reduce((acc: number, inv: any) => acc + (inv.totalAmount || 0), 0);
+
+      const totalSessions = performances.reduce((acc: number, perf: any) => acc + (perf.sessionCount || 0), 0);
+      const totalExtraExpense = performances.reduce((acc: number, perf: any) => acc + (perf.extraExpenseAmount || 0), 0);
+      const avgSessions = performances.length > 0 ? totalSessions / performances.length : 0;
+      const avgExtraExpense = performances.length > 0 ? totalExtraExpense / performances.length : 0;
 
       const calc = calculateMonthlyCashFlow(avgSessions, avgExtraExpense, {
         sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
@@ -584,7 +594,7 @@ export async function getLocationInsights() {
       });
 
       let cumulativeNetCash = 0;
-      loc.performances.forEach((perf: any) => {
+      performances.forEach((perf: any) => {
         const pCalc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount, {
            sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
            iyzicoCommissionRate: 2,

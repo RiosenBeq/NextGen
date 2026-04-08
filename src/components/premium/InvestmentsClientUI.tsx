@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Briefcase, 
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
+import {
+  Briefcase,
   PiggyBank, 
   TrendingUp, 
   Plus, 
@@ -18,7 +20,8 @@ import {
   History,
   Filter as FilterIcon,
   ArrowRight,
-  Search
+  Search,
+  Inbox
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -35,6 +38,8 @@ interface InvestmentsClientProps {
 }
 
 export default function InvestmentsClientUI({ investments, locations, total, count }: InvestmentsClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState<any>(null);
@@ -51,10 +56,10 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
     setIsLoading(true);
     try {
       const res = await deleteInvestment(id);
-      if (!res.success) alert(res.error);
-      else window.location.reload();
+      if (!res.success) toast.error(res.error);
+      else router.refresh();
     } catch (err) {
-      alert('Silme sırasında hata oluştu.');
+      toast.error('Silme sırasında hata oluştu.');
     } finally {
       setIsLoading(false);
     }
@@ -186,6 +191,15 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
                   </tr>
                </thead>
                <tbody className="divide-y divide-slate-100">
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-16 text-center">
+                        <Inbox className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                        <p className="text-sm font-medium text-slate-400">Henüz yatırım kaydı bulunmuyor</p>
+                        <p className="text-xs text-slate-400 mt-1">Yeni yatırım ekleyerek başlayın.</p>
+                      </td>
+                    </tr>
+                  )}
                   {filtered.map((inv, idx) => (
                      <tr 
                         key={inv.id || idx} 
@@ -257,7 +271,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
         <InvestmentForm 
           locations={locations} 
           initialData={editingInvestment}
-          onClose={() => { setShowForm(false); setEditingInvestment(null); window.location.reload(); }} 
+          onClose={() => { setShowForm(false); setEditingInvestment(null); router.refresh(); }} 
         />
       </PremiumModal>
 

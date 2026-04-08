@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -79,6 +81,8 @@ export default function AvmPaymentsClientUI({
   initialPayments: AvmPayment[];
   locations: LocationOption[];
 }) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [payments, setPayments] = useState(initialPayments);
   const [showForm, setShowForm] = useState(false);
   const [filterMonth, setFilterMonth] = useState('all');
@@ -112,7 +116,7 @@ export default function AvmPaymentsClientUI({
     setTogglingId(payment.id);
     const res = await toggleAvmPaymentPaid(payment.id, payment.isPaid);
     if (!res.success) {
-      alert(res.error || 'Durum güncellenemedi.');
+      toast.error(res.error || 'Durum güncellenemedi.');
       setTogglingId(null);
       return;
     }
@@ -131,7 +135,7 @@ export default function AvmPaymentsClientUI({
     setDeletingId(id);
     const res = await deleteAvmPayment(id);
     if (!res.success) {
-      alert(res.error || 'Silme işlemi başarısız.');
+      toast.error(res.error || 'Silme işlemi başarısız.');
       setDeletingId(null);
       return;
     }
@@ -419,6 +423,8 @@ function AddAvmPaymentForm({
   onClose: () => void;
   onSuccess: (payment: AvmPayment) => void;
 }) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     locationId: locations[0]?.id || '',
@@ -431,7 +437,7 @@ function AddAvmPaymentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.amount || !form.locationId) {
-      alert('Lokasyon ve tutar alanları zorunludur.');
+      toast.error('Lokasyon ve tutar alanları zorunludur.');
       return;
     }
 
@@ -448,10 +454,10 @@ function AddAvmPaymentForm({
       if (!res.success) throw new Error(res.error);
 
       // Reload to get the fresh data from server
-      window.location.reload();
+      router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.';
-      alert('Hata: ' + message);
+      toast.error('Hata: ' + message);
     } finally {
       setLoading(false);
     }

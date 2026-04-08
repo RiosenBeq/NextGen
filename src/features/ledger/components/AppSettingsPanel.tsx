@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 import { updateSystemParameter, resetSystemParameters } from '../actions';
 import { 
   Settings, 
@@ -14,6 +16,8 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 export default function AppSettingsPanel({ initialParams }: { initialParams: Record<string, any> }) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [params, setParams] = useState(initialParams);
   const [loading, setLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -26,7 +30,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
       setSuccess(key);
       setTimeout(() => setSuccess(null), 2000);
     } else {
-      alert('Hata: ' + res.error);
+      toast.error('Hata: ' + res.error);
     }
     setLoading(null);
   };
@@ -36,9 +40,9 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
       setLoading('RESET');
       const res = await resetSystemParameters();
       if (res.success) {
-        window.location.reload();
+        router.refresh();
       } else {
-        alert('Hata: ' + res.error);
+        toast.error('Hata: ' + res.error);
       }
       setLoading(null);
     }

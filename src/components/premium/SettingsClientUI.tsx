@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Settings, 
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
+import {
+  Settings,
   ShieldCheck, 
   Database, 
   Users, 
@@ -41,6 +43,8 @@ interface SettingsClientProps {
 }
 
 export default function SettingsClientUI({ locations, parameters, users, currentUser }: SettingsClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'general' | 'locations' | 'users' | 'profile' | 'integrations'>('general');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +72,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
     const res = await createSystemUser({ email, password, fullName, role });
     if (res.success) {
       setIsUserModalOpen(false);
-      window.location.reload();
+      router.refresh();
     } else {
       setFormError(res.error || 'Kullanıcı oluşturulamadı.');
       setIsSubmitting(false);
@@ -78,7 +82,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const handleDeleteUser = async (id: string) => {
     if (confirm('Bu yetkili hesabı silmek istediğinize emin misiniz?')) {
       await deleteSystemUser(id);
-      window.location.reload();
+      router.refresh();
     }
   };
 
@@ -95,7 +99,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const handleSaveUser = async (id: string) => {
     const draft = draftProfiles[id];
     if (!draft?.fullName?.trim()) {
-      alert('Ad soyad alanı boş bırakılamaz.');
+      toast.error('Ad soyad alanı boş bırakılamaz.');
       return;
     }
 
@@ -108,11 +112,11 @@ export default function SettingsClientUI({ locations, parameters, users, current
 
     if (res.success) {
       setEditingUserId(null);
-      window.location.reload();
+      router.refresh();
       return;
     }
 
-    alert(res.error || 'Kullanıcı güncellenemedi.');
+    toast.error(res.error || 'Kullanıcı güncellenemedi.');
     setSavingUserId(null);
   };
 

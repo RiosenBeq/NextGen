@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import { useToast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Upload, Trash2, Loader2, AlertCircle, CheckCircle2, ExternalLink, MapPin, ChevronDown } from 'lucide-react';
@@ -31,6 +32,7 @@ export default function ContractsClientUI({
   initialContracts: ContractDoc[];
   locations: LocationOption[];
 }) {
+  const { toast } = useToast();
   const [contracts, setContracts] = useState(initialContracts);
   const [locationId, setLocationId] = useState('global');
   const [uploading, setUploading] = useState(false);
@@ -113,7 +115,7 @@ export default function ContractsClientUI({
     setDeletingId(id);
     const res = await deleteDocument(id);
     if (!res.success) {
-      alert(res.error || 'Silme işlemi başarısız.');
+      toast.error(res.error || 'Silme işlemi başarısız.');
       setDeletingId(null);
       return;
     }

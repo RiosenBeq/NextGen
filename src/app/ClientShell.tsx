@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sidebar, Topbar, MobileNav } from "@/components/LayoutUI";
 import { usePathname } from "next/navigation";
+import { ToastProvider } from "@/components/ui/Toast";
 
 interface ClientShellProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ export default function ClientShell({ children, userEmail, userFullName, userRol
   }, [pathname]);
 
   return (
-    <>
+    <ToastProvider>
       <Sidebar userEmail={userEmail} userFullName={userFullName} userRole={userRole} />
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <Topbar
@@ -37,6 +38,6 @@ export default function ClientShell({ children, userEmail, userFullName, userRol
         </div>
         <MobileNav hidden={mobileMenuOpen} />
       </main>
-    </>
+    </ToastProvider>
   );
 }

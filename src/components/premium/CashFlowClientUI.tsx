@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 import { 
   Plus, 
   Search, 
@@ -36,6 +38,8 @@ export default function CashFlowClientUI({
   initialData, 
   filterLocation 
 }: CashFlowClientUIProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,9 +53,9 @@ export default function CashFlowClientUI({
     setIsLoading(true);
     try {
       const res = await deleteMonthlyPerformance(id);
-      if (!res.success) alert(res.error);
+      if (!res.success) toast.error(res.error);
     } catch (err) {
-      alert('Silme sırasında hata oluştu.');
+      toast.error('Silme sırasında hata oluştu.');
     } finally {
       setIsLoading(false);
     }

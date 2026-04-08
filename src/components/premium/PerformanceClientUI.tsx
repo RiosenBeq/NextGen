@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
+import {
   BarChart3,
   Activity,
   History as HistoryIcon,
@@ -20,6 +22,8 @@ interface PerformanceClientProps {
 }
 
 export default function PerformanceClientUI({ locations, history, historyLocId }: PerformanceClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
@@ -34,9 +38,9 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
     setIsLoading(true);
     try {
       const resp = await deleteDailyPerformance(row.id, row.locationId, row.date);
-      if (!resp.success) alert(resp.error);
+      if (!resp.success) toast.error(resp.error);
     } catch (err) {
-      alert('Silme sırasında bir hata oluştu');
+      toast.error('Silme sırasında bir hata oluştu');
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +86,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
          {/* Form Section */}
          <section className="xl:col-span-5 space-y-6">
             <div className="bg-white border border-slate-200 rounded-3xl p-1 shadow-sm">
-               <DailyPerformanceForm locations={locations} onSuccess={() => window.location.reload()} />
+               <DailyPerformanceForm locations={locations} onSuccess={() => router.refresh()} />
             </div>
 
             <div className="p-6 rounded-3xl bg-slate-900 text-white space-y-4 shadow-xl">

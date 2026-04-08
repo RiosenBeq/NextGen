@@ -100,7 +100,11 @@ export async function uploadDocument(formData: FormData) {
         fileUrl: publicUrl,
       });
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      // Clean up orphaned storage file
+      await storageClient.storage.from('documents').remove([uniqueName]);
+      throw dbError;
+    }
 
     await createAuditLog('CREATE', 'Document', relatedId, {
       fileName: file.name,
@@ -143,7 +147,10 @@ export async function deleteDocument(id: string) {
     const dbClient = adminSupabase || supabase;
 
     // Get file URL from DB first
-    const { data: doc } = await dbClient.from('Document').select('fileUrl').eq('id', id).single();
+    const { data: doc, error: fetchError } = await dbClient.from('Document').select('fileUrl').eq('id', id).single();
+    if (fetchError) {
+      console.warn('Document fetch warning:', fetchError.message);
+    }
 
     if (doc?.fileUrl) {
       // Delete from storage

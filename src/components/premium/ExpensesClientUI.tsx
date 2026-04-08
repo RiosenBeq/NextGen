@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 import { Plus, Wallet, Activity, FileText, AlertCircle, CheckCircle2, UploadCloud, Loader2, ChevronRight } from 'lucide-react';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
@@ -37,6 +39,8 @@ interface DocumentItem {
 }
 
 export default function ExpensesClientUI({ expenses, locations, documents, total, thisMonthTotal }: ExpensesClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
@@ -62,12 +66,12 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
       const update = await updateExpenseAttachment(selectedExpense.id, upload.publicUrl);
       if (!update.success) throw new Error(update.error);
 
-      alert('Belge başarıyla eklendi.');
+      toast.success('Belge başarıyla eklendi.');
       setIsDrawerOpen(false);
-      window.location.reload();
+      router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.';
-      alert(`Hata: ${message}`);
+      toast.error(`Hata: ${message}`);
     } finally {
       setIsUploading(false);
     }
@@ -119,7 +123,7 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
         <ExpenseForm
           locations={locations}
           initialData={editingExpense}
-          onClose={() => { setShowForm(false); setEditingExpense(null); window.location.reload(); }}
+          onClose={() => { setShowForm(false); setEditingExpense(null); router.refresh(); }}
         />
       </PremiumModal>
 

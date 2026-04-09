@@ -8,6 +8,28 @@ import { cn } from '@/lib/utils';
 export const metadata = { title: 'Aylık Özet — NextGenBox' };
 export const dynamic = 'force-dynamic';
 
+const AVM_FIXED_KEYWORDS = [
+  'sabit kira',
+  'avm aidat',
+  'ciro payı',
+  'ciro payi',
+  '[sabit kira]',
+  '[avm aidat]',
+  '[ciro payı]',
+];
+
+function normalizeText(value: string) {
+  return value
+    .toLocaleLowerCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isAvmFixedExpense(description: string | null | undefined) {
+  const normalizedDescription = normalizeText(description || '');
+  return AVM_FIXED_KEYWORDS.some((keyword) => normalizedDescription.includes(normalizeText(keyword)));
+}
+
 export default async function MonthlySummaryPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const supabase = await createClient();
   const params = await getSystemParameters();
@@ -51,8 +73,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
     const recurringTotal = (allExpenses || [])
         .filter(e => {
             if (e.type !== 'RECURRING') return false;
-            const d = e.description || '';
-            if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+            if (isAvmFixedExpense(e.description)) return false;
             return true;
         })
         .reduce((s, e) => {
@@ -64,8 +85,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
     const oneTimeTotal = (allExpenses || [])
         .filter(e => {
           if (e.type === 'RECURRING') return false;
-          const d = e.description || '';
-          if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+          if (isAvmFixedExpense(e.description)) return false;
           
           const expMonthStr = e.month ? e.month.slice(0, 7) : e.createdAt.slice(0, 7);
           return expMonthStr === selectedMonthStr && (!e.locationId || e.locationId === loc.id);
@@ -104,10 +124,12 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   });
 
   return (
-    <div className="page-wrapper min-h-screen bg-slate-50 space-y-8 p-6 md:p-10">
+    <div className="page-wrapper min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white space-y-8 p-6 md:p-10">
       
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200">
+      <header className="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border border-slate-200 rounded-[32px] bg-white p-6 md:p-8 shadow-sm">
+        <div className="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
+        <div className="absolute -left-24 -bottom-24 h-56 w-56 rounded-full bg-violet-100/60 blur-3xl pointer-events-none" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
             <Calendar size={24} />
@@ -125,6 +147,13 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
           <MonthSelector availableMonths={availableMonths} selectedMonthStr={selectedMonthStr} />
         </div>
       </header>
+
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <TopStat label="Aktif Şube" value={String(currentPerformances.length)} tone="slate" />
+        <TopStat label="Brüt Gelir" value={`₺${monthRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`} tone="blue" />
+        <TopStat label="Toplam Gider" value={`₺${(monthCommission + monthAvmFixed + monthOperationalExpense).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`} tone="amber" />
+        <TopStat label="Net Nakit" value={`₺${rawNetCash.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`} tone={rawNetCash >= 0 ? 'emerald' : 'rose'} />
+      </section>
 
       {/* Main Stats (EBIT Focused) */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -189,6 +218,9 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
               <div className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400"><FileText size={18} /></div>
               <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight">İşlem Bazlı Audit</h3>
            </div>
+           <span className="text-[11px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-lg px-3 py-1">
+            Toplam {monthSpecificExpenses.length} kayıt
+           </span>
         </div>
         
         <div className="overflow-x-auto">
@@ -203,7 +235,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
               </thead>
               <tbody className="divide-y divide-slate-50">
                  {monthSpecificExpenses.map((exp: any) => (
-                    <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={exp.id} className="hover:bg-slate-50/80 transition-colors">
                        <td className="px-8 py-5">
                           <div className="flex flex-col">
                              <span className="text-sm font-bold text-slate-800">{exp.description}</span>
@@ -252,6 +284,31 @@ function AnalysisCard({ label, val, icon: Icon, color }: any) {
          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
       </div>
       <p className="text-3xl font-bold text-slate-900 tabular-nums tracking-tighter italic">₺{val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
+    </div>
+  );
+}
+
+function TopStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'blue' | 'amber' | 'emerald' | 'rose' | 'slate';
+}) {
+  const toneClasses: Record<string, string> = {
+    blue: 'from-blue-50 to-blue-100/40 text-blue-700 border-blue-100',
+    amber: 'from-amber-50 to-amber-100/40 text-amber-700 border-amber-100',
+    emerald: 'from-emerald-50 to-emerald-100/40 text-emerald-700 border-emerald-100',
+    rose: 'from-rose-50 to-rose-100/40 text-rose-700 border-rose-100',
+    slate: 'from-slate-50 to-slate-100/60 text-slate-700 border-slate-200',
+  };
+
+  return (
+    <div className={cn('rounded-2xl border bg-gradient-to-br px-4 py-4 shadow-sm', toneClasses[tone])}>
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] opacity-80">{label}</p>
+      <p className="mt-2 text-lg font-black tracking-tight tabular-nums">{value}</p>
     </div>
   );
 }

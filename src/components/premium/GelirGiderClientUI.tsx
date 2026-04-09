@@ -325,7 +325,7 @@ export default function GelirGiderClientUI({
         {selectedEntry && (
           <div className="space-y-10 py-6">
              {isEditing ? (
-               <MonthlyPerformanceForm id={selectedEntry.perfId} initialData={{ sessions: selectedEntry.sessions, extraExpense: selectedEntry.extraExpense, extraNotes: selectedEntry.extraNotes, month: selectedEntry.monthId, locationName: selectedEntry.locationName }} onClose={() => setIsEditing(false)} onDelete={handleDelete} />
+               <MonthlyPerformanceForm id={selectedEntry.perfId} locationId={selectedEntry.locationId} initialData={{ sessions: selectedEntry.sessions, extraExpense: selectedEntry.extraExpense, extraNotes: selectedEntry.extraNotes, month: selectedEntry.monthId, locationName: selectedEntry.locationName }} onClose={() => setIsEditing(false)} onDelete={handleDelete} />
              ) : (
                <div className="space-y-10">
                   {/* Drawer Header Card */}

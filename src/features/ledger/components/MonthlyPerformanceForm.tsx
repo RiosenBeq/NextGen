@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateMonthlyPerformance } from '../actions';
+import { upsertMonthlyPerformance } from '@/features/ledger/performans-actions';
 import { Loader2, Save, Trash2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PerformanceFormProps {
   id: string;
+  locationId: string;
   initialData: {
     sessions: number;
     extraExpense: number;
@@ -19,7 +20,7 @@ interface PerformanceFormProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
-export default function MonthlyPerformanceForm({ id, initialData, onClose, onDelete }: PerformanceFormProps) {
+export default function MonthlyPerformanceForm({ id, locationId, initialData, onClose, onDelete }: PerformanceFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,15 +31,17 @@ export default function MonthlyPerformanceForm({ id, initialData, onClose, onDel
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      locationId: 'dummy', // Not used for update but required by Zod schema if not lax
-      month: initialData.month,
+    // monthId comes as "2026-04" — normalize to ISO for upsert
+    const monthForUpsert = initialData.month.length === 7
+      ? `${initialData.month}-01T00:00:00.000Z`
+      : initialData.month;
+
+    const res = await upsertMonthlyPerformance({
+      locationId,
+      month: monthForUpsert,
       sessionCount: Number(formData.get('sessions')),
       extraExpenseAmount: Number(formData.get('extraExpense')),
-      extraExpenseNotes: formData.get('extraNotes') as string,
-    };
-
-    const res = await updateMonthlyPerformance(id, data);
+    });
     setIsPending(false);
 
     if (res.success) {

@@ -21,8 +21,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
-import {
 import { toast } from '@/hooks/useToast';
+import {
   addAvmPayment,
   toggleAvmPaymentPaid,
   deleteAvmPayment,
@@ -69,7 +69,6 @@ function getCurrentMonth() {
 }
 
 function formatMonth(month: string) {
-  const router = useRouter();
   const [year, m] = month.split('-');
   const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   return `${months[parseInt(m, 10) - 1]} ${year}`;
@@ -82,6 +81,7 @@ export default function AvmPaymentsClientUI({
   initialPayments: AvmPayment[];
   locations: LocationOption[];
 }) {
+  const router = useRouter();
   const [payments, setPayments] = useState(initialPayments);
   const [showForm, setShowForm] = useState(false);
   const [filterMonth, setFilterMonth] = useState('all');
@@ -373,9 +373,9 @@ export default function AvmPaymentsClientUI({
         <AddAvmPaymentForm
           locations={locations}
           onClose={() => setShowForm(false)}
-          onSuccess={(newPayment) => {
-            setPayments((prev) => [newPayment, ...prev]);
+          onSuccess={() => {
             setShowForm(false);
+            router.refresh();
           }}
         />
       </PremiumModal>
@@ -420,7 +420,7 @@ function AddAvmPaymentForm({
 }: {
   locations: LocationOption[];
   onClose: () => void;
-  onSuccess: (payment: AvmPayment) => void;
+  onSuccess: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -450,8 +450,8 @@ function AddAvmPaymentForm({
 
       if (!res.success) throw new Error(res.error);
 
-      // Reload to get the fresh data from server
-      router.refresh();
+      // Success callback to parent component
+      onSuccess();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.';
       toast.error('Hata: ' + message);

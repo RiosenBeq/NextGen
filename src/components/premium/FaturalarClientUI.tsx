@@ -47,6 +47,7 @@ interface FaturalarProps {
 }
 
 export default function FaturalarClientUI({ invoices: initialInvoices, avmExpenses: initialAvmExpenses, locations }: FaturalarProps) {
+  const router = useRouter();
   const [invoices, setInvoices] = useState(initialInvoices);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

@@ -39,6 +39,7 @@ interface DocumentItem {
 }
 
 export default function ExpensesClientUI({ expenses, locations, documents, total, thisMonthTotal }: ExpensesClientProps) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);

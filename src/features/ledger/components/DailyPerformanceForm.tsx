@@ -71,7 +71,7 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
         });
         onSuccess?.();
       } else {
-        toast.error(res.error);
+        toast.error(res.error || 'İşlem sırasında bir hata oluştu.');
       }
     } finally {
       setLoading(false);

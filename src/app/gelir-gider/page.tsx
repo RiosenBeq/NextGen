@@ -104,7 +104,12 @@ export default async function GelirGiderPage(props: {
     const perfMonthStr = monthIdOf(String(perf.month));
 
     const recurringTotal = (expenses || [])
-      .filter((e) => e.type === 'RECURRING')
+      .filter((e) => {
+        if (e.type !== 'RECURRING') return false;
+        const d = e.description || '';
+        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+        return true;
+      })
       .reduce((s, e) => {
         if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
         if (e.locationId === loc.id) return s + (e.amountWithVat || 0);

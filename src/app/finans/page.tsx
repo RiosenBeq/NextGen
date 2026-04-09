@@ -44,15 +44,18 @@ export default async function FinansalTablo({
 
   const currentMonthId = new Date().toISOString().slice(0, 7);
 
-  // Recurring expenses (split global ones proportionally)
-  const recurringExpenses = (expenses || []).filter(e => e.type === 'RECURRING');
+  // Recurring expenses — exclude AVM-related tagged ones (already counted via calculateMonthlyCashFlow)
+  const filteredRecurringExpenses = (expenses || []).filter(e => {
+    if (e.type !== 'RECURRING') return false;
+    const d = e.description || '';
+    if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+    return true;
+  });
   const getRecurringTotal = (locationId?: string) => {
-    return recurringExpenses.reduce((s, e) => {
+    return filteredRecurringExpenses.reduce((s, e) => {
       if (!e.locationId) {
-        // Global recurring — split across all active locations
         return s + (e.amountWithVat || 0) / activeLocationCount;
       } else if (e.locationId === locationId) {
-        // Location-specific recurring — full amount
         return s + (e.amountWithVat || 0);
       }
       return s;
@@ -86,10 +89,8 @@ export default async function FinansalTablo({
 
       const sessions = perf.sessionCount;
       
-      // Calculate recurring + one-time expenses for THIS month/location
-      // Recurring: global split + location-specific full
-      const recurringTotal = (expenses || [])
-        .filter(e => e.type === 'RECURRING')
+      // Recurring: exclude AVM-tagged (already in calculateMonthlyCashFlow via loc params)
+      const recurringTotal = filteredRecurringExpenses
         .reduce((s, e) => {
           if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
           if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
@@ -151,7 +152,7 @@ export default async function FinansalTablo({
 
   const totalExtraExpenseAll = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalExtraExpense, 0);
 
-  const recurringGlobalTotal = (expenses || []).filter(e => e.type === 'RECURRING').reduce((s, e) => s + (e.amountWithVat || 0), 0);
+  const recurringGlobalTotal = filteredRecurringExpenses.reduce((s, e) => s + (e.amountWithVat || 0), 0);
   const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0) + recurringGlobalTotal;
   const netRevenuePerSession = sessionPrice * 0.96;
   const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;

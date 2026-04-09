@@ -19,6 +19,10 @@ import {
   CheckCircle2,
   Clock,
   X,
+  Paperclip,
+  UploadCloud,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
@@ -27,6 +31,7 @@ import {
   toggleAvmPaymentPaid,
   deleteAvmPayment,
 } from '@/features/avm-payments/actions';
+import { uploadDocument } from '@/features/belgeler/actions';
 
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
   Kira: 'Kira (Sabit)',
@@ -89,6 +94,8 @@ export default function AvmPaymentsClientUI({
   const [filterLocation, setFilterLocation] = useState('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [docs, setDocs] = useState<Record<string, { fileName: string; fileUrl: string }>>({});
 
   const availableMonths = useMemo(() => {
     const set = new Set(payments.map((p) => p.month));
@@ -141,6 +148,25 @@ export default function AvmPaymentsClientUI({
     }
     setPayments((prev) => prev.filter((p) => p.id !== id));
     setDeletingId(null);
+  };
+
+  const handleFileUpload = async (paymentId: string, file: File) => {
+    setUploadingId(paymentId);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('relatedType', 'avmpayment');
+      formData.append('relatedId', paymentId);
+      const res = await uploadDocument(formData);
+      if (!res.success) throw new Error(res.error);
+      setDocs(prev => ({ ...prev, [paymentId]: { fileName: file.name, fileUrl: res.publicUrl || '' } }));
+      toast.success(`"${file.name}" başarıyla yüklendi.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Yükleme başarısız.';
+      toast.error(msg);
+    } finally {
+      setUploadingId(null);
+    }
   };
 
   const formatCurrency = (val: number) =>
@@ -239,6 +265,7 @@ export default function AvmPaymentsClientUI({
                   <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Tip</th>
                   <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Açıklama</th>
                   <th className="text-right px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Tutar</th>
+                  <th className="text-center px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Belge</th>
                   <th className="text-center px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">İşlem</th>
                 </tr>
               </thead>
@@ -286,6 +313,20 @@ export default function AvmPaymentsClientUI({
                         {formatCurrency(payment.amount)}
                       </td>
                       <td className="px-5 py-3 text-center">
+                        {docs[payment.id] ? (
+                          <a href={docs[payment.id].fileUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 hover:text-emerald-700">
+                            <FileText size={14} /> <span className="hidden lg:inline">Görüntüle</span>
+                          </a>
+                        ) : uploadingId === payment.id ? (
+                          <Loader2 size={14} className="animate-spin text-slate-400 mx-auto" />
+                        ) : (
+                          <label className="inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-500 hover:text-blue-600 cursor-pointer">
+                            <UploadCloud size={14} /> <span className="hidden lg:inline">Yükle</span>
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(payment.id, f); e.target.value = ''; }} />
+                          </label>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-center">
                         <button
                           type="button"
                           onClick={() => handleDelete(payment.id)}
@@ -329,6 +370,22 @@ export default function AvmPaymentsClientUI({
                 {payment.description && (
                   <p className="text-xs text-slate-500">{payment.description}</p>
                 )}
+
+                {/* Document upload */}
+                <div className="flex items-center gap-2">
+                  {docs[payment.id] ? (
+                    <a href={docs[payment.id].fileUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 rounded-xl px-3 py-1.5">
+                      <FileText size={14} /> Belge Görüntüle
+                    </a>
+                  ) : uploadingId === payment.id ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 px-3 py-1.5"><Loader2 size={14} className="animate-spin" /> Yükleniyor...</span>
+                  ) : (
+                    <label className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 border border-blue-200 bg-blue-50 rounded-xl px-3 py-1.5 cursor-pointer">
+                      <UploadCloud size={14} /> Belge Ekle
+                      <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(payment.id, f); e.target.value = ''; }} />
+                    </label>
+                  )}
+                </div>
 
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-black text-slate-900 tabular-nums">{formatCurrency(payment.amount)}</p>
@@ -453,7 +510,22 @@ function AddAvmPaymentForm({
 
       if (!res.success) throw new Error(res.error);
 
-      // Reload to get the fresh data from server
+      const locationObj = locations.find(l => l.id === form.locationId);
+      const newPayment: AvmPayment = {
+        id: `avm_${Date.now()}`,
+        locationId: form.locationId,
+        month: form.month,
+        paymentType: form.paymentType,
+        description: form.description || null,
+        amount: parseFloat(form.amount),
+        isPaid: false,
+        paidAt: null,
+        createdAt: new Date().toISOString(),
+        location: locationObj || { id: form.locationId, name: 'Bilinmiyor' },
+      };
+
+      toast.success('Ödeme başarıyla kaydedildi.');
+      onSuccess(newPayment);
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.';

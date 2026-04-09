@@ -38,7 +38,12 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
     setIsLoading(true);
     try {
       const resp = await deleteDailyPerformance(row.id, row.locationId, row.date);
-      if (!resp.success) toast.error(resp.error);
+      if (!resp.success) {
+        toast.error(resp.error || 'Silme başarısız.');
+      } else {
+        toast.success('Kayıt başarıyla silindi.');
+        router.refresh();
+      }
     } catch (err) {
       toast.error('Silme sırasında bir hata oluştu');
     } finally {
@@ -176,7 +181,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
       </PremiumDrawer>
 
       <PremiumModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Veriyi Düzenle" maxWidth="max-w-xl">
-        <DailyPerformanceForm locations={locations} initialData={selectedRow} onSuccess={() => setIsEditModalOpen(false)} onCancel={() => setIsEditModalOpen(false)} />
+        <DailyPerformanceForm locations={locations} initialData={selectedRow} onSuccess={() => { setIsEditModalOpen(false); router.refresh(); }} onCancel={() => setIsEditModalOpen(false)} />
       </PremiumModal>
 
     </div>

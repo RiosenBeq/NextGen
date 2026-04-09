@@ -101,6 +101,29 @@ export default function CashFlowClientUI({
         ))}
       </section>
 
+      <section className="rounded-[28px] border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white p-4 md:p-5 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+            <p className="font-black uppercase tracking-widest text-slate-400">Durum</p>
+            <p className={cn("mt-1 text-sm font-black", currentTotals.profit >= 0 ? "text-emerald-700" : "text-rose-600")}>
+              {currentTotals.profit >= 0 ? 'Pozitif Nakit Akışı' : 'Negatif Nakit Akışı'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+            <p className="font-black uppercase tracking-widest text-slate-400">Ortalama Seans / Kayıt</p>
+            <p className="mt-1 text-sm font-black text-slate-900">
+              {initialData.length > 0 ? Math.round(currentTotals.sessions / initialData.length).toLocaleString('tr-TR') : '0'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+            <p className="font-black uppercase tracking-widest text-slate-400">Filtre</p>
+            <p className="mt-1 text-sm font-black text-slate-900">
+              {filterLocation === 'all' ? 'Tüm Lokasyonlar' : `${initialData[0]?.locationName || 'Lokasyon'}`}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 2. MAIN TABLE SECTION */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
@@ -117,7 +140,7 @@ export default function CashFlowClientUI({
            </button>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[40px] overflow-hidden shadow-2xl">
+        <div className="bg-white/95 backdrop-blur border border-slate-200 rounded-[40px] overflow-hidden shadow-2xl">
            <div className="hidden md:block overflow-x-auto no-scrollbar">
               <table className="w-full text-left border-collapse">
                  <thead>

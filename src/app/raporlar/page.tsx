@@ -10,6 +10,20 @@ export const metadata = {
   title: 'Nakit Akışı — NextGenBox',
 };
 
+const AVM_FIXED_KEYWORDS = ['sabit kira', 'avm aidat', 'ciro payı', 'ciro payi'];
+
+function normalizeText(value: string) {
+  return value
+    .toLocaleLowerCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isAvmFixedExpense(description: string | null | undefined) {
+  const normalized = normalizeText(description || '');
+  return AVM_FIXED_KEYWORDS.some((keyword) => normalized.includes(normalizeText(keyword)));
+}
+
 export default async function ReportsPage({
   searchParams,
 }: {
@@ -33,7 +47,7 @@ export default async function ReportsPage({
     supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
   ]);
 
-  const recurringExpenses = (expenses || []).filter((e) => e.type === 'RECURRING');
+  const recurringExpenses = (expenses || []).filter((e) => e.type === 'RECURRING' && !isAvmFixedExpense(e.description));
   const getRecurringTotal = (locationId?: string) => {
     return recurringExpenses.reduce((s, e) => {
       if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
@@ -46,8 +60,7 @@ export default async function ReportsPage({
     return (expenses || [])
       .filter((e) => {
         if (e.type === 'RECURRING') return false;
-        const d = e.description || '';
-        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
+        if (isAvmFixedExpense(e.description)) return false;
         const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
         if (expMonth !== monthId) return false;
         if (e.locationId && e.locationId !== locationId) return false;
@@ -64,18 +77,22 @@ export default async function ReportsPage({
     if (!perf.location || !perf.month) continue;
     const monthId = new Date(perf.month).toISOString().slice(0, 7);
     const key = `${perf.locationId}_${monthId}`;
-    const existing = consolidatedMap.get(key);
+    const normalizedRecord = {
+      ...perf,
+      month: `${monthId}-01T00:00:00.000Z`,
+      sessionCount: Number(perf.sessionCount || 0),
+      extraExpenseAmount: Number(perf.extraExpenseAmount || 0),
+    };
+    const existing = consolidatedMap.get(key) as any;
 
     if (!existing) {
-      consolidatedMap.set(key, {
-        ...perf,
-        month: `${monthId}-01T00:00:00.000Z`,
-        sessionCount: Number(perf.sessionCount || 0),
-        extraExpenseAmount: Number(perf.extraExpenseAmount || 0),
-      });
+      consolidatedMap.set(key, normalizedRecord);
     } else {
-      existing.sessionCount += Number(perf.sessionCount || 0);
-      existing.extraExpenseAmount += Number(perf.extraExpenseAmount || 0);
+      const existingTs = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      const candidateTs = new Date(normalizedRecord.updatedAt || normalizedRecord.createdAt || 0).getTime();
+      if (candidateTs >= existingTs) {
+        consolidatedMap.set(key, normalizedRecord);
+      }
     }
   }
 
@@ -114,9 +131,12 @@ export default async function ReportsPage({
     };
   });
 
-  const filteredData = processed.filter((row: any) =>
-    filterLocation === 'all' || row.locationId === filterLocation
-  );
+  const filteredData = processed
+    .filter((row: any) => filterLocation === 'all' || row.locationId === filterLocation)
+    .sort((a: any, b: any) => {
+      if (a.monthId !== b.monthId) return a.monthId < b.monthId ? 1 : -1;
+      return a.locationName.localeCompare(b.locationName, 'tr');
+    });
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">

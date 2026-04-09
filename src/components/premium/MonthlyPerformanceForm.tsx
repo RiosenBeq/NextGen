@@ -28,6 +28,11 @@ export default function MonthlyPerformanceForm({
   onSuccess, 
   onCancel 
 }: MonthlyPerformanceFormProps) {
+  const toSafeNumber = (value: string, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
   const [formData, setFormData] = useState({
     id: initialData?.id || undefined,
     locationId: initialData?.locationId || (locations.length > 0 ? locations[0].id : ''),
@@ -119,8 +124,9 @@ export default function MonthlyPerformanceForm({
               type="number"
               required
               placeholder="0"
-              value={formData.sessionCount || ''}
-              onChange={(e) => setFormData({ ...formData, sessionCount: Number(e.target.value) })}
+              value={String(formData.sessionCount)}
+              onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
+              onChange={(e) => setFormData({ ...formData, sessionCount: Math.max(0, Math.trunc(toSafeNumber(e.target.value, 0))) })}
               className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
             />
           </div>
@@ -134,8 +140,9 @@ export default function MonthlyPerformanceForm({
             <input
               type="number"
               placeholder="0"
-              value={formData.extraExpenseAmount || ''}
-              onChange={(e) => setFormData({ ...formData, extraExpenseAmount: Number(e.target.value) })}
+              value={String(formData.extraExpenseAmount)}
+              onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
+              onChange={(e) => setFormData({ ...formData, extraExpenseAmount: Math.max(0, toSafeNumber(e.target.value, 0)) })}
               className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
             />
           </div>

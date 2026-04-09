@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Receipt,
   FileText,
@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
-import { deleteExpenseAttachment, updateAvmExpenseFinancials, updateAvmExpenseStatus, uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
+import { deleteExpenseAttachment, updateAvmExpenseFinancials, updateAvmExpenseStatus } from '@/features/ledger/actions';
 
 interface Invoice {
   id: string;
@@ -44,6 +44,15 @@ interface FaturalarProps {
   locations: Array<{ id: string; name: string }>;
 }
 
+type AvmDocSlot = 'invoice' | 'receipt';
+type AvmDocFile = {
+  fileName: string;
+  size: number;
+  mimeType: string;
+  uploadedAt: string;
+  previewUrl: string;
+};
+
 export default function FaturalarClientUI({ invoices: initialInvoices, avmExpenses: initialAvmExpenses, locations }: FaturalarProps) {
   const [invoices, setInvoices] = useState(initialInvoices);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,6 +62,17 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   const [uploadingAvmId, setUploadingAvmId] = useState<string | null>(null);
   const [savingAvmId, setSavingAvmId] = useState<string | null>(null);
   const [avmDrafts, setAvmDrafts] = useState<Record<string, { amountWithVat: number; paidBy: string }>>({});
+  const [avmDocs, setAvmDocs] = useState<Record<string, Partial<Record<AvmDocSlot, AvmDocFile>>>>({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(avmDocs).forEach((slots) => {
+        Object.values(slots).forEach((doc) => {
+          if (doc?.previewUrl) URL.revokeObjectURL(doc.previewUrl);
+        });
+      });
+    };
+  }, [avmDocs]);
 
   const filteredInvoices = invoices.filter(inv =>
     inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -71,26 +91,60 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
     setAvmExpenses((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: !current } : item)));
   };
 
-  const handleUploadAvmInvoice = async (expenseId: string, file: File | null) => {
+  const handleUploadAvmDoc = async (expenseId: string, slot: AvmDocSlot, file: File | null) => {
     if (!file) return;
 
     setUploadingAvmId(expenseId);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const upload = await uploadExpenseAttachment(fd);
-      if (!upload.success || !upload.publicUrl) throw new Error(upload.error || 'Dosya yüklenemedi.');
+      const allowedMimes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedMimes.includes(file.type)) {
+        throw new Error('Sadece PDF, JPG, PNG veya WEBP yükleyebilirsiniz.');
+      }
+      if (file.size > 15 * 1024 * 1024) {
+        throw new Error('Dosya 15MB üzeri olamaz.');
+      }
 
-      const update = await updateExpenseAttachment(expenseId, upload.publicUrl);
-      if (!update.success) throw new Error(update.error || 'Belge kaydı güncellenemedi.');
+      const previewUrl = URL.createObjectURL(file);
+      const uploadedAt = new Date().toISOString();
 
-      await updateAvmExpenseStatus(expenseId, { isOfficial: true });
-      setAvmExpenses((prev) => prev.map((item) => (item.id === expenseId ? { ...item, attachmentUrl: upload.publicUrl, isOfficial: true } : item)));
+      setAvmDocs((prev) => {
+        const oldDoc = prev[expenseId]?.[slot];
+        if (oldDoc?.previewUrl) URL.revokeObjectURL(oldDoc.previewUrl);
+
+        return {
+          ...prev,
+          [expenseId]: {
+            ...(prev[expenseId] || {}),
+            [slot]: {
+              fileName: file.name,
+              size: file.size,
+              mimeType: file.type,
+              uploadedAt,
+              previewUrl,
+            },
+          },
+        };
+      });
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Belge yükleme hatası.');
     } finally {
       setUploadingAvmId(null);
     }
+  };
+
+  const handleClearAvmDoc = (expenseId: string, slot: AvmDocSlot) => {
+    setAvmDocs((prev) => {
+      const existing = prev[expenseId]?.[slot];
+      if (existing?.previewUrl) URL.revokeObjectURL(existing.previewUrl);
+
+      const nextSlots = { ...(prev[expenseId] || {}) };
+      delete nextSlots[slot];
+
+      return {
+        ...prev,
+        [expenseId]: nextSlots,
+      };
+    });
   };
 
   const handleDelete = async (invoiceId: string) => {
@@ -213,11 +267,55 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                     Fatura Geldi
                   </button>
 
-                  <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
-                    <Upload size={14} />
-                    {uploadingAvmId === item.id ? 'Yükleniyor...' : 'Fatura Yükle'}
-                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)} />
-                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {(['invoice', 'receipt'] as const).map((slot) => {
+                    const doc = avmDocs[item.id]?.[slot];
+                    const title = slot === 'invoice' ? 'Fatura Belgesi' : 'Dekont (Sabit)';
+                    return (
+                      <div key={slot} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">{title}</p>
+                          <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
+                            <Upload size={13} />
+                            {uploadingAvmId === item.id ? 'Yükleniyor...' : 'Yükle'}
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png,.webp"
+                              onChange={(e) => handleUploadAvmDoc(item.id, slot, e.target.files?.[0] || null)}
+                            />
+                          </label>
+                        </div>
+
+                        {doc ? (
+                          <div className="rounded-lg border border-slate-200 bg-white p-2 text-[11px] text-slate-600 space-y-1">
+                            <p className="font-semibold truncate">{doc.fileName}</p>
+                            <p>{(doc.size / (1024 * 1024)).toFixed(2)} MB • {new Date(doc.uploadedAt).toLocaleString('tr-TR')}</p>
+                            <div className="flex items-center gap-2">
+                              <a href={doc.previewUrl} target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline">
+                                Aç
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => handleClearAvmDoc(item.id, slot)}
+                                className="text-rose-600 font-semibold hover:underline"
+                              >
+                                Kaldır
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-slate-400">
+                            {slot === 'invoice'
+                              ? 'Sadece AVM takip ekranı için fatura yüklenebilir.'
+                              : 'Dekont alanı sabittir, yalnızca iç takip için kullanılır; başka ekranlara senkron olmaz.'}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

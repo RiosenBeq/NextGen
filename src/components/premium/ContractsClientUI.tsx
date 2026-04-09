@@ -14,7 +14,6 @@ type ContractDoc = {
   fileUrl: string;
   relatedId: string;
   uploadedAt?: string;
-  createdAt?: string;
 };
 
 type LocationOption = {
@@ -89,7 +88,7 @@ export default function ContractsClientUI({
       fileName: file.name,
       fileUrl: res.publicUrl || '',
       relatedId: locationId,
-      createdAt: new Date().toISOString(),
+      uploadedAt: new Date().toISOString(),
     };
     setContracts((prev) => [newDoc, ...prev]);
     setSuccessMsg(`"${file.name}" başarıyla yüklendi.`);
@@ -300,8 +299,8 @@ export default function ContractsClientUI({
   );
 }
 
-function formatDocumentDate(doc: { uploadedAt?: string; createdAt?: string }) {
-  const dateValue = doc.uploadedAt ?? doc.createdAt;
+function formatDocumentDate(doc: { uploadedAt?: string }) {
+  const dateValue = doc.uploadedAt;
   if (!dateValue) return 'Tarih yok';
   return new Date(dateValue).toLocaleDateString('tr-TR');
 }

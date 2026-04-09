@@ -55,6 +55,7 @@ export async function upsertDailyPerformance(data: {
     revalidatePath('/');
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
 
     return { success: true, data: record };
   } catch (error: any) {
@@ -158,8 +159,9 @@ export async function upsertMonthlyPerformance(data: {
     revalidatePath('/performans');
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     revalidatePath('/');
-    
+
     return { success: true, data: record };
   } catch (error: any) {
     console.error("Monthly Upsert Error:", error);
@@ -176,6 +178,7 @@ export async function deleteMonthlyPerformance(id: string) {
     revalidatePath('/performans');
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -199,6 +202,7 @@ export async function deleteDailyPerformance(id: string, locationId: string, dat
     revalidatePath('/performans');
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {

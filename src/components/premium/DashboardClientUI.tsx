@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import { 
@@ -18,6 +19,7 @@ import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
 import NoteList from '@/features/notlar/components/NoteList';
 import InteractiveKPICards from '@/features/ledger/components/InteractiveKPICards';
+import { toast } from '@/hooks/useToast';
 
 interface DashboardProps {
   stats: {
@@ -47,6 +49,7 @@ export default function DashboardClientUI({
   allMonthCount,
   allExpenses
 }: DashboardProps) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -69,11 +72,11 @@ export default function DashboardClientUI({
       const update = await updateExpenseAttachment(selectedExpense.id, upload.publicUrl);
       if (!update.success) throw new Error(update.error);
 
-      alert('Belge başarıyla eklendi.');
+      toast.success('Belge başarıyla eklendi.');
       setIsDrawerOpen(false);
-      window.location.reload();
+      router.refresh();
     } catch (err: any) {
-      alert('Hata: ' + err.message);
+      toast.error('Hata: ' + err.message);
     } finally {
       setIsUploading(false);
     }
@@ -257,7 +260,7 @@ export default function DashboardClientUI({
 
       {/* Modals & Drawers */}
       <PremiumModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Gider Tanımla" maxWidth="max-w-xl">
-        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); window.location.reload(); }} />
+        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); router.refresh(); }} />
       </PremiumModal>
 
       <PremiumDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="İşlem Detayı">

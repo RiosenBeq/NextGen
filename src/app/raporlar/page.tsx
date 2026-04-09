@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import CashFlowClientUI from '@/components/premium/CashFlowClientUI';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Nakit Akışı — NextGenBox',
 };

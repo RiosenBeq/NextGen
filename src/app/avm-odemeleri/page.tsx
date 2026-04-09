@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import AvmPaymentsClientUI from '@/components/premium/AvmPaymentsClientUI';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'AVM Ödeme Takibi — NextGenBox',
 };

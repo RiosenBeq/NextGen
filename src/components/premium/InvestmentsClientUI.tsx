@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import { 
@@ -26,6 +27,7 @@ import { InvestmentForm } from '@/features/ledger/components/InvestmentForm';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import { deleteInvestment } from '@/features/ledger/actions';
 import { Edit2, Trash2 } from 'lucide-react';
+import { toast } from '@/hooks/useToast';
 
 interface InvestmentsClientProps {
   investments: any[];
@@ -35,6 +37,7 @@ interface InvestmentsClientProps {
 }
 
 export default function InvestmentsClientUI({ investments, locations, total, count }: InvestmentsClientProps) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState<any>(null);
@@ -51,10 +54,10 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
     setIsLoading(true);
     try {
       const res = await deleteInvestment(id);
-      if (!res.success) alert(res.error);
-      else window.location.reload();
+      if (!res.success) toast.error(res.error);
+      else router.refresh();
     } catch (err) {
-      alert('Silme sırasında hata oluştu.');
+      toast.error('Silme sırasında hata oluştu.');
     } finally {
       setIsLoading(false);
     }
@@ -257,7 +260,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
         <InvestmentForm 
           locations={locations} 
           initialData={editingInvestment}
-          onClose={() => { setShowForm(false); setEditingInvestment(null); window.location.reload(); }} 
+          onClose={() => { setShowForm(false); setEditingInvestment(null); router.refresh(); }} 
         />
       </PremiumModal>
 

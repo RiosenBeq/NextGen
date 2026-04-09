@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import { useState, useRef } from 'react';
 import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/useToast';
 
 const EXPENSE_CATEGORIES = [
   { id: 'rent', label: 'KİRA GİDERİ' },
@@ -34,6 +36,7 @@ export default function ExpenseForm({
   initialData?: any,
   onClose?: () => void
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -93,7 +96,7 @@ export default function ExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.amount || !formData.description) {
-      alert('Sisteme kayıt yapabilmek için açıklama ve matrah bilgilerini eksiksiz girmelisiniz.');
+      toast.error('Sisteme kayıt yapabilmek için açıklama ve matrah bilgilerini eksiksiz girmelisiniz.');
       return;
     }
 
@@ -143,7 +146,7 @@ export default function ExpenseForm({
 
       if (onClose) {
         onClose();
-        window.location.reload(); 
+        router.refresh(); 
       } else {
         setFormData({
           description: '',
@@ -158,11 +161,11 @@ export default function ExpenseForm({
         setFile(null);
         setPreviewUrl(null);
         setUploadStatus('idle');
-        window.location.reload();
+        router.refresh();
       }
     } catch (err: any) {
       console.error(err);
-      alert('Hata: ' + err.message);
+      toast.error('Hata: ' + err.message);
     } finally {
       setLoading(false);
       setUploadStatus('idle');

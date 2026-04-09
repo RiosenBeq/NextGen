@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -45,6 +46,7 @@ const getCategoryColor = (category: string) => {
 };
 
 export default function ExpenseList({ initialExpenses, documents, locations }: Props) {
+  const router = useRouter();
   const [filterType, setFilterType] = useState('ALL');
   const [filterPaidBy, setFilterPaidBy] = useState('ALL');
   const [filterSettled, setFilterSettled] = useState('ALL');
@@ -73,7 +75,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
     if (confirm("Bu gideri silmek istediğinize emin misiniz? (Bu işlem geri alınamaz)")) {
       setDeletingExpenseId(id);
       await deleteExpense(id);
-      window.location.reload();
+      router.refresh();
       setDeletingExpenseId(null);
     }
   };
@@ -81,7 +83,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
   const handleToggleSettled = async (exp: any) => {
     setSettlingId(exp.id);
     await toggleExpenseSettled(exp.id, exp.description);
-    window.location.reload();
+    router.refresh();
   };
 
   const filteredTotal = filtered.reduce((acc, curr) => acc + (curr.amountWithVat || 0), 0);

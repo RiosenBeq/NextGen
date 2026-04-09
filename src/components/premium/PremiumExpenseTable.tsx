@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Calendar, Receipt, User, CheckCircle2, Trash2, Edit2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { deleteExpense, toggleExpenseSettled } from '@/features/ledger/actions';
@@ -35,6 +36,7 @@ interface DocumentItem {
 }
 
 export default function PremiumExpenseTable({ expenses, locations, onView, onEdit }: PremiumExpenseTableProps) {
+  const router = useRouter();
   const [filterType, setFilterType] = useState<'ALL' | 'RECURRING' | 'ONE_TIME'>('ALL');
   const [filterLocation, setFilterLocation] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,13 +58,14 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
     if (!confirm('Bu gider kaydını kalıcı olarak silmek istediğinize emin misiniz?')) return;
     setDeletingId(id);
     await deleteExpense(id);
-    window.location.reload();
+    router.refresh();
+    setDeletingId(null);
   };
 
   const handleToggleSettled = async (id: string, currentDesc: string, e: React.MouseEvent) => {
     e.stopPropagation();
     await toggleExpenseSettled(id, currentDesc);
-    window.location.reload();
+    router.refresh();
   };
 
   const formatCurrency = (val: number) =>

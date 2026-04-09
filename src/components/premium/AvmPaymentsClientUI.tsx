@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import {
+import { toast } from '@/hooks/useToast';
   addAvmPayment,
   toggleAvmPaymentPaid,
   deleteAvmPayment,
@@ -67,6 +69,7 @@ function getCurrentMonth() {
 }
 
 function formatMonth(month: string) {
+  const router = useRouter();
   const [year, m] = month.split('-');
   const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   return `${months[parseInt(m, 10) - 1]} ${year}`;
@@ -112,7 +115,7 @@ export default function AvmPaymentsClientUI({
     setTogglingId(payment.id);
     const res = await toggleAvmPaymentPaid(payment.id, payment.isPaid);
     if (!res.success) {
-      alert(res.error || 'Durum güncellenemedi.');
+      toast.error(res.error || 'Durum güncellenemedi.');
       setTogglingId(null);
       return;
     }
@@ -131,7 +134,7 @@ export default function AvmPaymentsClientUI({
     setDeletingId(id);
     const res = await deleteAvmPayment(id);
     if (!res.success) {
-      alert(res.error || 'Silme işlemi başarısız.');
+      toast.error(res.error || 'Silme işlemi başarısız.');
       setDeletingId(null);
       return;
     }
@@ -431,7 +434,7 @@ function AddAvmPaymentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.amount || !form.locationId) {
-      alert('Lokasyon ve tutar alanları zorunludur.');
+      toast.error('Lokasyon ve tutar alanları zorunludur.');
       return;
     }
 
@@ -448,10 +451,10 @@ function AddAvmPaymentForm({
       if (!res.success) throw new Error(res.error);
 
       // Reload to get the fresh data from server
-      window.location.reload();
+      router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.';
-      alert('Hata: ' + message);
+      toast.error('Hata: ' + message);
     } finally {
       setLoading(false);
     }

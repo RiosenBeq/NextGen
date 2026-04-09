@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import {
@@ -24,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import { deleteExpenseAttachment, updateAvmExpenseFinancials, updateAvmExpenseStatus, uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
+import { toast } from '@/hooks/useToast';
 
 interface Invoice {
   id: string;
@@ -64,7 +66,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   const handleToggleAvm = async (id: string, field: 'isSettled' | 'isOfficial', current: boolean) => {
     const res = await updateAvmExpenseStatus(id, { [field]: !current });
     if (!res.success) {
-      alert(res.error || 'Durum güncellenemedi.');
+      toast.error(res.error || 'Durum güncellenemedi.');
       return;
     }
 
@@ -87,7 +89,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       await updateAvmExpenseStatus(expenseId, { isOfficial: true });
       setAvmExpenses((prev) => prev.map((item) => (item.id === expenseId ? { ...item, attachmentUrl: upload.publicUrl, isOfficial: true } : item)));
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Belge yükleme hatası.');
+      toast.error(err instanceof Error ? err.message : 'Belge yükleme hatası.');
     } finally {
       setUploadingAvmId(null);
     }
@@ -104,7 +106,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       return;
     }
 
-    alert(res.error || 'Belge silinirken bir hata oluştu.');
+    toast.error(res.error || 'Belge silinirken bir hata oluştu.');
     setDeletingId(null);
   };
 
@@ -123,7 +125,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       paidBy: draft.paidBy,
     });
     if (!res.success) {
-      alert(res.error || 'AVM gider bilgisi güncellenemedi.');
+      toast.error(res.error || 'AVM gider bilgisi güncellenemedi.');
       setSavingAvmId(null);
       return;
     }
@@ -413,7 +415,7 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
           locations={locations}
           onClose={() => {
             setIsModalOpen(false);
-            window.location.reload();
+            router.refresh();
           }}
         />
       </PremiumModal>

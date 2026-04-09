@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import MonthlyPerformanceForm from './MonthlyPerformanceForm';
 import { deleteMonthlyPerformance } from '@/features/ledger/performans-actions';
+import { toast } from '@/hooks/useToast';
 
 interface CashFlowClientUIProps {
   locations: any[];
@@ -49,9 +50,9 @@ export default function CashFlowClientUI({
     setIsLoading(true);
     try {
       const res = await deleteMonthlyPerformance(id);
-      if (!res.success) alert(res.error);
+      if (!res.success) toast.error(res.error);
     } catch (err) {
-      alert('Silme sırasında hata oluştu.');
+      toast.error('Silme sırasında hata oluştu.');
     } finally {
       setIsLoading(false);
     }

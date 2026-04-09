@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { upsertDailyPerformance } from '../performans-actions';
+import { toast } from '@/hooks/useToast';
 
 const performanceSchema = z.object({
   locationId: z.string().min(1, 'Lokasyon seçiniz'),
@@ -70,7 +71,7 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
         });
         onSuccess?.();
       } else {
-        alert(res.error);
+        toast.error(res.error);
       }
     } finally {
       setLoading(false);

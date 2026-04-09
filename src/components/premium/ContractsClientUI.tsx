@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Upload, Trash2, Loader2, AlertCircle, CheckCircle2, ExternalLink, MapPin, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { deleteDocument, uploadDocument } from '@/features/belgeler/actions';
+import { toast } from '@/hooks/useToast';
 
 type ContractDoc = {
   id: string;
@@ -113,7 +114,7 @@ export default function ContractsClientUI({
     setDeletingId(id);
     const res = await deleteDocument(id);
     if (!res.success) {
-      alert(res.error || 'Silme işlemi başarısız.');
+      toast.error(res.error || 'Silme işlemi başarısız.');
       setDeletingId(null);
       return;
     }

@@ -3,6 +3,8 @@ import { getSystemParameters } from '@/features/ledger/actions';
 import { createClient } from '@/utils/supabase/server';
 import GelirGiderClientUI from '@/components/premium/GelirGiderClientUI';
 
+export const dynamic = 'force-dynamic';
+
 type PerfRow = {
   id: string;
   month: string;

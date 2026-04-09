@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import { 
@@ -32,6 +33,7 @@ import { LocationSettingsForm } from '@/features/ledger/components/LocationSetti
 import { ProfileSettingsForm } from '@/features/auth/components/ProfileSettingsForm';
 import { createSystemUser, deleteSystemUser, updateSystemUserAccess } from '@/features/auth/admin-actions';
 import { PremiumModal } from './PremiumModal';
+import { toast } from '@/hooks/useToast';
 
 interface SettingsClientProps {
   locations: any[];
@@ -41,6 +43,7 @@ interface SettingsClientProps {
 }
 
 export default function SettingsClientUI({ locations, parameters, users, currentUser }: SettingsClientProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'general' | 'locations' | 'users' | 'profile' | 'integrations'>('general');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +71,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
     const res = await createSystemUser({ email, password, fullName, role });
     if (res.success) {
       setIsUserModalOpen(false);
-      window.location.reload();
+      router.refresh();
     } else {
       setFormError(res.error || 'Kullanıcı oluşturulamadı.');
       setIsSubmitting(false);
@@ -78,7 +81,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const handleDeleteUser = async (id: string) => {
     if (confirm('Bu yetkili hesabı silmek istediğinize emin misiniz?')) {
       await deleteSystemUser(id);
-      window.location.reload();
+      router.refresh();
     }
   };
 
@@ -95,7 +98,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const handleSaveUser = async (id: string) => {
     const draft = draftProfiles[id];
     if (!draft?.fullName?.trim()) {
-      alert('Ad soyad alanı boş bırakılamaz.');
+      toast.error('Ad soyad alanı boş bırakılamaz.');
       return;
     }
 
@@ -108,11 +111,11 @@ export default function SettingsClientUI({ locations, parameters, users, current
 
     if (res.success) {
       setEditingUserId(null);
-      window.location.reload();
+      router.refresh();
       return;
     }
 
-    alert(res.error || 'Kullanıcı güncellenemedi.');
+    toast.error(res.error || 'Kullanıcı güncellenemedi.');
     setSavingUserId(null);
   };
 

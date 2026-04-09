@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import { 
@@ -29,6 +30,7 @@ import ExpenseForm from '@/features/ledger/components/ExpenseForm';
 import MonthlyPerformanceForm from '@/features/ledger/components/MonthlyPerformanceForm';
 import { deleteMonthlyPerformance } from '@/features/ledger/actions';
 import Link from 'next/link';
+import { toast } from '@/hooks/useToast';
 
 interface GelirGiderProps {
   summary: {
@@ -58,6 +60,7 @@ export default function GelirGiderClientUI({
   breakdown,
   availableMonths
 }: GelirGiderProps) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -71,16 +74,16 @@ export default function GelirGiderClientUI({
       const res = await deleteMonthlyPerformance(perfId);
       if (res.success) {
         setIsDrawerOpen(false);
-        window.location.reload();
+        router.refresh();
       } else {
-        alert("Silme hatası: " + res.error);
+        toast.error("Silme hatası: " + res.error);
       }
     }
   };
 
   const getMonthName = (monthId: string) => {
     if (!monthId) return 'Tümü';
-    const [y, m] = monthId.split('-');
+  const [y, m] = monthId.split('-');
     const d = new Date(parseInt(y), parseInt(m) - 1, 1);
     return d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }).toUpperCase();
   };
@@ -314,7 +317,7 @@ export default function GelirGiderClientUI({
       </div>
 
       <PremiumModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Gider Girişi" maxWidth="max-w-xl">
-        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); window.location.reload(); }} />
+        <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); router.refresh(); }} />
       </PremiumModal>
 
       <PremiumDrawer isOpen={isDrawerOpen} onClose={() => { setIsDrawerOpen(false); setIsEditing(false); }} title={isEditing ? "Verileri Güncelle" : "Dönem Finansal Detayı"}>

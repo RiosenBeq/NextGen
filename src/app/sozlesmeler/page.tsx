@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server';
 import ContractsClientUI from '@/components/premium/ContractsClientUI';
 import { FileText, ShieldCheck } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Sözleşmeler — NextGenBox',
 };

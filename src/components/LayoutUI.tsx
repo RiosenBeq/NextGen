@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   FileText,
+  StickyNote,
+  ScrollText,
   Settings,
   User,
   TrendingUp,
@@ -42,8 +44,8 @@ const navLinks = [
   { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Finansal Analiz" },
   { href: "/faturalar", label: "Faturalar & Belgeler", icon: Receipt, category: "Finansal Analiz" },
   { href: "/avm-odemeleri", label: "AVM Ödeme Takibi", icon: Building2, category: "Finansal Analiz" },
-  { href: "/sozlesmeler", label: "Sözleşmeler", icon: FileText, category: "Finansal Analiz" },
-  { href: "/notlar", label: "Notlar", icon: FileText, category: "Destek" },
+  { href: "/sozlesmeler", label: "Sözleşmeler", icon: ScrollText, category: "Finansal Analiz" },
+  { href: "/notlar", label: "Notlar", icon: StickyNote, category: "Destek" },
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
 ];

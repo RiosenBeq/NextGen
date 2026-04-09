@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import { updateMonthlyPerformance } from '../actions';
@@ -19,6 +20,7 @@ interface PerformanceFormProps {
 }
 
 export default function MonthlyPerformanceForm({ id, initialData, onClose, onDelete }: PerformanceFormProps) {
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export default function MonthlyPerformanceForm({ id, initialData, onClose, onDel
 
     if (res.success) {
       onClose();
-      window.location.reload();
+      router.refresh();
     } else {
       setError(res.error || 'Güncelleme hatası.');
     }

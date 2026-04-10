@@ -8,7 +8,7 @@ import * as z from 'zod';
 import { 
   Save, Calendar as CalendarIcon, 
   Settings, TrendingUp, Beaker, 
-  MessageSquare, ChevronDown
+  MessageSquare, ChevronDown, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';

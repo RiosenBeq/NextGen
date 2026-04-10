@@ -12,6 +12,7 @@ interface Expense {
   amountWithVat: number;
   type: string;
   paidBy?: string;
+  isOfficial?: boolean;
   location?: { name: string } | null;
 }
 
@@ -64,7 +65,14 @@ export default function AylikOzetExpenseTable({ initialExpenses }: { initialExpe
               <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-slate-800">{exp.description}</span>
+                    <span className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                      {exp.description}
+                      {!exp.isOfficial && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-orange-50 text-orange-600 border border-orange-100 uppercase tracking-tighter">
+                          Harici
+                        </span>
+                      )}
+                    </span>
                     <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                       {exp.location?.name || 'Genel'}
                     </span>
@@ -110,7 +118,12 @@ export default function AylikOzetExpenseTable({ initialExpenses }: { initialExpe
         {expenses.map((exp) => (
           <div key={exp.id} className="px-5 py-4 flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-800 truncate">{exp.description}</p>
+              <p className="text-sm font-semibold text-slate-800 truncate flex items-center gap-2">
+                {exp.description}
+                {!exp.isOfficial && (
+                  <span className="text-[8px] font-black text-orange-600 bg-orange-50 px-1 rounded uppercase">H</span>
+                )}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] font-medium text-slate-400 uppercase">
                   {exp.location?.name || 'Genel'}

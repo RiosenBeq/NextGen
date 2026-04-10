@@ -54,6 +54,7 @@ export default function ExpenseForm({
     categoryId: initialData?.categoryId || 'operational',
     locationId: initialData?.locationId || '',
     paidBy: initialData?.paidBy || 'Ortak Hesap',
+    isOfficial: initialData?.isOfficial ?? (parseFloat(initialData?.vatRate || '20') > 0),
     date: initialData?.date 
       ? new Date(initialData.date).toISOString().split('T')[0] 
       : new Date().toISOString().split('T')[0]
@@ -62,6 +63,14 @@ export default function ExpenseForm({
   const amountNum = parseFloat(formData.amount) || 0;
   const vatNum = parseFloat(formData.vatRate) || 0;
   const totalWithVat = amountNum * (1 + vatNum / 100);
+
+  // Auto-set isOfficial based on VAT rate
+  const lastVatRate = useRef(formData.vatRate);
+  if (lastVatRate.current !== formData.vatRate) {
+    const isNowOfficial = parseFloat(formData.vatRate) > 0;
+    setFormData(prev => ({ ...prev, isOfficial: isNowOfficial }));
+    lastVatRate.current = formData.vatRate;
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError('');
@@ -361,6 +370,39 @@ export default function ExpenseForm({
               </div>
             </div>
           </div>
+
+          {/* isOfficial Toggle */}
+          <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                formData.isOfficial ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-500"
+              )}>
+                {formData.isOfficial ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Resmi Gider İşlemi</p>
+                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  {formData.isOfficial ? "Grup adına faturalandırılacak" : "Faturasız / Harici harcama"}
+                </p>
+              </div>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, isOfficial: !formData.isOfficial })}
+              className={cn(
+                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none ring-offset-2 focus:ring-2 ring-blue-100",
+                formData.isOfficial ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "bg-slate-300"
+              )}
+            >
+              <span className={cn(
+                "inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out",
+                formData.isOfficial ? "translate-x-6" : "translate-x-1"
+              )} />
+            </button>
+          </div>
+
 
           <div className="space-y-4">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Ödemeyi Yapan</label>

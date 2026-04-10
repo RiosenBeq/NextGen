@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { deleteExpense, toggleExpenseSettled } from '../actions';
@@ -182,7 +182,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
               <th className="px-8 py-5 whitespace-nowrap">Açıklama & Takvim</th>
               <th className="px-8 py-5 whitespace-nowrap">Kategori & Tip</th>
               <th className="px-8 py-5 whitespace-nowrap">Ödeme Kaynağı</th>
-              <th className="px-8 py-5 whitespace-nowrap text-center">Mahsup Durumu</th>
+              <th className="px-8 py-5 whitespace-nowrap text-center">Durum</th>
               <th className="px-8 py-5 whitespace-nowrap text-center">Evrak</th>
               <th className="px-8 py-5 whitespace-nowrap text-right">Vergi Verisi</th>
               <th className="px-8 py-5 whitespace-nowrap text-right" style={{ color: '#2F6BFF' }}>Net Tutar</th>
@@ -244,24 +244,30 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                   </div>
                 </td>
                 <td className="px-8 py-6 text-center">
-                  <button 
-                    disabled={settlingId === exp.id}
-                    onClick={() => handleToggleSettled(exp)}
-                    className={cn(
-                      "inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest shadow-sm",
-                      exp.description.includes('[MAHSUP]') 
-                        ? "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100" 
-                        : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
-                    )}
-                  >
-                     {settlingId === exp.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                     ) : exp.description.includes('[MAHSUP]') ? (
-                        <><CheckCircle2 className="w-4 h-4 text-emerald-500" /> MAHSUP EDİLDİ</>
-                     ) : (
-                        <><div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300" /> BEKLEMEDE</>
-                     )}
-                  </button>
+                  <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
+                    <button 
+                      disabled={settlingId === exp.id}
+                      onClick={() => handleToggleSettled(exp)}
+                      className={cn(
+                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-[8px] font-black uppercase tracking-widest",
+                        exp.description.includes('[MAHSUP]') 
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-600" 
+                          : "bg-white border-slate-200 text-slate-500"
+                      )}
+                    >
+                       {settlingId === exp.id ? <Loader2 className="w-3 animate-spin" /> : exp.description.includes('[MAHSUP]') ? "MAHSUP" : "BEKLEMEDE"}
+                    </button>
+                    
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border",
+                      exp.isOfficial 
+                        ? "bg-blue-50 border-blue-100 text-blue-600" 
+                        : "bg-orange-50 border-orange-100 text-orange-600"
+                    )}>
+                      {exp.isOfficial ? <ShieldCheck size={10} /> : <ShieldAlert size={10} />}
+                      {exp.isOfficial ? "RESMİ" : "HARİCİ"}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-8 py-6 text-center">
                   {exp.attachmentUrl || (exp.documents && exp.documents.length > 0) ? (

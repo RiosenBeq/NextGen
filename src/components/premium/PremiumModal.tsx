@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, LayoutGrid, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { X, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Portal } from '@/components/ui/Portal';
 
@@ -14,7 +14,7 @@ interface PremiumModalProps {
   maxWidth?: string;
 }
 
-const overlayVariants = {
+const overlayVariants: Variants = {
   hidden: { opacity: 0, backdropFilter: 'blur(0px)' },
   visible: { 
     opacity: 1, 
@@ -28,7 +28,7 @@ const overlayVariants = {
   }
 };
 
-const modalVariants = {
+const modalVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9, y: 30, filter: 'blur(10px)' },
   visible: { 
     opacity: 1, 

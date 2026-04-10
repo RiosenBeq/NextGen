@@ -30,7 +30,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   const totalInv = (investments || []).reduce((acc: any, i: any) => acc + (i.totalAmount || 0), 0);
   const monthlyAmortization = totalInv > 0 ? totalInv / 36 : 0;
 
-  // Consolidate duplicate MonthlyPerformance records for the same location+month
+  // Ensure accurate MonthlyPerformance mapping
   function monthIdOf(val: string) {
     return val.includes('T') ? val.split('T')[0].slice(0, 7) : val.slice(0, 7);
   }
@@ -41,6 +41,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
     const mId = monthIdOf(String(row.month));
     const key = `${row.locationId}_${mId}`;
     const existing = consolidatedMap.get(key);
+    
     if (!existing) {
       consolidatedMap.set(key, {
         ...row,
@@ -51,16 +52,13 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
         _ids: [row.id],
       });
     } else {
+      // Logic for handling legacy duplicates if any exist
       existing.sessionCount += Number(row.sessionCount || 0);
-      existing.extraExpenseAmount = Number(existing.extraExpenseAmount || 0) + Number(row.extraExpenseAmount || 0);
+      existing.extraExpenseAmount += Number(row.extraExpenseAmount || 0);
       if (row.extraExpenseNotes) {
         existing.extraExpenseNotes = [existing.extraExpenseNotes, row.extraExpenseNotes].filter(Boolean).join(' | ');
       }
       existing._ids.push(row.id);
-      const deterministicId = `perf_${mId}_${row.locationId}`;
-      if (row.id === deterministicId || existing.id !== deterministicId) {
-        existing.id = row.id;
-      }
     }
   }
   const allConsolidated = Array.from(consolidatedMap.values());

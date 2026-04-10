@@ -47,11 +47,18 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
     if (error) throw error;
 
+    await createAuditLog('CREATE', 'MonthlyPerformance', record.id, {
+      locationId: validatedData.locationId,
+      sessions: validatedData.sessionCount,
+      month: normalizedMonth
+    });
+
     revalidatePath('/performans');
     revalidatePath('/');
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
+    revalidatePath('/aylik-ozet');
 
     return { success: true };
   } catch (error: any) {
@@ -89,6 +96,7 @@ export async function updateMonthlyPerformance(id: string, data: any) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/finans');
+    revalidatePath('/aylik-ozet');
     
     return { success: true };
   } catch (error: any) {
@@ -110,6 +118,7 @@ export async function deleteMonthlyPerformance(id: string) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/finans');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -346,6 +355,7 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
     revalidatePath('/giderler');
     revalidatePath('/');
     revalidatePath('/gelir-gider');
+    revalidatePath('/aylik-ozet');
     
     return { success: true, warning: docError ? 'Belge dosyaya bağlandı; Document kaydı oluşturulamadı.' : undefined };
   } catch (error: any) {
@@ -398,6 +408,7 @@ export async function deleteExpenseAttachment(id: string) {
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     revalidatePath('/');
+    revalidatePath('/aylik-ozet');
 
     return { success: true };
   } catch (error: any) {
@@ -458,6 +469,7 @@ export async function addInvestment(data: any) {
     revalidatePath('/yatirimlar');
     revalidatePath('/giderler');
     revalidatePath('/');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -495,6 +507,7 @@ export async function updateInvestment(id: string, data: any) {
     revalidatePath('/yatirimlar');
     revalidatePath('/giderler');
     revalidatePath('/');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -512,6 +525,7 @@ export async function deleteInvestment(id: string) {
     revalidatePath('/yatirimlar');
     revalidatePath('/giderler');
     revalidatePath('/');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -549,6 +563,7 @@ export async function updateLocationParameters(id: string, data: any) {
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -688,6 +703,7 @@ export async function updateSystemParameter(key: string, value: number) {
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     console.error("Update System Param Error:", error);
@@ -722,6 +738,7 @@ export async function resetSystemParameters() {
     revalidatePath('/raporlar');
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -746,6 +763,7 @@ export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: 
     revalidatePath('/faturalar');
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -789,6 +807,7 @@ export async function updateAvmExpenseFinancials(id: string, updates: { amountWi
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     revalidatePath('/raporlar');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -806,6 +825,7 @@ export async function toggleExpenseSettled(id: string, currentDesc: string) {
   if (error) return { success: false, error: error.message };
   
   revalidatePath('/giderler');
+  revalidatePath('/aylik-ozet');
   return { success: true };
 }
 
@@ -824,5 +844,6 @@ export async function autoSettleOldExpenses() {
     }
   }
   revalidatePath('/giderler');
+  revalidatePath('/aylik-ozet');
   return { success: true, count };
 }

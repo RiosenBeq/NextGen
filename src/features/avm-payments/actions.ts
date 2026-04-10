@@ -35,6 +35,8 @@ export async function addAvmPayment(data: unknown) {
     });
 
     revalidatePath('/avm-odemeleri');
+    revalidatePath('/aylik-ozet');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.';
@@ -74,6 +76,8 @@ export async function updateAvmPayment(
     });
 
     revalidatePath('/avm-odemeleri');
+    revalidatePath('/aylik-ozet');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Güncelleme hatası.';
@@ -104,6 +108,8 @@ export async function toggleAvmPaymentPaid(id: string, currentlyPaid: boolean) {
     });
 
     revalidatePath('/avm-odemeleri');
+    revalidatePath('/aylik-ozet');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Durum güncellenemedi.';
@@ -123,6 +129,8 @@ export async function deleteAvmPayment(id: string) {
     await createAuditLog('DELETE', 'AvmPayment', id);
 
     revalidatePath('/avm-odemeleri');
+    revalidatePath('/aylik-ozet');
+    revalidatePath('/raporlar');
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Silme işlemi başarısız.';

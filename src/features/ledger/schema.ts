@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const monthlyPerformanceSchema = z.object({
   locationId: z.string().min(1, "Aylık performans için bir AVM seçilmelidir."),
   month: z.string().datetime({ message: "Geçerli bir tarih olmalıdır." }).or(z.date()),
-  sessionCount: z.number().min(0, "Oturum sayısı 0'dan küçük olamaz."),
+  sessionCount: z.union([z.string(), z.number()]).transform((val) => val ? parseFloat(String(val)) : 0),
   extraExpenseAmount: z.union([z.string(), z.number()]).optional().nullable().transform((val) => val ? parseFloat(String(val)) : 0),
   extraExpenseNotes: z.string().optional().nullable(),
 });

@@ -6,9 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { 
-  Plus, Save, Calendar as CalendarIcon, 
+  Save, Calendar as CalendarIcon, 
   Settings, TrendingUp, Beaker, 
-  MessageSquare, Trash2, ChevronDown
+  MessageSquare, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -47,7 +47,6 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
     },
   });
 
-
   const selectedLocationId = form.watch('locationId');
   const selectedLocationName = locations.find((loc) => loc.id === selectedLocationId)?.name;
 
@@ -64,12 +63,7 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
       });
 
       if (res.success) {
-        form.reset({
-          ...values,
-          sessionCount: 0,
-          testCount: 0,
-          notes: '',
-        });
+        toast.success('Performans verisi kaydedildi.');
         onSuccess?.();
       } else {
         toast.error(res.error || 'Bir hata oluştu.');
@@ -80,132 +74,119 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
   };
 
   return (
-    <div className="premium-card p-6 border border-slate-200 bg-white">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-          <TrendingUp className="w-5 h-5" />
+    <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 sm:p-8 space-y-10">
+      {/* Premium Header Card */}
+      <section className="relative p-6 sm:p-8 rounded-[32px] bg-slate-900 overflow-hidden shadow-2xl shadow-slate-200">
+        <div className="absolute top-0 right-0 p-8 opacity-5 text-white">
+          <TrendingUp size={120} />
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Günlük Performans Girişi</h2>
-          <p className="text-xs text-slate-500 font-medium italic">Sistemi manuel verilerle besle</p>
-          {selectedLocationName && (
-            <p className="mt-1 inline-flex items-center rounded-lg border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
-              Şube: {selectedLocationName}
-            </p>
-          )}
+        
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-3 text-blue-400">
+            <TrendingUp size={14} />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">PERFORMANS GİRİŞİ</span>
+          </div>
+          <h2 className="text-3xl font-black text-white tracking-tight">Günlük Veri Girişi</h2>
+          <p className="text-sm text-slate-400 font-medium">Şube bazlı günlük seans ve test sayılarını kaydedin.</p>
         </div>
-      </div>
+      </section>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <Settings className="w-3.5 h-3.5" /> Lokasyon
-            </label>
+      {/* Main Inputs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lokasyon Seçimi</label>
+          <div className="relative group">
+            <Settings className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <select
               {...form.register('locationId')}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none appearance-none"
+              className="w-full px-0 py-3 bg-transparent border-b border-slate-200 text-sm font-bold text-slate-900 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer"
             >
-              <option value="">Seçiniz...</option>
+              <option value="">Lokasyon Seçiniz...</option>
               {locations.map(loc => (
                 <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
-            {form.formState.errors.locationId && (
-              <p className="text-[10px] font-bold text-red-500 uppercase tracking-wide">{form.formState.errors.locationId.message}</p>
-            )}
           </div>
+          {form.formState.errors.locationId && (
+            <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mt-1">{form.formState.errors.locationId.message}</p>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <CalendarIcon className="w-3.5 h-3.5" /> Tarih
-            </label>
+        <div className="space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">İşlem Tarihi</label>
+          <div className="relative group">
+            <CalendarIcon className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               type="date"
               {...form.register('date')}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+              className="w-full px-0 py-3 bg-transparent border-b border-slate-200 text-sm font-bold text-slate-900 focus:border-blue-500 outline-none transition-all cursor-pointer"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="space-y-4">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Oturum Sayısı (Seans)</label>
+          <div className="relative">
+            <TrendingUp size={16} className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-300" />
+            <input
+              type="number"
+              {...form.register('sessionCount')}
+              className="w-full px-0 py-4 bg-transparent border-b border-slate-200 text-4xl font-black text-slate-900 focus:border-blue-500 outline-none transition-all tabular-nums"
+              placeholder="0"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5" /> Oturum Sayısı
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                {...form.register('sessionCount')}
-                className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">Seans</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <Beaker className="w-3.5 h-3.5" /> Test Sayısı
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                {...form.register('testCount')}
-                className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">Test</span>
-            </div>
+        <div className="space-y-4">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Test Sayısı</label>
+          <div className="relative">
+            <Beaker size={16} className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-300" />
+            <input
+              type="number"
+              {...form.register('testCount')}
+              className="w-full px-0 py-4 bg-transparent border-b border-slate-200 text-4xl font-black text-slate-900 focus:border-blue-500 outline-none transition-all tabular-nums"
+              placeholder="0"
+            />
           </div>
         </div>
+      </div>
 
-        <div className="pt-2 border-t border-slate-100 mt-4">
-           <button 
-             type="button" 
-             onClick={() => setShowExtra(!showExtra)}
-             className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors"
-           >
-             <Plus className={cn("w-3.5 h-3.5 transition-transform", showExtra ? "rotate-45" : "0")} />
-             Notlar Ekle
-           </button>
+      {/* Notes Area */}
+      <div className="space-y-4">
+        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Günün Notları (Opsiyonel)</label>
+        <textarea
+          {...form.register('notes')}
+          rows={3}
+          className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-200 focus:ring-4 focus:ring-blue-50/50 outline-none transition-all resize-none"
+          placeholder="Bugüne dair özel notlarınız..."
+        />
+      </div>
 
-           <AnimatePresence>
-             {showExtra && (
-               <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                      <MessageSquare className="w-3.5 h-3.5" /> Notlar
-                    </label>
-                    <textarea
-                      {...form.register('notes')}
-                      placeholder="Günün notunu giriniz..."
-                      className="w-full h-20 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:bg-white focus:border-blue-400 transition-all outline-none resize-none"
-                    />
-                  </div>
-               </div>
-             )}
-           </AnimatePresence>
-        </div>
-
+      {/* Action Buttons */}
+      <div className="flex items-center gap-4 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={loading}
+          className="px-8 py-5 rounded-2xl text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors active:scale-95 disabled:opacity-50"
+        >
+          Vazgeç
+        </button>
         <button
           type="submit"
           disabled={loading}
-          className={cn(
-            "w-full h-12 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg shadow-slate-200 flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-[0.98]",
-            loading && "opacity-70 cursor-not-allowed"
-          )}
+          className="flex-1 py-5 bg-slate-900 hover:bg-slate-800 text-white rounded-[24px] text-[11px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-slate-200 transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
         >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <>
-              <Save size={18} />
-              Veriyi Kaydet
-            </>
-          )}
+          {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+          VERİYİ SİSTEME KAYDET
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
+
 
 

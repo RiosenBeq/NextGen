@@ -6,8 +6,8 @@ import { useToast } from '@/components/ui/Toast';
 import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
 import { compressImage, formatFileSize } from '@/lib/image-utils';
 import { 
-  Loader2, Upload, X, FileText, Image as ImageIcon, Receipt, 
-  Calendar, MapPin, Tag, Percent, ChevronDown, CheckCircle2, AlertCircle, CircleDollarSign, ArrowRight
+  Loader2, Upload, X, FileText, Receipt, 
+  Calendar, MapPin, Percent, ChevronDown, CheckCircle2, AlertCircle, CircleDollarSign, ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -64,14 +64,6 @@ export default function ExpenseForm({
   const vatNum = parseFloat(formData.vatRate) || 0;
   const totalWithVat = amountNum * (1 + vatNum / 100);
 
-  // Auto-set isOfficial based on VAT rate
-  const lastVatRate = useRef(formData.vatRate);
-  if (lastVatRate.current !== formData.vatRate) {
-    const isNowOfficial = parseFloat(formData.vatRate) > 0;
-    setFormData(prev => ({ ...prev, isOfficial: isNowOfficial }));
-    lastVatRate.current = formData.vatRate;
-  }
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError('');
     const selectedFile = e.target.files?.[0];
@@ -79,14 +71,13 @@ export default function ExpenseForm({
 
     const allowedMimes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedMimes.includes(selectedFile.type)) {
-      setFileError(`Desteklenmeyen format: ${selectedFile.type || 'bilinmiyor'}. Lütfen PDF, JPG veya PNG yükleyin.`);
+      setFileError(`Desteklenmeyen format. Lütfen PDF veya Görsel yükleyin.`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    const sizeMB = selectedFile.size / (1024 * 1024);
-    if (sizeMB > 15) {
-      setFileError(`Dosya çok büyük (${sizeMB.toFixed(1)}MB). Maksimum 15MB yüklenebilir.`);
+    if (selectedFile.size > 15 * 1024 * 1024) {
+      setFileError(`Dosya çok büyük (Maks 15MB).`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -106,7 +97,7 @@ export default function ExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.amount || !formData.description) {
-      toast.error('Sisteme kayıt yapabilmek için açıklama ve matrah bilgilerini eksiksiz girmelisiniz.');
+      toast.error('Lütfen zorunlu alanları doldurun.');
       return;
     }
 
@@ -116,13 +107,11 @@ export default function ExpenseForm({
 
       if (file) {
         let fileToUpload: File = file;
-
         if (!isPdf) {
           setUploadStatus('compressing');
           try {
             fileToUpload = await compressImage(file);
-          } catch (compErr: any) {
-            console.warn("Compression failed, uploading original:", compErr.message);
+          } catch (compErr) {
             fileToUpload = file;
           }
         }
@@ -130,21 +119,15 @@ export default function ExpenseForm({
         setUploadStatus('uploading');
         const uploadFormData = new FormData();
         uploadFormData.append('file', fileToUpload);
-        
         const uploadResult = await uploadExpenseAttachment(uploadFormData);
-        if (!uploadResult.success || !uploadResult.publicUrl) {
-          throw new Error(uploadResult.error || 'Dosya yükleme başarısız.');
-        }
+        if (!uploadResult.success || !uploadResult.publicUrl) throw new Error(uploadResult.error);
         attachmentUrl = uploadResult.publicUrl;
-        setUploadStatus('done');
       }
 
       const payload = {
         ...formData,
         locationId: formData.locationId === '' ? null : formData.locationId,
         attachmentUrl,
-        categoryId: formData.categoryId,
-        paidBy: formData.paidBy,
         month: new Date(formData.date).toISOString()
       };
 
@@ -154,423 +137,270 @@ export default function ExpenseForm({
 
       if (!result.success) throw new Error(result.error);
 
-      if (onClose) {
-        onClose();
-        router.refresh(); 
-      } else {
-        setFormData({
-          description: '',
-          amount: '',
-          vatRate: '20',
-          type: 'ONE_TIME',
-          categoryId: 'operational',
-          locationId: '',
-          paidBy: 'Ortak Hesap',
-          isOfficial: true,
-          date: new Date().toISOString().split('T')[0]
-        });
-        setFile(null);
-        setPreviewUrl(null);
-        setUploadStatus('idle');
-        router.refresh();
-      }
+      toast.success(initialData ? 'Kayıt güncellendi.' : 'Harcama kaydedildi.');
+      if (onClose) onClose();
+      router.refresh();
     } catch (err: any) {
-      console.error(err);
-      toast.error('Hata: ' + err.message);
+      toast.error(err.message || 'Bir hata oluştu.');
     } finally {
       setLoading(false);
       setUploadStatus('idle');
     }
   };
 
-  const removeFile = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFile(null);
-    setPreviewUrl(null);
-    setIsPdf(false);
-    setFileError('');
-    setUploadStatus('idle');
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   return (
-    <div className="bg-white rounded-2xl overflow-hidden w-full">
-      <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-700 border border-slate-200">
-            <Receipt className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              {initialData ? 'Gideri Güncelle' : 'Yeni Gider Kaydı'}
-            </h2>
-            <p className="text-xs text-slate-500">Operasyonel maliyet ve fiş girişi</p>
-          </div>
+    <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-10">
+      {/* Financial Hero Section */}
+      <section className="relative p-6 sm:p-8 rounded-[32px] bg-slate-900 overflow-hidden shadow-2xl shadow-slate-200">
+        <div className="absolute top-0 right-0 p-6 opacity-10">
+          <CircleDollarSign size={80} className="text-white" />
         </div>
         
-        {onClose && (
-          <button 
-            onClick={onClose} 
-            className="w-9 h-9 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center border border-slate-100"
-          >
-            <X size={18} />
-          </button>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-5 space-y-6">
-        {/* Step 1: Basic Info */}
-        <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-700">Temel Bilgiler</h3>
-          
-          <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">İşlem Açıklaması <span className="text-rose-500">*</span></label>
+        <div className="relative z-10 space-y-6">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">MATRAH (KDV HARİÇ)</label>
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-light text-slate-500">₺</span>
               <input
-                type="text"
+                type="number"
+                step="0.01"
                 required
-                placeholder="Örn: Kırtasiye alımı, Tamir masrafı..."
-                className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900 shadow-sm"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="0.00"
+                className="w-full bg-transparent border-none p-0 text-4xl sm:text-5xl font-black text-white focus:ring-0 placeholder:text-slate-800 tabular-nums outline-none"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">İşlem Tarihi <span className="text-rose-500">*</span></label>
-              <div className="relative group">
-                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-colors group-focus-within:text-blue-600" />
-                <input
-                  type="date"
-                  required
-                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-slate-900 cursor-pointer"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
+          <div className="flex flex-wrap items-center gap-4 sm:gap-8 pt-6 border-t border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400">
+                <Percent size={14} />
               </div>
+              <select
+                className="bg-transparent border-none text-sm font-bold text-white focus:ring-0 appearance-none cursor-pointer pr-6"
+                style={{ backgroundImage: 'none' }}
+                value={formData.vatRate}
+                onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
+              >
+                <option value="0" className="bg-slate-900">%0 KDV</option>
+                <option value="1" className="bg-slate-900">%1 KDV</option>
+                <option value="10" className="bg-slate-900">%10 KDV</option>
+                <option value="20" className="bg-slate-900">%20 KDV</option>
+              </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Lokasyon</label>
-              <div className="relative group">
-                <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-colors group-focus-within:text-blue-600" />
-                <select
-                  className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-slate-900 appearance-none cursor-pointer"
-                  value={formData.locationId}
-                  onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                >
-                  <option value="">Genel / Tüm Şubeler</option>
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <div className="h-4 w-px bg-white/10 hidden sm:block" />
+
+            <div className="flex items-center gap-3">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">TOPLAM:</div>
+              <div className="text-xl font-bold text-blue-400 tabular-nums">
+                ₺{totalWithVat.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Step 2: Financial Details */}
-        <div className="space-y-6 pt-8 border-t border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">02</div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest italic">MİKTAR & KDV</h3>
+      {/* Basic Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">İşlem Açıklaması</label>
+          <input
+            type="text"
+            required
+            placeholder="Örn: Ofis malzemeleri, internet faturası..."
+            className="w-full px-0 py-3 bg-transparent border-b border-slate-200 text-lg font-medium text-slate-900 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">İşlem Tarihi</label>
+          <div className="relative">
+            <Calendar className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="date"
+              required
+              className="w-full px-0 py-3 bg-transparent border-b border-slate-200 text-sm font-bold text-slate-900 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            />
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Matrah (KDV Hariç) <span className="text-rose-500">*</span></label>
-              <div className="relative group">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-blue-600 text-lg">₺</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  placeholder="0.00"
-                  className="w-full pl-12 pr-5 py-5 bg-white border border-slate-200 shadow-sm rounded-2xl text-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono font-black text-slate-900 tracking-tight"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                />
-              </div>
-            </div>
+        </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">KDV Oranı</label>
-              <div className="relative group">
-                <Percent className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <select
-                  className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
-                  value={formData.vatRate}
-                  onChange={(e) => setFormData({ ...formData, vatRate: e.target.value })}
-                >
-                  <option value="0">%0 Vergisiz</option>
-                  <option value="1">%1 İndirimli</option>
-                  <option value="10">%10 Hizmet</option>
-                  <option value="20">%20 Standart</option>
-                </select>
-                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+        <div className="space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lokasyon</label>
+          <div className="relative">
+            <MapPin className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <select
+              className="w-full px-0 py-3 bg-transparent border-b border-slate-200 text-sm font-bold text-slate-900 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer"
+              value={formData.locationId}
+              onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+            >
+              <option value="">Genel / Tüm Şubeler</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
           </div>
+        </div>
+      </div>
 
-          <AnimatePresence>
-            {amountNum > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                className="p-6 rounded-3xl bg-blue-600 text-white shadow-xl shadow-blue-200 overflow-hidden relative group"
+      {/* Advanced Settings */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+        <div className="space-y-4">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Kategori & Tip</label>
+          <div className="space-y-3">
+            <div className="group relative">
+              <select
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-200 outline-none transition-all appearance-none cursor-pointer"
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
               >
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-700">
-                  <CircleDollarSign size={80} />
-                </div>
-                <div className="relative z-10 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-100">Ödenecek Toplam (KDV DAHİL)</p>
-                    <p className="text-xs font-medium text-blue-100/80 mt-0.5">Nihai işlem maliyeti</p>
-                  </div>
-                  <span className="text-3xl font-bold tracking-tighter italic">
-                    ₺{totalWithVat.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Ödeme Tipi</label>
-              <div className="relative">
-                <select
-                  className="w-full pl-5 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                >
-                  {PAYMENT_FREQUENCIES.map(f => (
-                    <option key={f.id} value={f.id}>{f.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Kategori</label>
-              <div className="relative">
-                <select
-                  className="w-full pl-5 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
-                  value={formData.categoryId}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                >
-                  {EXPENSE_CATEGORIES.map(c => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* isOfficial Toggle */}
-          <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                formData.isOfficial ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-500"
-              )}>
-                {formData.isOfficial ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-800">Resmi Gider İşlemi</p>
-                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                  {formData.isOfficial ? "Grup adına faturalandırılacak" : "Faturasız / Harici harcama"}
-                </p>
-              </div>
+                {EXPENSE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" />
             </div>
             
+            <div className="group relative">
+              <select
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-200 outline-none transition-all appearance-none cursor-pointer"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              >
+                {PAYMENT_FREQUENCIES.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+              </select>
+              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Evrak & Ödeme</label>
+          <div className="space-y-3">
+            {/* isOfficial Toggle */}
             <button
               type="button"
               onClick={() => setFormData({ ...formData, isOfficial: !formData.isOfficial })}
               className={cn(
-                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none ring-offset-2 focus:ring-2 ring-blue-100",
-                formData.isOfficial ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "bg-slate-300"
+                "w-full px-4 py-3 rounded-xl border flex items-center justify-between transition-all group",
+                formData.isOfficial 
+                  ? "bg-blue-50/50 border-blue-100 text-blue-700" 
+                  : "bg-slate-50/50 border-slate-100 text-slate-500 hover:border-slate-200"
               )}
             >
-              <span className={cn(
-                "inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out",
-                formData.isOfficial ? "translate-x-6" : "translate-x-1"
-              )} />
+              <span className="text-xs font-bold">Resmi İşlem / Fatura</span>
+              <div className={cn(
+                "w-7 h-4 rounded-full relative transition-colors p-0.5",
+                formData.isOfficial ? "bg-blue-500" : "bg-slate-300"
+              )}>
+                <div className={cn(
+                  "w-3 h-3 bg-white rounded-full transition-transform",
+                  formData.isOfficial ? "translate-x-3" : "translate-x-0"
+                )} />
+              </div>
             </button>
-          </div>
 
-
-          <div className="space-y-4">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Ödemeyi Yapan</label>
-            <div className="flex flex-wrap gap-2.5">
-              {[
-                { id: 'Ortak Hesap', label: 'Ortak Hesap' },
-                { id: 'Okan', label: 'Okan' },
-                { id: 'Talha', label: 'Talha' },
-                { id: 'Furkan', label: 'Furkan' },
-                { id: 'Alp', label: 'Alp' }
-              ].map((partner) => {
-                const isSelected = formData.paidBy === partner.id;
-                return (
-                  <button
-                    key={partner.id}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, paidBy: partner.id })}
-                    className={cn(
-                      "px-6 py-3.5 rounded-xl border font-bold transition-all active:scale-95 text-sm outline-none w-full sm:w-auto",
-                      isSelected 
-                        ? "bg-slate-900 border-slate-900 text-white shadow-lg" 
-                        : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
-                    )}
-                  >
-                    {partner.label}
-                  </button>
-                );
-              })}
+            {/* Paid By */}
+            <div className="group relative">
+               <select
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-200 outline-none transition-all appearance-none cursor-pointer"
+                value={formData.paidBy}
+                onChange={(e) => setFormData({ ...formData, paidBy: e.target.value })}
+              >
+                {['Ortak Hesap', 'Okan', 'Talha', 'Furkan', 'Alp'].map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Step 3: Evrak ve Belge */}
-        <div className="space-y-6 pt-8 border-t border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">03</div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest italic">BELGE YÜKLEME</h3>
-          </div>
+      {/* Document Upload Area */}
+      <div className="pt-4">
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "group relative p-8 rounded-[24px] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all cursor-pointer overflow-hidden bg-slate-50 hover:bg-white",
+            file && !fileError ? "border-blue-200 bg-blue-50/20" : "border-slate-100 hover:border-blue-200"
+          )}
+        >
+          <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleFileChange} />
           
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              "group relative flex flex-col items-center justify-center p-12 rounded-[32px] border-2 border-dashed transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
-              file && !fileError
-                ? "border-emerald-200 bg-emerald-50/30"
-                : fileError
-                ? "border-rose-200 bg-rose-50/30"
-                : "border-slate-200 bg-slate-50/30 hover:border-blue-300 hover:bg-blue-50/30"
-            )}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept=".pdf,.jpg,.jpeg,.png,.webp"
-              onChange={handleFileChange}
-            />
-
-            <AnimatePresence mode="popLayout">
-              {previewUrl && !fileError ? (
-                <motion.div
-                  key="preview"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl border border-white relative z-10"
-                >
-                  <img src={previewUrl} alt="Fatura Önizleme" className="w-full h-auto object-cover max-h-48" />
-                </motion.div>
-              ) : file && isPdf && !fileError ? (
-                <motion.div
-                  key="pdf"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex flex-col items-center gap-4 relative z-10"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center text-emerald-500">
-                    <FileText size={32} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900 truncate max-w-[200px]">{file.name}</p>
-                    <p className="text-[10px] font-bold text-emerald-600 mt-1 uppercase tracking-widest">{formatFileSize(file.size)} • PDF HAZIR</p>
-                  </div>
-                </motion.div>
-              ) : fileError ? (
-                <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3 relative z-10 text-center">
-                  <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
-                    <AlertCircle size={24} />
-                  </div>
-                  <p className="text-sm font-bold text-rose-600">{fileError}</p>
-                  <span className="text-[10px] font-bold text-white px-4 py-2 bg-rose-500 rounded-xl">Tekrar Dene</span>
-                </motion.div>
-              ) : (
-                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-4 relative z-10">
-                  <div className="w-16 h-16 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:scale-110 group-hover:text-blue-500 transition-all duration-500 shadow-sm">
-                    <Upload size={24} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-600 transition-colors">Belge veya Fotoğraf Yükleyin</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">PDF, JPG, PNG (Maks 15MB)</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {file && !fileError && (
-              <button
-                type="button"
-                onClick={removeFile}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-500 hover:text-rose-500 shadow-sm border border-slate-100 transition-all z-20 flex items-center justify-center"
-              >
-                <X size={14} strokeWidth={2.5} />
-              </button>
-            )}
-          </div>
-
-          <AnimatePresence>
-            {uploadStatus !== 'idle' && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-slate-100 shadow-sm"
-              >
-                {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && <Loader2 size={16} className="animate-spin text-blue-600" />}
-                {uploadStatus === 'done' && <CheckCircle2 size={16} className="text-emerald-500" />}
-                <span className="text-xs font-bold text-slate-600">
-                  {uploadStatus === 'compressing' ? 'Görsel optimize ediliyor...' : 
-                   uploadStatus === 'uploading' ? 'Buluta yükleniyor...' : 'Yükleme başarılı!'}
-                </span>
+          <AnimatePresence mode="wait">
+            {previewUrl && !fileError ? (
+              <motion.div key="preview" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[200px] h-32 rounded-xl border border-slate-100 overflow-hidden shadow-sm shadow-blue-100">
+                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+              </motion.div>
+            ) : file && isPdf ? (
+              <motion.div key="pdf" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                  <FileText size={20} />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-bold text-slate-800">{file.name}</p>
+                  <p className="text-[10px] font-bold text-blue-600 mt-0.5 uppercase tracking-widest">{formatFileSize(file.size)}</p>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-300 group-hover:text-blue-500 group-hover:border-blue-100 transition-all">
+                  <Upload size={18} />
+                </div>
+                <p className="text-xs font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-widest">DOSYA VEYA FOTOĞRAF EKLE</p>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
 
-        {/* Submit Actions */}
-        <div className="pt-8 border-t border-slate-100 flex items-center justify-end gap-3">
-          {onClose && (
-            <button
+          {file && (
+             <button
               type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="px-6 py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+              onClick={(e) => { e.stopPropagation(); setFile(null); setPreviewUrl(null); }}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-sm"
             >
-              Vazgeç
+              <X size={14} />
             </button>
           )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 md:flex-none relative group overflow-hidden bg-blue-600 text-white rounded-2xl px-10 py-4 font-bold text-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-100 hover:bg-blue-700 active:scale-95"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                İşleniyor...
-              </>
-            ) : (
-              <>
-                {initialData ? 'Değişiklikleri Kaydet' : 'Kaydı Tamamla'}
-                <ArrowRight size={18} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
-              </>
-            )}
-          </button>
+
+          {uploadStatus !== 'idle' && (
+            <div className="absolute inset-0 bg-white/90 backdrop-blur-[2px] flex items-center justify-center">
+              <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-slate-900 shadow-xl">
+                <Loader2 size={16} className="animate-spin text-blue-400" />
+                <span className="text-xs font-bold text-white uppercase tracking-widest">
+                  {uploadStatus === 'compressing' ? 'Optimize Ediliyor' : 'Buluta Yükleniyor'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-      </form>
-    </div>
+        {fileError && <p className="mt-3 text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center">{fileError}</p>}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-4 pt-4">
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="px-8 py-5 rounded-2xl text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors active:scale-95 disabled:opacity-50"
+          >
+            Vazgeç
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-blue-100 transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
+        >
+          {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+          {initialData ? 'KAYDI GÜNCELLE' : 'HARCAMAYI KAYDET'}
+        </button>
+      </div>
+    </form>
   );
 }
+

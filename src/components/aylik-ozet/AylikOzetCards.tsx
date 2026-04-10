@@ -19,6 +19,13 @@ export type LocationCalc = {
   revenueShareRate: number;
   totalAvmExpense: number;
   extraExpense: number;
+  extraExpenseDetails?: {
+    id: string;
+    description: string;
+    amount: number;
+    type: string;
+    isGlobal: boolean;
+  }[];
   netCash: number;
   breakEvenSessions: number;
 };
@@ -502,10 +509,23 @@ function OperationalModal({
           <div key={loc.name} className="space-y-1">
             {locationDetails.length > 1 && <LocationHeader name={loc.name} />}
             <CalcRow
-              label="Ek Masraflar (KDV Dahil)"
+              label="Ek Masraflar (KDV Dahil Toplam)"
               val={fmt(loc.extraExpense)}
               indent
             />
+            {loc.extraExpenseDetails && loc.extraExpenseDetails.length > 0 && (
+              <div className="ml-8 space-y-1 mt-1 border-l-2 border-slate-100 pl-3">
+                {loc.extraExpenseDetails.map((detail) => (
+                  <div key={detail.id} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-500">{detail.description}</span>
+                      <span className="text-[9px] font-bold text-amber-500 uppercase">{detail.type} {detail.isGlobal ? '(Genel Giderden Pay)' : ''}</span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 tabular-nums italic">{fmt(detail.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         <CalcRow label="Toplam Ek Giderler" val={fmt(monthOperationalExpense)} highlight />

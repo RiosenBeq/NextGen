@@ -7,7 +7,7 @@ export const avmPaymentSchema = z.object({
     error: 'Geçerli bir ödeme tipi seçiniz.',
   }),
   description: z.string().max(500, 'Açıklama en fazla 500 karakter olabilir.').optional().nullable(),
-  amount: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
+  amount: z.union([z.string(), z.number()]).transform((val) => val ? parseFloat(String(val)) : 0),
 });
 
 export type AvmPaymentInput = z.infer<typeof avmPaymentSchema>;

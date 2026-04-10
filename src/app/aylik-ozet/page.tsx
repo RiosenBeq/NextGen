@@ -86,6 +86,18 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   for (const perf of currentPerformances) {
     const loc = perf.location;
 
+    const locationExtraDetails: { id: string; description: string; amount: number; type: string; isGlobal: boolean }[] = [];
+
+    if ((perf.extraExpenseAmount || 0) > 0) {
+      locationExtraDetails.push({
+        id: `perf-extra-${perf.id}`,
+        description: perf.extraExpenseNotes || 'Ekstra Gider (Performans Tablosu)',
+        amount: Number(perf.extraExpenseAmount),
+        type: 'Performans Ekstrası',
+        isGlobal: false
+      });
+    }
+
     const recurringTotal = (allExpenses || [])
       .filter((e: any) => {
         if (e.type !== 'RECURRING') return false;
@@ -94,8 +106,16 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
         return true;
       })
       .reduce((s: number, e: any) => {
-        if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocCount;
-        if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
+        if (!e.locationId) {
+          const val = (e.amountWithVat || 0) / activeLocCount;
+          locationExtraDetails.push({ id: `rec-glob-${e.id}`, description: e.description, amount: val, type: 'Sabit', isGlobal: true });
+          return s + val;
+        }
+        if (e.locationId === loc.id) {
+          const val = (e.amountWithVat || 0);
+          locationExtraDetails.push({ id: `rec-loc-${e.id}`, description: e.description, amount: val, type: 'Sabit', isGlobal: false });
+          return s + val;
+        }
         return s;
       }, 0);
 
@@ -108,8 +128,14 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
         return expMonthStr === selectedMonthStr && (!e.locationId || e.locationId === loc.id);
       })
       .reduce((s: number, e: any) => {
-        if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocCount;
-        return s + (e.amountWithVat || 0);
+        if (!e.locationId) {
+          const val = (e.amountWithVat || 0) / activeLocCount;
+          locationExtraDetails.push({ id: `one-glob-${e.id}`, description: e.description, amount: val, type: 'Ad-hoc', isGlobal: true });
+          return s + val;
+        }
+        const val = (e.amountWithVat || 0);
+        locationExtraDetails.push({ id: `one-loc-${e.id}`, description: e.description, amount: val, type: 'Ad-hoc', isGlobal: false });
+        return s + val;
       }, 0);
 
     const extra = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
@@ -146,6 +172,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
       revenueShareRate,
       totalAvmExpense: calc.totalAvmExpense,
       extraExpense: extra,
+      extraExpenseDetails: locationExtraDetails,
       netCash: calc.netCash,
       breakEvenSessions: calc.breakEvenSessions,
     });

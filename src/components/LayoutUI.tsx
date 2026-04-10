@@ -97,20 +97,21 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
     <motion.aside 
       initial={{ x: -260, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-64 shrink-0 hidden lg:flex flex-col h-screen text-white relative z-50 shadow-2xl"
-      style={{ background: '#1E2A44' }}
+      className="w-66 shrink-0 hidden lg:flex flex-col h-screen text-white relative z-50 shadow-2xl overflow-hidden"
+      style={{ background: 'var(--sidebar-bg)' }}
     >
+      <div className="absolute top-0 left-0 w-full h-[500px] opacity-20 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top left, var(--primary-blue), transparent)' }}></div>
       {/* Logo */}
-      <div className="h-[65px] flex items-center px-5 border-b border-white/[0.06]">
+      <div className="h-[72px] flex items-center px-6 border-b border-white/[0.04] relative z-10">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-105" style={{ background: '#2F6BFF' }}>
+          <div className="w-10 h-10 rounded-[14px] flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105" style={{ background: 'linear-gradient(135deg, var(--primary-blue), var(--deep-accent))', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)' }}>
             <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-base tracking-tight text-white leading-tight">
-              NextGen<span className="text-[#60A5FA]">Box</span>
+            <span className="font-extrabold text-[17px] tracking-tight text-white leading-tight">
+              NextGen<span style={{ color: 'var(--primary-blue)' }}>Box</span>
             </span>
-            <span className="text-[9px] font-semibold tracking-[0.15em] text-slate-500 uppercase">Veri Merkezi</span>
+            <span className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mt-0.5">SaaS Platform</span>
           </div>
         </Link>
       </div>
@@ -206,15 +207,15 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
   return (
     <>
       <header className={cn(
-        "h-[65px] flex items-center justify-between px-5 md:px-8 sticky top-0 z-40 transition-all duration-200 border-b bg-white/80 backdrop-blur-md",
+        "h-[72px] flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40 transition-all duration-300 bg-white/70 backdrop-blur-xl border-b",
         scrolled ? "shadow-sm border-slate-200" : "border-slate-100"
       )}>
         <div className="flex items-center gap-6">
           <button 
             onClick={onToggleMenu}
-            className="lg:hidden p-2 rounded-lg hover:bg-slate-50 transition-colors"
+            className="lg:hidden p-2.5 rounded-xl hover:bg-slate-100 transition-colors"
           >
-            <Menu className="w-5 h-5 text-slate-500" />
+            <Menu className="w-5 h-5 text-slate-600" />
           </button>
 
           {/* Breadcrumb */}
@@ -224,7 +225,7 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                   <Link 
                     href={crumb.href}
                     className={cn(
-                      "text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap",
+                      "text-[11px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
                       i === breadcrumbs.length - 1 ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
                     )}
                   >
@@ -245,14 +246,14 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <LogoutButton variant="topbar" />
-          <button onClick={() => setProfileModalOpen(true)} className="flex items-center gap-2.5 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all border border-transparent hover:border-slate-200">
+          <button onClick={() => setProfileModalOpen(true)} className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-2xl transition-all border border-transparent hover:border-slate-200 hover:shadow-sm">
             <div className="hidden md:flex flex-col items-end">
-              <p className="text-[11px] font-semibold text-slate-900 leading-none mb-1">{displayName}</p>
-              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
+              <p className="text-xs font-bold text-slate-900 leading-none mb-1">{displayName}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
             </div>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #2F6BFF, #2457E6)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-slate-900 border border-slate-800">
               <User className="w-4 h-4 text-white" />
             </div>
           </button>

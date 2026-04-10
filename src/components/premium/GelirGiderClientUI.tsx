@@ -93,14 +93,14 @@ export default function GelirGiderClientUI({
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
       {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div className="flex items-center gap-3">
-           <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
-              <Wallet size={20} />
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-8 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white flex items-center justify-center shadow-xl shadow-blue-200/50">
+              <Wallet size={24} />
            </div>
            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Gelir & Gider Analizi</h1>
-              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Ticari Döküm & Performans</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Gelir & Gider Analizi</h1>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.15em] mt-1.5">Ticari Döküm & Performans</p>
            </div>
         </div>
 
@@ -121,7 +121,7 @@ export default function GelirGiderClientUI({
 
            <button
              onClick={() => setIsModalOpen(true)}
-             className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200/50 active:scale-[0.97]"
+             className="elite-button-primary"
            >
               <Plus size={18} />
               <span className="hidden sm:inline">Yeni Kayıt</span>
@@ -384,13 +384,13 @@ function KPICard({ label, value, icon, color, subtitle }: any) {
   };
 
   return (
-    <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all">
-       <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-3", themes[color])}>
-          {React.cloneElement(icon as React.ReactElement<any>, { size: 18 })}
+    <div className="premium-card p-6 flex flex-col justify-center min-h-[140px]">
+       <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform hover:scale-110", themes[color])}>
+          {React.cloneElement(icon as React.ReactElement<any>, { size: 20 })}
        </div>
-       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-       <p className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{value}</p>
-       <p className="text-[10px] text-slate-400 mt-2 border-t border-slate-100 pt-2">{subtitle}</p>
+       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
+       <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter tabular-nums mt-1.5">{value}</p>
+       <p className="text-[11px] font-medium text-slate-400 mt-3 pt-3 border-t border-slate-100">{subtitle}</p>
     </div>
   );
 }

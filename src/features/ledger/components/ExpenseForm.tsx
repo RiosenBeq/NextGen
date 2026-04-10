@@ -224,15 +224,15 @@ export default function ExpenseForm({
           <h3 className="text-sm font-semibold text-slate-700">Temel Bilgiler</h3>
           
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">İşlem Açıklaması <span className="text-rose-500">*</span></label>
-            <input
-              type="text"
-              required
-              placeholder="Örn: Kırtasiye alımı, Tamir masrafı..."
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">İşlem Açıklaması <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                required
+                placeholder="Örn: Kırtasiye alımı, Tamir masrafı..."
+                className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900 shadow-sm"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,16 +279,16 @@ export default function ExpenseForm({
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Matrah (KDV Hariç) <span className="text-rose-500">*</span></label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Matrah (KDV Hariç) <span className="text-rose-500">*</span></label>
               <div className="relative group">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-blue-600 text-lg">₺</span>
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-blue-600 text-lg">₺</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   required
                   placeholder="0.00"
-                  className="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-mono font-bold text-slate-900 shadow-sm tracking-tight"
+                  className="w-full pl-12 pr-5 py-5 bg-white border border-slate-200 shadow-sm rounded-2xl text-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono font-black text-slate-900 tracking-tight"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 />
@@ -406,8 +406,8 @@ export default function ExpenseForm({
 
 
           <div className="space-y-4">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-tight ml-1">Ödemeyi Yapan</label>
-            <div className="flex flex-wrap gap-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Ödemeyi Yapan</label>
+            <div className="flex flex-wrap gap-2.5">
               {[
                 { id: 'Ortak Hesap', label: 'Ortak Hesap' },
                 { id: 'Okan', label: 'Okan' },
@@ -422,10 +422,10 @@ export default function ExpenseForm({
                     type="button"
                     onClick={() => setFormData({ ...formData, paidBy: partner.id })}
                     className={cn(
-                      "px-5 py-3 rounded-xl border-2 text-sm font-bold transition-all active:scale-95",
+                      "px-6 py-3.5 rounded-xl border font-bold transition-all active:scale-95 text-sm outline-none w-full sm:w-auto",
                       isSelected 
-                        ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
-                        : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50"
+                        ? "bg-slate-900 border-slate-900 text-white shadow-lg" 
+                        : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
                     )}
                   >
                     {partner.label}

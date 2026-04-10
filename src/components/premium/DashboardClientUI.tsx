@@ -100,16 +100,16 @@ export default function DashboardClientUI({
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
       {/* Header Section */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-8 border-b border-slate-200/60">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             Genel Bakış
           </h1>
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Finansal Performans & Analiz Merkezi</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.15em] mt-1.5">Finansal Performans & Analiz Merkezi</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200/50 active:scale-[0.97]"
+          className="elite-button-primary"
         >
           <Plus size={18} />
           Yeni Gider
@@ -162,13 +162,13 @@ export default function DashboardClientUI({
       {/* Main Content Grid */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Analiz Merkezi */}
-        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-5 sm:px-7 py-5 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Finansal Analiz Merkezi</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Aksiyon alınabilir finansal analiz kartları.</p>
+        <div className="xl:col-span-8 premium-card">
+          <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Finansal Analiz Merkezi</h3>
+            <p className="text-xs text-slate-500 mt-1">Aksiyon alınabilir finansal analiz metrikleri.</p>
           </div>
 
-          <div className="p-5 sm:p-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <AnalyzerCard
               title="Ortalama Gider"
               value={formatCurrency(ortalamaGider)}
@@ -381,18 +381,21 @@ function AnalyzerCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-xl border p-4 text-left w-full transition-all',
+        'rounded-2xl border p-5 text-left w-full transition-all duration-300 relative overflow-hidden group',
         t.bg, t.border,
-        clickable ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'cursor-default'
+        clickable ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer hover:border-blue-200' : 'cursor-default'
       )}
     >
-      <div className="flex items-center gap-2">
-        <span className={cn("w-1.5 h-1.5 rounded-full", t.dot)} />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
-        {clickable && <ChevronRight size={12} className="ml-auto text-blue-500" />}
+      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500", t.dot)}></div>
+      <div className="relative z-10 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className={cn("w-2 h-2 rounded-full shadow-sm", t.dot)} />
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-700 transition-colors">{title}</p>
+        </div>
+        {clickable && <ChevronRight size={14} className="text-blue-500 opacity-50 group-hover:opacity-100 transition-opacity group-hover:translate-x-1" />}
       </div>
-      <p className="mt-2.5 text-xl font-bold tracking-tight text-slate-900">{value}</p>
-      <p className="mt-1 text-xs text-slate-500 leading-relaxed">{description}</p>
+      <p className="relative z-10 mt-3 text-2xl font-black tracking-tight text-slate-900">{value}</p>
+      <p className="relative z-10 mt-1.5 text-xs text-slate-500 leading-relaxed font-medium">{description}</p>
     </button>
   );
 }

@@ -81,17 +81,17 @@ export default function ExpensesClientUI({ expenses, locations, documents, total
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-blue-700">
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200/60 bg-blue-50/50 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-widest text-blue-700 shadow-sm">
               <Activity className="w-3.5 h-3.5" />
               Gider Yönetim Merkezi
             </p>
-            <h1 className="mt-3 text-2xl md:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-              <Wallet className="w-7 h-7 text-slate-400 shrink-0" />
+            <h1 className="mt-4 text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+              <Wallet className="w-8 h-8 text-slate-400 shrink-0" />
               Gider Yönetimi
             </h1>
-            <p className="text-sm text-slate-500 mt-2 max-w-2xl">Gider kayıtları, belge durumu ve ödeme detaylarını tek panelden yönetin.</p>
+            <p className="text-sm font-medium text-slate-500 mt-2.5 max-w-2xl">Gider kayıtları, belge durumu ve ödeme detaylarını tek panelden yönetin.</p>
           </div>
 
           <div className="flex flex-col gap-3">

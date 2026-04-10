@@ -60,8 +60,8 @@ export default function InteractiveKPICards({
           <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter bg-emerald-100 text-emerald-700">Tüm Zamanlar</span>
         </div>
         <div className="space-y-1">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Toplam Ciro</p>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tighter">₺{totalRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Toplam Ciro</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tighter mt-1">₺{totalRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
           <p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1">
              <ArrowUpRight size={12} className="text-emerald-500" />
              Brüt Gelirler
@@ -94,8 +94,8 @@ export default function InteractiveKPICards({
               </span>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Toplam Gider</p>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tighter">₺{totalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Toplam Gider</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tighter mt-1">₺{totalExpense.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
               <p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1">
                  <ArrowUpRight size={12} className="text-red-500" />
                  Tüm Operasyonel Çıkışlar
@@ -137,8 +137,8 @@ export default function InteractiveKPICards({
           <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter bg-blue-100 text-blue-700">Operasyonel</span>
         </div>
         <div className="space-y-1">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Net Kâr (Amortisman Sonrası)</p>
-          <h2 className={cn("text-2xl font-black tracking-tighter", trueNetProfit >= 0 ? "text-slate-900" : "text-rose-600")}>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Net Kâr (Amortisman Sonrası)</p>
+          <h2 className={cn("text-3xl font-black tracking-tighter mt-1", trueNetProfit >= 0 ? "text-slate-900" : "text-rose-600")}>
             ₺{trueNetProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
           </h2>
           <p className="text-[10px] font-semibold text-slate-400 mt-2 flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
@@ -185,8 +185,8 @@ export default function InteractiveKPICards({
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Toplam Yatırım</p>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tighter">₺{totalInvestment.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Toplam Yatırım</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tighter mt-1">₺{totalInvestment.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h2>
               <p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1">
                  <ArrowUpRight size={12} className="text-amber-500" />
                  Kabin + Kurulum + Altyapı
@@ -250,9 +250,9 @@ export default function InteractiveKPICards({
                 </span>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Net Nakit Akışı</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Net Nakit Akışı</p>
                 <h2 className={cn(
-                  "text-2xl font-black tracking-tighter",
+                  "text-3xl font-black tracking-tighter mt-1",
                   isProfitable ? "text-blue-700" : "text-rose-600"
                 )}>
                   {isProfitable ? "+" : ""}

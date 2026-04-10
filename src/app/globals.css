@@ -3,57 +3,60 @@
 @layer base {
   :root {
     /* ═══════════════════════════════════════════
-       NEXTGENBOX DESIGN TOKENS
-       Premium Financial SaaS System
+       NEXTGENBOX PREMIUM DESIGN TOKENS
+       Enterprise SaaS System
     ═══════════════════════════════════════════ */
 
-    /* Primary */
-    --primary-navy: #1E2A44;
-    --primary-blue: #2F6BFF;
-    --deep-accent: #2457E6;
-    --primary-hover: #1D5AE6;
+    /* Primary Palette */
+    --primary-navy: #0B1120;     /* Deeper, more luxurious navy */
+    --primary-blue: #3B82F6;     /* Vibrant, modern primary blue */
+    --deep-accent: #1D4ED8;      /* Stronger deep accent */
+    --primary-hover: #2563EB;    /* Richer hover state */
 
-    /* Teal Accent */
-    --teal-accent: #14B8A6;
-    --soft-teal: #D9F4F1;
-    --cyan-hint: #DFF7FF;
+    /* Branding Accents */
+    --teal-accent: #0D9488;
+    --soft-teal: #ECFDF5;
+    --cyan-hint: #E0F2FE;
 
-    /* Neutrals */
-    --bg: #F7F9FC;
+    /* Neutrals & Surfaces */
+    --bg: #F8FAFC;               /* Clean, cool grey background */
     --surface: #FFFFFF;
-    --surface-alt: #F2F5FA;
-    --border: #E5EAF2;
-    --border-strong: #D5DCE8;
-    --text-primary: #101828;
-    --text-secondary: #667085;
-    --text-muted: #98A2B3;
+    --surface-alt: #F1F5F9;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    
+    /* Typography Colors */
+    --text-primary: #0F172A;     /* Ultra dark blue-grey for main text */
+    --text-secondary: #475569;   /* Slate for secondary */
+    --text-muted: #94A3B8;
 
-    /* Status */
-    --success: #12B76A;
-    --success-light: #ECFDF5;
-    --warning: #F79009;
-    --warning-light: #FFFBEB;
-    --error: #F04438;
-    --error-light: #FEF3F2;
-    --info: #2E90FA;
-    --info-light: #EFF8FF;
+    /* Status Colors */
+    --success: #10B981;
+    --success-light: #D1FAE5;
+    --warning: #F59E0B;
+    --warning-light: #FEF3C7;
+    --error: #EF4444;
+    --error-light: #FEE2E2;
+    --info: #3B82F6;
+    --info-light: #DBEAFE;
 
-    /* Shadows */
-    --shadow-xs: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
-    --shadow-sm: 0 1px 3px 0 rgba(16, 24, 40, 0.06), 0 1px 2px -1px rgba(16, 24, 40, 0.04);
-    --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.06), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
-    --shadow-lg: 0 12px 24px -4px rgba(16, 24, 40, 0.08), 0 4px 8px -2px rgba(16, 24, 40, 0.04);
-    --shadow-xl: 0 20px 40px -8px rgba(16, 24, 40, 0.1), 0 8px 16px -4px rgba(16, 24, 40, 0.05);
+    /* Modern SaaS Shadows (Smoother, multilayered) */
+    --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 
-    /* Radius */
+    /* Radius System */
     --radius-sm: 0.5rem;
     --radius-md: 0.75rem;
     --radius-lg: 1rem;
-    --radius-xl: 1.25rem;
-    --radius-2xl: 1.5rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
     --radius-full: 9999px;
 
-    /* Legacy compat — mapped to new tokens */
+    /* Legacy compat */
     --background: var(--bg);
     --foreground: var(--text-primary);
     --card: var(--surface);
@@ -72,14 +75,14 @@
     --destructive-foreground: #FFFFFF;
     --border-legacy: var(--border);
     --input: var(--surface);
-    --ring: rgba(47, 107, 255, 0.2);
+    --ring: rgba(59, 130, 246, 0.25);
     --radius: var(--radius-lg);
 
-    /* Sidebar */
+    /* Sidebar / Navigation */
     --sidebar-bg: var(--primary-navy);
     --sidebar-text: #94A3B8;
-    --sidebar-active-bg: rgba(47, 107, 255, 0.12);
-    --sidebar-active-border: rgba(47, 107, 255, 0.25);
+    --sidebar-active-bg: rgba(59, 130, 246, 0.15);
+    --sidebar-active-border: rgba(59, 130, 246, 0.3);
     --sidebar-active-text: #FFFFFF;
     --sidebar-active-icon: #60A5FA;
   }
@@ -115,18 +118,22 @@ body {
   border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .premium-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xl);
   border-color: var(--border-strong);
+  transform: translateY(-2px);
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--shadow-glass);
 }
 
 /* ══════════════════════════════════════
@@ -134,9 +141,10 @@ body {
    ══════════════════════════════════════ */
 
 .heading-display {
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 /* ══════════════════════════════════════
@@ -183,15 +191,15 @@ body {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem 1.5rem;
-  background: var(--primary-blue);
+  background: linear-gradient(135deg, var(--primary-blue), var(--deep-accent));
   color: #ffffff;
   font-weight: 600;
   font-size: 0.875rem;
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
-  box-shadow: 0 1px 2px rgba(47, 107, 255, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2);
 }
 
 .elite-button-primary:hover {
@@ -318,12 +326,26 @@ body {
    ══════════════════════════════════════ */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes pulse-dot {
@@ -344,25 +366,41 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0.875rem;
+  padding: 0.625rem 1rem;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--sidebar-text);
-  transition: color 0.15s, background 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
   text-decoration: none;
+  position: relative;
+  overflow: hidden;
 }
 
 .sidebar-link:hover {
-  color: #F1F5F9;
-  background: rgba(255,255,255,0.05);
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-link.active {
   color: var(--sidebar-active-text);
   background: var(--sidebar-active-bg);
   border-color: var(--sidebar-active-border);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background: var(--primary-blue);
+  border-radius: 0 4px 4px 0;
 }
 
 /* ══════════════════════════════════════

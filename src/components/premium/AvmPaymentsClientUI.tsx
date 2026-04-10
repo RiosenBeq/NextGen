@@ -23,11 +23,13 @@ import {
   UploadCloud,
   FileText,
   ExternalLink,
+  Edit2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import {
   addAvmPayment,
+  updateAvmPayment,
   toggleAvmPaymentPaid,
   deleteAvmPayment,
 } from '@/features/avm-payments/actions';
@@ -89,7 +91,8 @@ export default function AvmPaymentsClientUI({
   const router = useRouter();
   const { toast } = useToast();
   const [payments, setPayments] = useState(initialPayments);
-  const [showForm, setShowForm] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<AvmPayment | null>(null);
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterLocation, setFilterLocation] = useState('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -191,7 +194,10 @@ export default function AvmPaymentsClientUI({
             </p>
           </div>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setEditingPayment(null);
+              setIsFormOpen(true);
+            }}
             className="min-h-[44px] px-5 rounded-2xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-slate-800 inline-flex items-center justify-center gap-2 shrink-0 transition-colors"
           >
             <Plus size={16} /> Yeni Ödeme Ekle
@@ -326,7 +332,17 @@ export default function AvmPaymentsClientUI({
                           </label>
                         )}
                       </td>
-                      <td className="px-5 py-3 text-center">
+                      <td className="px-5 py-3 text-center flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPayment(payment);
+                            setIsFormOpen(true);
+                          }}
+                          className="rounded-lg border border-blue-200 bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100 transition-colors"
+                        >
+                          <Edit2 size={14} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(payment.id)}
@@ -412,6 +428,16 @@ export default function AvmPaymentsClientUI({
                     </button>
                     <button
                       type="button"
+                      onClick={() => {
+                        setEditingPayment(payment);
+                        setIsFormOpen(true);
+                      }}
+                      className="rounded-2xl border border-blue-200 bg-blue-50 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-blue-600"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDelete(payment.id)}
                       disabled={deletingId === payment.id}
                       className="rounded-2xl border border-rose-200 bg-rose-50 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-rose-600 disabled:opacity-50"
@@ -426,14 +452,19 @@ export default function AvmPaymentsClientUI({
         </>
       )}
 
-      {/* Add Payment Modal */}
-      <PremiumModal isOpen={showForm} onClose={() => setShowForm(false)} title="Yeni AVM Ödemesi Ekle" maxWidth="max-w-lg">
+      {/* Add/Edit Payment Modal */}
+      <PremiumModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingPayment ? "AVM Ödemesi Düzenle" : "Yeni AVM Ödemesi Ekle"} maxWidth="max-w-lg">
         <AddAvmPaymentForm
           locations={locations}
-          onClose={() => setShowForm(false)}
+          initialData={editingPayment}
+          onClose={() => setIsFormOpen(false)}
           onSuccess={(newPayment) => {
-            setPayments((prev) => [newPayment, ...prev]);
-            setShowForm(false);
+            if (editingPayment) {
+              setPayments(prev => prev.map(p => p.id === newPayment.id ? newPayment : p));
+            } else {
+              setPayments((prev) => [newPayment, ...prev]);
+            }
+            setIsFormOpen(false);
           }}
         />
       </PremiumModal>
@@ -473,10 +504,12 @@ function StatCard({
 
 function AddAvmPaymentForm({
   locations,
+  initialData,
   onClose,
   onSuccess,
 }: {
   locations: LocationOption[];
+  initialData?: AvmPayment | null;
   onClose: () => void;
   onSuccess: (payment: AvmPayment) => void;
 }) {
@@ -484,11 +517,11 @@ function AddAvmPaymentForm({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    locationId: locations[0]?.id || '',
-    month: getCurrentMonth(),
-    paymentType: 'Kira' as string,
-    description: '',
-    amount: '',
+    locationId: initialData?.locationId || locations[0]?.id || '',
+    month: initialData?.month || getCurrentMonth(),
+    paymentType: initialData?.paymentType || 'Kira',
+    description: initialData?.description || '',
+    amount: initialData?.amount?.toString() || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -500,32 +533,58 @@ function AddAvmPaymentForm({
 
     setLoading(true);
     try {
-      const res = await addAvmPayment({
-        locationId: form.locationId,
-        month: form.month,
-        paymentType: form.paymentType,
-        description: form.description || null,
-        amount: form.amount,
-      });
+      if (initialData?.id) {
+        const res = await updateAvmPayment(initialData.id, {
+          locationId: form.locationId,
+          month: form.month,
+          paymentType: form.paymentType,
+          description: form.description || null,
+          amount: form.amount,
+        });
+        if (!res.success) throw new Error(res.error);
 
-      if (!res.success) throw new Error(res.error);
+        const locationObj = locations.find(l => l.id === form.locationId);
+        const updatedPayment: AvmPayment = {
+          ...initialData,
+          locationId: form.locationId,
+          month: form.month,
+          paymentType: form.paymentType,
+          description: form.description || null,
+          amount: parseFloat(form.amount),
+          location: locationObj || initialData.location,
+        };
 
-      const locationObj = locations.find(l => l.id === form.locationId);
-      const newPayment: AvmPayment = {
-        id: `avm_${Date.now()}`,
-        locationId: form.locationId,
-        month: form.month,
-        paymentType: form.paymentType,
-        description: form.description || null,
-        amount: parseFloat(form.amount),
-        isPaid: false,
-        paidAt: null,
-        createdAt: new Date().toISOString(),
-        location: locationObj || { id: form.locationId, name: 'Bilinmiyor' },
-      };
+        toast.success('Ödeme başarıyla güncellendi.');
+        onSuccess(updatedPayment);
+      } else {
+        const res = await addAvmPayment({
+          locationId: form.locationId,
+          month: form.month,
+          paymentType: form.paymentType,
+          description: form.description || null,
+          amount: form.amount,
+        });
 
-      toast.success('Ödeme başarıyla kaydedildi.');
-      onSuccess(newPayment);
+        if (!res.success) throw new Error(res.error);
+
+        const locationObj = locations.find(l => l.id === form.locationId);
+        const newPayment: AvmPayment = {
+          id: `avm_${Date.now()}`,
+          locationId: form.locationId,
+          month: form.month,
+          paymentType: form.paymentType,
+          description: form.description || null,
+          amount: parseFloat(form.amount),
+          isPaid: false,
+          paidAt: null,
+          createdAt: new Date().toISOString(),
+          location: locationObj || { id: form.locationId, name: 'Bilinmiyor' },
+        };
+
+        toast.success('Ödeme başarıyla kaydedildi.');
+        onSuccess(newPayment);
+      }
+      
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.';
@@ -639,7 +698,7 @@ function AddAvmPaymentForm({
               <Loader2 size={16} className="animate-spin" /> Kaydediliyor...
             </>
           ) : (
-            'Ödemeyi Kaydet'
+            initialData ? 'Ödemeyi Güncelle' : 'Ödemeyi Kaydet'
           )}
         </button>
       </div>

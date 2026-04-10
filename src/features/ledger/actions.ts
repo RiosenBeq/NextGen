@@ -420,6 +420,7 @@ export async function deleteExpense(id: string) {
     revalidatePath('/raporlar');
     revalidatePath('/finans');
     revalidatePath('/faturalar');
+    revalidatePath('/aylik-ozet');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

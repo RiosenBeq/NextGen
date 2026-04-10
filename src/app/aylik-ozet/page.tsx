@@ -1,9 +1,19 @@
 import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { Calendar, FileText } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import MonthSelector from '@/features/ledger/components/MonthSelector';
 import AylikOzetCards, { type LocationCalc } from '@/components/aylik-ozet/AylikOzetCards';
+import AylikOzetExpenseTable from '@/components/aylik-ozet/AylikOzetExpenseTable';
+
+interface Expense {
+  id: string;
+  description: string;
+  amountWithVat: number;
+  type: string;
+  paidBy?: string;
+  location?: { name: string } | null;
+}
 
 export const metadata = { title: 'Aylık Özet — NextGenBox' };
 export const dynamic = 'force-dynamic';
@@ -227,70 +237,24 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
       {/* Transaction Details — Desktop Table */}
       <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-5 sm:px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-          <div className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400"><FileText size={16} /></div>
+          <div className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+          </div>
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">İşlem Bazlı Giderler</h3>
           <span className="ml-auto text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">{monthSpecificExpenses.length} kayıt</span>
         </div>
 
-        {monthSpecificExpenses.length === 0 ? (
-          <div className="py-16 text-center">
-            <FileText size={32} className="mx-auto text-slate-200 mb-3" />
-            <p className="text-sm font-medium text-slate-400">Bu dönem için gider kaydı bulunamadı.</p>
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="px-6 py-4">Açıklama</th>
-                    <th className="px-4 py-4 text-center">Sorumlu</th>
-                    <th className="px-4 py-4 text-center">Tip</th>
-                    <th className="px-6 py-4 text-right">Tutar</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {monthSpecificExpenses.map((exp: any) => (
-                    <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-slate-800">{exp.description}</span>
-                          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{exp.location?.name || 'Genel'}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 uppercase">{exp.paidBy || 'MERKEZ'}</span>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">{exp.type === 'RECURRING' ? 'Sabit' : 'Ad-hoc'}</span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="text-sm font-bold text-slate-900 tabular-nums">₺{exp.amountWithVat?.toLocaleString('tr-TR')}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="md:hidden divide-y divide-slate-100">
-              {monthSpecificExpenses.map((exp: any) => (
-                <div key={exp.id} className="px-5 py-4 flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{exp.description}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-medium text-slate-400 uppercase">{exp.location?.name || 'Genel'}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 uppercase">{exp.type === 'RECURRING' ? 'Sabit' : 'Ad-hoc'}</span>
-                    </div>
-                  </div>
-                  <span className="text-sm font-bold text-slate-900 tabular-nums whitespace-nowrap">₺{exp.amountWithVat?.toLocaleString('tr-TR')}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        {/* Expense Table Client Component (with delete) */}
+        <AylikOzetExpenseTable
+          initialExpenses={(monthSpecificExpenses as Expense[]).map((e: Expense) => ({
+            id: e.id,
+            description: e.description,
+            amountWithVat: e.amountWithVat,
+            type: e.type,
+            paidBy: e.paidBy,
+            location: e.location,
+          }))}
+        />
       </section>
 
     </div>

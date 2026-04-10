@@ -41,19 +41,19 @@ export default async function TargetsPage() {
 
   return (
     <div className="page-wrapper space-y-8 animate-fade-in">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-100">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100 flex items-center gap-1">
-              <Trophy size={12} /> Oyunlaştırma
-            </span>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-200">
+            <Target size={20} />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <Target className="w-7 h-7 text-orange-500" />
-            Hedefler & Projeksiyon
-          </h1>
-          <p className="text-sm text-slate-500 mt-2 font-medium">Yatırım geri dönüşü, aylık hedefler ve senaryo projeksiyonlarını tek panelden izleyin.</p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Hedefler & Projeksiyon</h1>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Yatırım Geri Dönüşü & Senaryolar</p>
+          </div>
         </div>
+        <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100 flex items-center gap-1.5 w-fit">
+          <Trophy size={12} /> Oyunlaştırma
+        </span>
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">

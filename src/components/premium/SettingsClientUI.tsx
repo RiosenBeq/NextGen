@@ -125,34 +125,31 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const liveMode = parameters?.SETTING_ANIMATION_SPEED === 2 ? 'Premium' : parameters?.SETTING_ANIMATION_SPEED === 1 ? 'Standart' : 'Hızlı';
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
-      
-      {/* Premium Header */}
-      <header className="flex flex-col md:flex-row md:items-start justify-between gap-8">
-        <div className="space-y-1.5">
-           <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-100">
-                 <Settings size={28} />
-              </div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Sistem Ayarları</h1>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+           <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
+              <Settings size={20} />
            </div>
-           <p className="text-sm text-slate-500 font-medium italic pl-1">
-              Operasyonel parametreler, lokasyon bazlı yapılandırmalar ve erişim kontrolü.
-           </p>
+           <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Sistem Ayarları</h1>
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Yapılandırma & Erişim Kontrolü</p>
+           </div>
         </div>
-        
-        <div className="hidden lg:flex items-center gap-4">
-           <div className="bg-white border border-slate-200 px-6 py-4 rounded-[24px] shadow-sm flex items-center gap-5">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg"><Zap size={20} /></div>
-              <div className="flex flex-col">
-                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">SİSTEM VERSİYON</span>
-                 <span className="text-sm font-bold text-slate-900 tracking-tight">Build 2026.0406 <span className="text-[10px] font-medium text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full ml-1">STABLE</span></span>
-              </div>
+
+        <div className="hidden lg:flex items-center gap-3 px-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm">
+           <Zap size={14} className="text-slate-400" />
+           <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Versiyon</span>
+              <span className="text-xs font-bold text-slate-900 ml-2">Build 2026.0406</span>
+              <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded ml-1.5">STABLE</span>
            </div>
         </div>
       </header>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatusCard label="Aktif Şube" value={`${locations.length}`} description="Sistemde tanımlı lokasyon" icon={<MapPin size={16} />} tone="blue" />
         <StatusCard label="Kullanıcı" value={`${users.length}`} description="Yetkili hesap adedi" icon={<Users size={16} />} tone="slate" />
         <StatusCard label="Süper Admin" value={`${superAdminCount}`} description="Yüksek yetkili hesaplar" icon={<ShieldCheck size={16} />} tone="amber" />
@@ -160,27 +157,26 @@ export default function SettingsClientUI({ locations, parameters, users, current
       </section>
 
       {/* Tabs Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-         
-         <aside className="lg:col-span-3 space-y-2 lg:sticky lg:top-8">
-            <div className="p-1 bg-slate-50 rounded-[28px] border border-slate-200 space-y-1">
-               <TabButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} icon={<Sliders size={18} />} label="Genel Yapılandırma" />
-               <TabButton active={activeTab === 'locations'} onClick={() => setActiveTab('locations')} icon={<MapPin size={18} />} label="Şube Ayarları" />
-               <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="Erişim & Yetki" />
-               <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label="Profil Ayarları" />
-               <TabButton active={activeTab === 'integrations'} onClick={() => setActiveTab('integrations')} icon={<Workflow size={18} />} label="Entegrasyonlar" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+         <aside className="lg:col-span-3 space-y-4 lg:sticky lg:top-[80px]">
+            {/* Horizontal tabs on mobile, vertical on desktop */}
+            <div className="flex lg:flex-col gap-1 overflow-x-auto no-scrollbar p-1 bg-slate-50 rounded-xl border border-slate-200">
+               <TabButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} icon={<Sliders size={16} />} label="Genel" />
+               <TabButton active={activeTab === 'locations'} onClick={() => setActiveTab('locations')} icon={<MapPin size={16} />} label="Şubeler" />
+               <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={16} />} label="Erişim" />
+               <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={16} />} label="Profil" />
+               <TabButton active={activeTab === 'integrations'} onClick={() => setActiveTab('integrations')} icon={<Workflow size={16} />} label="Entegrasyon" />
             </div>
-            
-            <div className="pt-6 px-4">
-               <div className="p-6 rounded-[24px] bg-blue-50 border border-blue-100/50 space-y-4">
-                  <div className="flex items-center gap-2 text-blue-600">
-                     <HelpCircle size={16} />
-                     <span className="text-[10px] font-bold uppercase tracking-widest">Sistem Notu</span>
-                  </div>
-                  <p className="text-[11px] text-blue-800/70 font-medium leading-relaxed italic">
-                     Burada yapacağınız tüm değişiklikler finansal raporları ve dashboard metriklerini geriye dönük olarak etkileyebilir. Değişiklik yapmadan önce verileri doğrulayın.
-                  </p>
+
+            <div className="hidden lg:block p-4 rounded-xl bg-blue-50 border border-blue-100 space-y-2">
+               <div className="flex items-center gap-2 text-blue-600">
+                  <HelpCircle size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Sistem Notu</span>
                </div>
+               <p className="text-[11px] text-blue-800/70 leading-relaxed">
+                  Burada yapacağınız tüm değişiklikler finansal raporları ve dashboard metriklerini geriye dönük olarak etkileyebilir.
+               </p>
             </div>
          </aside>
 
@@ -208,17 +204,17 @@ export default function SettingsClientUI({ locations, parameters, users, current
 
                {activeTab === 'users' && (
                   <motion.div key="users" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <SectionHeader title="Yetkili Erişim Kontrolü" icon={<ShieldCheck className="text-slate-900" />} />
-                        <button 
-                           onClick={() => setIsUserModalOpen(true)} 
-                           className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-[11px] font-bold tracking-widest uppercase flex items-center justify-center gap-3 shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95"
+                        <button
+                           onClick={() => setIsUserModalOpen(true)}
+                           className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200/50 active:scale-[0.97]"
                         >
-                           <UserPlus size={18} /> Yeni Hesap Tanımla
+                           <UserPlus size={16} /> Yeni Hesap
                         </button>
                      </div>
 
-                     <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
+                     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                         <table className="w-full text-left border-collapse">
                            <thead>
                               <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -332,30 +328,30 @@ export default function SettingsClientUI({ locations, parameters, users, current
                      <SectionHeader title="Supabase & Vercel Entegrasyonu" icon={<Cloud className="text-blue-600" />} />
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-3">
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">VERİ SERVİSİ</p>
-                           <p className="text-sm font-black text-slate-900 inline-flex items-center gap-2"><Server size={16} className="text-emerald-600" /> Supabase</p>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2">
+                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Veri Servisi</p>
+                           <p className="text-sm font-bold text-slate-900 inline-flex items-center gap-2"><Server size={14} className="text-emerald-600" /> Supabase</p>
                            <p className="text-xs text-slate-500 leading-relaxed">
                               Notlar, giderler, loglar ve kullanıcı metadata verileri Supabase üzerinde yönetiliyor.
                            </p>
-                           <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
+                           <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline">
                               Supabase panelini aç
                            </a>
                         </div>
 
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-3">
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">YAYIN ORTAMI</p>
-                           <p className="text-sm font-black text-slate-900 inline-flex items-center gap-2"><Cloud size={16} className="text-slate-700" /> Vercel</p>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2">
+                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Yayın Ortamı</p>
+                           <p className="text-sm font-bold text-slate-900 inline-flex items-center gap-2"><Cloud size={14} className="text-slate-700" /> Vercel</p>
                            <p className="text-xs text-slate-500 leading-relaxed">
                               Uygulama dağıtımı ve çalışma zamanı Vercel altyapısında devam ediyor.
                            </p>
-                           <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
+                           <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline">
                               Vercel panelini aç
                            </a>
                         </div>
                      </div>
 
-                     <div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
+                     <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-2">Gelişmiş Ayar Notu</p>
                         <p className="text-sm text-blue-900/80 leading-relaxed">
                            Bu panelde yapılan kullanıcı, profil ve parametre değişiklikleri tüm sistem ekranlarına anlık olarak yansıtılır.
@@ -392,12 +388,12 @@ export default function SettingsClientUI({ locations, parameters, users, current
                </div>
             </div>
 
-            <button 
-               type="submit" 
-               disabled={isSubmitting} 
-               className="w-full h-16 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+            <button
+               type="submit"
+               disabled={isSubmitting}
+               className="w-full py-3.5 bg-blue-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50"
             >
-               {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> İŞLENİYOR...</> : <><UserPlus size={18} /> ERİŞİMİ AKTİF ET</> }
+               {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> İşleniyor...</> : <><UserPlus size={16} /> Erişimi Aktif Et</> }
             </button>
          </form>
       </PremiumModal>
@@ -458,33 +454,30 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 
 function SectionHeader({ title, icon }: { title: string, icon: any }) {
   return (
-    <div className="flex items-center gap-4 group">
-       <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition-all">
-          {React.cloneElement(icon as React.ReactElement<any>, { size: 24 })}
+    <div className="flex items-center gap-3">
+       <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400">
+          {React.cloneElement(icon as React.ReactElement<any>, { size: 18 })}
        </div>
-       <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase">{title}</h2>
+       <h2 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h2>
     </div>
   );
 }
 
 function TabButton({ active, label, icon, onClick }: { active: boolean, label: string, icon: any, onClick: () => void }) {
   return (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       className={cn(
-         "w-full p-4 flex items-center gap-4 rounded-[22px] transition-all text-left", 
-         active 
-            ? "bg-white text-slate-900 shadow-sm border border-slate-200" 
-            : "text-slate-400 hover:text-slate-600 border border-transparent"
+         "flex-shrink-0 lg:w-full px-3 py-2.5 flex items-center gap-2.5 rounded-lg transition-all text-left whitespace-nowrap",
+         active
+            ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+            : "text-slate-500 hover:text-slate-700 border border-transparent"
       )}
     >
-       <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center transition-all", 
-          active ? "bg-slate-900 text-white shadow-lg" : "bg-white border border-slate-100 text-slate-400"
-       )}>
+       <span className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", active ? "bg-slate-900 text-white" : "text-slate-400")}>
           {icon}
-       </div>
-       <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
+       </span>
+       <span className="text-xs font-semibold">{label}</span>
     </button>
   );
 }

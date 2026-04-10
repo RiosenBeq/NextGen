@@ -97,24 +97,24 @@ export default function DashboardClientUI({
   const belgesizKayit = recentExpenses.filter((gider: any) => !gider.attachmentUrl).length;
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
-      
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
-          <p className="text-sm text-slate-500">Sistem genelindeki finansal performans ve analiz merkezi.</p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Genel Bakış
+          </h1>
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Finansal Performans & Analiz Merkezi</p>
         </div>
-        <div className="flex items-center gap-3">
-           <button 
-             onClick={() => setIsModalOpen(true)}
-             className="inline-flex items-center gap-2.5 px-4 sm:px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
-           >
-              <Plus size={20} />
-              Yeni Gider Girişi
-           </button>
-        </div>
-      </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200/50 active:scale-[0.97]"
+        >
+          <Plus size={18} />
+          Yeni Gider
+        </button>
+      </header>
 
       {/* Summary Cards - Flipping KPIs */}
       <InteractiveKPICards 
@@ -127,45 +127,48 @@ export default function DashboardClientUI({
         allMonthCount={allMonthCount}
       />
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           {
             id: 'growth',
             title: 'Büyüme Notu',
             front: `%${stats.monthlyGrowth.toFixed(1)} aylık trend`,
             back: 'Trend değeri son dönem performans eğiliminden üretilir. Düzenli oturum artışı pozitif etki sağlar.',
+            accent: 'border-l-blue-500',
           },
           {
             id: 'roi',
             title: 'ROI İzleme',
             front: `${stats.sessions.toLocaleString('tr-TR')} toplam seans`,
             back: 'Seans hacmi arttıkça amortisman etkisi azalır ve yatırım geri dönüş süresi kısalır.',
+            accent: 'border-l-amber-500',
           },
           {
             id: 'cash',
             title: 'Nakit Uyarısı',
             front: formatCurrency(stats.profit),
             back: 'Net nakit negatif olduğunda gider kırılımını kontrol edip bir sonraki ay için sabit maliyet optimizasyonu yapın.',
+            accent: stats.profit >= 0 ? 'border-l-emerald-500' : 'border-l-rose-500',
           },
         ].map((card) => (
-          <article key={card.id} className="h-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{card.title}</p>
+          <article key={card.id} className={cn("h-full rounded-2xl border border-slate-200 border-l-4 bg-white p-5 shadow-sm", card.accent)}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{card.title}</p>
             <p className="mt-2 text-lg font-bold text-slate-900">{card.front}</p>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600">{card.back}</p>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">{card.back}</p>
           </article>
         ))}
       </section>
 
       {/* Main Content Grid */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Analiz Merkezi */}
-        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-sm">
-          <div className="space-y-1 mb-6">
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Finansal Analiz Merkezi</h3>
-            <p className="text-xs text-slate-500">Aksiyon alınabilir finansal analiz kartları.</p>
+        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-5 sm:px-7 py-5 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Finansal Analiz Merkezi</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Aksiyon alınabilir finansal analiz kartları.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 sm:p-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AnalyzerCard
               title="Ortalama Gider"
               value={formatCurrency(ortalamaGider)}
@@ -197,50 +200,45 @@ export default function DashboardClientUI({
 
         {/* Recent Transactions */}
         <div className="xl:col-span-4 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                 <Receipt size={20} className="text-slate-400" />
+           <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                 <Receipt size={16} className="text-slate-400" />
                  Son Kayıtlar
               </h3>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">AUDIT</span>
+              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">{recentExpenses.length}</span>
            </div>
-           
-           <div className="flex-1 overflow-y-auto">
-              <table className="w-full text-left border-collapse">
-                 <tbody className="divide-y divide-slate-50">
-                    {recentExpenses.length === 0 ? (
-                       <tr><td className="py-20 text-center text-xs font-medium text-slate-400 italic">Kayıt bulunamadı.</td></tr>
-                    ) : (
-                       recentExpenses.map((exp, idx) => (
-                          <tr 
-                            key={exp.id || idx} 
-                            className="group hover:bg-slate-50/50 transition-all cursor-pointer"
-                            onClick={() => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
-                          >
-                             <td className="px-6 py-4">
-                                <div className="flex flex-col">
-                                   <span className="text-sm font-bold text-slate-800 line-clamp-1">{exp.description}</span>
-                                   <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{exp.location?.name || 'Genel'}</span>
-                                      <span className="w-0.5 h-0.5 rounded-full bg-slate-200" />
-                                      <span className="text-[10px] font-medium text-slate-400 lowercase">{exp.createdAt ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '-'}</span>
-                                   </div>
-                                </div>
-                             </td>
-                             <td className="px-6 py-4 text-right">
-                                <span className={cn("text-sm font-bold tabular-nums tracking-tighter italic", exp.isOfficial ? "text-slate-900" : "text-slate-500")}>
-                                   {formatCurrency(exp.amountWithVat)}
-                                </span>
-                             </td>
-                          </tr>
-                       ))
-                    )}
-                 </tbody>
-              </table>
+
+           <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+              {recentExpenses.length === 0 ? (
+                 <div className="py-16 text-center">
+                    <Receipt size={28} className="mx-auto text-slate-200 mb-2" />
+                    <p className="text-sm font-medium text-slate-400">Kayıt bulunamadı.</p>
+                 </div>
+              ) : (
+                 recentExpenses.map((exp, idx) => (
+                    <div
+                      key={exp.id || idx}
+                      className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                      onClick={() => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
+                    >
+                       <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 truncate">{exp.description}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                             <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{exp.location?.name || 'Genel'}</span>
+                             <span className="w-0.5 h-0.5 rounded-full bg-slate-300" />
+                             <span className="text-[10px] font-medium text-slate-400">{exp.createdAt ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '-'}</span>
+                          </div>
+                       </div>
+                       <span className={cn("text-sm font-bold tabular-nums whitespace-nowrap", exp.isOfficial ? "text-slate-900" : "text-slate-400")}>
+                          {formatCurrency(exp.amountWithVat)}
+                       </span>
+                    </div>
+                 ))
+              )}
            </div>
-           
-           <div className="p-4 border-t border-slate-100 text-center">
-              <Link href="/gelir-gider" className="text-[11px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors flex items-center justify-center gap-2">
+
+           <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/30">
+              <Link href="/gelir-gider" className="text-[11px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors flex items-center justify-center gap-1.5">
                  Tümünü Görüntüle <ChevronRight size={14} />
               </Link>
            </div>
@@ -248,15 +246,17 @@ export default function DashboardClientUI({
       </section>
       
       {/* User Notes Section */}
-      <section className="bg-white border border-slate-200 rounded-[32px] p-5 sm:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-8">
-           <FileText size={20} className="text-blue-600" />
+      <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-5 sm:px-7 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+           <div className="p-2 bg-white rounded-xl border border-slate-200 text-blue-600"><FileText size={16} /></div>
            <div>
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Kişisel Notlar</h3>
-              <p className="text-xs text-slate-500 font-medium italic mt-0.5">Operasyonel notlar ve hatırlatıcılar.</p>
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Kişisel Notlar</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Operasyonel notlar ve hatırlatıcılar.</p>
            </div>
         </div>
-        <NoteList initialNotes={notes} />
+        <div className="p-5 sm:p-7">
+          <NoteList initialNotes={notes} />
+        </div>
       </section>
 
       {/* Modals & Drawers */}
@@ -370,27 +370,29 @@ function AnalyzerCard({
   clickable?: boolean;
 }) {
   const toneMap = {
-    blue: 'border-blue-200 bg-blue-50/50',
-    emerald: 'border-emerald-200 bg-emerald-50/50',
-    rose: 'border-rose-200 bg-rose-50/50',
+    blue: { bg: 'bg-blue-50/60', border: 'border-blue-100', dot: 'bg-blue-500' },
+    emerald: { bg: 'bg-emerald-50/60', border: 'border-emerald-100', dot: 'bg-emerald-500' },
+    rose: { bg: 'bg-rose-50/60', border: 'border-rose-100', dot: 'bg-rose-500' },
   };
+  const t = toneMap[tone];
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-2xl border p-4 text-left w-full transition-all',
-        toneMap[tone],
+        'rounded-xl border p-4 text-left w-full transition-all',
+        t.bg, t.border,
         clickable ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'cursor-default'
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
-        {clickable && <span className="text-[10px] font-bold text-blue-600 uppercase">Detay</span>}
+      <div className="flex items-center gap-2">
+        <span className={cn("w-1.5 h-1.5 rounded-full", t.dot)} />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
+        {clickable && <ChevronRight size={12} className="ml-auto text-blue-500" />}
       </div>
-      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
-      <p className="mt-1 text-xs text-slate-600">{description}</p>
+      <p className="mt-2.5 text-xl font-bold tracking-tight text-slate-900">{value}</p>
+      <p className="mt-1 text-xs text-slate-500 leading-relaxed">{description}</p>
     </button>
   );
 }

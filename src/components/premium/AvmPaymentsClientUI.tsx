@@ -175,15 +175,15 @@ export default function AvmPaymentsClientUI({
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-blue-700">
               <Building2 className="w-3.5 h-3.5" />
               Bağımsız Takip Modülü
             </p>
-            <h1 className="mt-3 text-3xl md:text-4xl font-black tracking-tight text-slate-900 inline-flex items-center gap-3">
-              <Receipt className="w-8 h-8 text-slate-400" />
+            <h1 className="mt-3 text-2xl md:text-3xl font-black tracking-tight text-slate-900 inline-flex items-center gap-3">
+              <Receipt className="w-7 h-7 text-slate-400 shrink-0" />
               AVM Ödeme Takibi
             </h1>
             <p className="text-sm text-slate-500 mt-2 max-w-2xl">
@@ -192,7 +192,7 @@ export default function AvmPaymentsClientUI({
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="h-14 px-6 rounded-2xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-slate-800 inline-flex items-center justify-center gap-2 shrink-0 transition-colors"
+            className="min-h-[44px] px-5 rounded-2xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-slate-800 inline-flex items-center justify-center gap-2 shrink-0 transition-colors"
           >
             <Plus size={16} /> Yeni Ödeme Ekle
           </button>
@@ -215,7 +215,7 @@ export default function AvmPaymentsClientUI({
             <select
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 pl-10 pr-10 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
+              className="w-full h-11 rounded-2xl border border-slate-200 pl-10 pr-10 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
             >
               <option value="all">Tüm Aylar</option>
               {availableMonths.map((m) => (
@@ -231,7 +231,7 @@ export default function AvmPaymentsClientUI({
             <select
               value={filterLocation}
               onChange={(e) => setFilterLocation(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 pl-10 pr-10 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
+              className="w-full h-11 rounded-2xl border border-slate-200 pl-10 pr-10 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
             >
               <option value="all">Tüm Lokasyonlar</option>
               {locations.map((loc) => (
@@ -374,13 +374,13 @@ export default function AvmPaymentsClientUI({
                 {/* Document upload */}
                 <div className="flex items-center gap-2">
                   {docs[payment.id] ? (
-                    <a href={docs[payment.id].fileUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 rounded-xl px-3 py-1.5">
+                    <a href={docs[payment.id].fileUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 rounded-2xl px-3 py-2 min-h-[44px]">
                       <FileText size={14} /> Belge Görüntüle
                     </a>
                   ) : uploadingId === payment.id ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 px-3 py-1.5"><Loader2 size={14} className="animate-spin" /> Yükleniyor...</span>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 px-3 py-2 min-h-[44px]"><Loader2 size={14} className="animate-spin" /> Yükleniyor...</span>
                   ) : (
-                    <label className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 border border-blue-200 bg-blue-50 rounded-xl px-3 py-1.5 cursor-pointer">
+                    <label className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 border border-blue-200 bg-blue-50 rounded-2xl px-3 py-2 min-h-[44px] cursor-pointer">
                       <UploadCloud size={14} /> Belge Ekle
                       <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(payment.id, f); e.target.value = ''; }} />
                     </label>
@@ -395,7 +395,7 @@ export default function AvmPaymentsClientUI({
                       onClick={() => handleTogglePaid(payment)}
                       disabled={togglingId === payment.id}
                       className={cn(
-                        'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all disabled:opacity-50',
+                        'inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs font-bold min-h-[44px] transition-all disabled:opacity-50',
                         payment.isPaid
                           ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                           : 'border-slate-200 bg-white text-slate-500'
@@ -414,7 +414,7 @@ export default function AvmPaymentsClientUI({
                       type="button"
                       onClick={() => handleDelete(payment.id)}
                       disabled={deletingId === payment.id}
-                      className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 disabled:opacity-50"
+                      className="rounded-2xl border border-rose-200 bg-rose-50 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-rose-600 disabled:opacity-50"
                     >
                       {deletingId === payment.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                     </button>
@@ -546,7 +546,7 @@ function AddAvmPaymentForm({
             required
             value={form.locationId}
             onChange={(e) => setForm({ ...form, locationId: e.target.value })}
-            className="w-full h-11 rounded-xl border border-slate-200 pl-10 pr-10 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
+            className="w-full h-11 rounded-2xl border border-slate-200 pl-10 pr-10 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
           >
             {locations.map((loc) => (
               <option key={loc.id} value={loc.id}>
@@ -567,7 +567,7 @@ function AddAvmPaymentForm({
             required
             value={form.month}
             onChange={(e) => setForm({ ...form, month: e.target.value })}
-            className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 cursor-pointer"
+            className="w-full h-11 rounded-2xl border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 cursor-pointer"
           />
         </div>
         <div className="space-y-1.5">
@@ -577,7 +577,7 @@ function AddAvmPaymentForm({
               required
               value={form.paymentType}
               onChange={(e) => setForm({ ...form, paymentType: e.target.value })}
-              className="w-full h-11 rounded-xl border border-slate-200 px-3 pr-10 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
+              className="w-full h-11 rounded-2xl border border-slate-200 px-3 pr-10 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
             >
               <option value="Kira">Kira (Sabit)</option>
               <option value="Aidat">Aidat & Ortak Gider</option>

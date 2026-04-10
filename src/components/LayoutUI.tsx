@@ -350,7 +350,7 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-slate-200 px-2 py-1.5 rounded-2xl shadow-xl shadow-slate-200/70 max-w-[92vw]">
+    <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md border border-slate-200 px-1.5 py-1.5 rounded-2xl shadow-xl shadow-slate-200/70 max-w-[92vw]">
       <div className="flex items-center gap-0.5" role="navigation">
         {mobileLinks.map(link => {
           const isActive = pathname === link.href;
@@ -360,10 +360,10 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all",
+                "flex flex-col items-center gap-0.5 min-w-[56px] px-3 py-2.5 rounded-xl transition-all",
                 isActive
                   ? "text-blue-600 bg-blue-50"
-                  : "text-slate-400 hover:text-slate-700 hover:bg-slate-50"
+                  : "text-slate-400 active:bg-slate-50"
               )}
             >
               <Icon className="w-5 h-5" />

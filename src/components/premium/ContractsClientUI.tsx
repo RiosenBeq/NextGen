@@ -127,7 +127,7 @@ export default function ContractsClientUI({
       {/* Upload Section */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 space-y-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
             <Upload className="w-5 h-5 text-blue-600" />
           </div>
           <div>
@@ -138,13 +138,13 @@ export default function ContractsClientUI({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="relative sm:col-span-2">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <select
               value={locationId}
               onChange={(e) => setLocationId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 pl-10 pr-10 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
+              className="w-full rounded-2xl border border-slate-200 pl-10 pr-10 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 appearance-none cursor-pointer"
             >
               <option value="global">Genel Sözleşme</option>
               {locations.map((loc) => (
@@ -156,7 +156,7 @@ export default function ContractsClientUI({
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
 
-          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-sm">
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-sm shrink-0 min-h-[48px]">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {uploading ? 'Yükleniyor...' : 'Dosya Seç'}
             <input
@@ -178,16 +178,18 @@ export default function ContractsClientUI({
           className={cn(
             'rounded-2xl border-2 border-dashed p-8 text-center transition-all cursor-pointer',
             isDragging
-              ? 'border-blue-400 bg-blue-50/50 scale-[1.01]'
-              : 'border-slate-200 bg-slate-50/30 hover:border-slate-300'
+              ? 'border-blue-400 bg-blue-50/60 scale-[1.01]'
+              : 'border-slate-200 bg-slate-50/40 hover:border-blue-300 hover:bg-blue-50/20'
           )}
           onClick={() => fileInputRef.current?.click()}
         >
-          <Upload className={cn('w-8 h-8 mx-auto mb-2 transition-colors', isDragging ? 'text-blue-500' : 'text-slate-300')} />
-          <p className="text-sm font-semibold text-slate-500">
+          <div className={cn('w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center transition-colors', isDragging ? 'bg-blue-100' : 'bg-slate-100')}>
+            <Upload className={cn('w-6 h-6 transition-colors', isDragging ? 'text-blue-500' : 'text-slate-400')} />
+          </div>
+          <p className="text-sm font-semibold text-slate-600">
             {isDragging ? 'Dosyayı buraya bırakın...' : 'Sözleşmeyi buraya sürükleyin veya tıklayın'}
           </p>
-          <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wide font-bold">PDF, JPG, PNG, WebP</p>
+          <p className="text-[10px] text-slate-400 mt-1.5 uppercase tracking-widest font-bold">PDF • JPG • PNG • WebP</p>
         </div>
 
         <AnimatePresence>
@@ -196,7 +198,7 @@ export default function ContractsClientUI({
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3"
+              className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3"
             >
               <AlertCircle size={16} className="text-rose-500 shrink-0" />
               <p className="text-xs text-rose-700 font-semibold">{error}</p>
@@ -207,7 +209,7 @@ export default function ContractsClientUI({
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3"
+              className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3"
             >
               <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
               <p className="text-xs text-emerald-700 font-semibold">{successMsg}</p>
@@ -218,7 +220,7 @@ export default function ContractsClientUI({
 
       {/* Contracts List */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
             Yüklü Sözleşmeler ({filteredContracts.length})
           </h3>
@@ -226,7 +228,7 @@ export default function ContractsClientUI({
             <select
               value={filterLoc}
               onChange={(e) => setFilterLoc(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 pr-8 text-xs text-slate-700 outline-none focus:border-blue-500 appearance-none cursor-pointer"
+              className="rounded-2xl border border-slate-200 px-3 py-2 pr-8 text-xs text-slate-700 outline-none focus:border-blue-500 appearance-none cursor-pointer"
             >
               <option value="all">Tüm Lokasyonlar</option>
               <option value="global">Genel</option>
@@ -234,18 +236,18 @@ export default function ContractsClientUI({
                 <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
         {filteredContracts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center">
             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
             <p className="text-sm text-slate-400 font-semibold">Henüz sözleşme yüklenmedi.</p>
             <p className="text-xs text-slate-400 mt-1">Yukarıdaki formu kullanarak sözleşme yükleyebilirsiniz.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <AnimatePresence>
               {filteredContracts.map((doc) => (
                 <motion.div
@@ -254,10 +256,10 @@ export default function ContractsClientUI({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   layout
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3.5 hover:bg-slate-50/50 transition-colors group"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50/50 transition-colors group"
                 >
                   <div className="min-w-0 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="min-w-0">
@@ -269,12 +271,12 @@ export default function ContractsClientUI({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                     {doc.fileUrl && (
                       <Link
                         href={doc.fileUrl}
                         target="_blank"
-                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors inline-flex items-center gap-1.5"
+                        className="rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors inline-flex items-center gap-1.5 min-h-[40px]"
                       >
                         <ExternalLink size={12} />
                         Görüntüle
@@ -284,7 +286,7 @@ export default function ContractsClientUI({
                       type="button"
                       onClick={() => handleDelete(doc.id)}
                       disabled={deletingId === doc.id}
-                      className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 transition-colors disabled:opacity-60"
+                      className="rounded-2xl border border-rose-200 bg-rose-50 p-2.5 text-rose-600 hover:bg-rose-100 transition-colors disabled:opacity-60 min-w-[40px] min-h-[40px] flex items-center justify-center"
                     >
                       {deletingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                     </button>

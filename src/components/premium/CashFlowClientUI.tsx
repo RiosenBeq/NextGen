@@ -82,101 +82,101 @@ export default function CashFlowClientUI({
     <div className="space-y-8 animate-fade-in relative">
       
       {/* 1. TOP KPIS */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {kpis.map((kpi, idx) => (
-          <motion.div 
-            key={kpi.label} 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <motion.div
+            key={kpi.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className={cn("p-6 rounded-[32px] border shadow-sm group hover:shadow-xl transition-all duration-500", kpi.cardClass)}
+            className={cn("p-5 rounded-2xl border shadow-sm group hover:shadow-md transition-all duration-300", kpi.cardClass)}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className={cn("w-12 h-12 rounded-2xl border flex items-center justify-center shadow-inner", kpi.iconBg)}>
-                 <kpi.icon size={24} className={kpi.iconColor} />
+            <div className="flex items-start justify-between mb-3">
+              <div className={cn("w-11 h-11 rounded-2xl border flex items-center justify-center", kpi.iconBg)}>
+                 <kpi.icon size={20} className={kpi.iconColor} />
               </div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white/50 px-3 py-1 rounded-xl border border-white shadow-sm">{kpi.tag}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide bg-white/60 px-2.5 py-1 rounded-xl border border-white/80">{kpi.tag}</span>
             </div>
-            <div className="space-y-1">
-               <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest italic">{kpi.label}</p>
-               <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic">{kpi.value}</h2>
+            <div className="space-y-0.5">
+               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{kpi.label}</p>
+               <h2 className="text-2xl font-black text-slate-900 tracking-tight">{kpi.value}</h2>
             </div>
           </motion.div>
         ))}
       </section>
 
       {/* 2. MAIN TABLE SECTION */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-8 bg-slate-900 rounded-full" />
-              <h2 className="text-xl font-black text-slate-900 tracking-tighter italic uppercase">Finansal Denetim Listesi</h2>
+              <div className="w-1 h-7 bg-slate-900 rounded-full" />
+              <h2 className="text-lg font-black text-slate-900 tracking-tight uppercase">Finansal Denetim Listesi</h2>
            </div>
-           <button 
+           <button
               onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
-              className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all hover:scale-[1.02] shadow-xl shadow-slate-200 active:scale-95 flex items-center gap-2"
+              className="min-h-[44px] px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-xs font-bold uppercase tracking-wide hover:bg-blue-600 transition-colors shadow-sm active:scale-95 flex items-center gap-2 shrink-0"
            >
-              <Plus size={16} strokeWidth={3} />
+              <Plus size={15} strokeWidth={2.5} />
               Yeni Kayıt
            </button>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[40px] overflow-hidden shadow-2xl">
-           <div className="hidden md:block overflow-x-auto no-scrollbar">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+           <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/50">
-                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dönem & Şube</th>
-                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Oturum</th>
-                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Brüt Ciro</th>
-                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Gider (Dahil)</th>
-                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Net Nakit</th>
-                       <th className="px-8 py-5"></th>
+                    <tr className="border-b border-slate-100 bg-slate-50/60">
+                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wide">Dönem & Şube</th>
+                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wide text-center">Oturum</th>
+                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wide text-right">Brüt Ciro</th>
+                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wide text-right">Gider (Dahil)</th>
+                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wide text-right">Net Nakit</th>
+                       <th className="px-4 py-4"></th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
                     {initialData.map((row: any, idx: number) => (
-                       <motion.tr 
-                          key={row.id || idx} 
-                          initial={{ opacity: 0 }} 
-                          animate={{ opacity: 1 }} 
+                       <motion.tr
+                          key={row.id || idx}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           transition={{ delay: idx * 0.03 }}
-                          className="group hover:bg-slate-50/50 transition-all"
+                          className="group hover:bg-slate-50/50 transition-colors"
                        >
-                          <td className="px-8 py-6">
+                          <td className="px-6 py-4">
                              <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 italic tracking-tight uppercase underline decoration-slate-200 underline-offset-4 decoration-1">{row.month}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{row.locationName}</span>
+                                <span className="text-sm font-bold text-slate-900 uppercase tracking-tight">{row.month}</span>
+                                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">{row.locationName}</span>
                              </div>
                           </td>
-                          <td className="px-8 py-6 text-center">
-                             <span className="px-3 py-1 bg-slate-100 rounded-lg text-sm font-black text-slate-700 italic tracking-tight border border-slate-200/50">{row.sessionCount}</span>
+                          <td className="px-6 py-4 text-center">
+                             <span className="px-2.5 py-1 bg-slate-100 rounded-lg text-sm font-bold text-slate-700 border border-slate-200/60">{row.sessionCount}</span>
                           </td>
-                          <td className="px-8 py-6 text-right">
-                             <span className="text-sm font-black text-slate-900 italic tracking-tighter">{formatCurrency(row.grossRevenue)}</span>
+                          <td className="px-6 py-4 text-right">
+                             <span className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency(row.grossRevenue)}</span>
                           </td>
-                          <td className="px-8 py-6 text-right">
-                             <span className="text-sm font-bold text-rose-500 italic tracking-tighter">{formatCurrency(row.totalExpense)}</span>
+                          <td className="px-6 py-4 text-right">
+                             <span className="text-sm font-semibold text-rose-500 tabular-nums">{formatCurrency(row.totalExpense)}</span>
                           </td>
-                          <td className="px-8 py-6 text-right">
-                             <span className={cn("text-lg font-black italic tracking-tighter", row.netCash >= 0 ? "text-emerald-700" : "text-red-600")}>
+                          <td className="px-6 py-4 text-right">
+                             <span className={cn("text-base font-black tabular-nums", row.netCash >= 0 ? "text-emerald-700" : "text-red-600")}>
                                 {formatCurrency(row.netCash)}
                              </span>
                           </td>
-                          <td className="px-8 py-6 text-right">
-                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button 
+                          <td className="px-4 py-4 text-right">
+                             <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
                                   onClick={() => handleEdit(row)}
-                                  className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95"
+                                  className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors"
                                 >
-                                   <Edit2 size={16} />
+                                   <Edit2 size={15} />
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => handleDelete(row.id)}
                                   disabled={isLoading}
-                                  className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm active:scale-95"
+                                  className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-colors disabled:opacity-50"
                                 >
-                                   <Trash2 size={16} />
+                                   <Trash2 size={15} />
                                 </button>
                              </div>
                           </td>
@@ -184,12 +184,12 @@ export default function CashFlowClientUI({
                     ))}
                     {initialData.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="py-24 text-center">
-                           <div className="flex flex-col items-center gap-4">
-                              <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
-                                 <FileText size={32} strokeWidth={1.5} />
+                        <td colSpan={6} className="py-16 text-center">
+                           <div className="flex flex-col items-center gap-3">
+                              <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
+                                 <FileText size={28} strokeWidth={1.5} />
                               </div>
-                              <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Henüz bir kayıt bulunmuyor.</p>
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Henüz bir kayıt bulunmuyor.</p>
                            </div>
                         </td>
                       </tr>
@@ -201,29 +201,36 @@ export default function CashFlowClientUI({
            <div className="space-y-3 p-4 md:hidden">
               {initialData.map((row: any, idx: number) => (
                 <div key={row.id || idx} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{row.month}</p>
-                      <p className="text-sm font-semibold text-slate-900">{row.locationName}</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{row.month}</p>
+                      <p className="text-sm font-semibold text-slate-900 mt-0.5">{row.locationName}</p>
                     </div>
-                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700">{row.sessionCount} seans</span>
+                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 shrink-0">{row.sessionCount} seans</span>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-slate-100 pt-3">
                     <p className="text-slate-500">Brüt Ciro</p>
-                    <p className="text-right font-semibold text-slate-900">{formatCurrency(row.grossRevenue)}</p>
+                    <p className="text-right font-semibold text-slate-900 tabular-nums">{formatCurrency(row.grossRevenue)}</p>
                     <p className="text-slate-500">Toplam Gider</p>
-                    <p className="text-right font-semibold text-rose-600">{formatCurrency(row.totalExpense)}</p>
+                    <p className="text-right font-semibold text-rose-600 tabular-nums">{formatCurrency(row.totalExpense)}</p>
                     <p className="text-slate-500">Net Nakit</p>
-                    <p className={cn("text-right font-bold", row.netCash >= 0 ? "text-emerald-700" : "text-rose-600")}>{formatCurrency(row.netCash)}</p>
+                    <p className={cn("text-right font-bold tabular-nums", row.netCash >= 0 ? "text-emerald-700" : "text-rose-600")}>{formatCurrency(row.netCash)}</p>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-end gap-2">
-                    <button onClick={() => handleEdit(row)} className="rounded-lg border border-slate-200 p-2 text-slate-500">
-                      <Edit2 size={14} />
+                  <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                    <button
+                      onClick={() => handleEdit(row)}
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                    >
+                      <Edit2 size={15} />
                     </button>
-                    <button onClick={() => handleDelete(row.id)} disabled={isLoading} className="rounded-lg border border-slate-200 p-2 text-slate-500 disabled:opacity-50">
-                      <Trash2 size={14} />
+                    <button
+                      onClick={() => handleDelete(row.id)}
+                      disabled={isLoading}
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:text-rose-600 hover:border-rose-200 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>

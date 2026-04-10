@@ -70,10 +70,21 @@ export default function GunluklerSayfasi() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-8 space-y-6 pb-20">
-      <header className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
-        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">Sistem Log</h1>
-        <p className="text-sm text-slate-500 mt-1">Tüm kayıtlar sade görünümde listelenir. Filtrelerle hızlıca daraltabilirsiniz.</p>
+    <div className="page-wrapper space-y-8 pb-20">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200">
+            <Database size={20} />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Sistem Logları</h1>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Kayıt & İşlem Geçmişi</p>
+          </div>
+        </div>
+      </header>
+
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <p className="text-sm text-slate-500 mb-4">Filtrelerle hızlıca daraltabilirsiniz.</p>
 
         <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:items-center">
           <div className="relative flex-1">
@@ -123,9 +134,9 @@ export default function GunluklerSayfasi() {
             )}
           </div>
         </div>
-      </header>
+      </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-4 md:px-6 py-3 border-b border-slate-100 text-xs text-slate-500 font-semibold">
           Toplam {filtreliLoglar.length} kayıt
         </div>

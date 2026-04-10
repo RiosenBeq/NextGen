@@ -42,6 +42,34 @@ export default async function FinansalTablo({
 
   const activeLocationCount = (locations || []).length || 1;
 
+  // Consolidate duplicate MonthlyPerformance records for same location+month
+  function monthIdOf(val: string) {
+    return val.includes('T') ? val.split('T')[0].slice(0, 7) : val.slice(0, 7);
+  }
+  const consolidatedPerfMap = new Map<string, any>();
+  for (const row of (performances || [])) {
+    if (!row.location || !row.month) continue;
+    const mId = monthIdOf(String(row.month));
+    const key = `${row.locationId}_${mId}`;
+    const existing = consolidatedPerfMap.get(key);
+    if (!existing) {
+      consolidatedPerfMap.set(key, {
+        ...row,
+        month: `${mId}-01T00:00:00.000Z`,
+        sessionCount: Number(row.sessionCount || 0),
+        extraExpenseAmount: Number(row.extraExpenseAmount || 0),
+        extraExpenseNotes: row.extraExpenseNotes || '',
+      });
+    } else {
+      existing.sessionCount += Number(row.sessionCount || 0);
+      existing.extraExpenseAmount = Number(existing.extraExpenseAmount || 0) + Number(row.extraExpenseAmount || 0);
+      if (row.extraExpenseNotes) {
+        existing.extraExpenseNotes = [existing.extraExpenseNotes, row.extraExpenseNotes].filter(Boolean).join(' | ');
+      }
+    }
+  }
+  const consolidatedPerformances = Array.from(consolidatedPerfMap.values());
+
   const currentMonthId = new Date().toISOString().slice(0, 7);
 
   // Recurring expenses — exclude AVM-related tagged ones (already counted via calculateMonthlyCashFlow)
@@ -79,8 +107,8 @@ export default async function FinansalTablo({
 
   const avmSummaries: Record<string, any> = {};
 
-  if (performances && locations) {
-    for (const perf of performances) {
+  if (consolidatedPerformances.length > 0 && locations) {
+    for (const perf of consolidatedPerformances) {
       const loc = perf.location;
       if (!loc) continue;
 
@@ -204,8 +232,8 @@ export default async function FinansalTablo({
   });
 
   // Filter options for months
-  const allMonths = performances
-    ? [...new Set(performances.map(p => new Date(p.month).toISOString().slice(0, 7)))]
+  const allMonths = consolidatedPerformances.length > 0
+    ? [...new Set(consolidatedPerformances.map(p => monthIdOf(String(p.month))))]
     : [];
   allMonths.sort().reverse();
 

@@ -143,42 +143,37 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
-      {/* 1. ELITE HEADER */}
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-slate-100">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-100">
-                <Receipt size={24} strokeWidth={2.5} />
-             </div>
-             <div>
-                <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] italic">Kurumsal Belge Arşivi</span>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">E-Faturalar ve Dekontlar</h1>
-             </div>
-          </div>
-          <p className="text-sm text-slate-500 font-bold italic max-w-xl">
-            Sisteme yüklenen tüm gider evrakları, PDF faturalar ve ödeme dekontları burada asenkron olarak saklanır.
-          </p>
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+              <Receipt size={20} />
+           </div>
+           <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Faturalar & Belgeler</h1>
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Kurumsal Belge Arşivi</p>
+           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-          <div className="relative w-full sm:w-80 group">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
              <input
                type="text"
-               placeholder="Belge veya şube ara..."
+               placeholder="Ara..."
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full pl-11 pr-5 py-4 bg-white border border-slate-200 rounded-[22px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-sm placeholder:text-slate-300"
+               className="w-full sm:w-56 pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all shadow-sm placeholder:text-slate-400"
              />
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-[22px] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 italic"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200/50 active:scale-[0.97]"
           >
-            <Plus size={18} strokeWidth={3} />
-            YENİ BELGE EKLE
+            <Plus size={18} />
+            <span className="hidden sm:inline">Yeni Belge</span>
           </button>
         </div>
       </header>

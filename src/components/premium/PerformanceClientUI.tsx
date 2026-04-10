@@ -65,17 +65,19 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200">
-        <div className="space-y-1">
-           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-blue-600" />
-              Performans Yönetimi
-           </h1>
-           <p className="text-sm text-slate-500 font-medium">Günlük seans girişlerini ve operasyonel verileri yönetin.</p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+              <BarChart3 size={20} />
+           </div>
+           <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Performans Yönetimi</h1>
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Günlük Seans & Operasyonel Veri</p>
+           </div>
         </div>
-        <div className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-[10px] font-bold uppercase tracking-widest italic">
-           <Activity size={14} className="inline mr-2" />
-           Manuel Mod Aktif
+        <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-[10px] font-bold uppercase tracking-widest">
+           <Activity size={12} className="inline mr-1.5" />
+           Manuel Mod
         </div>
       </header>
 
@@ -89,29 +91,29 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
          
          {/* Form Section */}
-         <section className="xl:col-span-5 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-3xl p-1 shadow-sm">
+         <section className="xl:col-span-5 space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-1 shadow-sm">
                <DailyPerformanceForm locations={locations} onSuccess={() => router.refresh()} />
             </div>
 
-            <div className="p-6 rounded-3xl bg-slate-900 text-white space-y-4 shadow-xl">
+            <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-3">
                <div className="flex items-center gap-2">
-                  <HistoryIcon size={18} className="text-slate-400" />
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sistem Bilgisi</h3>
+                  <HistoryIcon size={14} className="text-slate-400" />
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sistem Bilgisi</h3>
                </div>
-               <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                  Girdiğiniz günlük veriler, ilgili döneme ait <span className="text-white font-bold italic">Nakit Akışı (P&L)</span> raporlarına otomatik olarak aktarılır.
+               <p className="text-xs text-slate-400 leading-relaxed">
+                  Girdiğiniz günlük veriler, ilgili döneme ait <span className="text-white font-semibold">Nakit Akışı (P&L)</span> raporlarına otomatik olarak aktarılır.
                </p>
             </div>
          </section>
 
          {/* History Section */}
-         <section className="xl:col-span-7 space-y-4">
-            <div className="flex items-center justify-between px-2">
-               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <HistoryIcon size={16} /> Giriş Geçmişi
+         <section className="xl:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <HistoryIcon size={14} className="text-slate-400" /> Giriş Geçmişi
                </h3>
-               <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
+               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                   <FilterLink href="/performans?location=all" active={historyLocId === '' || historyLocId === 'all'} label="Tümü" />
                   {locations.map(loc => (
                     <FilterLink key={loc.id} href={`/performans?location=${loc.id}`} active={historyLocId === loc.id} label={loc.name} />
@@ -119,34 +121,38 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-               <table className="w-full text-left border-collapse">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+               <table className="w-full text-left">
                   <thead>
-                     <tr className="bg-slate-50 border-b border-slate-100">
-                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tarih / Şube</th>
-                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Oturum</th>
-                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Test</th>
+                     <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                        <th className="px-6 py-4">Tarih / Şube</th>
+                        <th className="px-4 py-4 text-center">Oturum</th>
+                        <th className="px-4 py-4 text-center">Test</th>
                         <th className="px-6 py-4"></th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                      {history.length === 0 ? (
-                        <tr><td colSpan={4} className="py-20 text-center text-xs font-medium text-slate-400 italic">Kayıt bulunamadı.</td></tr>
+                        <tr><td colSpan={4} className="py-16 text-center">
+                           <BarChart3 size={28} className="mx-auto text-slate-200 mb-2" />
+                           <p className="text-sm font-medium text-slate-400">Kayıt bulunamadı.</p>
+                        </td></tr>
                      ) : (
                         history.map((row, idx) => (
-                           <tr key={row.id || idx} className="group hover:bg-slate-50/50 transition-all cursor-pointer" onClick={() => { setSelectedRow(row); setIsDrawerOpen(true); }}>
-                              <td className="px-6 py-5">
+                           <tr key={row.id || idx} className="group hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => { setSelectedRow(row); setIsDrawerOpen(true); }}>
+                              <td className="px-6 py-4">
                                  <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{formatMonth(row.date)}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{row.location?.name || 'GENEL'}</span>
+                                    <span className="text-sm font-semibold text-slate-800">{formatMonth(row.date)}</span>
+                                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{row.location?.name || 'Genel'}</span>
                                  </div>
                               </td>
-                              <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-xs font-mono font-bold">{row.sessionCount}</span></td>
-                              <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-xs font-mono font-bold">{row.testCount}</span></td>
-                              <td className="px-6 py-5 text-right opacity-0 group-hover:opacity-100 transition-all">
+                              <td className="px-4 py-4 text-center"><span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-xs font-mono font-bold">{row.sessionCount}</span></td>
+                              <td className="px-4 py-4 text-center"><span className="px-2.5 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-xs font-mono font-bold">{row.testCount}</span></td>
+                              <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                                  <div className="flex items-center justify-end gap-2">
-                                    <button disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleEdit(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"><Edit2 size={14} /></button>
-                                    <button disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"><Trash2 size={14} /></button>
+                                    <button disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleEdit(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-white transition-all disabled:opacity-50"><Edit2 size={14} /></button>
+                                    <button disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-white transition-all disabled:opacity-50"><Trash2 size={14} /></button>
                                  </div>
                               </td>
                            </tr>
@@ -155,27 +161,50 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                   </tbody>
                </table>
             </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-slate-100">
+               {history.length === 0 ? (
+                  <div className="py-16 text-center">
+                     <BarChart3 size={28} className="mx-auto text-slate-200 mb-2" />
+                     <p className="text-sm font-medium text-slate-400">Kayıt bulunamadı.</p>
+                  </div>
+               ) : (
+                  history.map((row, idx) => (
+                     <div key={row.id || idx} className="px-5 py-4 flex items-center justify-between gap-3" onClick={() => { setSelectedRow(row); setIsDrawerOpen(true); }}>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-sm font-semibold text-slate-800">{formatMonth(row.date)}</p>
+                           <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{row.location?.name || 'Genel'}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           <span className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-xs font-mono font-bold">{row.sessionCount}</span>
+                           <span className="px-2 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-xs font-mono font-bold">{row.testCount}</span>
+                        </div>
+                     </div>
+                  ))
+               )}
+            </div>
          </section>
       </div>
 
       <PremiumDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="Veri Detayı">
         {selectedRow && (
-           <div className="space-y-10 py-6">
-              <div className="p-8 rounded-3xl bg-slate-900 text-white space-y-6 shadow-xl">
+           <div className="space-y-6 py-4">
+              <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-4">
                  <div className="space-y-1">
                     <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">{formatMonth(selectedRow.date)}</p>
-                    <p className="text-3xl font-bold italic tracking-tighter uppercase">{selectedRow.location?.name}</p>
+                    <p className="text-xl font-bold tracking-tight">{selectedRow.location?.name}</p>
                  </div>
-                 <div className="grid grid-cols-2 gap-8 pt-4 border-t border-white/10">
-                    <div className="space-y-1"><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Oturum</p><p className="text-2xl font-bold italic">{selectedRow.sessionCount}</p></div>
-                    <div className="space-y-1"><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Test</p><p className="text-2xl font-bold italic">{selectedRow.testCount}</p></div>
+                 <div className="grid grid-cols-2 gap-6 pt-4 border-t border-white/10">
+                    <div className="space-y-1"><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Oturum</p><p className="text-xl font-bold">{selectedRow.sessionCount}</p></div>
+                    <div className="space-y-1"><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Test</p><p className="text-xl font-bold">{selectedRow.testCount}</p></div>
                  </div>
               </div>
-              <div className="space-y-4 px-1">
+              <div className="space-y-3">
                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Notlar</h4>
-                 <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{selectedRow.extraMetrics?.notlar || "Not eklenmemiş."}</p>
+                 <p className="text-sm text-slate-600 leading-relaxed">{selectedRow.extraMetrics?.notlar || "Not eklenmemiş."}</p>
               </div>
-              <button onClick={() => setIsDrawerOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-xl transition-all hover:bg-slate-800">Kapat</button>
+              <button onClick={() => setIsDrawerOpen(false)} className="w-full py-3.5 bg-slate-900 text-white rounded-xl text-sm font-semibold transition-all hover:bg-slate-800">Kapat</button>
            </div>
         )}
       </PremiumDrawer>

@@ -166,6 +166,7 @@ export default function ExpenseForm({
           categoryId: 'operational',
           locationId: '',
           paidBy: 'Ortak Hesap',
+          isOfficial: true,
           date: new Date().toISOString().split('T')[0]
         });
         setFile(null);

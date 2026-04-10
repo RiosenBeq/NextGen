@@ -46,7 +46,7 @@ export function PremiumModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-900/40"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
             onClick={onClose}
           />
 
@@ -59,7 +59,7 @@ export function PremiumModal({
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.2, type: 'spring', damping: 25, stiffness: 300 }}
                 className={cn(
-                  'relative w-full rounded-2xl border border-slate-200/50 bg-white/95 backdrop-blur-xl shadow-2xl',
+                  'relative w-full rounded-2xl border border-white/60 bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]',
                   'max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden flex flex-col',
                   maxWidth
                 )}
@@ -105,7 +105,7 @@ export function PremiumDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/40"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
           />
 
           <div className="absolute inset-0 overflow-y-auto p-3 sm:p-6">
@@ -115,7 +115,7 @@ export function PremiumDrawer({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.2, type: 'spring', damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl border border-slate-200/50 bg-white/95 backdrop-blur-xl shadow-2xl"
+                className="relative w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl border border-white/60 bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">

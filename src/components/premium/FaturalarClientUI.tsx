@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import {
@@ -57,6 +57,14 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   const [uploadingAvmId, setUploadingAvmId] = useState<string | null>(null);
   const [savingAvmId, setSavingAvmId] = useState<string | null>(null);
   const [avmDrafts, setAvmDrafts] = useState<Record<string, { amountWithVat: number; paidBy: string }>>({});
+
+  useEffect(() => {
+    setInvoices(initialInvoices);
+  }, [initialInvoices]);
+
+  useEffect(() => {
+    setAvmExpenses(initialAvmExpenses);
+  }, [initialAvmExpenses]);
 
   const filteredInvoices = invoices.filter(inv =>
     inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||

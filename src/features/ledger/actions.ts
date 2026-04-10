@@ -28,16 +28,34 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
     const validatedData = monthlyPerformanceSchema.parse(data);
 
     const { normalizedMonth, deterministicId } = normalizeMonthInput(validatedData.month);
+    const targetId = deterministicId(validatedData.locationId);
+
+    // Fetch existing record to accumulate values
+    const { data: existingRecord } = await supabase
+      .from('MonthlyPerformance')
+      .select('sessionCount, extraExpenseAmount, extraExpenseNotes')
+      .eq('id', targetId)
+      .maybeSingle();
+
+    const newSessionCount = (existingRecord?.sessionCount || 0) + validatedData.sessionCount;
+    const newExtraExpenseAmount = (existingRecord?.extraExpenseAmount || 0) + (validatedData.extraExpenseAmount || 0);
+    
+    let combinedNotes = validatedData.extraExpenseNotes || '';
+    if (existingRecord?.extraExpenseNotes && validatedData.extraExpenseNotes) {
+        combinedNotes = `${existingRecord.extraExpenseNotes} | ${validatedData.extraExpenseNotes}`;
+    } else if (existingRecord?.extraExpenseNotes) {
+        combinedNotes = existingRecord.extraExpenseNotes;
+    }
 
     const { data: record, error } = await supabase
       .from('MonthlyPerformance')
       .upsert({
-        id: deterministicId(validatedData.locationId),
+        id: targetId,
         locationId: validatedData.locationId,
         month: normalizedMonth,
-        sessionCount: validatedData.sessionCount,
-        extraExpenseAmount: validatedData.extraExpenseAmount || 0,
-        extraExpenseNotes: validatedData.extraExpenseNotes,
+        sessionCount: newSessionCount,
+        extraExpenseAmount: newExtraExpenseAmount,
+        extraExpenseNotes: combinedNotes,
         updatedAt: new Date().toISOString(),
       }, {
         onConflict: 'id'

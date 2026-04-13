@@ -104,8 +104,9 @@ export async function uploadDocument(formData: FormData) {
       .from('documents')
       .getPublicUrl(uniqueName);
 
-    // Save to DB
-    const { error: dbError } = await (adminSupabase || supabase)
+    // Save to DB with the request-scoped user client so newly created
+    // records are visible under the same RLS context on the contracts page.
+    const { error: dbError } = await supabase
       .from('Document')
       .insert({
         id: `doc_${crypto.randomUUID()}`,

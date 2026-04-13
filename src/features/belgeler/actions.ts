@@ -25,6 +25,16 @@ const ALLOWED_MIME_TYPES: Record<string, string> = {
 
 const MAX_FILE_SIZE_MB = 15;
 
+function sanitizeStorageSegment(input: string) {
+  return input
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w.-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
+
 export async function uploadDocument(formData: FormData) {
   try {
     const supabase = await createClient();
@@ -67,8 +77,13 @@ export async function uploadDocument(formData: FormData) {
       console.warn('Bucket check/create warning:', bucketErr);
     }
 
-    // Generate unique file path
-    const uniqueName = `${relatedType}/${relatedId}/${Date.now()}_${file.name}`;
+    // Generate unique and storage-safe file path
+    const sanitizedRelatedType = sanitizeStorageSegment(relatedType) || 'document';
+    const sanitizedRelatedId = sanitizeStorageSegment(relatedId) || 'global';
+    const extension = ALLOWED_MIME_TYPES[mimeType] || file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const sanitizedBaseName = sanitizeStorageSegment(baseName) || 'file';
+    const uniqueName = `${sanitizedRelatedType}/${sanitizedRelatedId}/${Date.now()}_${sanitizedBaseName}.${extension}`;
 
     // Upload to Supabase Storage with contentType
     const { error: uploadError } = await storageClient.storage

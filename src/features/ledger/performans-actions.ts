@@ -104,15 +104,20 @@ async function syncMonthlyPerformance(locationId: string, dateStr: string) {
   }
 }
 
-export async function getDailyPerformanceHistory(locationId: string, limit = 30) {
+export async function getDailyPerformanceHistory(locationId?: string, limit = 30) {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from('DailyPerformance')
       .select('*, location:Location(id,name)')
-      .eq('locationId', locationId)
       .order('date', { ascending: false })
       .limit(limit);
+
+    if (locationId) {
+      query = query.eq('locationId', locationId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];

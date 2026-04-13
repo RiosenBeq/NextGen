@@ -15,8 +15,8 @@ export default async function PerformancePage(props: {
   const filterLocation = searchParams.location || 'all';
   const locations = await getActiveLocations();
 
-  const historyLocId = filterLocation === 'all' ? (locations[0]?.id || '') : filterLocation;
-  const history = await getDailyPerformanceHistory(historyLocId);
+  const historyLocId = filterLocation === 'all' ? '' : filterLocation;
+  const history = await getDailyPerformanceHistory(historyLocId || undefined);
 
   return (
     <PerformanceClientUI

@@ -14,9 +14,9 @@ export default async function SozlesmelerPage() {
   const [{ data: contracts }, { data: locations }] = await Promise.all([
     supabase
       .from('Document')
-      .select('id, fileName, fileUrl, relatedId, createdAt')
+      .select('id, fileName, fileUrl, relatedId, uploadedAt')
       .eq('relatedType', 'contract')
-      .order('createdAt', { ascending: false }),
+      .order('uploadedAt', { ascending: false }),
     supabase.from('Location').select('id, name').eq('isActive', true).order('name', { ascending: true }),
   ]);
 
@@ -46,7 +46,7 @@ export default async function SozlesmelerPage() {
       </section>
 
       <ContractsClientUI
-        initialContracts={(contracts || []) as Array<{ id: string; fileName: string; fileUrl: string; relatedId: string; uploadedAt?: string; createdAt?: string }>}
+        initialContracts={(contracts || []) as Array<{ id: string; fileName: string; fileUrl: string; relatedId: string; uploadedAt?: string }>}
         locations={(locations || []) as Array<{ id: string; name: string }>}
       />
     </div>

@@ -138,7 +138,7 @@ export async function uploadDocument(formData: FormData) {
 export async function getDocuments(relatedType?: string, relatedId?: string) {
   try {
     const supabase = await createClient();
-    let query = supabase.from('Document').select('*').order('createdAt', { ascending: false });
+    let query = supabase.from('Document').select('*').order('uploadedAt', { ascending: false });
 
     if (relatedType) query = query.eq('relatedType', relatedType);
     if (relatedId) query = query.eq('relatedId', relatedId);

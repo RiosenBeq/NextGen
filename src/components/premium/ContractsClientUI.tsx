@@ -36,6 +36,7 @@ export default function ContractsClientUI({
   const [locationId, setLocationId] = useState('global');
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
@@ -88,7 +89,7 @@ export default function ContractsClientUI({
       fileName: file.name,
       fileUrl: res.publicUrl || '',
       relatedId: locationId,
-      createdAt: new Date().toISOString(),
+      uploadedAt: new Date().toISOString(),
     };
     setContracts((prev) => [newDoc, ...prev]);
     setSuccessMsg(`"${file.name}" başarıyla yüklendi.`);
@@ -97,16 +98,27 @@ export default function ContractsClientUI({
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
-  const handleUpload = async (file: File | null) => {
+  const handleUploadSelection = (file: File | null) => {
     if (!file) return;
-    await processUpload(file);
+    setError('');
+    setSuccessMsg('');
+    setSelectedFile(file);
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleUploadConfirm = async () => {
+    if (!selectedFile) {
+      setError('Lütfen önce bir dosya seçin.');
+      return;
+    }
+    await processUpload(selectedFile);
+    setSelectedFile(null);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) await processUpload(file);
+    if (file) handleUploadSelection(file);
   };
 
   const handleDelete = async (id: string) => {
@@ -158,17 +170,32 @@ export default function ContractsClientUI({
 
           <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-sm">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? 'Yükleniyor...' : 'Dosya Seç'}
+            Dosya Seç
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
               accept=".pdf,.jpg,.jpeg,.png,.webp"
               disabled={uploading}
-              onChange={(e) => handleUpload(e.target.files?.[0] || null)}
+              onChange={(e) => handleUploadSelection(e.target.files?.[0] || null)}
             />
           </label>
+          <button
+            type="button"
+            onClick={handleUploadConfirm}
+            disabled={uploading || !selectedFile}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {uploading ? 'Yükleniyor...' : 'Belgeyi Yükle'}
+          </button>
         </div>
+
+        {selectedFile && (
+          <p className="text-xs font-medium text-slate-600">
+            Seçilen dosya: <span className="font-semibold text-slate-900">{selectedFile.name}</span>
+          </p>
+        )}
 
         {/* Drag & Drop Zone */}
         <div

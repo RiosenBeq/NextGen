@@ -22,12 +22,12 @@ interface Props {
   initialNotes: Note[];
 }
 
-const THEMES: Record<string, { card: string; badge: string; dot: string }> = {
-  zinc: { card: 'border-slate-200 bg-white', badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-600' },
-  blue: { card: 'border-blue-200 bg-blue-50/40', badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-600' },
-  emerald: { card: 'border-emerald-200 bg-emerald-50/40', badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
-  amber: { card: 'border-amber-200 bg-amber-50/40', badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-600' },
-  rose: { card: 'border-rose-200 bg-rose-50/40', badge: 'bg-rose-100 text-rose-700', dot: 'bg-rose-600' },
+const THEMES: Record<string, { dot: string; label: string }> = {
+  zinc: { dot: 'bg-slate-500', label: 'Nötr' },
+  blue: { dot: 'bg-blue-600', label: 'Mavi' },
+  emerald: { dot: 'bg-emerald-600', label: 'Yeşil' },
+  amber: { dot: 'bg-amber-600', label: 'Amber' },
+  rose: { dot: 'bg-rose-600', label: 'Pembe' },
 };
 
 export default function NoteList({ initialNotes }: Props) {
@@ -68,13 +68,13 @@ export default function NoteList({ initialNotes }: Props) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Notlarda ara (başlık, içerik)..."
-            className="w-full h-11 rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+            className="w-full px-4 py-2.5 pl-11 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
           />
         </div>
 
         <button
           onClick={() => setIsAdding(true)}
-          className="h-11 px-5 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-slate-800 inline-flex items-center justify-center gap-2"
+          className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm inline-flex items-center justify-center gap-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Yeni Not
@@ -82,10 +82,10 @@ export default function NoteList({ initialNotes }: Props) {
       </div>
 
       {filteredNotes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-14 text-center">
+        <div className="rounded-2xl border border-dashed border-slate-200/70 bg-white p-14 text-center">
           <StickyNote className="mx-auto w-10 h-10 text-slate-300" />
-          <p className="mt-3 text-sm font-semibold text-slate-700">Not bulunamadı</p>
-          <p className="mt-1 text-xs text-slate-500">Arama kriterini değiştirin veya yeni bir not ekleyin.</p>
+          <p className="mt-3 text-sm font-semibold text-slate-900 tracking-tight">Not bulunamadı</p>
+          <p className="mt-1 text-sm text-slate-500">Arama kriterini değiştirin veya yeni bir not ekleyin.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -96,30 +96,31 @@ export default function NoteList({ initialNotes }: Props) {
                 <motion.article
                   key={note.id}
                   layout
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  className={cn('rounded-2xl border p-4 shadow-sm transition-all hover:shadow-md', theme.card)}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="bg-white border border-slate-200/70 rounded-2xl p-5 hover:border-slate-300/70 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-bold text-slate-900 truncate">{note.title}</h3>
-                      <span className={cn('mt-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide', theme.badge)}>
-                        <span className={cn('w-1.5 h-1.5 rounded-full', theme.dot)} />
-                        {note.color}
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={cn('w-2 h-2 rounded-full shrink-0', theme.dot)} />
+                        <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">{theme.label}</span>
+                      </div>
+                      <h3 className="text-base font-semibold text-slate-900 tracking-tight truncate">{note.title}</h3>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => setEditingNote(note)}
-                        className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-blue-600"
+                        className="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 inline-flex items-center justify-center transition-colors"
                         title="Düzenle"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(note.id)}
-                        className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-rose-600"
+                        className="w-9 h-9 rounded-lg hover:bg-rose-50 text-slate-500 hover:text-rose-600 inline-flex items-center justify-center transition-colors"
                         title="Sil"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -131,8 +132,8 @@ export default function NoteList({ initialNotes }: Props) {
                     {note.content || 'İçerik bulunmuyor.'}
                   </p>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-3 text-[11px] text-slate-500">
-                    <span className="inline-flex items-center gap-1">
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-3 text-xs text-slate-400 tabular-nums">
+                    <span className="inline-flex items-center gap-1.5">
                       <Clock3 className="w-3.5 h-3.5" />
                       {new Date(note.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>

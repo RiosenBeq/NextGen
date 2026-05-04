@@ -25,6 +25,16 @@ const ALLOWED_MIME_TYPES: Record<string, string> = {
 
 const MAX_FILE_SIZE_MB = 15;
 
+function sanitizeStorageSegment(input: string) {
+  return input
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^\w.-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
+
 export async function uploadDocument(formData: FormData) {
   try {
     const supabase = await createClient();
@@ -67,8 +77,13 @@ export async function uploadDocument(formData: FormData) {
       console.warn('Bucket check/create warning:', bucketErr);
     }
 
-    // Generate unique file path
-    const uniqueName = `${relatedType}/${relatedId}/${Date.now()}_${file.name}`;
+    // Generate unique and storage-safe file path
+    const sanitizedRelatedType = sanitizeStorageSegment(relatedType) || 'document';
+    const sanitizedRelatedId = sanitizeStorageSegment(relatedId) || 'global';
+    const extension = ALLOWED_MIME_TYPES[mimeType] || file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const sanitizedBaseName = sanitizeStorageSegment(baseName) || 'file';
+    const uniqueName = `${sanitizedRelatedType}/${sanitizedRelatedId}/${Date.now()}_${sanitizedBaseName}.${extension}`;
 
     // Upload to Supabase Storage with contentType
     const { error: uploadError } = await storageClient.storage
@@ -89,16 +104,41 @@ export async function uploadDocument(formData: FormData) {
       .from('documents')
       .getPublicUrl(uniqueName);
 
-    // Save to DB
-    const { error: dbError } = await (adminSupabase || supabase)
-      .from('Document')
-      .insert({
-        id: `doc_${crypto.randomUUID()}`,
-        relatedType,
-        relatedId,
-        fileName: file.name,
-        fileUrl: publicUrl,
-      });
+    // Save to DB — try with new metadata fields (fileSize, mimeType); fallback
+    // to minimal payload if the schema-cache doesn't yet know about them.
+    const dbClient = adminSupabase || supabase;
+    const id = `doc_${crypto.randomUUID()}`;
+    const fullPayload = {
+      id,
+      relatedType,
+      relatedId,
+      fileName: file.name,
+      fileUrl: publicUrl,
+      fileSize: file.size,
+      mimeType,
+    };
+
+    let { error: dbError } = await dbClient.from('Document').insert(fullPayload);
+
+    if (dbError) {
+      const msg = (dbError.message || '').toLowerCase();
+      const isMissingColumn =
+        msg.includes('schema cache') ||
+        msg.includes("could not find") ||
+        msg.includes('column') && (msg.includes('filesize') || msg.includes('mimetype'));
+
+      if (isMissingColumn) {
+        console.warn('Document insert: fileSize/mimeType columns missing, retrying minimal payload', dbError.message);
+        const { error: retryError } = await dbClient.from('Document').insert({
+          id,
+          relatedType,
+          relatedId,
+          fileName: file.name,
+          fileUrl: publicUrl,
+        });
+        dbError = retryError;
+      }
+    }
 
     if (dbError) throw dbError;
 

@@ -14,7 +14,15 @@ export const expenseSchema = z.object({
   type: z.enum(['ONE_TIME', 'RECURRING']),
   amount: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
   vatRate: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
-  isOfficial: z.union([z.boolean(), z.string()]).transform((val) => val === 'true' || val === true),
+  isOfficial: z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return false;
+      if (typeof val === 'boolean') return val;
+      const normalized = val.trim().toLowerCase();
+      return normalized === 'true' || normalized === 'on' || normalized === '1';
+    }),
   month: z.string().nullable().optional(),
   paidBy: z.string().optional(),
   categoryId: z.string().nullable().optional(),

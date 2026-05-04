@@ -133,6 +133,8 @@ model Document {
   id          String   @id @default(cuid())
   fileUrl     String
   fileName    String?
+  fileSize    Int?
+  mimeType    String?
   relatedType String   // expense, investment
   relatedId   String
   uploadedAt  DateTime @default(now())

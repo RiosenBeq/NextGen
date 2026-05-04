@@ -2,15 +2,19 @@
 import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  ChevronRight, 
+import { motion } from 'framer-motion';
+import {
+  Plus,
+  ChevronRight,
   Receipt,
   FileText,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  UploadCloud
+  UploadCloud,
+  TrendingUp,
+  Activity,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -61,15 +65,50 @@ interface DashboardProps {
   allExpenses: DashboardExpense[];
 }
 
-export default function DashboardClientUI({ 
-  stats, 
-  recentExpenses, 
-  locations, 
+type AccentTone = 'blue' | 'emerald' | 'rose' | 'amber';
+
+const TONE_STYLES: Record<AccentTone, { iconBg: string; iconText: string; chipBg: string; chipText: string }> = {
+  blue: {
+    iconBg: 'bg-blue-50',
+    iconText: 'text-blue-600',
+    chipBg: 'bg-blue-50',
+    chipText: 'text-blue-600',
+  },
+  emerald: {
+    iconBg: 'bg-emerald-50',
+    iconText: 'text-emerald-600',
+    chipBg: 'bg-emerald-50',
+    chipText: 'text-emerald-600',
+  },
+  rose: {
+    iconBg: 'bg-rose-50',
+    iconText: 'text-rose-600',
+    chipBg: 'bg-rose-50',
+    chipText: 'text-rose-600',
+  },
+  amber: {
+    iconBg: 'bg-amber-50',
+    iconText: 'text-amber-600',
+    chipBg: 'bg-amber-50',
+    chipText: 'text-amber-600',
+  },
+};
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.25, ease: 'easeOut' as const },
+};
+
+export default function DashboardClientUI({
+  stats,
+  recentExpenses,
+  locations,
   notes = [],
   totalInvestment,
   investmentBreakdown,
   allMonthCount,
-  allExpenses
+  allExpenses,
 }: DashboardProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,7 +126,7 @@ export default function DashboardClientUI({
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const upload = await uploadExpenseAttachment(formData);
       if (!upload.success || !upload.publicUrl) throw new Error(upload.error || 'Yükleme başarısız');
 
@@ -104,7 +143,7 @@ export default function DashboardClientUI({
     }
   };
 
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   const ortalamaGider = allExpenses.length > 0
@@ -117,73 +156,109 @@ export default function DashboardClientUI({
 
   const belgesizKayit = recentExpenses.filter((gider) => !gider.attachmentUrl).length;
 
+  const insightCards: { id: string; title: string; front: string; back: string; tone: AccentTone; icon: React.ReactNode }[] = [
+    {
+      id: 'growth',
+      title: 'Büyüme Notu',
+      front: `%${stats.monthlyGrowth.toFixed(1)} aylık trend`,
+      back: 'Trend değeri son dönem performans eğiliminden üretilir. Düzenli oturum artışı pozitif etki sağlar.',
+      tone: 'emerald',
+      icon: <TrendingUp size={16} />,
+    },
+    {
+      id: 'roi',
+      title: 'ROI İzleme',
+      front: `${stats.sessions.toLocaleString('tr-TR')} toplam seans`,
+      back: 'Seans hacmi arttıkça amortisman etkisi azalır ve yatırım geri dönüş süresi kısalır.',
+      tone: 'blue',
+      icon: <Activity size={16} />,
+    },
+    {
+      id: 'cash',
+      title: 'Nakit Uyarısı',
+      front: formatCurrency(stats.profit),
+      back: 'Net nakit negatif olduğunda gider kırılımını kontrol edip bir sonraki ay için sabit maliyet optimizasyonu yapın.',
+      tone: stats.profit >= 0 ? 'emerald' : 'rose',
+      icon: <Wallet size={16} />,
+    },
+  ];
+
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
-      
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="space-y-8 pb-20"
+    >
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <motion.div {...fadeInUp} className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Genel Bakış</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Genel Bakış</h1>
           <p className="text-sm text-slate-500">Sistem genelindeki finansal performans ve analiz merkezi.</p>
         </div>
         <div className="flex items-center gap-3">
-           <button 
-             onClick={() => setIsModalOpen(true)}
-             className="inline-flex items-center gap-2.5 px-4 sm:px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
-           >
-              <Plus size={20} />
-              Yeni Gider Girişi
-           </button>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors duration-200 shadow-sm"
+          >
+            <Plus size={16} />
+            Yeni Gider Girişi
+          </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Summary Cards - Flipping KPIs */}
-      <InteractiveKPICards 
-        totalRevenue={stats.revenue}
-        totalExpense={stats.expense}
-        totalInvestment={totalInvestment}
-        investmentBreakdown={investmentBreakdown}
-        totalNetCash={stats.profit}
-        expenses={allExpenses}
-        allMonthCount={allMonthCount}
-      />
+      <motion.div {...fadeInUp} transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}>
+        <InteractiveKPICards
+          totalRevenue={stats.revenue}
+          totalExpense={stats.expense}
+          totalInvestment={totalInvestment}
+          investmentBreakdown={investmentBreakdown}
+          totalNetCash={stats.profit}
+          expenses={allExpenses}
+          allMonthCount={allMonthCount}
+        />
+      </motion.div>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {
-            id: 'growth',
-            title: 'Büyüme Notu',
-            front: `%${stats.monthlyGrowth.toFixed(1)} aylık trend`,
-            back: 'Trend değeri son dönem performans eğiliminden üretilir. Düzenli oturum artışı pozitif etki sağlar.',
-          },
-          {
-            id: 'roi',
-            title: 'ROI İzleme',
-            front: `${stats.sessions.toLocaleString('tr-TR')} toplam seans`,
-            back: 'Seans hacmi arttıkça amortisman etkisi azalır ve yatırım geri dönüş süresi kısalır.',
-          },
-          {
-            id: 'cash',
-            title: 'Nakit Uyarısı',
-            front: formatCurrency(stats.profit),
-            back: 'Net nakit negatif olduğunda gider kırılımını kontrol edip bir sonraki ay için sabit maliyet optimizasyonu yapın.',
-          },
-        ].map((card) => (
-          <article key={card.id} className="h-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{card.title}</p>
-            <p className="mt-2 text-lg font-bold text-slate-900">{card.front}</p>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600">{card.back}</p>
-          </article>
-        ))}
-      </section>
+      {/* Insight Cards */}
+      <motion.section
+        {...fadeInUp}
+        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        {insightCards.map((card) => {
+          const tone = TONE_STYLES[card.tone];
+          return (
+            <article
+              key={card.id}
+              className="rounded-2xl bg-white border border-slate-200/70 shadow-sm hover:shadow-md hover:border-slate-300/60 transition-all duration-200 p-6"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', tone.iconBg, tone.iconText)}>
+                  {card.icon}
+                </div>
+              </div>
+              <p className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-500">{card.title}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{card.front}</p>
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">{card.back}</p>
+            </article>
+          );
+        })}
+      </motion.section>
 
       {/* Main Content Grid */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Analiz Merkezi */}
-        <div className="xl:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-sm">
+        <motion.div
+          {...fadeInUp}
+          transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
+          className="xl:col-span-8 bg-white border border-slate-200/70 rounded-2xl p-6 sm:p-8 shadow-sm"
+        >
           <div className="space-y-1 mb-6">
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Finansal Analiz Merkezi</h3>
-            <p className="text-xs text-slate-500">Aksiyon alınabilir finansal analiz kartları.</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Analiz</p>
+            <h3 className="text-lg font-semibold tracking-tight text-slate-900">Finansal Analiz Merkezi</h3>
+            <p className="text-sm text-slate-500">Aksiyon alınabilir finansal analiz kartları.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -214,71 +289,101 @@ export default function DashboardClientUI({
               tone={stats.profit >= 0 ? 'emerald' : 'rose'}
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Recent Transactions */}
-        <div className="xl:col-span-4 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                 <Receipt size={20} className="text-slate-400" />
-                 Son Kayıtlar
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">AUDIT</span>
-           </div>
-           
-           <div className="flex-1 overflow-y-auto">
-              <table className="w-full text-left border-collapse">
-                 <tbody className="divide-y divide-slate-50">
-                    {recentExpenses.length === 0 ? (
-                       <tr><td className="py-20 text-center text-xs font-medium text-slate-400 italic">Kayıt bulunamadı.</td></tr>
-                    ) : (
-                       recentExpenses.map((exp, idx) => (
-                          <tr 
-                            key={exp.id || idx} 
-                            className="group hover:bg-slate-50/50 transition-all cursor-pointer"
-                            onClick={() => { setSelectedExpense(exp); setIsDrawerOpen(true); }}
-                          >
-                             <td className="px-6 py-4">
-                                <div className="flex flex-col">
-                                   <span className="text-sm font-bold text-slate-800 line-clamp-1">{exp.description}</span>
-                                   <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{exp.location?.name || 'Genel'}</span>
-                                      <span className="w-0.5 h-0.5 rounded-full bg-slate-200" />
-                                      <span className="text-[10px] font-medium text-slate-400 lowercase">{exp.createdAt ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '-'}</span>
-                                   </div>
-                                </div>
-                             </td>
-                             <td className="px-6 py-4 text-right">
-                                <span className={cn("text-sm font-bold tabular-nums tracking-tighter italic", exp.isOfficial ? "text-slate-900" : "text-slate-500")}>
-                                   {formatCurrency(exp.amountWithVat)}
-                                </span>
-                             </td>
-                          </tr>
-                       ))
-                    )}
-                 </tbody>
-              </table>
-           </div>
-           
-           <div className="p-4 border-t border-slate-100 text-center">
-              <Link href="/gelir-gider" className="text-[11px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors flex items-center justify-center gap-2">
-                 Tümünü Görüntüle <ChevronRight size={14} />
-              </Link>
-           </div>
-        </div>
+        <motion.div
+          {...fadeInUp}
+          transition={{ duration: 0.25, ease: 'easeOut', delay: 0.2 }}
+          className="xl:col-span-4 bg-white border border-slate-200/70 rounded-2xl overflow-hidden shadow-sm flex flex-col"
+        >
+          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Receipt size={18} className="text-slate-400" />
+              <h3 className="text-lg font-semibold tracking-tight text-slate-900">Son Kayıtlar</h3>
+            </div>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+              Audit
+            </span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {recentExpenses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
+                  <Receipt size={20} />
+                </div>
+                <p className="text-sm font-medium text-slate-600">Kayıt bulunamadı</p>
+                <p className="mt-1 text-xs text-slate-400">Yeni bir gider girdiğinizde burada listelenir.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {recentExpenses.map((exp, idx) => (
+                  <li key={exp.id || idx}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedExpense(exp);
+                        setIsDrawerOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left hover:bg-slate-50 transition-colors duration-200"
+                    >
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium text-slate-900 truncate">{exp.description}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs font-medium text-slate-500">{exp.location?.name || 'Genel'}</span>
+                          <span className="w-1 h-1 rounded-full bg-slate-300" />
+                          <span className="text-xs text-slate-400">
+                            {exp.createdAt
+                              ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+                              : '-'}
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={cn(
+                          'text-sm font-semibold tabular-nums tracking-tight whitespace-nowrap',
+                          exp.isOfficial ? 'text-slate-900' : 'text-slate-500'
+                        )}
+                      >
+                        {formatCurrency(exp.amountWithVat)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="px-4 py-3 border-t border-slate-100 text-center">
+            <Link
+              href="/gelir-gider"
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center justify-center gap-1.5"
+            >
+              Tümünü Görüntüle
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+        </motion.div>
       </section>
-      
+
       {/* User Notes Section */}
-      <section className="bg-white border border-slate-200 rounded-[32px] p-5 sm:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-8">
-           <FileText size={20} className="text-blue-600" />
-           <div>
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Kişisel Notlar</h3>
-              <p className="text-xs text-slate-500 font-medium italic mt-0.5">Operasyonel notlar ve hatırlatıcılar.</p>
-           </div>
+      <motion.section
+        {...fadeInUp}
+        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.25 }}
+        className="bg-white border border-slate-200/70 rounded-2xl p-6 sm:p-8 shadow-sm"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <FileText size={18} />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-slate-900">Kişisel Notlar</h3>
+            <p className="text-sm text-slate-500 mt-0.5">Operasyonel notlar ve hatırlatıcılar.</p>
+          </div>
         </div>
         <NoteList initialNotes={notes} />
-      </section>
+      </motion.section>
 
       {/* Modals & Drawers */}
       <PremiumModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Gider Tanımla" maxWidth="max-w-xl">
@@ -287,53 +392,83 @@ export default function DashboardClientUI({
 
       <PremiumDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="İşlem Detayı">
         {selectedExpense && (
-          <div className="space-y-8 py-4 animate-in slide-in-from-right-5 duration-500">
-             <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Net Tutar</p>
-                <p className="text-4xl font-bold text-slate-900 tabular-nums tracking-tighter italic">
-                  {formatCurrency(selectedExpense.amountWithVat)}
+          <div className="space-y-8 py-4">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Net Tutar</p>
+              <p className="text-3xl font-semibold text-slate-900 tabular-nums tracking-tight">
+                {formatCurrency(selectedExpense.amountWithVat)}
+              </p>
+            </div>
+
+            <div className="space-y-5 px-1">
+              <DetailRow label="Açıklama" value={selectedExpense.description} />
+              <DetailRow label="Tip" value={selectedExpense.type === 'RECURRING' ? 'Mükerrer' : 'Tek Seferlik'} />
+              <DetailRow label="Durum" value={selectedExpense.isOfficial ? 'Resmi Evrak' : 'Gayri Resmi'} />
+              <DetailRow label="Lokasyon" value={selectedExpense.location?.name || 'Tümü'} />
+              <DetailRow label="Tarih" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
+
+              <div className="pt-6 border-t border-slate-100 space-y-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <FileText size={14} className="text-slate-400" />
+                  Belge Durumu
                 </p>
-             </div>
 
-             <div className="space-y-5 px-1">
-                <DetailRow label="Açıklama" value={selectedExpense.description} />
-                <DetailRow label="Tip" value={selectedExpense.type === 'RECURRING' ? 'Mükerrer' : 'Tek Seferlik'} />
-                <DetailRow label="Durum" value={selectedExpense.isOfficial ? 'Resmi Evrak' : 'Gayri Resmi'} />
-                <DetailRow label="Lokasyon" value={selectedExpense.location?.name || 'Tümü'} />
-                <DetailRow label="Tarih" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
-                
-                <div className="pt-6 border-t border-slate-100 space-y-4">
-                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
-                      <FileText size={14} className="text-slate-400" />
-                      Belge Durumu
-                   </p>
-                   
-                   {selectedExpense.attachmentUrl ? (
-                     <a href={selectedExpense.attachmentUrl} target="_blank" rel="noopener" className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100 group">
-                        <div className="flex items-center gap-3">
-                           <div className="bg-white p-2 rounded-xl text-emerald-600 shadow-sm border border-emerald-100"><CheckCircle2 size={16} /></div>
-                           <span className="text-sm font-bold text-emerald-800">Belge Mevcut</span>
-                        </div>
-                        <ChevronRight size={16} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
-                     </a>
-                   ) : (
-                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100">
-                           <AlertCircle size={16} className="text-rose-500" />
-                           <span className="text-sm font-bold text-rose-800">Belge Bulunmuyor</span>
-                        </div>
-                        <input type="file" ref={fileRef} onChange={handleLateUpload} className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" />
-                        <button onClick={() => fileRef.current?.click()} disabled={isUploading} className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-white transition-all text-sm font-bold">
-                           {isUploading ? <><Loader2 size={18} className="animate-spin" /> Yükleniyor...</> : <><UploadCloud size={18} /> Belge Ekle</>}
-                        </button>
-                     </div>
-                   )}
-                </div>
-             </div>
+                {selectedExpense.attachmentUrl ? (
+                  <a
+                    href={selectedExpense.attachmentUrl}
+                    target="_blank"
+                    rel="noopener"
+                    className="flex items-center justify-between p-4 rounded-xl bg-emerald-50 border border-emerald-100 group hover:bg-emerald-100/60 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-2 rounded-lg text-emerald-600 shadow-sm border border-emerald-100">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <span className="text-sm font-medium text-emerald-700">Belge Mevcut</span>
+                    </div>
+                    <ChevronRight size={16} className="text-emerald-500 group-hover:translate-x-1 transition-transform duration-200" />
+                  </a>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-50 border border-rose-100">
+                      <AlertCircle size={16} className="text-rose-600" />
+                      <span className="text-sm font-medium text-rose-700">Belge Bulunmuyor</span>
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileRef}
+                      onChange={handleLateUpload}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl border border-dashed border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/40 transition-colors duration-200 text-sm font-medium"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Yükleniyor...
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud size={16} /> Belge Ekle
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
 
-             <button onClick={() => setIsDrawerOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-bold transition-all hover:bg-slate-800 active:scale-[0.98] shadow-xl">
-               Pencereyi Kapat
-             </button>
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              className="w-full py-3.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors duration-200 shadow-sm"
+            >
+              Pencereyi Kapat
+            </button>
           </div>
         )}
       </PremiumDrawer>
@@ -345,32 +480,35 @@ export default function DashboardClientUI({
         maxWidth="max-w-lg"
       >
         <div className="p-6 space-y-4">
-          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Gösterilen Değer</p>
-            <p className="mt-1 text-2xl font-black text-slate-900">{formatCurrency(ortalamaGider)}</p>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+            <p className="text-xs font-medium uppercase tracking-wider text-blue-700">Gösterilen Değer</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{formatCurrency(ortalamaGider)}</p>
           </div>
           <p className="text-sm text-slate-600 leading-relaxed">
             Bu değer, sistemdeki tüm gider kayıtlarının <b>KDV dahil toplam tutarlarının</b> ortalamasıdır.
           </p>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-sm">
-            <p className="font-semibold text-slate-700">Formül</p>
+          <div className="rounded-xl border border-slate-200/70 bg-slate-50 p-4 space-y-2 text-sm">
+            <p className="font-medium text-slate-700">Formül</p>
             <p className="text-slate-600">Ortalama Gider = Toplam Gider Tutarı / Gider Kayıt Adedi</p>
             <p className="text-xs text-slate-500">
-              Toplam Tutar: <b>{formatCurrency(allExpenses.reduce((toplam, gider) => toplam + (gider.amountWithVat || 0), 0))}</b> •
-              Kayıt Adedi: <b>{allExpenses.length}</b>
+              Toplam Tutar:{' '}
+              <b className="tabular-nums">
+                {formatCurrency(allExpenses.reduce((toplam, gider) => toplam + (gider.amountWithVat || 0), 0))}
+              </b>{' '}
+              • Kayıt Adedi: <b className="tabular-nums">{allExpenses.length}</b>
             </p>
           </div>
         </div>
       </PremiumModal>
-    </div>
+    </motion.div>
   );
 }
 
-function DetailRow({ label, value }: { label: string, value: string }) {
+function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
-       <p className="text-sm font-bold text-slate-900">{value}</p>
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</span>
+      <p className="text-sm font-medium text-slate-900">{value}</p>
     </div>
   );
 }
@@ -386,32 +524,36 @@ function AnalyzerCard({
   title: string;
   value: string;
   description: string;
-  tone: 'blue' | 'emerald' | 'rose';
+  tone: AccentTone;
   onClick?: () => void;
   clickable?: boolean;
 }) {
-  const toneMap = {
-    blue: 'border-blue-200 bg-blue-50/50',
-    emerald: 'border-emerald-200 bg-emerald-50/50',
-    rose: 'border-rose-200 bg-rose-50/50',
-  };
+  const t = TONE_STYLES[tone];
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-2xl border p-4 text-left w-full transition-all',
-        toneMap[tone],
-        clickable ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'cursor-default'
+        'rounded-2xl border border-slate-200/70 bg-white p-5 text-left w-full shadow-sm transition-all duration-200',
+        clickable
+          ? 'hover:shadow-md hover:border-slate-300/60 cursor-pointer'
+          : 'cursor-default'
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
-        {clickable && <span className="text-[10px] font-bold text-blue-600 uppercase">Detay</span>}
+        <div className="flex items-center gap-2.5">
+          <span className={cn('w-2 h-2 rounded-full', t.iconText.replace('text-', 'bg-'))} />
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{title}</p>
+        </div>
+        {clickable && (
+          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-md', t.chipBg, t.chipText)}>
+            Detay
+          </span>
+        )}
       </div>
-      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
-      <p className="mt-1 text-xs text-slate-600">{description}</p>
+      <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
+      <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{description}</p>
     </button>
   );
 }

@@ -5,11 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
-  Plus, Save, Calendar as CalendarIcon,
-  Settings, TrendingUp, Beaker,
-  MessageSquare
+  Plus, Save, TrendingUp, MessageSquare
 } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { upsertDailyPerformance } from '../performans-actions';
 import { toast } from '@/hooks/useToast';
@@ -45,7 +43,9 @@ interface DailyPerformanceFormProps {
   onCancel?: () => void;
 }
 
-export default function DailyPerformanceForm({ locations, initialData, onSuccess }: DailyPerformanceFormProps) {
+const inputBase = "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150";
+
+export default function DailyPerformanceForm({ locations, initialData, onSuccess, onCancel }: DailyPerformanceFormProps) {
   const [loading, setLoading] = useState(false);
   const [showExtra, setShowExtra] = useState(!!initialData?.extraMetrics?.notlar);
 
@@ -93,31 +93,28 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
   };
 
   return (
-    <div className="premium-card p-6 border border-slate-200 bg-white">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-          <TrendingUp className="w-5 h-5" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Günlük Performans Girişi</h2>
-          <p className="text-xs text-slate-500 font-medium italic">Sistemi manuel verilerle besle</p>
-          {selectedLocationName && (
-            <p className="mt-1 inline-flex items-center rounded-lg border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
-              Şube: {selectedLocationName}
-            </p>
-          )}
-        </div>
+    <div className="bg-white rounded-2xl p-6 sm:p-8">
+      <div className="mb-6 space-y-1">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">Günlük Performans Girişi</h2>
+        <p className="text-sm text-slate-500">Sistemi manuel verilerle besle</p>
+        {selectedLocationName && (
+          <p className="mt-2 inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+            Şube: {selectedLocationName}
+          </p>
+        )}
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <Settings className="w-3.5 h-3.5" /> Lokasyon
-            </label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Lokasyon</label>
             <select
               {...form.register('locationId')}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none appearance-none"
+              className={cn(
+                inputBase,
+                "appearance-none cursor-pointer",
+                form.formState.errors.locationId && "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500"
+              )}
             >
               <option value="">Seçiniz...</option>
               {locations.map(loc => (
@@ -125,100 +122,102 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
               ))}
             </select>
             {form.formState.errors.locationId && (
-              <p className="text-[10px] font-bold text-red-500 uppercase tracking-wide">{form.formState.errors.locationId.message}</p>
+              <p className="text-xs text-rose-600 mt-1">{form.formState.errors.locationId.message}</p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <CalendarIcon className="w-3.5 h-3.5" /> Tarih
-            </label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Tarih</label>
             <input
               type="date"
               {...form.register('date')}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+              className={inputBase}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5" /> Oturum Sayısı
-            </label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Oturum Sayısı</label>
             <div className="relative">
               <input
                 type="number"
                 {...form.register('sessionCount')}
-                className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+                className={cn(inputBase, "pr-16")}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">Seans</span>
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">Seans</span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-              <Beaker className="w-3.5 h-3.5" /> Test Sayısı
-            </label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Test Sayısı</label>
             <div className="relative">
               <input
                 type="number"
                 {...form.register('testCount')}
-                className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+                className={cn(inputBase, "pr-16")}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">Test</span>
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">Test</span>
             </div>
           </div>
         </div>
 
-        <div className="pt-2 border-t border-slate-100 mt-4">
-           <button 
-             type="button" 
-             onClick={() => setShowExtra(!showExtra)}
-             className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors"
-           >
-             <Plus className={cn("w-3.5 h-3.5 transition-transform", showExtra ? "rotate-45" : "0")} />
-             Notlar Ekle
-           </button>
+        <div className="pt-4 border-t border-slate-200/70">
+          <button
+            type="button"
+            onClick={() => setShowExtra(!showExtra)}
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+          >
+            <Plus className={cn("w-4 h-4 transition-transform duration-150", showExtra && "rotate-45")} />
+            Notlar Ekle
+          </button>
 
-           <AnimatePresence>
-             {showExtra && (
-               <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                      <MessageSquare className="w-3.5 h-3.5" /> Notlar
-                    </label>
-                    <textarea
-                      {...form.register('notes')}
-                      placeholder="Günün notunu giriniz..."
-                      className="w-full h-20 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:bg-white focus:border-blue-400 transition-all outline-none resize-none"
-                    />
-                  </div>
-               </div>
-             )}
-           </AnimatePresence>
+          <AnimatePresence>
+            {showExtra && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="mt-4 space-y-1.5"
+              >
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-slate-400" /> Notlar
+                </label>
+                <textarea
+                  {...form.register('notes')}
+                  placeholder="Günün notunu giriniz..."
+                  className={`${inputBase} min-h-[80px] resize-none`}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={cn(
-            "w-full h-12 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg shadow-slate-200 flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-[0.98]",
-            loading && "opacity-70 cursor-not-allowed"
+        <div className="pt-6 border-t border-slate-200/70 flex items-center justify-end gap-3">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors"
+            >
+              Vazgeç
+            </button>
           )}
-        >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <>
-              <Save size={18} />
-              Veriyi Kaydet
-            </>
-          )}
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <TrendingUp className="w-4 h-4 animate-pulse" />
+            ) : (
+              <Save size={16} />
+            )}
+            {loading ? 'Kaydediliyor...' : 'Veriyi Kaydet'}
+          </button>
+        </div>
       </form>
     </div>
   );
 }
-
-

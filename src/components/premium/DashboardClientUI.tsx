@@ -13,8 +13,10 @@ import {
   Loader2,
   UploadCloud,
   TrendingUp,
+  TrendingDown,
   Activity,
   Wallet,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -47,6 +49,8 @@ type DashboardNote = {
   createdAt: string;
 };
 
+type MonthSlice = { revenue: number; profit: number; sessions: number };
+
 interface DashboardProps {
   stats: {
     revenue: number;
@@ -55,6 +59,15 @@ interface DashboardProps {
     roi: number;
     sessions: number;
     monthlyGrowth: number;
+    currentMonth: MonthSlice;
+    previousMonth: MonthSlice;
+    currentMonthId: string;
+    previousMonthId: string;
+    growth: {
+      revenue: number | null;
+      profit: number | null;
+      sessions: number | null;
+    };
   };
   recentExpenses: DashboardExpense[];
   locations: DashboardLocation[];
@@ -156,30 +169,67 @@ export default function DashboardClientUI({
 
   const belgesizKayit = recentExpenses.filter((gider) => !gider.attachmentUrl).length;
 
-  const insightCards: { id: string; title: string; front: string; back: string; tone: AccentTone; icon: React.ReactNode }[] = [
+  // ── Bu ay ↔ geçen ay karşılaştırma kartları için yardımcılar ────────────
+  const monthLabel = (yyyymm: string) => {
+    const [y, m] = yyyymm.split('-');
+    if (!y || !m) return yyyymm;
+    const date = new Date(Date.UTC(Number(y), Number(m) - 1, 1));
+    return date.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+  };
+
+  const formatCompact = (val: number) =>
+    new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 }).format(val);
+
+  type MoMTrend = {
+    id: string;
+    title: string;
+    icon: React.ReactNode;
+    currentValue: string;
+    currentLabel: string;
+    previousValue: string;
+    previousLabel: string;
+    pct: number | null;
+    // Pozitif yön (artış iyi mi?). Profit/Revenue/Sessions için: true.
+    higherIsBetter: boolean;
+    accent: AccentTone;
+  };
+
+  const trendCards: MoMTrend[] = [
     {
-      id: 'growth',
-      title: 'Büyüme Notu',
-      front: `%${stats.monthlyGrowth.toFixed(1)} aylık trend`,
-      back: 'Trend değeri son dönem performans eğiliminden üretilir. Düzenli oturum artışı pozitif etki sağlar.',
-      tone: 'emerald',
-      icon: <TrendingUp size={16} />,
-    },
-    {
-      id: 'roi',
-      title: 'ROI İzleme',
-      front: `${stats.sessions.toLocaleString('tr-TR')} toplam seans`,
-      back: 'Seans hacmi arttıkça amortisman etkisi azalır ve yatırım geri dönüş süresi kısalır.',
-      tone: 'blue',
-      icon: <Activity size={16} />,
-    },
-    {
-      id: 'cash',
-      title: 'Nakit Uyarısı',
-      front: formatCurrency(stats.profit),
-      back: 'Net nakit negatif olduğunda gider kırılımını kontrol edip bir sonraki ay için sabit maliyet optimizasyonu yapın.',
-      tone: stats.profit >= 0 ? 'emerald' : 'rose',
+      id: 'profit',
+      title: 'Net Kâr',
       icon: <Wallet size={16} />,
+      currentValue: formatCurrency(stats.currentMonth.profit),
+      currentLabel: monthLabel(stats.currentMonthId),
+      previousValue: formatCurrency(stats.previousMonth.profit),
+      previousLabel: monthLabel(stats.previousMonthId),
+      pct: stats.growth.profit,
+      higherIsBetter: true,
+      accent: stats.currentMonth.profit >= 0 ? 'emerald' : 'rose',
+    },
+    {
+      id: 'revenue',
+      title: 'Aylık Ciro',
+      icon: <TrendingUp size={16} />,
+      currentValue: formatCurrency(stats.currentMonth.revenue),
+      currentLabel: monthLabel(stats.currentMonthId),
+      previousValue: formatCurrency(stats.previousMonth.revenue),
+      previousLabel: monthLabel(stats.previousMonthId),
+      pct: stats.growth.revenue,
+      higherIsBetter: true,
+      accent: 'blue',
+    },
+    {
+      id: 'sessions',
+      title: 'Seans Hacmi',
+      icon: <Activity size={16} />,
+      currentValue: `${formatCompact(stats.currentMonth.sessions)} seans`,
+      currentLabel: monthLabel(stats.currentMonthId),
+      previousValue: `${formatCompact(stats.previousMonth.sessions)} seans`,
+      previousLabel: monthLabel(stats.previousMonthId),
+      pct: stats.growth.sessions,
+      higherIsBetter: true,
+      accent: 'amber',
     },
   ];
 
@@ -221,30 +271,15 @@ export default function DashboardClientUI({
         />
       </motion.div>
 
-      {/* Insight Cards */}
+      {/* MoM Trend Cards — bu ay vs geçen ay */}
       <motion.section
         {...fadeInUp}
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
-        {insightCards.map((card) => {
-          const tone = TONE_STYLES[card.tone];
-          return (
-            <article
-              key={card.id}
-              className="rounded-2xl bg-white border border-slate-200/70 shadow-sm hover:shadow-md hover:border-slate-300/60 transition-all duration-200 p-6"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', tone.iconBg, tone.iconText)}>
-                  {card.icon}
-                </div>
-              </div>
-              <p className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-500">{card.title}</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{card.front}</p>
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">{card.back}</p>
-            </article>
-          );
-        })}
+        {trendCards.map((card) => (
+          <TrendCard key={card.id} card={card} />
+        ))}
       </motion.section>
 
       {/* Main Content Grid */}
@@ -510,6 +545,81 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</span>
       <p className="text-sm font-medium text-slate-900">{value}</p>
     </div>
+  );
+}
+
+type TrendCardProps = {
+  card: {
+    id: string;
+    title: string;
+    icon: React.ReactNode;
+    currentValue: string;
+    currentLabel: string;
+    previousValue: string;
+    previousLabel: string;
+    pct: number | null;
+    higherIsBetter: boolean;
+    accent: AccentTone;
+  };
+};
+
+function TrendCard({ card }: TrendCardProps) {
+  const tone = TONE_STYLES[card.accent];
+
+  // Yön + renk: pct null ise nötr badge, sayı ise yüksek/düşük göre yeşil/kırmızı.
+  const direction =
+    card.pct === null ? 'neutral' : card.pct > 0 ? 'up' : card.pct < 0 ? 'down' : 'flat';
+  const isGood =
+    direction === 'flat' || direction === 'neutral'
+      ? null
+      : card.higherIsBetter
+        ? direction === 'up'
+        : direction === 'down';
+
+  const badgeStyles =
+    isGood === null
+      ? 'bg-slate-100 text-slate-600 border-slate-200'
+      : isGood
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+        : 'bg-rose-50 text-rose-700 border-rose-200/60';
+
+  const ArrowIcon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : ArrowRight;
+
+  const pctLabel =
+    card.pct === null
+      ? 'Yetersiz veri'
+      : `${card.pct > 0 ? '+' : ''}${card.pct.toFixed(1)}%`;
+
+  return (
+    <article className="rounded-2xl bg-white border border-slate-200/70 shadow-sm hover:shadow-md hover:border-slate-300/60 transition-all duration-200 p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', tone.iconBg, tone.iconText)}>
+          {card.icon}
+        </div>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium tabular-nums',
+            badgeStyles
+          )}
+        >
+          <ArrowIcon size={12} />
+          {pctLabel}
+        </span>
+      </div>
+
+      <p className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-500">{card.title}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+        {card.currentValue}
+      </p>
+      <p className="mt-1 text-xs text-slate-500">{card.currentLabel}</p>
+
+      <div className="mt-4 pt-4 border-t border-slate-100 flex items-baseline justify-between gap-3">
+        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">vs Geçen Ay</span>
+        <span className="text-sm font-medium tabular-nums tracking-tight text-slate-600">
+          {card.previousValue}
+        </span>
+      </div>
+    </article>
   );
 }
 

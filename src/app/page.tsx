@@ -102,7 +102,7 @@ export default async function DashboardPage() {
     ? [...new Set(performances.map((p: PerformanceRow) => p.locationId))].length
     : 1) || 1;
 
-  const monthlyTotals: Record<string, { revenue: number; profit: number }> = {};
+  const monthlyTotals: Record<string, { revenue: number; profit: number; sessions: number }> = {};
   let totalManualRevenue = 0;
   let totalManualNetCash = 0;
   let totalManualOperationalExpense = 0;
@@ -174,10 +174,11 @@ export default async function DashboardPage() {
       month: perfMonthStr,
     });
 
-    const monthKey = new Date(perf.month).toLocaleDateString('tr-TR', { month: 'short' });
-    if (!monthlyTotals[monthKey]) monthlyTotals[monthKey] = { revenue: 0, profit: 0 };
+    const monthKey = perfMonthStr; // YYYY-MM (önceki kısa "Oca" formatı yerine kanonik)
+    if (!monthlyTotals[monthKey]) monthlyTotals[monthKey] = { revenue: 0, profit: 0, sessions: 0 };
     monthlyTotals[monthKey].revenue += calc.grossRevenue;
     monthlyTotals[monthKey].profit += calc.netCash;
+    monthlyTotals[monthKey].sessions += Number(perf.sessionCount || 0);
 
     totalManualRevenue += calc.grossRevenue;
     totalManualNetCash += calc.netCash;
@@ -205,7 +206,30 @@ export default async function DashboardPage() {
 
   // New Data Fetching for UI
   const activeLocations = await getActiveLocations() || [];
-  
+
+  // ── Bu ay ↔ geçen ay karşılaştırması ───────────────────────────────────────
+  const now = new Date();
+  const currentMonthId = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const prevDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const previousMonthId = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  const emptyMonth = { revenue: 0, profit: 0, sessions: 0 };
+  const currentMonth = monthlyTotals[currentMonthId] ?? emptyMonth;
+  const previousMonth = monthlyTotals[previousMonthId] ?? emptyMonth;
+
+  // Yüzde değişim. Önceki dönem 0 ise oran tanımsızdır → null döndür ki
+  // UI "yetersiz veri" olarak gösterebilsin (1900%+ saçma sayılar yerine).
+  const pctChange = (curr: number, prev: number): number | null => {
+    if (prev === 0) return null;
+    return ((curr - prev) / Math.abs(prev)) * 100;
+  };
+
+  const growth = {
+    revenue: pctChange(currentMonth.revenue, previousMonth.revenue),
+    profit: pctChange(currentMonth.profit, previousMonth.profit),
+    sessions: pctChange(currentMonth.sessions, previousMonth.sessions),
+  };
+
   // Stats preparation for Premium UI
   const stats = {
     revenue: displayAllTimeRevenue,
@@ -213,7 +237,15 @@ export default async function DashboardPage() {
     profit: trueGlobalNetCash,
     roi: insights[0]?.roi || 0,
     sessions: displayTotalSessions,
-    monthlyGrowth: 12.5 // Mock for now or calculate if data allows
+    // Geriye dönük uyumluluk: monthlyGrowth artık gerçek MoM net kâr yüzdesi
+    // (önceden mock %12.5 idi). Tanımsızsa 0 (UI null kontrolünü growth.profit
+    // üzerinden yapmalı).
+    monthlyGrowth: growth.profit ?? 0,
+    currentMonth,
+    previousMonth,
+    currentMonthId,
+    previousMonthId,
+    growth,
   };
 
   const { data: latestExpenses } = await supabase

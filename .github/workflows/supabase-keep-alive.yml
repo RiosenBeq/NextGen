@@ -1,0 +1,44 @@
+name: Supabase Keep-Alive
+
+# Supabase Free tier 7 gün inaktiviteden sonra projeyi otomatik duraklatır.
+# Bu workflow her 5 günde bir /api/keep-alive endpoint'ine GET atarak DB'yi
+# uyanık tutar (Free tier'da kalmaya devam edebilmek için).
+#
+# Manuel test: Actions sekmesi → "Supabase Keep-Alive" → "Run workflow"
+
+on:
+  schedule:
+    # Her 5 günde bir, 03:17 UTC. Tam 5 günlük cron yok; ayın gün adımıyla
+    # 1, 6, 11, 16, 21, 26'sında çalışır → ortalama ~5 günde bir.
+    - cron: '17 3 1,6,11,16,21,26 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping keep-alive endpoint
+        env:
+          KEEP_ALIVE_URL: https://www.ozelfutbol.com.tr/api/keep-alive
+        run: |
+          set -euo pipefail
+          # Maks 3 deneme, her biri 30s timeout, exponential backoff
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt → $KEEP_ALIVE_URL"
+            response=$(curl -fsS --max-time 30 -w '\nHTTP_STATUS:%{http_code}' "$KEEP_ALIVE_URL" || true)
+            status=$(echo "$response" | grep -oE 'HTTP_STATUS:[0-9]+' | cut -d: -f2 || echo "000")
+            body=$(echo "$response" | sed '/HTTP_STATUS:/d')
+            echo "Status: $status"
+            echo "Body: $body"
+            if [ "$status" = "200" ]; then
+              echo "✓ Keep-alive successful"
+              exit 0
+            fi
+            sleep $((attempt * 10))
+          done
+          echo "✗ Keep-alive failed after 3 attempts"
+          exit 1

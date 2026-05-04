@@ -10,7 +10,7 @@
     "postinstall": "prisma generate"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0 <23"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

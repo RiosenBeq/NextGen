@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import {
-  Receipt,
   FileText,
   Download,
   Calendar,
@@ -11,12 +10,11 @@ import {
   Search,
   Eye,
   Plus,
-  ArrowRight,
   Trash2,
   Loader2,
   CheckSquare,
   Square,
-  Upload
+  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,7 +22,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
-import { deleteExpenseAttachment, updateAvmExpenseFinancials, updateAvmExpenseStatus, uploadExpenseAttachment, updateExpenseAttachment } from '@/features/ledger/actions';
+import {
+  deleteExpenseAttachment,
+  updateAvmExpenseFinancials,
+  updateAvmExpenseStatus,
+  uploadExpenseAttachment,
+  updateExpenseAttachment,
+} from '@/features/ledger/actions';
 import { toast } from '@/hooks/useToast';
 
 interface Invoice {
@@ -46,7 +50,14 @@ interface FaturalarProps {
   locations: Array<{ id: string; name: string }>;
 }
 
-export default function FaturalarClientUI({ invoices: initialInvoices, avmExpenses: initialAvmExpenses, locations }: FaturalarProps) {
+const cardShadow =
+  'shadow-[0_1px_3px_rgba(15,23,42,0.04),_0_1px_2px_rgba(15,23,42,0.06)]';
+
+export default function FaturalarClientUI({
+  invoices: initialInvoices,
+  avmExpenses: initialAvmExpenses,
+  locations,
+}: FaturalarProps) {
   const router = useRouter();
   const [invoices, setInvoices] = useState(initialInvoices);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,40 +66,54 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   const [avmExpenses, setAvmExpenses] = useState(initialAvmExpenses);
   const [uploadingAvmId, setUploadingAvmId] = useState<string | null>(null);
   const [savingAvmId, setSavingAvmId] = useState<string | null>(null);
-  const [avmDrafts, setAvmDrafts] = useState<Record<string, { amountWithVat: number; paidBy: string }>>({});
+  const [avmDrafts, setAvmDrafts] = useState<
+    Record<string, { amountWithVat: number; paidBy: string }>
+  >({});
 
-  const filteredInvoices = invoices.filter(inv =>
-    inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (inv.location?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    inv.paidBy.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredInvoices = invoices.filter(
+    (inv) =>
+      inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (inv.location?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      inv.paidBy.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-
-  const handleToggleAvm = async (id: string, field: 'isSettled' | 'isOfficial', current: boolean) => {
+  const handleToggleAvm = async (
+    id: string,
+    field: 'isSettled' | 'isOfficial',
+    current: boolean
+  ) => {
     const res = await updateAvmExpenseStatus(id, { [field]: !current });
     if (!res.success) {
       toast.error(res.error || 'Durum güncellenemedi.');
       return;
     }
-
-    setAvmExpenses((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: !current } : item)));
+    setAvmExpenses((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: !current } : item))
+    );
   };
 
   const handleUploadAvmInvoice = async (expenseId: string, file: File | null) => {
     if (!file) return;
-
     setUploadingAvmId(expenseId);
     try {
       const fd = new FormData();
       fd.append('file', file);
       const upload = await uploadExpenseAttachment(fd);
-      if (!upload.success || !upload.publicUrl) throw new Error(upload.error || 'Dosya yüklenemedi.');
+      if (!upload.success || !upload.publicUrl)
+        throw new Error(upload.error || 'Dosya yüklenemedi.');
 
       const update = await updateExpenseAttachment(expenseId, upload.publicUrl);
-      if (!update.success) throw new Error(update.error || 'Belge kaydı güncellenemedi.');
+      if (!update.success)
+        throw new Error(update.error || 'Belge kaydı güncellenemedi.');
 
       await updateAvmExpenseStatus(expenseId, { isOfficial: true });
-      setAvmExpenses((prev) => prev.map((item) => (item.id === expenseId ? { ...item, attachmentUrl: upload.publicUrl, isOfficial: true } : item)));
+      setAvmExpenses((prev) =>
+        prev.map((item) =>
+          item.id === expenseId
+            ? { ...item, attachmentUrl: upload.publicUrl, isOfficial: true }
+            : item
+        )
+      );
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Belge yükleme hatası.');
     } finally {
@@ -98,24 +123,23 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
 
   const handleDelete = async (invoiceId: string) => {
     if (!confirm('Bu belgeyi silmek istediğinize emin misiniz?')) return;
-
     setDeletingId(invoiceId);
     const res = await deleteExpenseAttachment(invoiceId);
-
     if (res.success) {
       setInvoices((prev) => prev.filter((invoice) => invoice.id !== invoiceId));
       return;
     }
-
     toast.error(res.error || 'Belge silinirken bir hata oluştu.');
     setDeletingId(null);
   };
 
   const getAvmDraft = (item: Invoice) => {
-    return avmDrafts[item.id] || {
-      amountWithVat: Number(item.amountWithVat || 0),
-      paidBy: item.paidBy || 'Ortak Hesap',
-    };
+    return (
+      avmDrafts[item.id] || {
+        amountWithVat: Number(item.amountWithVat || 0),
+        paidBy: item.paidBy || 'Ortak Hesap',
+      }
+    );
   };
 
   const handleSaveAvmFinancials = async (item: Invoice) => {
@@ -130,11 +154,14 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
       setSavingAvmId(null);
       return;
     }
-
     setAvmExpenses((prev) =>
       prev.map((row) =>
         row.id === item.id
-          ? { ...row, amountWithVat: Number(draft.amountWithVat || 0), paidBy: draft.paidBy || 'Ortak Hesap' }
+          ? {
+              ...row,
+              amountWithVat: Number(draft.amountWithVat || 0),
+              paidBy: draft.paidBy || 'Ortak Hesap',
+            }
           : row
       )
     );
@@ -142,84 +169,127 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32">
-
-      {/* 1. ELITE HEADER */}
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-slate-100">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-100">
-                <Receipt size={24} strokeWidth={2.5} />
-             </div>
-             <div>
-                <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] italic">Kurumsal Belge Arşivi</span>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">E-Faturalar ve Dekontlar</h1>
-             </div>
-          </div>
-          <p className="text-sm text-slate-500 font-bold italic max-w-xl">
-            Sisteme yüklenen tüm gider evrakları, PDF faturalar ve ödeme dekontları burada asenkron olarak saklanır.
+    <div className="space-y-8 pb-24">
+      {/* Header */}
+      <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+            Kurumsal Belge Arşivi
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            E-Faturalar ve Dekontlar
+          </h1>
+          <p className="text-sm text-slate-500 max-w-xl">
+            Sisteme yüklenen tüm gider evrakları, PDF faturalar ve ödeme dekontları
+            burada saklanır.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-          <div className="relative w-full sm:w-80 group">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-             <input
-               type="text"
-               placeholder="Belge veya şube ara..."
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full pl-11 pr-5 py-4 bg-white border border-slate-200 rounded-[22px] text-sm font-black italic uppercase tracking-tighter text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-sm placeholder:text-slate-300"
-             />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Belge veya şube ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
+            />
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-[22px] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 italic"
+            className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200"
           >
-            <Plus size={18} strokeWidth={3} />
-            YENİ BELGE EKLE
+            <Plus size={16} />
+            Yeni Belge Ekle
           </button>
         </div>
       </header>
 
-
-      {/* AVM FATURA / ÖDEME TAKİBİ (HESAPLAMADAN AYRI) */}
-      <section className="rounded-[32px] border border-slate-200 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">AVM Fatura & Ödeme Takibi</h2>
-            <p className="text-xs text-slate-500">Kira / aidat / ciro payı kayıtlarını buradan fatura tutarına göre güncelleyin. Bu bölüm operasyonel hesaplardan ayrı takip içindir.</p>
+      {/* AVM Section */}
+      <section
+        className={cn(
+          'rounded-2xl border border-slate-200/70 bg-white p-6 space-y-5',
+          cardShadow
+        )}
+      >
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+              AVM Fatura & Ödeme Takibi
+            </h2>
+            <p className="text-sm text-slate-500 max-w-2xl">
+              Kira / aidat / ciro payı kayıtlarını buradan fatura tutarına göre
+              güncelleyin. Bu bölüm operasyonel hesaplardan ayrı takip içindir.
+            </p>
           </div>
-          <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Otomatik kira kayıtları desteklenir</span>
+          <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-500">
+            Otomatik kira kayıtları desteklenir
+          </span>
         </div>
 
         {avmExpenses.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">Bu ay için AVM gider kaydı bulunamadı.</div>
+          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-400">
+            Bu ay için AVM gider kaydı bulunamadı.
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {avmExpenses.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-slate-200 p-4 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 line-clamp-2">{item.description}</p>
-                    <p className="text-xs text-slate-500">{item.location?.name || 'Genel'} • ₺{item.amountWithVat?.toLocaleString('tr-TR')}</p>
-                  </div>
+              <div
+                key={item.id}
+                className="rounded-xl border border-slate-200/70 bg-white p-4 space-y-3 hover:border-slate-300/70 transition-all duration-200"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 line-clamp-2">
+                    {item.description}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5 tabular-nums">
+                    {item.location?.name || 'Genel'} · ₺
+                    {item.amountWithVat?.toLocaleString('tr-TR')}
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => handleToggleAvm(item.id, 'isSettled', Boolean(item.isSettled))} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
-                    {Boolean(item.isSettled) ? <CheckSquare size={14} className="text-emerald-600" /> : <Square size={14} />}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleToggleAvm(item.id, 'isSettled', Boolean(item.isSettled))
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    {Boolean(item.isSettled) ? (
+                      <CheckSquare size={14} className="text-emerald-600" />
+                    ) : (
+                      <Square size={14} />
+                    )}
                     Ödeme Yapıldı
                   </button>
-                  <button type="button" onClick={() => handleToggleAvm(item.id, 'isOfficial', item.isOfficial)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
-                    {item.isOfficial ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} />}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleToggleAvm(item.id, 'isOfficial', item.isOfficial)
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    {item.isOfficial ? (
+                      <CheckSquare size={14} className="text-blue-600" />
+                    ) : (
+                      <Square size={14} />
+                    )}
                     Fatura Geldi
                   </button>
 
-                  <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
                     <Upload size={14} />
                     {uploadingAvmId === item.id ? 'Yükleniyor...' : 'Fatura Yükle'}
-                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)} />
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      onChange={(e) =>
+                        handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -231,10 +301,13 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                     onChange={(e) =>
                       setAvmDrafts((prev) => ({
                         ...prev,
-                        [item.id]: { ...getAvmDraft(item), amountWithVat: Number(e.target.value || 0) },
+                        [item.id]: {
+                          ...getAvmDraft(item),
+                          amountWithVat: Number(e.target.value || 0),
+                        },
                       }))
                     }
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
                     placeholder="Fatura Tutarı (KDV Dahil)"
                   />
                   <input
@@ -246,16 +319,18 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
                         [item.id]: { ...getAvmDraft(item), paidBy: e.target.value },
                       }))
                     }
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
                     placeholder="Ödeyen Hesap"
                   />
                   <button
                     type="button"
                     onClick={() => handleSaveAvmFinancials(item)}
                     disabled={savingAvmId === item.id}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 disabled:opacity-60"
+                    className="rounded-lg bg-slate-900 text-white hover:bg-slate-800 px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
                   >
-                    {savingAvmId === item.id ? 'Kaydediliyor...' : 'Tutar/Ödeyen Güncelle'}
+                    {savingAvmId === item.id
+                      ? 'Kaydediliyor...'
+                      : 'Tutar/Ödeyen Güncelle'}
                   </button>
                 </div>
               </div>
@@ -264,148 +339,194 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
         )}
       </section>
 
-      {/* 2. DOCUMENT GRID */}
+      {/* Document Grid */}
       <section>
-         <AnimatePresence mode="popLayout">
-           {filteredInvoices.length === 0 ? (
-             <motion.div
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="py-32 text-center border-2 border-dashed border-slate-100 rounded-[48px] bg-slate-50/30 flex flex-col items-center gap-6"
-             >
-                <div className="w-20 h-20 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-200 shadow-sm">
-                   <FileText size={40} strokeWidth={1} />
-                </div>
-                <div className="space-y-1">
-                   <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">Henüz Belge Bulunmuyor</h3>
-                   <p className="text-sm text-slate-400 font-bold italic">Aramaya uygun bir evrak bulunamadı veya henüz yükleme yapılmadı.</p>
-                </div>
-             </motion.div>
-           ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
-                {filteredInvoices.map((inv, idx) => {
-                  const attachmentUrl = inv.attachmentUrl ?? undefined;
-                  const isPdf = attachmentUrl?.toLowerCase().includes('.pdf') ?? false;
+        <AnimatePresence mode="popLayout">
+          {filteredInvoices.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="py-20 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center gap-4"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/70 flex items-center justify-center text-slate-300">
+                <FileText size={32} strokeWidth={1.5} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-semibold tracking-tight text-slate-900">
+                  Henüz Belge Bulunmuyor
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Aramaya uygun bir evrak bulunamadı veya henüz yükleme yapılmadı.
+                </p>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+              {filteredInvoices.map((inv, idx) => {
+                const attachmentUrl = inv.attachmentUrl ?? undefined;
+                const isPdf = attachmentUrl?.toLowerCase().includes('.pdf') ?? false;
 
-                  return (
+                return (
                   <motion.div
                     layout
                     key={inv.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="group bg-white rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-100/50 hover:border-blue-200 transition-all duration-500 overflow-hidden flex flex-col h-full active:scale-[0.98]"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: idx * 0.03, ease: 'easeOut' }}
+                    className={cn(
+                      'group bg-white rounded-2xl border border-slate-200/70 overflow-hidden flex flex-col h-full hover:shadow-md hover:border-slate-300/70 transition-all duration-200',
+                      cardShadow
+                    )}
                   >
-                     {/* Preview Area */}
-                     <div className="h-56 bg-slate-50 border-b border-slate-50 flex items-center justify-center relative group-hover:bg-blue-50/30 transition-colors overflow-hidden">
-                        {isPdf ? (
-                          <div className="flex flex-col items-center gap-4">
-                             <div className="w-20 h-20 rounded-3xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 shadow-sm group-hover:rotate-6 transition-transform duration-500">
-                                <FileText size={40} strokeWidth={1.5} />
-                             </div>
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">PDF ARŞİVİ</span>
+                    {/* Preview */}
+                    <div className="h-44 bg-slate-50 border-b border-slate-100 flex items-center justify-center relative overflow-hidden">
+                      {isPdf ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-14 h-14 rounded-xl bg-white border border-slate-200/70 flex items-center justify-center text-blue-600">
+                            <FileText size={26} strokeWidth={1.5} />
                           </div>
-                        ) : (
-                          <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700">
-                             {attachmentUrl ? (
-                               <Image
-                                 src={attachmentUrl}
-                                 alt="Belge"
-                                 fill
-                                 sizes="(max-width: 768px) 100vw, (max-width: 1536px) 33vw, 25vw"
-                                 className="object-cover opacity-60 group-hover:opacity-100 transition-all duration-500"
-                               />
-                             ) : (
-                               <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-slate-400">
-                                 Önizleme bulunamadı
-                               </div>
-                             )}
-                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                       )}
-
-                       {/* Floating Actions */}
-                       <div className="absolute top-4 right-4 flex gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                          <Link href={attachmentUrl || '#'} target="_blank" className={cn("w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 shadow-lg flex items-center justify-center transition-all", attachmentUrl ? "hover:text-blue-600 hover:scale-110" : "pointer-events-none opacity-40")}>
-                             <Eye size={18} />
-                          </Link>
-                          <Link href={attachmentUrl || '#'} download target="_blank" className={cn("w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 shadow-lg flex items-center justify-center transition-all", attachmentUrl ? "hover:text-blue-600 hover:scale-110" : "pointer-events-none opacity-40")}>
-                             <Download size={18} />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(inv.id)}
-                            disabled={deletingId === inv.id}
-                            className="w-10 h-10 bg-white/90 backdrop-blur rounded-xl text-slate-600 hover:text-rose-600 disabled:text-slate-300 disabled:cursor-not-allowed shadow-lg flex items-center justify-center transition-all hover:scale-110"
-                          >
-                            {deletingId === inv.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={18} />}
-                          </button>
-                       </div>
-
-                       <div className="absolute top-4 left-4">
-                          <span className={cn(
-                            "px-3 py-1.5 rounded-xl backdrop-blur-md shadow-sm text-[9px] font-black uppercase tracking-widest border transition-colors",
-                            inv.isOfficial
-                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                              : "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                          )}>
-                             {inv.isOfficial ? "RESMİ FATURA" : "DEKONT / FİŞ"}
+                          <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
+                            PDF Arşivi
                           </span>
-                       </div>
-                     </div>
-
-                     {/* Info Area */}
-                     <div className="p-8 flex flex-col flex-1 space-y-6">
-                        <div className="flex justify-between items-start gap-4">
-                          <h4 className="font-black text-slate-900 text-lg tracking-tighter uppercase italic line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">{inv.description}</h4>
-                          <span className="font-black text-rose-600 text-lg italic tracking-tighter shrink-0">₺{inv.amountWithVat?.toLocaleString('tr-TR')}</span>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4 mt-auto">
-                           <div className="space-y-1">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">LOKASYON</p>
-                              <div className="flex items-center gap-2 text-[11px] text-slate-700 font-bold italic truncate">
-                                 <MapPin size={12} className="text-blue-500" />
-                                 {inv.location?.name || 'GENEL MERKEZ'}
-                              </div>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">TARİH</p>
-                              <div className="flex items-center gap-2 text-[11px] text-slate-700 font-bold italic">
-                                 <Calendar size={12} className="text-blue-500" />
-                                 {new Date(inv.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                              </div>
-                           </div>
+                      ) : (
+                        <div className="w-full h-full relative">
+                          {attachmentUrl ? (
+                            <Image
+                              src={attachmentUrl}
+                              alt="Belge"
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1536px) 33vw, 25vw"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs font-medium text-slate-400">
+                              Önizleme bulunamadı
+                            </div>
+                          )}
                         </div>
+                      )}
 
-                        <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
-                           <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">KAYIT KAYNAĞI</span>
-                              <span className="text-[10px] uppercase font-black text-slate-900 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">{inv.paidBy}</span>
-                           </div>
-                           <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(inv.id)}
-                                disabled={deletingId === inv.id}
-                                className="px-3 py-2 rounded-xl border border-rose-100 bg-rose-50/60 text-rose-600 hover:bg-rose-100 transition-colors text-[10px] font-black uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
-                              >
-                                {deletingId === inv.id ? 'SİLİNİYOR...' : 'BELGEYİ SİL'}
-                              </button>
-                              <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
-                                <ArrowRight size={16} />
-                              </div>
-                           </div>
+                      {/* Floating Actions */}
+                      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Link
+                          href={attachmentUrl || '#'}
+                          target="_blank"
+                          className={cn(
+                            'w-9 h-9 bg-white rounded-lg text-slate-600 shadow-sm border border-slate-200/70 flex items-center justify-center transition-colors',
+                            attachmentUrl
+                              ? 'hover:bg-slate-50 hover:text-blue-600'
+                              : 'pointer-events-none opacity-40'
+                          )}
+                        >
+                          <Eye size={16} />
+                        </Link>
+                        <Link
+                          href={attachmentUrl || '#'}
+                          download
+                          target="_blank"
+                          className={cn(
+                            'w-9 h-9 bg-white rounded-lg text-slate-600 shadow-sm border border-slate-200/70 flex items-center justify-center transition-colors',
+                            attachmentUrl
+                              ? 'hover:bg-slate-50 hover:text-blue-600'
+                              : 'pointer-events-none opacity-40'
+                          )}
+                        >
+                          <Download size={16} />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(inv.id)}
+                          disabled={deletingId === inv.id}
+                          className="w-9 h-9 bg-white rounded-lg text-slate-600 hover:text-rose-600 hover:bg-slate-50 disabled:text-slate-300 disabled:cursor-not-allowed shadow-sm border border-slate-200/70 flex items-center justify-center transition-colors"
+                        >
+                          {deletingId === inv.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={16} />
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="absolute top-3 left-3">
+                        <span
+                          className={cn(
+                            'px-2.5 py-1 rounded-lg text-[10px] font-medium uppercase tracking-wider border',
+                            inv.isOfficial
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                              : 'bg-blue-50 text-blue-600 border-blue-200'
+                          )}
+                        >
+                          {inv.isOfficial ? 'Resmi Fatura' : 'Dekont / Fiş'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-5 flex flex-col flex-1 space-y-4">
+                      <div className="flex justify-between items-start gap-3">
+                        <h4 className="font-semibold text-slate-900 text-sm tracking-tight line-clamp-2 leading-snug">
+                          {inv.description}
+                        </h4>
+                        <span className="font-semibold text-rose-600 text-sm tabular-nums shrink-0">
+                          ₺{inv.amountWithVat?.toLocaleString('tr-TR')}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-auto">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
+                            Lokasyon
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-700 truncate">
+                            <MapPin size={12} className="text-slate-400" />
+                            {inv.location?.name || 'Genel Merkez'}
+                          </div>
                         </div>
-                     </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
+                            Tarih
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-700 tabular-nums">
+                            <Calendar size={12} className="text-slate-400" />
+                            {new Date(inv.createdAt).toLocaleDateString('tr-TR', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
+                            Kayıt Kaynağı
+                          </p>
+                          <span className="text-xs font-medium text-slate-700">
+                            {inv.paidBy}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(inv.id)}
+                          disabled={deletingId === inv.id}
+                          className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {deletingId === inv.id ? 'Siliniyor...' : 'Belgeyi Sil'}
+                        </button>
+                      </div>
+                    </div>
                   </motion.div>
-                )})}
-             </div>
-           )}
-         </AnimatePresence>
+                );
+              })}
+            </div>
+          )}
+        </AnimatePresence>
       </section>
 
-      {/* 3. MODALS */}
+      {/* Modal */}
       <PremiumModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -420,7 +541,6 @@ export default function FaturalarClientUI({ invoices: initialInvoices, avmExpens
           }}
         />
       </PremiumModal>
-
     </div>
   );
 }

@@ -21,97 +21,91 @@ interface Insight {
 
 export default function StrategicMatrix({ insights }: { insights: Insight[] }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {insights.map((loc, idx) => (
         <motion.div
           key={loc.id}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.1 }}
-          className="relative group bg-white border border-slate-200 rounded-[40px] p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden"
+          transition={{ delay: idx * 0.05, duration: 0.25, ease: 'easeOut' }}
+          className="group bg-white border border-slate-200/70 rounded-2xl p-6 md:p-8 hover:border-slate-300/70 transition-colors"
         >
-          {/* Subtle Background Accent */}
-          <div className={cn(
-             "absolute -right-20 -top-20 w-64 h-64 blur-[100px] rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-1000",
-             loc.isProfitable ? "bg-emerald-500" : "bg-rose-500"
-          )}></div>
-
           {/* Header */}
-          <div className="flex justify-between items-start mb-8 relative z-10">
+          <div className="flex justify-between items-start mb-8">
             <div className="space-y-1">
-              <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic group-hover:text-blue-600 transition-colors">
+              <h3 className="text-lg font-semibold text-slate-900 tracking-tight">
                 {loc.name}
               </h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">STRATEJİK OPERASYONEL ANALİZ</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Stratejik Operasyonel Analiz</p>
             </div>
             <div className={cn(
-              "px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest italic shadow-sm border",
-              loc.isProfitable 
-                ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-                : "bg-rose-50 text-rose-600 border-rose-100"
+              "px-3 py-1 rounded-full text-xs font-medium border",
+              loc.isProfitable
+                ? "bg-emerald-50 text-emerald-600 border-emerald-200/70"
+                : "bg-rose-50 text-rose-600 border-rose-200/70"
             )}>
-              {loc.isProfitable ? "AKTÜEL KÂRLI" : "MİLYET EŞİĞİ ALTI"}
+              {loc.isProfitable ? "Aktüel Kârlı" : "Milyet Eşiği Altı"}
             </div>
           </div>
 
           {/* Metrics Grid */}
-          <div className="grid grid-cols-2 gap-6 mb-8 relative z-10">
-            <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100 group-hover:bg-white transition-colors shadow-inner">
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="p-5 rounded-xl bg-slate-50/50 border border-slate-200/70">
               <div className="flex items-center gap-2 mb-3">
                 <Target size={14} className="text-slate-400" />
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Başabaş Noktası</span>
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Başabaş Noktası</span>
               </div>
-              <p className="text-2xl font-black text-slate-900 italic tracking-tighter">
+              <p className="text-2xl font-semibold text-slate-900 tracking-tight tabular-nums">
                 {loc.breakEvenSessions}
-                <span className="text-xs ml-1.5 font-bold text-slate-400 uppercase not-italic tracking-normal">Seans</span>
+                <span className="text-xs ml-1.5 font-medium text-slate-400">seans</span>
               </p>
             </div>
-            <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100 group-hover:bg-white transition-colors shadow-inner">
+            <div className="p-5 rounded-xl bg-slate-50/50 border border-slate-200/70">
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 size={14} className="text-slate-400" />
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Kâr Marjı</span>
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Kâr Marjı</span>
               </div>
-              <p className="text-2xl font-black text-slate-900 italic tracking-tighter">%{loc.profitMargin.toFixed(1)}</p>
+              <p className="text-2xl font-semibold text-slate-900 tracking-tight tabular-nums">%{loc.profitMargin.toFixed(1)}</p>
             </div>
           </div>
 
           {/* Progress Section */}
-          <div className="space-y-4 mb-6 relative z-10">
+          <div className="space-y-3 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock size={14} className="text-slate-400" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Amortisman Projeksiyonu</span>
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Amortisman Projeksiyonu</span>
               </div>
               <span className={cn(
-                "text-sm font-black italic tracking-tighter",
+                "text-sm font-semibold tracking-tight tabular-nums",
                 loc.paybackProgress >= 70 ? "text-emerald-600" : "text-blue-600"
               )}>
-                %{loc.paybackProgress.toFixed(1)} TAMAMLANDI
+                %{loc.paybackProgress.toFixed(1)} tamamlandı
               </span>
             </div>
-            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
-               <motion.div
-                 initial={{ width: 0 }}
-                 animate={{ width: `${loc.paybackProgress}%` }}
-                 transition={{ duration: 1.5, ease: "easeOut" }}
-                 className={cn(
-                   "h-full rounded-full shadow-[0_0_10px_rgba(37,99,235,0.2)]",
-                   loc.paybackProgress >= 70 ? "bg-emerald-500" : "bg-blue-600"
-                 )}
-               />
+            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${loc.paybackProgress}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+                className={cn(
+                  "h-full rounded-full",
+                  loc.paybackProgress >= 70 ? "bg-emerald-500" : "bg-blue-600"
+                )}
+              />
             </div>
           </div>
 
           {/* ROI Info */}
-          <div className="pt-6 border-t border-slate-100 flex items-center justify-between relative z-10">
+          <div className="pt-6 border-t border-slate-200/70 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.25em]">Tahmini Geri Dönüş</span>
-              <span className="text-base font-black text-slate-900 italic tracking-tighter uppercase">
-                {loc.estimatedPaybackMonths === Infinity ? 'VERİ YETERSİZ' : `${loc.estimatedPaybackMonths} AY İÇİNDE`}
+              <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Tahmini Geri Dönüş</span>
+              <span className="text-base font-semibold text-slate-900 tracking-tight tabular-nums mt-0.5">
+                {loc.estimatedPaybackMonths === Infinity ? 'Veri yetersiz' : `${loc.estimatedPaybackMonths} ay içinde`}
               </span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm">
-               <Zap size={20} className={cn(loc.paybackProgress > 80 && "text-amber-400")} />
+            <div className="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+              <Zap size={18} className={cn(loc.paybackProgress > 80 && "text-amber-500 group-hover:text-amber-300")} />
             </div>
           </div>
         </motion.div>

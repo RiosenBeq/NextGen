@@ -26,6 +26,9 @@ const COLORS = [
   { id: 'rose', dot: 'bg-rose-600', ring: 'ring-rose-600', label: 'Pembe' },
 ];
 
+const inputBase =
+  'w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150';
+
 export function NoteForm({ initialData, onClose }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || '');
@@ -61,16 +64,16 @@ export function NoteForm({ initialData, onClose }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-4">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6">
       <div>
-        <h4 className="text-xl font-bold text-slate-900 tracking-tight">
+        <h4 className="text-xl font-semibold text-slate-900 tracking-tight">
           {initialData ? 'Notu Güncelle' : 'Yeni Not Ekle'}
         </h4>
-        <p className="text-xs text-slate-500 mt-1">Kısa, net ve aranabilir notlar oluşturun.</p>
+        <p className="text-sm text-slate-500 mt-1">Kısa, net ve aranabilir notlar oluşturun.</p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Başlık</label>
+        <label className="text-sm font-medium text-slate-700">Başlık</label>
         <input
           autoFocus
           required
@@ -78,24 +81,24 @@ export function NoteForm({ initialData, onClose }: Props) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Örn: Nisan operasyon toplantı kararı"
-          className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+          className={inputBase}
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">İçerik</label>
+        <label className="text-sm font-medium text-slate-700">İçerik</label>
         <textarea
           required
           rows={6}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Not detayları..."
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 resize-none"
+          className={cn(inputBase, 'resize-none leading-relaxed')}
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Renk</label>
+        <label className="text-sm font-medium text-slate-700">Renk</label>
         <div className="flex flex-wrap gap-2">
           {COLORS.map((item) => (
             <button
@@ -103,34 +106,36 @@ export function NoteForm({ initialData, onClose }: Props) {
               type="button"
               onClick={() => setColor(item.id)}
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition-all',
+                'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
                 color === item.id
-                  ? 'border-slate-300 bg-white text-slate-900 ring-2 ring-offset-1'
-                  : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white'
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               )}
             >
-              <span className={cn('w-3 h-3 rounded-full', item.dot)} />
+              <span className={cn('w-2.5 h-2.5 rounded-full', item.dot)} />
               {item.label}
-              {color === item.id && <Check className={cn('w-3.5 h-3.5', item.ring.replace('ring-', 'text-'))} />}
+              {color === item.id && <Check className="w-3.5 h-3.5 text-white" />}
             </button>
           ))}
         </div>
       </div>
 
-      {error && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600">{error}</p>}
+      {error && (
+        <p className="rounded-xl border border-rose-200/70 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">{error}</p>
+      )}
 
-      <div className="grid grid-cols-2 gap-3 pt-2">
+      <div className="pt-6 border-t border-slate-200/70 flex justify-end gap-3">
         <button
           type="button"
           onClick={() => onClose?.()}
-          className="h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50"
+          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors"
         >
           Vazgeç
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="h-11 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-slate-800 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2 transition-colors"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
           {initialData ? 'Kaydet' : 'Not Oluştur'}

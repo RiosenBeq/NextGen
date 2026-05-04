@@ -1,5 +1,4 @@
 'use client';
-import { useRouter } from 'next/navigation';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -27,7 +26,7 @@ interface Investment {
 
 interface Props {
   initialInvestments: Investment[];
-  locations: any[];
+  locations: Location[];
 }
 
 export default function InvestmentList({ initialInvestments, locations }: Props) {

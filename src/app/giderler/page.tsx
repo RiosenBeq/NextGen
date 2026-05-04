@@ -24,13 +24,17 @@ export default async function ExpensesPage() {
       .eq('relatedType', 'expense'),
   ]);
 
+  type ExpenseRow = {
+    amountWithVat?: number | null;
+    month?: string | null;
+  };
   const expenses = expensesData || [];
-  const total = expenses.reduce((sum: number, exp: any) => sum + (exp.amountWithVat || 0), 0);
+  const total = expenses.reduce((sum: number, exp: ExpenseRow) => sum + (exp.amountWithVat || 0), 0);
 
   const currentMonthStr = new Date().toISOString().slice(0, 7);
   const thisMonthTotal = expenses
-    .filter((e: any) => e.month && e.month.slice(0, 7) === currentMonthStr)
-    .reduce((sum: number, e: any) => sum + (e.amountWithVat || 0), 0);
+    .filter((e: ExpenseRow) => !!e.month && e.month.slice(0, 7) === currentMonthStr)
+    .reduce((sum: number, e: ExpenseRow) => sum + (e.amountWithVat || 0), 0);
 
   return (
     <ExpensesClientUI

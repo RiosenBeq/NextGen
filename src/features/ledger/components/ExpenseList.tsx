@@ -2,33 +2,43 @@
 import { useRouter } from 'next/navigation';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, FileText, Edit2, Trash2, Calendar, Filter, ChevronDown, CheckCircle2, Loader2 } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { deleteExpense, toggleExpenseSettled } from '../actions';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+
+interface ExpenseDocument {
+  id: string;
+  relatedId?: string | null;
+  fileUrl: string;
+}
+
+interface ExpenseLocation {
+  id: string;
+  name: string;
+}
 
 interface Expense {
   id: string;
   description: string;
-  type: 'ONE_TIME' | 'RECURRING'; 
+  type: 'ONE_TIME' | 'RECURRING';
   month?: string;
   isOfficial: boolean;
   vatRate: number;
   amountWithoutVat: number;
   amountWithVat: number;
   attachmentUrl?: string | null;
-  location?: { id: string; name: string } | null;
+  location?: ExpenseLocation | null;
   paidBy?: string;
-  documents?: any[];
+  documents?: ExpenseDocument[];
 }
 
 interface Props {
   initialExpenses: Expense[];
-  documents: any[];
-  locations: any[];
+  documents: ExpenseDocument[];
+  locations: ExpenseLocation[];
 }
 
 const getCategoryColor = (category: string) => {
@@ -80,7 +90,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
     }
   };
 
-  const handleToggleSettled = async (exp: any) => {
+  const handleToggleSettled = async (exp: Expense) => {
     setSettlingId(exp.id);
     await toggleExpenseSettled(exp.id, exp.description);
     router.refresh();
@@ -115,7 +125,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-4 outline-none transition-all placeholder:text-slate-400 shadow-sm text-slate-900 font-medium"
-              style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as any}
+              style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as React.CSSProperties}
             />
           </div>
 
@@ -125,7 +135,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
                 className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black text-slate-700 uppercase tracking-widest cursor-pointer appearance-none shadow-sm focus:ring-4 outline-none transition-all"
-                style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as any}
+                style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as React.CSSProperties}
               >
                 <option value="ALL">TÜM KATEGORİLER</option>
                 <option value="Operasyonel">OPERASYONEL</option>
@@ -145,7 +155,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                 value={filterPaidBy}
                 onChange={(e) => setFilterPaidBy(e.target.value)}
                 className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black text-slate-700 uppercase tracking-widest cursor-pointer appearance-none shadow-sm focus:ring-4 outline-none transition-all"
-                style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as any}
+                style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as React.CSSProperties}
               >
                 <option value="ALL">TÜM ÖDEYENLER</option>
                 <option value="Ortak Hesap">ORTAK HESAP</option>
@@ -162,7 +172,7 @@ export default function ExpenseList({ initialExpenses, documents, locations }: P
                 value={filterSettled}
                 onChange={(e) => setFilterSettled(e.target.value)}
                 className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black text-slate-700 uppercase tracking-widest cursor-pointer appearance-none shadow-sm focus:ring-4 outline-none transition-all"
-                style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as any}
+                style={{ '--tw-ring-color': 'rgba(47,107,255,0.2)' } as React.CSSProperties}
               >
                 <option value="ALL">TÜMÜ</option>
                 <option value="ACTIVE">BEKLEYEN</option>

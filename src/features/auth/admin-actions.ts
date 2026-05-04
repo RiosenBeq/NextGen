@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { createAuditLog } from '@/lib/audit';
+import { getErrorMessage } from '@/lib/errors';
 
 const supabaseAdminOptions = {
   auth: {
@@ -29,18 +30,20 @@ const newUserSchema = z.object({
   role: z.enum(['superadmin', 'user']).default('user'),
   fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır.").optional()
 });
+type NewUserInput = z.input<typeof newUserSchema>;
 
 const updateUserSchema = z.object({
   userId: z.string().min(1, 'Kullanıcı ID zorunludur.'),
   role: z.enum(['superadmin', 'user']),
   fullName: z.string().min(2, 'Ad Soyad en az 2 karakter olmalıdır.'),
 });
+type UpdateUserInput = z.input<typeof updateUserSchema>;
 
 /**
  * Yeni bir kullanıcı oluşturur (Sadece Super Admin yetkisi gerektirir)
  * Bu metod, işlemi gerçekleştiren admin kullanıcısının session'unu kapatmadan yeni kullanıcı açabilmesini sağlar.
  */
-export async function createSystemUser(data: any) {
+export async function createSystemUser(data: NewUserInput) {
   try {
     const validatedData = newUserSchema.parse(data);
 
@@ -70,12 +73,12 @@ export async function createSystemUser(data: any) {
 
     revalidatePath('/kullanicilar');
     return { success: true, user: { id: userData.user.id, email: userData.user.email } };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create User Error:", error);
-    if (error.name === 'ZodError') {
-      return { success: false, error: error.errors[0].message };
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
     }
-    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+    return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
@@ -117,12 +120,12 @@ export async function deleteSystemUser(userId: string) {
 
     revalidatePath('/kullanicilar');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
-export async function updateSystemUserAccess(data: any) {
+export async function updateSystemUserAccess(data: UpdateUserInput) {
   try {
     const validatedData = updateUserSchema.parse(data);
     const adminAuthClient = getAdminClient();
@@ -151,11 +154,11 @@ export async function updateSystemUserAccess(data: any) {
     revalidatePath('/kullanicilar');
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Update User Access Error:', error);
-    if (error.name === 'ZodError') {
-      return { success: false, error: error.errors[0].message };
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
     }
-    return { success: false, error: String(error?.message || 'Kullanıcı güncellenemedi.') };
+    return { success: false, error: getErrorMessage(error, 'Kullanıcı güncellenemedi.') };
   }
 }

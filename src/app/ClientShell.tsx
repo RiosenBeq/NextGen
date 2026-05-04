@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sidebar, Topbar, MobileNav } from "@/components/LayoutUI";
 import { usePathname } from "next/navigation";
 
@@ -14,10 +14,12 @@ interface ClientShellProps {
 export default function ClientShell({ children, userEmail, userFullName, userRole }: ClientShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  useEffect(() => {
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <>

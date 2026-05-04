@@ -2,14 +2,12 @@
 import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Wallet, 
-  PieChart, 
-  Filter, 
-  Search, 
-  Download, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Filter,
+  Download,
   ChevronRight,
   ArrowRight,
   Receipt,
@@ -19,11 +17,11 @@ import {
   HandCoins,
   CreditCard,
   Plus,
-  Trash2, 
-  Edit2, 
-  Zap 
+  Trash2,
+  Edit2,
+  Zap
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import ExpenseForm from '@/features/ledger/components/ExpenseForm';
@@ -32,6 +30,32 @@ import { deleteMonthlyPerformance } from '@/features/ledger/actions';
 import Link from 'next/link';
 import { toast } from '@/hooks/useToast';
 
+type GelirGiderLocation = { id: string; name: string };
+
+type GelirGiderCategory = { id: string; name: string };
+
+type GelirGiderEntry = {
+  perfId: string;
+  monthId: string;
+  month: string;
+  locationName: string;
+  sessions: number;
+  grossRevenue: number;
+  avmExpense: number;
+  netCash: number;
+  revenueShare: number;
+  totalCommission: number;
+  extraExpense: number;
+  extraNotes?: string;
+};
+
+type GelirGiderBreakdown = {
+  label: string;
+  subLabel?: string;
+  value: number;
+  color: string;
+};
+
 interface GelirGiderProps {
   summary: {
     gross: number;
@@ -39,30 +63,29 @@ interface GelirGiderProps {
     net: number;
     margin: number;
   };
-  entries: any[];
-  categories: any[];
-  locations: any[];
+  entries: GelirGiderEntry[];
+  categories: GelirGiderCategory[];
+  locations: GelirGiderLocation[];
   filters: {
     month: string;
     location: string;
     category: string;
   };
-  breakdown: any[];
+  breakdown: GelirGiderBreakdown[];
   availableMonths: string[];
 }
 
-export default function GelirGiderClientUI({ 
-  summary, 
-  entries, 
-  categories, 
-  locations, 
-  filters, 
+export default function GelirGiderClientUI({
+  summary,
+  entries,
+  locations,
+  filters,
   breakdown,
   availableMonths
 }: GelirGiderProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<any>(null);
+  const [selectedEntry, setSelectedEntry] = useState<GelirGiderEntry | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -324,7 +347,7 @@ export default function GelirGiderClientUI({
         {selectedEntry && (
           <div className="space-y-10 py-6">
              {isEditing ? (
-               <MonthlyPerformanceForm id={selectedEntry.perfId} initialData={{ sessions: selectedEntry.sessions, extraExpense: selectedEntry.extraExpense, extraNotes: selectedEntry.extraNotes, month: selectedEntry.monthId, locationName: selectedEntry.locationName }} onClose={() => setIsEditing(false)} onDelete={handleDelete} />
+               <MonthlyPerformanceForm id={selectedEntry.perfId} initialData={{ sessions: selectedEntry.sessions, extraExpense: selectedEntry.extraExpense, extraNotes: selectedEntry.extraNotes ?? '', month: selectedEntry.monthId, locationName: selectedEntry.locationName }} onClose={() => setIsEditing(false)} onDelete={handleDelete} />
              ) : (
                <div className="space-y-10">
                   {/* Drawer Header Card */}
@@ -410,8 +433,24 @@ export default function GelirGiderClientUI({
   );
 }
 
-function KPICard({ label, value, icon, color, subtitle, trend }: any) {
-  const themes: any = {
+type KPICardColor = 'blue' | 'rose' | 'emerald' | 'amber';
+
+function KPICard({
+  label,
+  value,
+  icon,
+  color,
+  subtitle,
+  trend,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactElement;
+  color: KPICardColor;
+  subtitle: string;
+  trend: string;
+}) {
+  const themes: Record<KPICardColor, { iconBg: string; border: string; trend: string }> = {
     blue: { iconBg: "bg-blue-50 text-blue-600", border: "border-blue-100", trend: "bg-blue-50 text-blue-600" },
     rose: { iconBg: "bg-rose-50 text-rose-600", border: "border-rose-100", trend: "bg-rose-50 text-rose-600" },
     emerald: { iconBg: "bg-emerald-50 text-emerald-600", border: "border-emerald-100", trend: "bg-emerald-50 text-emerald-600" },
@@ -423,7 +462,7 @@ function KPICard({ label, value, icon, color, subtitle, trend }: any) {
     <div className={cn("bg-white border border-slate-200 p-8 rounded-[32px] space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden", theme.border)}>
        <div className="flex items-center justify-between">
           <div className={cn("p-3.5 rounded-2xl transition-all shadow-inner", theme.iconBg)}>
-             {React.cloneElement(icon as React.ReactElement<any>, { size: 24, strokeWidth: 2 })}
+             {React.cloneElement(icon as React.ReactElement<{ size?: number; strokeWidth?: number }>, { size: 24, strokeWidth: 2 })}
           </div>
           <div className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-widest", theme.trend)}>
              {trend}
@@ -454,8 +493,8 @@ function FilterLink({ href, active, label }: { href: string, active: boolean, la
   );
 }
 
-function DetailMetric({ label, value, icon, color }: { label: string, value: string, icon: any, color: string }) {
-  const bgColors: any = {
+function DetailMetric({ label, value, icon, color }: { label: string, value: string, icon: React.ReactNode, color: string }) {
+  const bgColors: Record<string, string> = {
     emerald: "bg-emerald-50 text-emerald-500 border-emerald-100/50",
     blue: "bg-blue-50 text-blue-500 border-blue-100/50",
     amber: "bg-amber-50 text-amber-500 border-amber-100/50",

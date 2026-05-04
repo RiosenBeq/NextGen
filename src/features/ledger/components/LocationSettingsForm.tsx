@@ -2,12 +2,24 @@
 
 import { useState } from 'react';
 import { updateLocationParameters } from '../actions';
-import { Loader2, Save, MapPin, Percent, DollarSign, Building } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Loader2, Save, Building } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface LocationSettingsLocation {
+  id: string;
+  name: string;
+  fixedRent?: number;
+  duesAmount?: number;
+  revenueShareRate?: number;
+  revenueThreshold?: number;
+  rentVatRate?: number;
+}
 
 interface Props {
-  location: any;
+  location: LocationSettingsLocation;
 }
+
+const inputBase = "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150";
 
 export function LocationSettingsForm({ location }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,109 +48,107 @@ export function LocationSettingsForm({ location }: Props) {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-8 bg-white border border-slate-200 shadow-sm rounded-[32px] overflow-hidden"
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.08)]"
     >
-      <div className="flex items-center justify-between mb-10">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
-            <Building size={24} />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-center text-slate-500">
+            <Building size={20} />
           </div>
-          <div className="space-y-0.5">
-            <h3 className="text-xl font-bold text-slate-900 tracking-tight">{location.name}</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{location.id}</p>
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-slate-900">{location.name}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{location.id}</p>
           </div>
         </div>
-        {success && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            GÜNCELLENDİ
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium flex items-center gap-2"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Güncellendi
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="space-y-2.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
-              <DollarSign size={14} className="text-slate-400" /> Sabit Kira (₺)
-            </label>
-            <input 
-              name="fixedRent" 
-              type="number" 
-              defaultValue={location.fixedRent} 
-              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
-              placeholder="0.00" 
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Sabit Kira (₺)</label>
+            <input
+              name="fixedRent"
+              type="number"
+              defaultValue={location.fixedRent}
+              className={inputBase}
+              placeholder="0.00"
             />
           </div>
 
-          <div className="space-y-2.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
-              <Building size={14} className="text-slate-400" /> Aidat / Ortak Gider (₺)
-            </label>
-            <input 
-              name="duesAmount" 
-              type="number" 
-              defaultValue={location.duesAmount} 
-              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300"
-              placeholder="0.00" 
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Aidat / Ortak Gider (₺)</label>
+            <input
+              name="duesAmount"
+              type="number"
+              defaultValue={location.duesAmount}
+              className={inputBase}
+              placeholder="0.00"
             />
           </div>
 
-          <div className="space-y-2.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">
-              Kira KDV Oranı (%)
-            </label>
-            <input 
-              name="rentVatRate" 
-              type="number" 
-              defaultValue={location.rentVatRate} 
-              className="w-full px-5 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all placeholder:text-slate-300" 
-              placeholder="20" 
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Kira KDV Oranı (%)</label>
+            <input
+              name="rentVatRate"
+              type="number"
+              defaultValue={location.rentVatRate}
+              className={inputBase}
+              placeholder="20"
             />
           </div>
 
-          <div className="space-y-2.5">
-            <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest pl-1 flex items-center gap-2">
-              <Percent size={14} /> Ciro Payı Oranı (%)
-            </label>
-            <input 
-              name="revenueShareRate" 
-              type="number" 
-              defaultValue={location.revenueShareRate} 
-              className="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-sm font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition-all placeholder:text-emerald-300" 
-              placeholder="0" 
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Ciro Payı Oranı (%)</label>
+            <input
+              name="revenueShareRate"
+              type="number"
+              defaultValue={location.revenueShareRate}
+              className={inputBase}
+              placeholder="0"
             />
+            <p className="text-xs text-slate-500">Eşik üzerindeki ciroya uygulanır</p>
           </div>
 
-          <div className="space-y-2.5">
-            <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest pl-1">
-              Ciro Eşiği (₺)
-            </label>
-            <input 
-              name="revenueThreshold" 
-              type="number" 
-              defaultValue={location.revenueThreshold} 
-              className="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-sm font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition-all placeholder:text-emerald-300" 
-              placeholder="0.00" 
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">Ciro Eşiği (₺)</label>
+            <input
+              name="revenueThreshold"
+              type="number"
+              defaultValue={location.revenueThreshold}
+              className={inputBase}
+              placeholder="0.00"
             />
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full h-16 flex items-center justify-center gap-3 bg-slate-900 text-white rounded-2xl font-bold text-xs tracking-widest shadow-xl shadow-slate-200 uppercase transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
-        >
-          {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} />}
-          LOKASYON AYARLARINI KAYDET
-        </button>
+        <div className="pt-6 border-t border-slate-200/70 flex justify-end">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
+            Lokasyon Ayarlarını Kaydet
+          </button>
+        </div>
       </form>
     </motion.div>
   );

@@ -2,20 +2,20 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from "@/lib/utils";
+
+type PerformanceComparisonRow = { month: string } & Record<string, string | number>;
 
 interface PerformanceComparisonProps {
-  data: any[];
+  data: PerformanceComparisonRow[];
 }
 
 export default function PerformanceComparison({ data }: PerformanceComparisonProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredBar, setHoveredBar] = useState<{ month: string, loc: string, val: number } | null>(null);
 
   if (!data || data.length === 0) return null;
 
   const locations = Object.keys(data[0]).filter(k => k !== 'month');
-  const maxVal = Math.max(...data.flatMap(d => locations.map(l => d[l] || 0)), 1);
+  const maxVal = Math.max(...data.flatMap(d => locations.map(l => Number(d[l]) || 0)), 1);
 
   const colors = ['#2563EB', '#F59E0B', '#10B981', '#6366F1'];
 
@@ -36,7 +36,7 @@ export default function PerformanceComparison({ data }: PerformanceComparisonPro
           <div key={d.month} className="flex-1 flex flex-col items-center group h-full justify-end">
             <div className="w-full flex items-end justify-center gap-1 md:gap-2 grow">
               {locations.map((loc, locIdx) => {
-                const val = d[loc] || 0;
+                const val = Number(d[loc]) || 0;
                 const h = (val / maxVal) * 100;
                 return (
                   <div key={loc} className="relative w-full max-w-[24px]">
@@ -46,7 +46,7 @@ export default function PerformanceComparison({ data }: PerformanceComparisonPro
                       transition={{ duration: 1, delay: i * 0.05 + locIdx * 0.1, ease: "circOut" }}
                       className="w-full rounded-t-lg shadow-sm cursor-help hover:brightness-110 transition-all"
                       style={{ backgroundColor: colors[locIdx % colors.length] }}
-                      onMouseEnter={(e) => setHoveredBar({ month: d.month, loc, val })}
+                      onMouseEnter={() => setHoveredBar({ month: d.month, loc, val })}
                       onMouseLeave={() => setHoveredBar(null)}
                     />
                   </div>

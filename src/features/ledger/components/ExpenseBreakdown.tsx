@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { PieChart, ShoppingBag, Users, Building, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,51 +13,53 @@ interface Props {
   expenses: Expense[];
 }
 
+function getColor(cat: string) {
+  switch (cat) {
+    case 'Faturalar': return { bg: 'bg-amber-100', text: 'text-amber-600', fill: 'bg-amber-500' };
+    case 'Personel': return { bg: 'bg-indigo-100', text: 'text-indigo-600', fill: 'bg-indigo-500' };
+    case 'Kira': return { bg: 'bg-emerald-100', text: 'text-emerald-600', fill: 'bg-emerald-500' };
+    default: return { bg: 'bg-slate-100', text: 'text-slate-600', fill: 'bg-slate-500' };
+  }
+}
+
+function getIcon(cat: string) {
+  switch (cat) {
+    case 'Faturalar': return Zap;
+    case 'Personel': return Users;
+    case 'Kira': return Building;
+    default: return ShoppingBag;
+  }
+}
+
+function computeBreakdown(expenses: Expense[]) {
+  const categories: Record<string, number> = {
+    'Faturalar': 0,
+    'Personel': 0,
+    'Kira': 0,
+    'Diğer': 0
+  };
+
+  let total = 0;
+  expenses.forEach(exp => {
+    const cat = exp.type || 'Diğer';
+    if (categories[cat] !== undefined) categories[cat] += exp.amountWithVat;
+    else categories['Diğer'] += exp.amountWithVat;
+    total += exp.amountWithVat;
+  });
+
+  return Object.entries(categories)
+    .map(([name, value]) => ({
+      name,
+      value,
+      percentage: total > 0 ? (value / total) * 100 : 0,
+      color: getColor(name)
+    }))
+    .filter(c => c.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
 export default function ExpenseBreakdown({ expenses }: Props) {
-  const breakdown = useMemo(() => {
-    const categories: Record<string, number> = {
-      'Faturalar': 0,
-      'Personel': 0,
-      'Kira': 0,
-      'Diğer': 0
-    };
-    
-    let total = 0;
-    expenses.forEach(exp => {
-      const cat = exp.type || 'Diğer';
-      if (categories[cat] !== undefined) categories[cat] += exp.amountWithVat;
-      else categories['Diğer'] += exp.amountWithVat;
-      total += exp.amountWithVat;
-    });
-
-    return Object.entries(categories)
-      .map(([name, value]) => ({
-        name,
-        value,
-        percentage: total > 0 ? (value / total) * 100 : 0,
-        color: getColor(name)
-      }))
-      .filter(c => c.value > 0)
-      .sort((a, b) => b.value - a.value);
-  }, [expenses]);
-
-  function getColor(cat: string) {
-    switch (cat) {
-      case 'Faturalar': return { bg: 'bg-amber-100', text: 'text-amber-600', fill: 'bg-amber-500' };
-      case 'Personel': return { bg: 'bg-indigo-100', text: 'text-indigo-600', fill: 'bg-indigo-500' };
-      case 'Kira': return { bg: 'bg-emerald-100', text: 'text-emerald-600', fill: 'bg-emerald-500' };
-      default: return { bg: 'bg-slate-100', text: 'text-slate-600', fill: 'bg-slate-500' };
-    }
-  }
-
-  function getIcon(cat: string) {
-    switch (cat) {
-      case 'Faturalar': return Zap;
-      case 'Personel': return Users;
-      case 'Kira': return Building;
-      default: return ShoppingBag;
-    }
-  }
+  const breakdown = computeBreakdown(expenses);
 
   if (breakdown.length === 0) return (
     <div className="py-8 text-center text-slate-400">

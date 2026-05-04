@@ -89,7 +89,23 @@ export default async function GelirGiderPage(props: {
     return String(b.month).localeCompare(String(a.month));
   });
 
-  const monthlyEntries: any[] = [];
+  type MonthlyEntry = {
+    perfId: string;
+    monthId: string;
+    month: string;
+    locationName: string;
+    locationId: string;
+    sessions: number;
+    extraExpense: number;
+    extraNotes: string;
+    grossRevenue: number;
+    totalExpense: number;
+    netCash: number;
+    totalCommission: number;
+    revenueShare: number;
+    avmExpense: number;
+  };
+  const monthlyEntries: MonthlyEntry[] = [];
   let totalGrossSum = 0;
   let totalExpenseSumValue = 0;
   let totalNetCashSum = 0;

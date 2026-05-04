@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   TrendingDown, 
   ChevronRight, 
@@ -60,8 +60,8 @@ export default function ExpenseDetailCard({ total, breakdown, tag = "KDV Dahil" 
         </h2>
         
         <div className="mt-4 flex items-center gap-1 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-          {breakdown.map((item, idx) => (
-            <div 
+          {breakdown.map((item) => (
+            <div
               key={item.id}
               style={{ width: `${(item.value / total) * 100}%` }}
               className={cn("h-full", item.color)}

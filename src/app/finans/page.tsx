@@ -1,16 +1,56 @@
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import * as motion from "framer-motion/client";
-import {
-  TrendingUp, TrendingDown, BarChart3, Percent,
-  Zap, CreditCard, Calendar, Target, RefreshCw, Building2
-} from 'lucide-react';
+import { Target } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import FlipFinanceCard from '@/components/premium/FlipFinanceCard';
 import ScenarioAnalysisSection from '@/components/premium/ScenarioAnalysisSection';
 import FinanceSummaryCards from '@/components/premium/FinanceSummaryCards';
+
+type LocationRow = {
+  id: string;
+  name: string;
+  fixedRent: number;
+  duesAmount: number;
+  revenueShareRate?: number | null;
+  isActive?: boolean | null;
+};
+
+type ExpenseRow = {
+  id: string;
+  type: string;
+  description?: string | null;
+  amountWithVat?: number | null;
+  locationId?: string | null;
+  month?: string | null;
+  location?: { name?: string } | null;
+};
+
+type PerformanceRow = {
+  id: string;
+  month: string;
+  locationId: string;
+  sessionCount: number;
+  extraExpenseAmount?: number | null;
+  extraExpenseNotes?: string | null;
+  location?: LocationRow | null;
+};
+
+type AvmSummary = {
+  name: string;
+  totalSessions: number;
+  totalGrossRevenue: number;
+  totalCommission: number;
+  totalRevenueShare: number;
+  totalAvmExpense: number;
+  totalNetCash: number;
+  fixedRent: number;
+  duesAmount: number;
+  totalIyzico: number;
+  totalNayax: number;
+  totalExtraExpense: number;
+};
 
 export const metadata = {
   title: 'Finansal Analiz — NextGenBox',
@@ -42,12 +82,10 @@ export default async function FinansalTablo({
 
   const activeLocationCount = (locations || []).length || 1;
 
-  const currentMonthId = new Date().toISOString().slice(0, 7);
-
   // Recurring expenses (split global ones proportionally)
-  const recurringExpenses = (expenses || []).filter(e => e.type === 'RECURRING');
+  const recurringExpenses = (expenses || []).filter((e: ExpenseRow) => e.type === 'RECURRING');
   const getRecurringTotal = (locationId?: string) => {
-    return recurringExpenses.reduce((s, e) => {
+    return recurringExpenses.reduce((s: number, e: ExpenseRow) => {
       if (!e.locationId) {
         // Global recurring — split across all active locations
         return s + (e.amountWithVat || 0) / activeLocationCount;
@@ -59,25 +97,10 @@ export default async function FinansalTablo({
     }, 0);
   };
 
-  // One-time expenses per month
-  const getOneTimeExpenses = (monthId: string, locationId?: string) => {
-    return (expenses || [])
-      .filter(e => {
-        if (e.type === 'RECURRING') return false;
-        const d = e.description || '';
-        if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
-        const expMonth = e.month ? (e.month.includes('T') ? e.month.split('T')[0].slice(0, 7) : e.month.slice(0, 7)) : '';
-        if (expMonth !== monthId) return false;
-        if (locationId && e.locationId && e.locationId !== locationId) return false;
-        return true;
-      })
-      .reduce((s, e) => s + (e.amountWithVat || 0), 0);
-  };
-
-  const avmSummaries: Record<string, any> = {};
+  const avmSummaries: Record<string, AvmSummary> = {};
 
   if (performances && locations) {
-    for (const perf of performances) {
+    for (const perf of performances as PerformanceRow[]) {
       const loc = perf.location;
       if (!loc) continue;
 
@@ -85,12 +108,12 @@ export default async function FinansalTablo({
       if (filterMonth !== 'all' && perfMonthStr !== filterMonth) continue;
 
       const sessions = perf.sessionCount;
-      
+
       // Calculate recurring + one-time expenses for THIS month/location
       // Recurring: global split + location-specific full
       const recurringTotal = (expenses || [])
-        .filter(e => e.type === 'RECURRING')
-        .reduce((s, e) => {
+        .filter((e: ExpenseRow) => e.type === 'RECURRING')
+        .reduce((s: number, e: ExpenseRow) => {
           if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
           if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
           return s;
@@ -98,7 +121,7 @@ export default async function FinansalTablo({
 
       // One-time: global split + location-specific full
       const oneTimeTotal = (expenses || [])
-        .filter(e => {
+        .filter((e: ExpenseRow) => {
           if (e.type === 'RECURRING') return false;
           const d = e.description || '';
           if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
@@ -107,7 +130,7 @@ export default async function FinansalTablo({
           if (e.locationId && e.locationId !== loc.id) return false;
           return true;
         })
-        .reduce((s, e) => {
+        .reduce((s: number, e: ExpenseRow) => {
           if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
           return s + (e.amountWithVat || 0);
         }, 0);
@@ -142,17 +165,16 @@ export default async function FinansalTablo({
     }
   }
 
-  const totalGross = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalGrossRevenue, 0);
-  const totalSessions = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalSessions, 0);
-  const totalIyzico = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalIyzico, 0);
-  const totalNayax = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNayax, 0);
-  const totalAvmExpense = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalAvmExpense, 0);
-  const totalNetCash = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalNetCash, 0);
+  const totalGross = Object.values(avmSummaries).reduce((s: number, a: AvmSummary) => s + a.totalGrossRevenue, 0);
+  const totalIyzico = Object.values(avmSummaries).reduce((s: number, a: AvmSummary) => s + a.totalIyzico, 0);
+  const totalNayax = Object.values(avmSummaries).reduce((s: number, a: AvmSummary) => s + a.totalNayax, 0);
+  const totalAvmExpense = Object.values(avmSummaries).reduce((s: number, a: AvmSummary) => s + a.totalAvmExpense, 0);
+  const totalNetCash = Object.values(avmSummaries).reduce((s: number, a: AvmSummary) => s + a.totalNetCash, 0);
 
-  const totalExtraExpenseAll = Object.values(avmSummaries).reduce((s: number, a: any) => s + a.totalExtraExpense, 0);
+  const totalExtraExpenseAll = Object.values(avmSummaries).reduce((s: number, a: AvmSummary) => s + a.totalExtraExpense, 0);
 
-  const recurringGlobalTotal = (expenses || []).filter(e => e.type === 'RECURRING').reduce((s, e) => s + (e.amountWithVat || 0), 0);
-  const monthlyFixedTotal = (locations || []).reduce((s, loc) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0) + recurringGlobalTotal;
+  const recurringGlobalTotal = (expenses || []).filter((e: ExpenseRow) => e.type === 'RECURRING').reduce((s: number, e: ExpenseRow) => s + (e.amountWithVat || 0), 0);
+  const monthlyFixedTotal = (locations || []).reduce((s: number, loc: LocationRow) => s + (loc.fixedRent * 1.20) + loc.duesAmount, 0) + recurringGlobalTotal;
   const netRevenuePerSession = sessionPrice * 0.96;
   const breakEvenTotal = netRevenuePerSession > 0 ? Math.ceil(monthlyFixedTotal / netRevenuePerSession) : 0;
 
@@ -204,20 +226,20 @@ export default async function FinansalTablo({
 
   // Filter options for months
   const allMonths = performances
-    ? [...new Set(performances.map(p => new Date(p.month).toISOString().slice(0, 7)))]
+    ? [...new Set((performances as PerformanceRow[]).map((p: PerformanceRow) => new Date(p.month).toISOString().slice(0, 7)))]
     : [];
   allMonths.sort().reverse();
 
   const operationalItems = [
     ...(expenses || [])
-      .filter((e) => {
+      .filter((e: ExpenseRow) => {
         const d = e.description || '';
         if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
         if (!filterMonth || filterMonth === 'all') return true;
         const expMonth = e.month ? (String(e.month).includes('T') ? String(e.month).split('T')[0].slice(0, 7) : String(e.month).slice(0, 7)) : '';
         return expMonth === filterMonth;
       })
-      .map((e) => ({
+      .map((e: ExpenseRow) => ({
         id: `exp_${e.id}`,
         label: e.description || 'Gider kaydı',
         amount: Number(e.amountWithVat || 0),
@@ -225,13 +247,13 @@ export default async function FinansalTablo({
         location: e.location?.name,
         source: 'expense' as const,
       })),
-    ...(performances || [])
-      .filter((p) => Number(p.extraExpenseAmount || 0) > 0)
-      .filter((p) => {
+    ...((performances || []) as PerformanceRow[])
+      .filter((p: PerformanceRow) => Number(p.extraExpenseAmount || 0) > 0)
+      .filter((p: PerformanceRow) => {
         if (!filterMonth || filterMonth === 'all') return true;
         return new Date(p.month).toISOString().slice(0, 7) === filterMonth;
       })
-      .map((p) => ({
+      .map((p: PerformanceRow) => ({
         id: `manual_${p.id}`,
         label: p.extraExpenseNotes || 'Manuel ekstra gider',
         amount: Number(p.extraExpenseAmount || 0),
@@ -312,7 +334,7 @@ export default async function FinansalTablo({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {(locations || []).map((loc) => {
+          {((locations || []) as LocationRow[]).map((loc: LocationRow) => {
             const recurringForLoc = getRecurringTotal(loc.id);
             return (
               <FlipFinanceCard

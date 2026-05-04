@@ -2,36 +2,42 @@
 import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
-import { 
-  Briefcase, 
-  PiggyBank, 
-  TrendingUp, 
-  Plus, 
-  ArrowUpRight, 
-  BarChart3, 
-  ChevronRight,
-  Download,
-  Info,
+import {
+  Briefcase,
+  PiggyBank,
+  TrendingUp,
+  Plus,
   Activity,
   Box,
   Globe,
-  MoreVertical,
   History,
-  Filter as FilterIcon,
   ArrowRight,
   Search
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { InvestmentForm } from '@/features/ledger/components/InvestmentForm';
 import { PremiumModal, PremiumDrawer } from './PremiumModal';
 import { deleteInvestment } from '@/features/ledger/actions';
 import { Edit2, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/useToast';
+import { getErrorMessage } from '@/lib/errors';
+
+type InvestmentLocation = { id: string; name: string };
+
+type InvestmentItem = {
+  id: string;
+  description: string;
+  amount: number;
+  currency?: string;
+  notes?: string;
+  createdAt: string;
+  locationId?: string;
+  location?: { name?: string } | null;
+};
 
 interface InvestmentsClientProps {
-  investments: any[];
-  locations: any[];
+  investments: InvestmentItem[];
+  locations: InvestmentLocation[];
   total: number;
   count: number;
 }
@@ -40,8 +46,8 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedInvestment, setSelectedInvestment] = useState<any>(null);
-  const [editingInvestment, setEditingInvestment] = useState<any>(null);
+  const [selectedInvestment, setSelectedInvestment] = useState<InvestmentItem | null>(null);
+  const [editingInvestment, setEditingInvestment] = useState<InvestmentItem | null>(null);
   const [filterLocation, setFilterLocation] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -54,16 +60,16 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
     setIsLoading(true);
     try {
       const res = await deleteInvestment(id);
-      if (!res.success) toast.error(res.error);
+      if (!res.success) toast.error(res.error ?? '');
       else router.refresh();
-    } catch (err) {
-      toast.error('Silme sırasında hata oluştu.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Silme sırasında hata oluştu.'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEdit = (inv: any) => {
+  const handleEdit = (inv: InvestmentItem) => {
     setEditingInvestment(inv);
     setShowForm(true);
   };
@@ -257,10 +263,10 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
         title={editingInvestment ? "Yatırım Kaydı Düzenle" : "Yatırım (CAPEX) Kaydı Tanımla"}
         maxWidth="max-w-2xl"
       >
-        <InvestmentForm 
-          locations={locations} 
-          initialData={editingInvestment}
-          onClose={() => { setShowForm(false); setEditingInvestment(null); router.refresh(); }} 
+        <InvestmentForm
+          locations={locations}
+          initialData={editingInvestment ?? undefined}
+          onClose={() => { setShowForm(false); setEditingInvestment(null); router.refresh(); }}
         />
       </PremiumModal>
 
@@ -303,7 +309,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
 
                  {selectedInvestment.notes && (
                     <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 italic font-medium text-slate-600 text-sm leading-relaxed">
-                       "{selectedInvestment.notes}"
+                       &quot;{selectedInvestment.notes}&quot;
                     </div>
                  )}
               </div>

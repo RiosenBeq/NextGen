@@ -2,12 +2,20 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, TrendingUp, ArrowRight, X, HelpCircle, Target, Zap, Rocket, Coins, BarChart3, Binary } from 'lucide-react';
+import { Calculator, TrendingUp, ArrowRight, X, HelpCircle, Target, Zap, Rocket, Coins, BarChart3, Binary, type LucideIcon } from 'lucide-react';
 import { calculateMonthlyCashFlow } from '../calculations';
 import { cn } from '@/lib/utils';
 
+interface SimulatorDefaultParams {
+  sessionPrice?: number;
+  fixedRent?: number;
+  duesAmount?: number;
+  revenueShareRate?: number;
+  investmentAmount?: number;
+}
+
 interface Props {
-  defaultParams: any;
+  defaultParams: SimulatorDefaultParams;
 }
 
 export default function FinancialSimulator({ defaultParams }: Props) {
@@ -26,7 +34,7 @@ export default function FinancialSimulator({ defaultParams }: Props) {
     });
   }, [sessions, defaultParams]);
 
-  const explanations: Record<string, { title: string, icon: any, math: string, text: string, details: string, formula: string, breakdown?: { label: string, value: string, color?: string }[] }> = {
+  const explanations: Record<string, { title: string, icon: LucideIcon, math: string, text: string, details: string, formula: string, breakdown?: { label: string, value: string, color?: string }[] }> = {
     'cashflow': {
        title: 'NET NAKİT AKIŞI',
        icon: Zap,
@@ -292,7 +300,7 @@ export default function FinancialSimulator({ defaultParams }: Props) {
                       <div className="mt-1"><HelpCircle size={16} className="text-rose-500" /></div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 italic">BASİT ANLATIM</p>
-                        <p className="text-sm font-bold text-slate-200 leading-relaxed italic">"{explanations[activeModal].text}"</p>
+                        <p className="text-sm font-bold text-slate-200 leading-relaxed italic">&quot;{explanations[activeModal].text}&quot;</p>
                       </div>
                     </div>
 

@@ -7,7 +7,7 @@ export async function createAuditLog(
   action: 'CREATE' | 'UPDATE' | 'DELETE',
   entity: string,
   entityId: string,
-  details?: any,
+  details?: unknown,
   status: 'SUCCESS' | 'ERROR' = 'SUCCESS'
 ) {
   try {
@@ -27,13 +27,14 @@ export async function createAuditLog(
 
     if (typeof details === 'object' && details !== null) {
       // If it's an object, we can extract some key info for the readable string
-      const mainInfo = details.description || details.name || details.title || entityId;
+      const detailsObj = details as Record<string, unknown>;
+      const mainInfo = detailsObj.description || detailsObj.name || detailsObj.title || entityId;
       descriptiveDetails = `${userDisplay} tarafından ${entity} (${mainInfo}) ${actionText}. Sonuç: ${statusText}.`;
-      
+
       // Keep the full object as well for technical tracking
       descriptiveDetails += ` | Veri: ${JSON.stringify(details)}`;
     } else {
-      descriptiveDetails = `${userDisplay} tarafından ${entity} (${entityId}) ${actionText}. Sonuç: ${statusText}. ${details || ''}`;
+      descriptiveDetails = `${userDisplay} tarafından ${entity} (${entityId}) ${actionText}. Sonuç: ${statusText}. ${details ? String(details) : ''}`;
     }
 
     const { error } = await supabase

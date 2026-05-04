@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, HelpCircle, ChevronRight, Zap, Calculator, Percent, Info, Search } from 'lucide-react';
+import { X, BookOpen, HelpCircle, Zap, Calculator, Percent, Info, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FAQ_DATA = [
@@ -98,7 +98,7 @@ export function SystemDocs({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Soru veya anahtar kelime ara..."
                             className="w-full bg-slate-50 border border-slate-200 rounded-3xl py-5 pl-16 pr-6 text-sm text-slate-900 focus:outline-none transition-all placeholder:text-slate-400 focus:bg-white shadow-inner font-medium"
-                            style={{ '--tw-border-opacity': '1' } as any}
+                            style={{ '--tw-border-opacity': '1' } as React.CSSProperties}
                             onFocus={(e) => e.target.style.borderColor = 'rgba(47,107,255,0.4)'}
                             onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
                           />

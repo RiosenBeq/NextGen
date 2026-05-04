@@ -1,23 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Calendar, 
-  MapPin, 
-  Activity, 
-  Plus, 
-  Save, 
-  Trash2, 
+import {
+  Calendar,
+  MapPin,
+  Activity,
+  Save,
   AlertCircle,
   Coins
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { upsertMonthlyPerformance } from '@/features/ledger/performans-actions';
 
+type LocationOption = { id: string; name: string };
+
+type MonthlyPerformanceInitialData = {
+  id?: string;
+  locationId?: string;
+  monthId?: string;
+  sessionCount?: number;
+  extraExpense?: number;
+};
+
 interface MonthlyPerformanceFormProps {
-  locations: any[];
-  initialData?: any;
+  locations: LocationOption[];
+  initialData?: MonthlyPerformanceInitialData | null;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -58,7 +65,7 @@ export default function MonthlyPerformanceForm({
       } else {
         setError(resp.error || 'Kayıt sırasında bir hata oluştu.');
       }
-    } catch (err) {
+    } catch {
       setError('Sistem hatası oluştu.');
     } finally {
       setIsLoading(false);

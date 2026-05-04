@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
+import { getErrorMessage } from '@/lib/errors';
 
 
 function normalizeMonthInput(monthInput: string) {
@@ -25,7 +26,7 @@ export async function upsertDailyPerformance(data: {
   date: string;
   sessionCount: number;
   testCount: number;
-  extraMetrics?: any;
+  extraMetrics?: Record<string, unknown>;
 }) {
   try {
     const supabase = await createClient();
@@ -57,9 +58,9 @@ export async function upsertDailyPerformance(data: {
     revalidatePath('/gelir-gider');
 
     return { success: true, data: record };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Daily Performance Error:", error);
-    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+    return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
@@ -161,9 +162,9 @@ export async function upsertMonthlyPerformance(data: {
     revalidatePath('/');
     
     return { success: true, data: record };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Monthly Upsert Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -178,9 +179,9 @@ export async function deleteMonthlyPerformance(id: string) {
     revalidatePath('/gelir-gider');
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Monthly Delete Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -201,8 +202,8 @@ export async function deleteDailyPerformance(id: string, locationId: string, dat
     revalidatePath('/gelir-gider');
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Daily Delete Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: getErrorMessage(error) };
   }
 }

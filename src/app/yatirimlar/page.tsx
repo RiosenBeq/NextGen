@@ -18,8 +18,9 @@ export default async function InvestmentsPage() {
     .select('*, location:Location(*)')
     .order('createdAt', { ascending: false });
 
+  type InvestmentRow = { totalAmount?: number | null };
   const investments = investmentsData || [];
-  const total = investments.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+  const total = investments.reduce((sum: number, inv: InvestmentRow) => sum + (inv.totalAmount || 0), 0);
 
   return (
     <InvestmentsClientUI

@@ -35,11 +35,31 @@ import { createSystemUser, deleteSystemUser, updateSystemUserAccess } from '@/fe
 import { PremiumModal } from './PremiumModal';
 import { toast } from '@/hooks/useToast';
 
+type SettingsLocation = {
+  id: string;
+  name: string;
+  fixedRent?: number;
+  duesAmount?: number;
+  revenueShareRate?: number;
+  revenueThreshold?: number;
+  rentVatRate?: number;
+};
+
+type SettingsUser = {
+  id: string;
+  email?: string;
+  fullName?: string;
+  role?: string;
+  birthDate?: string;
+  lastSignIn?: string;
+  createdAt?: string;
+};
+
 interface SettingsClientProps {
-  locations: any[];
+  locations: SettingsLocation[];
   parameters: Record<string, number>;
-  users: any[];
-  currentUser: any;
+  users: SettingsUser[];
+  currentUser: SettingsUser | null;
 }
 
 export default function SettingsClientUI({ locations, parameters, users, currentUser }: SettingsClientProps) {
@@ -56,7 +76,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const [formError, setFormError] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [draftProfiles, setDraftProfiles] = useState<Record<string, { fullName: string; role: 'superadmin' | 'user' }>>(() =>
-    (users || []).reduce((acc: Record<string, { fullName: string; role: 'superadmin' | 'user' }>, user: any) => {
+    (users || []).reduce<Record<string, { fullName: string; role: 'superadmin' | 'user' }>>((acc, user) => {
       acc[user.id] = { fullName: user.fullName || '', role: user.role === 'superadmin' ? 'superadmin' : 'user' };
       return acc;
     }, {})
@@ -119,8 +139,8 @@ export default function SettingsClientUI({ locations, parameters, users, current
     setSavingUserId(null);
   };
 
-  const selectedProfile = users.find((u: any) => u.id === selectedProfileId);
-  const superAdminCount = users.filter((user: any) => user.role === 'superadmin').length;
+  const selectedProfile = users.find((u) => u.id === selectedProfileId);
+  const superAdminCount = users.filter((user) => user.role === 'superadmin').length;
   const liveMode = parameters?.SETTING_ANIMATION_SPEED === 2 ? 'Premium' : parameters?.SETTING_ANIMATION_SPEED === 1 ? 'Standart' : 'Hızlı';
 
   return (
@@ -322,7 +342,18 @@ export default function SettingsClientUI({ locations, parameters, users, current
                {activeTab === 'profile' && (
                   <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                      <SectionHeader title="Kişisel Profilim" icon={<User className="text-blue-600" />} />
-                     <ProfileSettingsForm user={currentUser} />
+                     {currentUser && (
+                       <ProfileSettingsForm
+                         user={{
+                           id: currentUser.id,
+                           email: currentUser.email ?? '',
+                           fullName: currentUser.fullName ?? '',
+                           role: currentUser.role ?? '',
+                           birthDate: currentUser.birthDate,
+                           lastSignIn: currentUser.lastSignIn,
+                         }}
+                       />
+                     )}
                   </motion.div>
                )}
 
@@ -455,18 +486,18 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SectionHeader({ title, icon }: { title: string, icon: any }) {
+function SectionHeader({ title, icon }: { title: string, icon: React.ReactElement }) {
   return (
     <div className="flex items-center gap-4 group">
        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition-all">
-          {React.cloneElement(icon as React.ReactElement<any>, { size: 24 })}
+          {React.cloneElement(icon as React.ReactElement<{ size?: number }>, { size: 24 })}
        </div>
        <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase">{title}</h2>
     </div>
   );
 }
 
-function TabButton({ active, label, icon, onClick }: { active: boolean, label: string, icon: any, onClick: () => void }) {
+function TabButton({ active, label, icon, onClick }: { active: boolean, label: string, icon: React.ReactNode, onClick: () => void }) {
   return (
     <button 
       onClick={onClick} 
@@ -488,7 +519,21 @@ function TabButton({ active, label, icon, onClick }: { active: boolean, label: s
   );
 }
 
-function InputGroup({ label, value, onChange, placeholder, type = 'text', icon }: any) {
+function InputGroup({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  icon,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  icon?: React.ReactNode;
+}) {
   return (
     <div className="space-y-2">
        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{label}</label>
@@ -509,7 +554,19 @@ function InputGroup({ label, value, onChange, placeholder, type = 'text', icon }
   );
 }
 
-function RoleButton({ active, label, icon, onClick, isDark }: any) {
+function RoleButton({
+  active,
+  label,
+  icon,
+  onClick,
+  isDark = false,
+}: {
+  active: boolean;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  isDark?: boolean;
+}) {
   return (
     <button 
       type="button" 

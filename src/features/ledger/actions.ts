@@ -4,7 +4,19 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
+import { getErrorMessage } from '@/lib/errors';
 import prisma from '@/lib/db';
+import type { z } from 'zod';
+
+type ExpenseInput = z.input<typeof expenseSchema>;
+type InvestmentInput = z.input<typeof investmentSchema>;
+type LocationParamsInput = z.input<typeof locationParamsSchema>;
+type InvestmentRow = { totalAmount?: number | null };
+type PerformanceRow = {
+  sessionCount: number;
+  extraExpenseAmount: number;
+  month?: string;
+};
 
 
 function normalizeMonthInput(monthInput: string | Date) {
@@ -29,7 +41,7 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
     const { normalizedMonth, deterministicId } = normalizeMonthInput(validatedData.month);
 
-    const { data: record, error } = await supabase
+    const { error } = await supabase
       .from('MonthlyPerformance')
       .upsert({
         id: deterministicId(validatedData.locationId),
@@ -54,18 +66,18 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
     revalidatePath('/finans');
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Hata:", error);
-    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+    return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
-export async function updateMonthlyPerformance(id: string, data: any) {
+export async function updateMonthlyPerformance(id: string, data: MonthlyPerformanceInput) {
   try {
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
 
-    const { data: record, error } = await supabase
+    const { error } = await supabase
       .from('MonthlyPerformance')
       .update({
         sessionCount: validatedData.sessionCount,
@@ -89,11 +101,11 @@ export async function updateMonthlyPerformance(id: string, data: any) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/finans');
-    
+
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update Performance Error:", error);
-    return { success: false, error: String(error?.message || 'Güncelleme hatası.') };
+    return { success: false, error: getErrorMessage(error, 'Güncelleme hatası.') };
   }
 }
 
@@ -102,7 +114,7 @@ export async function deleteMonthlyPerformance(id: string) {
     const supabase = await createClient();
     const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
     if (error) throw error;
-    
+
     await createAuditLog('DELETE', 'MonthlyPerformance', id);
 
     revalidatePath('/performans');
@@ -111,12 +123,12 @@ export async function deleteMonthlyPerformance(id: string) {
     revalidatePath('/raporlar');
     revalidatePath('/finans');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
-export async function addExpense(data: any) {
+export async function addExpense(data: ExpenseInput) {
   try {
     const validatedData = expenseSchema.parse(data);
     const amountWithoutVat = Math.max(0, validatedData.amount || 0);
@@ -166,13 +178,13 @@ export async function addExpense(data: any) {
     revalidatePath('/raporlar');
     revalidatePath('/faturalar');
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Add Expense Error:", error);
-    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+    return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
-export async function updateExpense(id: string, data: any) {
+export async function updateExpense(id: string, data: ExpenseInput) {
   try {
     const validatedData = expenseSchema.parse(data);
     const supabase = await createClient();
@@ -180,7 +192,7 @@ export async function updateExpense(id: string, data: any) {
     const amountWithoutVat = Math.max(0, validatedData.amount || 0);
     const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
-    const { data: record, error } = await supabase
+    const { error } = await supabase
       .from('Expense')
       .update({
         locationId: validatedData.locationId || null,
@@ -220,9 +232,9 @@ export async function updateExpense(id: string, data: any) {
     revalidatePath('/raporlar');
     revalidatePath('/faturalar');
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update Expense Error:", error);
-    return { success: false, error: String(error?.message || 'Bilinmeyen bir hata oluştu.') };
+    return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
@@ -278,7 +290,7 @@ export async function uploadExpenseAttachment(formData: FormData) {
     }
 
     // 3. Dosyayı doğrudan Admin servisi ile yükle (RLS engeline takılmaz)
-    const { data: uploadData, error: uploadError } = await adminSupabase.storage
+    const { error: uploadError } = await adminSupabase.storage
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -296,9 +308,9 @@ export async function uploadExpenseAttachment(formData: FormData) {
       .getPublicUrl(filePath);
 
     return { success: true, publicUrl };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Upload Error:", error);
-    return { success: false, error: `Sunucu hatası: ${error.message}` };
+    return { success: false, error: `Sunucu hatası: ${getErrorMessage(error)}` };
   }
 }
 export async function updateExpenseAttachment(id: string, fileUrl: string) {
@@ -340,9 +352,9 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
     revalidatePath('/gelir-gider');
     
     return { success: true, warning: docError ? 'Belge dosyaya bağlandı; Document kaydı oluşturulamadı.' : undefined };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update Attachment Error:", error);
-    return { success: false, error: String(error?.message || 'Bağlantı hatası.') };
+    return { success: false, error: getErrorMessage(error, 'Bağlantı hatası.') };
   }
 }
 
@@ -392,9 +404,9 @@ export async function deleteExpenseAttachment(id: string) {
     revalidatePath('/');
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Delete Attachment Error:', error);
-    return { success: false, error: String(error?.message || 'Belge silinemedi.') };
+    return { success: false, error: getErrorMessage(error, 'Belge silinemedi.') };
   }
 }
 
@@ -413,12 +425,12 @@ export async function deleteExpense(id: string) {
     revalidatePath('/finans');
     revalidatePath('/faturalar');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
-export async function addInvestment(data: any) {
+export async function addInvestment(data: InvestmentInput) {
   try {
     const validatedData = investmentSchema.parse(data);
     const amount = Math.max(0, validatedData.amount || 0);
@@ -450,12 +462,12 @@ export async function addInvestment(data: any) {
     revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
-export async function updateInvestment(id: string, data: any) {
+export async function updateInvestment(id: string, data: InvestmentInput) {
   try {
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz yatırım ID.' };
@@ -487,8 +499,8 @@ export async function updateInvestment(id: string, data: any) {
     revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -504,12 +516,12 @@ export async function deleteInvestment(id: string) {
     revalidatePath('/giderler');
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
-export async function updateLocationParameters(id: string, data: any) {
+export async function updateLocationParameters(id: string, data: LocationParamsInput) {
   try {
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz lokasyon ID.' };
@@ -541,8 +553,8 @@ export async function updateLocationParameters(id: string, data: any) {
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -566,10 +578,10 @@ export async function getLocationInsights() {
     const params = await getSystemParameters();
 
     const insights = (locations || []).map(loc => {
-      const totalInvestment = loc.investments.reduce((acc: number, inv: any) => acc + (inv.totalAmount || 0), 0);
-      
-      const totalSessions = loc.performances.reduce((acc: number, perf: any) => acc + (perf.sessionCount || 0), 0);
-      const totalExtraExpense = loc.performances.reduce((acc: number, perf: any) => acc + (perf.extraExpenseAmount || 0), 0);
+      const totalInvestment = loc.investments.reduce((acc: number, inv: InvestmentRow) => acc + (inv.totalAmount || 0), 0);
+
+      const totalSessions = loc.performances.reduce((acc: number, perf: PerformanceRow) => acc + (perf.sessionCount || 0), 0);
+      const totalExtraExpense = loc.performances.reduce((acc: number, perf: PerformanceRow) => acc + (perf.extraExpenseAmount || 0), 0);
       const avgSessions = loc.performances.length > 0 ? totalSessions / loc.performances.length : 0;
       const avgExtraExpense = loc.performances.length > 0 ? totalExtraExpense / loc.performances.length : 0;
 
@@ -584,7 +596,7 @@ export async function getLocationInsights() {
       });
 
       let cumulativeNetCash = 0;
-      loc.performances.forEach((perf: any) => {
+      loc.performances.forEach((perf: PerformanceRow) => {
         const pCalc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount, {
            sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
            iyzicoCommissionRate: 2,
@@ -638,7 +650,7 @@ export async function getSystemParameters() {
   try {
     const supabase = await createClient();
     const { data } = await supabase.from('SystemParameter').select('*');
-    const map: Record<string, any> = {};
+    const map: Record<string, number> = {};
     data?.forEach(p => map[p.key] = p.value);
     return map;
   } catch (error) {
@@ -678,9 +690,9 @@ export async function updateSystemParameter(key: string, value: number) {
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update System Param Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -712,8 +724,8 @@ export async function resetSystemParameters() {
     revalidatePath('/gelir-gider');
     revalidatePath('/finans');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -736,8 +748,8 @@ export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: 
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -779,8 +791,8 @@ export async function updateAvmExpenseFinancials(id: string, updates: { amountWi
     revalidatePath('/finans');
     revalidatePath('/raporlar');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 

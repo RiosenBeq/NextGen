@@ -2,13 +2,31 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 import { addInvestment, updateInvestment } from '../actions';
-import { Loader2, Plus, Wallet, X, Edit } from 'lucide-react';
+import { investmentSchema } from '../schema';
+import { Loader2, Plus, Wallet, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+interface InvestmentFormLocation {
+  id: string;
+  name: string;
+}
+
+type InvestmentFormValues = z.input<typeof investmentSchema>;
+
+interface InvestmentFormInitialData {
+  id?: string;
+  description?: string;
+  locationId?: string | null;
+  amount?: number | string;
+  currency?: string;
+  notes?: string | null;
+}
+
 interface Props {
-  locations: any[];
-  initialData?: any;
+  locations: InvestmentFormLocation[];
+  initialData?: InvestmentFormInitialData;
   onClose?: () => void;
 }
 
@@ -16,11 +34,11 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(!!initialData);
 
-  const { register, handleSubmit, reset } = useForm({
-    defaultValues: initialData || {}
+  const { register, handleSubmit, reset } = useForm<InvestmentFormValues>({
+    defaultValues: (initialData ?? {}) as Partial<InvestmentFormValues>
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: InvestmentFormValues) => {
     setIsSubmitting(true);
     let result;
     if (initialData?.id) {

@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone Node CLI scripts and ad-hoc tooling — not part of the app bundle.
+    "scripts/**",
+    "tmp/**",
+    "_tmp_excel/**",
   ]),
 ]);
 

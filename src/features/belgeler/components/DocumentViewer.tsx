@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, X, FileText, Image as ImageIcon, Download, Trash2, Calendar, HardDrive } from 'lucide-react';
+import { Eye, X, FileText, Download, Trash2, Calendar, HardDrive } from 'lucide-react';
 import { deleteDocument } from '../actions';
 
 interface DocumentItem {

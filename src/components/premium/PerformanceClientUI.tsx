@@ -14,10 +14,23 @@ import DailyPerformanceForm from '@/features/ledger/components/DailyPerformanceF
 import { PremiumDrawer, PremiumModal } from './PremiumModal';
 import { deleteDailyPerformance } from '@/features/ledger/performans-actions';
 import { toast } from '@/hooks/useToast';
+import { getErrorMessage } from '@/lib/errors';
+
+type PerformanceLocation = { id: string; name: string };
+
+type PerformanceHistoryRow = {
+  id: string;
+  locationId: string;
+  date: string;
+  sessionCount: number;
+  testCount: number;
+  extraMetrics?: { notlar?: string } | null;
+  location?: { name?: string } | null;
+};
 
 interface PerformanceClientProps {
-  locations: any[];
-  history: any[];
+  locations: PerformanceLocation[];
+  history: PerformanceHistoryRow[];
   historyLocId: string;
 }
 
@@ -25,27 +38,27 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
   const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [selectedRow, setSelectedRow] = useState<PerformanceHistoryRow | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const formatMonth = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  const handleDelete = async (row: any) => {
+  const handleDelete = async (row: PerformanceHistoryRow) => {
     if (!confirm('Bu günlük kaydı silmek istediğinize emin misiniz?')) return;
     setIsLoading(true);
     try {
       const resp = await deleteDailyPerformance(row.id, row.locationId, row.date);
-      if (!resp.success) toast.error(resp.error);
-    } catch (err) {
-      toast.error('Silme sırasında bir hata oluştu');
+      if (!resp.success) toast.error(resp.error ?? '');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Silme sırasında bir hata oluştu'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEdit = (row: any) => {
+  const handleEdit = (row: PerformanceHistoryRow) => {
     setSelectedRow(row);
     setIsEditModalOpen(true);
   };
@@ -175,7 +188,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
       </PremiumDrawer>
 
       <PremiumModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Veriyi Düzenle" maxWidth="max-w-xl">
-        <DailyPerformanceForm locations={locations} initialData={selectedRow} onSuccess={() => setIsEditModalOpen(false)} onCancel={() => setIsEditModalOpen(false)} />
+        <DailyPerformanceForm locations={locations} initialData={selectedRow ?? undefined} onSuccess={() => setIsEditModalOpen(false)} onCancel={() => setIsEditModalOpen(false)} />
       </PremiumModal>
 
     </div>

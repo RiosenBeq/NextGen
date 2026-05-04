@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { 
-  Plus, Save, Calendar as CalendarIcon, 
-  Settings, TrendingUp, Beaker, 
-  MessageSquare, Trash2, ChevronDown
+import {
+  Plus, Save, Calendar as CalendarIcon,
+  Settings, TrendingUp, Beaker,
+  MessageSquare
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { upsertDailyPerformance } from '../performans-actions';
 import { toast } from '@/hooks/useToast';
@@ -22,21 +22,35 @@ const performanceSchema = z.object({
   notes: z.string().optional(),
 });
 
-type PerformanceFormValues = z.infer<typeof performanceSchema>;
+type PerformanceFormInput = z.input<typeof performanceSchema>;
+type PerformanceFormValues = z.output<typeof performanceSchema>;
+
+interface LocationOption {
+  id: string;
+  name: string;
+}
+
+interface DailyPerformanceInitialData {
+  locationId?: string;
+  date?: string | Date;
+  sessionCount?: number;
+  testCount?: number;
+  extraMetrics?: { notlar?: string } | null;
+}
 
 interface DailyPerformanceFormProps {
-  locations: any[];
-  initialData?: any;
+  locations: LocationOption[];
+  initialData?: DailyPerformanceInitialData;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function DailyPerformanceForm({ locations, initialData, onSuccess, onCancel }: DailyPerformanceFormProps) {
+export default function DailyPerformanceForm({ locations, initialData, onSuccess }: DailyPerformanceFormProps) {
   const [loading, setLoading] = useState(false);
   const [showExtra, setShowExtra] = useState(!!initialData?.extraMetrics?.notlar);
 
-  const form = useForm<PerformanceFormValues>({
-    resolver: zodResolver(performanceSchema) as any,
+  const form = useForm<PerformanceFormInput, unknown, PerformanceFormValues>({
+    resolver: zodResolver(performanceSchema),
     defaultValues: {
       locationId: initialData?.locationId || '',
       date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -53,7 +67,7 @@ export default function DailyPerformanceForm({ locations, initialData, onSuccess
   const onSubmit = async (values: PerformanceFormValues) => {
     setLoading(true);
     try {
-      const extraMetrics: Record<string, any> = {};
+      const extraMetrics: Record<string, string> = {};
       if (values.notes) extraMetrics['notlar'] = values.notes;
 
       const res = await upsertDailyPerformance({

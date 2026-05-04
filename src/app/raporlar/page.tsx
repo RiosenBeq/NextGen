@@ -61,7 +61,23 @@ export default async function ReportsPage({
       }, 0);
   };
 
-  const consolidatedMap = new Map<string, any>();
+  type LocationLite = {
+    id: string;
+    name: string;
+    fixedRent: number;
+    duesAmount: number;
+    revenueShareRate?: number | null;
+  };
+  type ConsolidatedPerf = {
+    id: string;
+    month: string;
+    locationId: string;
+    location: LocationLite;
+    sessionCount: number;
+    extraExpenseAmount: number;
+  };
+
+  const consolidatedMap = new Map<string, ConsolidatedPerf>();
   for (const perf of performances || []) {
     if (!perf.location || !perf.month) continue;
     const monthId = new Date(perf.month).toISOString().slice(0, 7);
@@ -81,7 +97,7 @@ export default async function ReportsPage({
     }
   }
 
-  const processed = Array.from(consolidatedMap.values()).map((perf: any) => {
+  const processed = Array.from(consolidatedMap.values()).map((perf) => {
     const perfMonthId = new Date(perf.month).toISOString().slice(0, 7);
     const sessions = perf.sessionCount;
 
@@ -116,7 +132,7 @@ export default async function ReportsPage({
     };
   });
 
-  const filteredData = processed.filter((row: any) =>
+  const filteredData = processed.filter((row) =>
     filterLocation === 'all' || row.locationId === filterLocation
   );
 

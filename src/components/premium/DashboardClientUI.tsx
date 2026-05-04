@@ -20,6 +20,28 @@ import { uploadExpenseAttachment, updateExpenseAttachment } from '@/features/led
 import NoteList from '@/features/notlar/components/NoteList';
 import InteractiveKPICards from '@/features/ledger/components/InteractiveKPICards';
 import { toast } from '@/hooks/useToast';
+import { getErrorMessage } from '@/lib/errors';
+
+type DashboardLocation = { id: string; name: string };
+
+type DashboardExpense = {
+  id: string;
+  description: string;
+  amountWithVat: number;
+  type?: string;
+  isOfficial?: boolean;
+  attachmentUrl?: string | null;
+  createdAt: string;
+  location?: { name?: string } | null;
+};
+
+type DashboardNote = {
+  id: string | number;
+  title: string;
+  content?: string;
+  color: string;
+  createdAt: string;
+};
 
 interface DashboardProps {
   stats: {
@@ -30,13 +52,13 @@ interface DashboardProps {
     sessions: number;
     monthlyGrowth: number;
   };
-  recentExpenses: any[];
-  locations: any[];
-  notes?: any[];
+  recentExpenses: DashboardExpense[];
+  locations: DashboardLocation[];
+  notes?: DashboardNote[];
   totalInvestment: number;
   investmentBreakdown: Record<string, number>;
   allMonthCount: number;
-  allExpenses: any[];
+  allExpenses: DashboardExpense[];
 }
 
 export default function DashboardClientUI({ 
@@ -51,7 +73,7 @@ export default function DashboardClientUI({
 }: DashboardProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<any>(null);
+  const [selectedExpense, setSelectedExpense] = useState<DashboardExpense | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isAverageExpenseModalOpen, setIsAverageExpenseModalOpen] = useState(false);
@@ -75,8 +97,8 @@ export default function DashboardClientUI({
       toast.success('Belge başarıyla eklendi.');
       setIsDrawerOpen(false);
       router.refresh();
-    } catch (err: any) {
-      toast.error('Hata: ' + err.message);
+    } catch (error) {
+      toast.error('Hata: ' + getErrorMessage(error));
     } finally {
       setIsUploading(false);
     }
@@ -86,14 +108,14 @@ export default function DashboardClientUI({
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   const ortalamaGider = allExpenses.length > 0
-    ? allExpenses.reduce((toplam: number, gider: any) => toplam + (gider.amountWithVat || 0), 0) / allExpenses.length
+    ? allExpenses.reduce((toplam, gider) => toplam + (gider.amountWithVat || 0), 0) / allExpenses.length
     : 0;
 
   const resmiOran = allExpenses.length > 0
-    ? (allExpenses.filter((gider: any) => gider.isOfficial).length / allExpenses.length) * 100
+    ? (allExpenses.filter((gider) => gider.isOfficial).length / allExpenses.length) * 100
     : 0;
 
-  const belgesizKayit = recentExpenses.filter((gider: any) => !gider.attachmentUrl).length;
+  const belgesizKayit = recentExpenses.filter((gider) => !gider.attachmentUrl).length;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
@@ -334,7 +356,7 @@ export default function DashboardClientUI({
             <p className="font-semibold text-slate-700">Formül</p>
             <p className="text-slate-600">Ortalama Gider = Toplam Gider Tutarı / Gider Kayıt Adedi</p>
             <p className="text-xs text-slate-500">
-              Toplam Tutar: <b>{formatCurrency(allExpenses.reduce((toplam: number, gider: any) => toplam + (gider.amountWithVat || 0), 0))}</b> •
+              Toplam Tutar: <b>{formatCurrency(allExpenses.reduce((toplam, gider) => toplam + (gider.amountWithVat || 0), 0))}</b> •
               Kayıt Adedi: <b>{allExpenses.length}</b>
             </p>
           </div>

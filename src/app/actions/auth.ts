@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { loginSchema, type LoginFormState } from '@/lib/auth-schemas';
+import { getErrorMessage } from '@/lib/errors';
 
 export async function login(
   state: LoginFormState,
@@ -72,7 +73,7 @@ export async function updateProfile(formData: FormData) {
     // Yalnızca başarılı olursa layout'u revalidate et
     // redirect değil, çünkü modal ClientSide kapanacak
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Profil güncellenirken bir hata oluştu.' };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, 'Profil güncellenirken bir hata oluştu.') };
   }
 }

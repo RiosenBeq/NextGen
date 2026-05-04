@@ -4,13 +4,14 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
 import { compressImage, formatFileSize } from '@/lib/image-utils';
-import { 
-  Loader2, Upload, X, FileText, Image as ImageIcon, Receipt, 
-  Calendar, MapPin, Tag, Percent, ChevronDown, CheckCircle2, AlertCircle, CircleDollarSign, ArrowRight
+import {
+  Loader2, Upload, X, FileText, Receipt,
+  Calendar, MapPin, Percent, ChevronDown, CheckCircle2, AlertCircle, CircleDollarSign, ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/useToast';
+import { getErrorMessage } from '@/lib/errors';
 
 const EXPENSE_CATEGORIES = [
   { id: 'rent', label: 'KİRA GİDERİ' },
@@ -27,13 +28,32 @@ const PAYMENT_FREQUENCIES = [
   { id: 'RECURRING', label: 'DÜZENLİ ÖDEME (Aylık)' },
 ];
 
-export default function ExpenseForm({ 
-  locations, 
-  initialData, 
-  onClose 
-}: { 
-  locations: any[], 
-  initialData?: any,
+interface ExpenseFormLocation {
+  id: string;
+  name: string;
+}
+
+interface ExpenseFormInitialData {
+  id?: string;
+  description?: string;
+  amountWithoutVat?: number | string;
+  amount?: number | string;
+  vatRate?: number | string;
+  type?: 'ONE_TIME' | 'RECURRING';
+  categoryId?: string | null;
+  locationId?: string | null;
+  paidBy?: string;
+  date?: string | Date;
+  attachmentUrl?: string | null;
+}
+
+export default function ExpenseForm({
+  locations,
+  initialData,
+  onClose
+}: {
+  locations: ExpenseFormLocation[],
+  initialData?: ExpenseFormInitialData | null,
   onClose?: () => void
 }) {
   const router = useRouter();
@@ -111,8 +131,8 @@ export default function ExpenseForm({
           setUploadStatus('compressing');
           try {
             fileToUpload = await compressImage(file);
-          } catch (compErr: any) {
-            console.warn("Compression failed, uploading original:", compErr.message);
+          } catch (compErr) {
+            console.warn("Compression failed, uploading original:", getErrorMessage(compErr));
             fileToUpload = file;
           }
         }
@@ -135,6 +155,7 @@ export default function ExpenseForm({
         attachmentUrl,
         categoryId: formData.categoryId,
         paidBy: formData.paidBy,
+        isOfficial: Boolean(attachmentUrl),
         month: new Date(formData.date).toISOString()
       };
 
@@ -163,9 +184,9 @@ export default function ExpenseForm({
         setUploadStatus('idle');
         router.refresh();
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error('Hata: ' + err.message);
+      toast.error('Hata: ' + getErrorMessage(err));
     } finally {
       setLoading(false);
       setUploadStatus('idle');
@@ -334,7 +355,7 @@ export default function ExpenseForm({
                 <select
                   className="w-full pl-5 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'ONE_TIME' | 'RECURRING' })}
                 >
                   {PAYMENT_FREQUENCIES.map(f => (
                     <option key={f.id} value={f.id}>{f.label}</option>

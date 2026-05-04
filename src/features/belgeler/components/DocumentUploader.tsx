@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, FileText, Image, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, X, FileText, Image as ImageIcon, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { uploadDocument } from '../actions';
 
 interface Props {
@@ -10,6 +10,9 @@ interface Props {
   relatedId: string;
   onUploadComplete?: () => void;
 }
+
+const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function DocumentUploader({ relatedType, relatedId, onUploadComplete }: Props) {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,16 +22,13 @@ export default function DocumentUploader({ relatedType, relatedId, onUploadCompl
   const [errorMsg, setErrorMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-  const maxSize = 10 * 1024 * 1024; // 10MB
-
   const handleFile = useCallback(async (file: File) => {
-    if (!acceptedTypes.includes(file.type)) {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
       setStatus('error');
       setErrorMsg('Sadece PDF, JPG, PNG ve WebP dosyaları kabul edilir.');
       return;
     }
-    if (file.size > maxSize) {
+    if (file.size > MAX_SIZE) {
       setStatus('error');
       setErrorMsg('Dosya boyutu 10MB\'ı aşamaz.');
       return;
@@ -174,7 +174,7 @@ export default function DocumentUploader({ relatedType, relatedId, onUploadCompl
                   <span className="text-[10px] font-bold uppercase">PDF</span>
                 </div>
                 <div className="flex items-center gap-2 text-zinc-600">
-                  <Image className="w-4 h-4" />
+                  <ImageIcon className="w-4 h-4" />
                   <span className="text-[10px] font-bold uppercase">JPG/PNG</span>
                 </div>
               </div>

@@ -1,17 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
-  Download,
-  Calendar,
-  Wallet,
-  Activity,
-  ChevronRight,
-  Eye,
+import {
+  Plus,
   Trash2,
   Edit2,
   FileText,
@@ -19,54 +10,66 @@ import {
   ArrowUpRight,
   CalendarDays
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { PremiumModal, PremiumDrawer } from './PremiumModal';
+import { PremiumModal } from './PremiumModal';
 import MonthlyPerformanceForm from './MonthlyPerformanceForm';
 import { deleteMonthlyPerformance } from '@/features/ledger/performans-actions';
 import { toast } from '@/hooks/useToast';
 
+type LocationOption = { id: string; name: string };
+
+type CashFlowRow = {
+  id: string;
+  month?: string;
+  locationName?: string;
+  locationId?: string;
+  sessionCount: number;
+  grossRevenue: number;
+  totalExpense: number;
+  netCash: number;
+};
+
 interface CashFlowClientUIProps {
-  locations: any[];
-  initialData: any[];
+  locations: LocationOption[];
+  initialData: CashFlowRow[];
   filterLocation: string;
 }
 
-export default function CashFlowClientUI({ 
-  locations, 
-  initialData, 
-  filterLocation 
+export default function CashFlowClientUI({
+  locations,
+  initialData,
 }: CashFlowClientUIProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [editingRecord, setEditingRecord] = useState<CashFlowRow | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bu finansal kaydı silmek istediğinize emin misiniz?')) return;
-    
+
     setIsLoading(true);
     try {
       const res = await deleteMonthlyPerformance(id);
-      if (!res.success) toast.error(res.error);
-    } catch (err) {
+      if (!res.success) toast.error(res.error ?? '');
+    } catch {
       toast.error('Silme sırasında hata oluştu.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEdit = (record: any) => {
+  const handleEdit = (record: CashFlowRow) => {
     setEditingRecord(record);
     setIsModalOpen(true);
   };
 
   const currentTotals = {
-    revenue: initialData.reduce((s: number, r: any) => s + (r.grossRevenue || 0), 0),
-    profit: initialData.reduce((s: number, r: any) => s + (r.netCash || 0), 0),
-    sessions: initialData.reduce((s: number, r: any) => s + (r.sessionCount || 0), 0),
+    revenue: initialData.reduce((s, r) => s + (r.grossRevenue || 0), 0),
+    profit: initialData.reduce((s, r) => s + (r.netCash || 0), 0),
+    sessions: initialData.reduce((s, r) => s + (r.sessionCount || 0), 0),
   };
 
   const kpis = [
@@ -132,9 +135,9 @@ export default function CashFlowClientUI({
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
-                    {initialData.map((row: any, idx: number) => (
-                       <motion.tr 
-                          key={row.id || idx} 
+                    {initialData.map((row, idx) => (
+                       <motion.tr
+                          key={row.id || idx}
                           initial={{ opacity: 0 }} 
                           animate={{ opacity: 1 }} 
                           transition={{ delay: idx * 0.03 }}
@@ -196,7 +199,7 @@ export default function CashFlowClientUI({
            </div>
 
            <div className="space-y-3 p-4 md:hidden">
-              {initialData.map((row: any, idx: number) => (
+              {initialData.map((row, idx) => (
                 <div key={row.id || idx} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between">
                     <div>

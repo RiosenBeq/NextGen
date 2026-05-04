@@ -1,19 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getLocationInsights } from '@/features/ledger/actions';
-import StrategicMatrix from '@/features/ledger/components/StrategicMatrix';
-import FinancialSimulator from '@/features/ledger/components/FinancialSimulator';
-import ExpenseBreakdown from '@/features/ledger/components/ExpenseBreakdown';
-import PerformanceComparison from '@/features/ledger/components/PerformanceComparison';
-import InteractiveKPICards from '@/features/ledger/components/InteractiveKPICards';
-import { 
-  TrendingUp, CreditCard, Wallet, Activity, 
-  ArrowUpRight, Radio, LayoutDashboard, BarChart3, 
-  Globe, ShieldCheck 
-} from 'lucide-react';
-import * as motion from "framer-motion/client";
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import DashboardClientUI from '@/components/premium/DashboardClientUI';
 import { getActiveLocations } from '@/features/ledger/actions';
 
@@ -25,6 +12,46 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 import { redirect } from 'next/navigation';
+
+type LocationLite = {
+  id: string;
+  name: string;
+  fixedRent: number;
+  duesAmount: number;
+  revenueShareRate?: number | null;
+};
+type PerformanceRow = {
+  id: string;
+  month: string;
+  locationId: string;
+  sessionCount: number;
+  extraExpenseAmount?: number | null;
+  location?: LocationLite | null;
+};
+type ExpenseRow = {
+  id: string;
+  type: string;
+  description?: string | null;
+  amountWithVat?: number | null;
+  locationId?: string | null;
+  month?: string | null;
+};
+type InvestmentRow = {
+  id: string;
+  totalAmount?: number | null;
+  amountWithoutVat?: number | null;
+  locationId?: string | null;
+  location?: { name?: string | null } | { name?: string | null }[] | null;
+};
+type SystemParamRow = { key: string; value: unknown };
+type ConsolidatedPerf = {
+  id: string;
+  month: string;
+  locationId: string;
+  location: LocationLite;
+  sessionCount: number;
+  extraExpenseAmount: number;
+};
 
 function monthIdOf(value: string) {
   return value.includes('T') ? value.split('T')[0].slice(0, 7) : value.slice(0, 7);
@@ -66,21 +93,21 @@ export default async function DashboardPage() {
     .from('SystemParameter')
     .select('*');
 
-  const paramMap = (paramsData || []).reduce((acc: any, p) => {
+  const paramMap = (paramsData || []).reduce((acc: Record<string, unknown>, p: SystemParamRow) => {
     acc[p.key] = p.value;
     return acc;
-  }, {});
+  }, {} as Record<string, unknown>);
 
   const activeLocationCount = (performances
-    ? [...new Set(performances.map((p: any) => p.locationId))].length
+    ? [...new Set(performances.map((p: PerformanceRow) => p.locationId))].length
     : 1) || 1;
 
-  const monthlyTotals: Record<string, any> = {};
+  const monthlyTotals: Record<string, { revenue: number; profit: number }> = {};
   let totalManualRevenue = 0;
   let totalManualNetCash = 0;
   let totalManualOperationalExpense = 0;
 
-  const consolidatedMap = new Map<string, any>();
+  const consolidatedMap = new Map<string, ConsolidatedPerf>();
   for (const perf of performances || []) {
     const loc = perf.location;
     if (!loc || !perf.month) continue;
@@ -107,20 +134,20 @@ export default async function DashboardPage() {
     const perfMonthStr = monthIdOf(String(perf.month));
 
     const recurringTotal = (expensesData || [])
-      .filter((e: any) => {
+      .filter((e: ExpenseRow) => {
         if (e.type !== 'RECURRING') return false;
         const d = e.description || '';
         if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
         return true;
       })
-      .reduce((s: number, e: any) => {
+      .reduce((s: number, e: ExpenseRow) => {
         if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
         if (e.locationId === loc.id) return s + (e.amountWithVat || 0);
         return s;
       }, 0);
 
     const oneTimeTotal = (expensesData || [])
-      .filter((e: any) => {
+      .filter((e: ExpenseRow) => {
         if (e.type === 'RECURRING') return false;
         const d = e.description || '';
         if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
@@ -130,7 +157,7 @@ export default async function DashboardPage() {
         if (e.locationId && e.locationId !== loc.id) return false;
         return true;
       })
-      .reduce((s: number, e: any) => {
+      .reduce((s: number, e: ExpenseRow) => {
         if (!e.locationId) return s + (e.amountWithVat || 0) / activeLocationCount;
         return s + (e.amountWithVat || 0);
       }, 0);
@@ -160,19 +187,21 @@ export default async function DashboardPage() {
   const displayAllTimeRevenue = totalManualRevenue;
   const trueGlobalNetCash = totalManualNetCash;
   const totalGlobalOperationalExpense = totalManualOperationalExpense;
-  const displayTotalSessions = Array.from(consolidatedMap.values()).reduce((acc: number, p: any) => acc + Number(p.sessionCount || 0), 0);
-  const totalInvestment = (investmentData || []).reduce((acc: number, inv: any) => {
+  const displayTotalSessions = Array.from(consolidatedMap.values()).reduce((acc: number, p: ConsolidatedPerf) => acc + Number(p.sessionCount || 0), 0);
+  const totalInvestment = (investmentData || []).reduce((acc: number, inv: InvestmentRow) => {
     const tutar = Number(inv.totalAmount ?? inv.amountWithoutVat ?? 0);
     return acc + (Number.isFinite(tutar) ? tutar : 0);
   }, 0);
 
-  const investmentBreakdown = (investmentData || []).reduce((acc: Record<string, number>, inv: any) => {
-    const lokasyon = inv.location?.name || 'Belirtilmemiş';
+  const investmentBreakdown = (investmentData || []).reduce((acc: Record<string, number>, inv: InvestmentRow) => {
+    const locField = inv.location;
+    const locName = Array.isArray(locField) ? locField[0]?.name : locField?.name;
+    const lokasyon = locName || 'Belirtilmemiş';
     const tutar = Number(inv.totalAmount ?? inv.amountWithoutVat ?? 0);
     acc[lokasyon] = (acc[lokasyon] || 0) + (Number.isFinite(tutar) ? tutar : 0);
     return acc;
   }, {});
-  const allMonthCount = consolidatedMap.size > 0 ? new Set(Array.from(consolidatedMap.values()).map((p: any) => monthIdOf(String(p.month)))).size : 1;
+  const allMonthCount = consolidatedMap.size > 0 ? new Set(Array.from(consolidatedMap.values()).map((p: ConsolidatedPerf) => monthIdOf(String(p.month)))).size : 1;
 
   // New Data Fetching for UI
   const activeLocations = await getActiveLocations() || [];

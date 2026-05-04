@@ -17,7 +17,6 @@ import {
   CircleDollarSign,
   CheckCircle2,
   Clock,
-  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PremiumModal } from './PremiumModal';

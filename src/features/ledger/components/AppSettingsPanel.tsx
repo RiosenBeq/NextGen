@@ -15,7 +15,22 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/useToast';
 
-export default function AppSettingsPanel({ initialParams }: { initialParams: Record<string, any> }) {
+interface SettingOption {
+  value: number;
+  label: string;
+  description?: string;
+}
+
+interface SettingItem {
+  key: string;
+  label: string;
+  description: string;
+  type: string;
+  options?: SettingOption[];
+  labels?: { on: string; off: string };
+}
+
+export default function AppSettingsPanel({ initialParams }: { initialParams: Record<string, number> }) {
   const router = useRouter();
   const [params, setParams] = useState(initialParams);
   const [loading, setLoading] = useState<string | null>(null);
@@ -122,7 +137,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
             </div>
             
             <div className="p-2">
-              {group.settings.map((setting: any) => (
+              {group.settings.map((setting: SettingItem) => (
                 <div 
                   key={setting.key} 
                   className="group flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl hover:bg-slate-50 transition-colors gap-6"
@@ -146,7 +161,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
                   <div className="flex-shrink-0">
                     {setting.type === 'select' ? (
                       <div className="flex flex-wrap gap-2">
-                        {setting.options?.map((opt: any) => {
+                        {setting.options?.map((opt: SettingOption) => {
                           const isActive = (params[setting.key] || 0) === opt.value;
                           return (
                             <button

@@ -21,7 +21,8 @@ export default async function TargetsPage() {
   const currentMonthStr = new Date().toISOString().slice(0, 7);
   const { data: currentPerformances } = await supabase.from('MonthlyPerformance').select('*').like('month', `${currentMonthStr}%`);
 
-  const currentGross = (currentPerformances || []).reduce((acc: number, p: any) => acc + (p.sessionCount * 300), 0);
+  type PerformanceRow = { sessionCount: number };
+  const currentGross = (currentPerformances || []).reduce((acc: number, p: PerformanceRow) => acc + (p.sessionCount * 300), 0);
   const monthlyRevenueTarget = 150000;
   const monthlyProgress = Math.max(0, Math.min(100, (currentGross / monthlyRevenueTarget) * 100));
 

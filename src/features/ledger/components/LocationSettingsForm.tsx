@@ -2,11 +2,21 @@
 
 import { useState } from 'react';
 import { updateLocationParameters } from '../actions';
-import { Loader2, Save, MapPin, Percent, DollarSign, Building } from 'lucide-react';
+import { Loader2, Save, Percent, DollarSign, Building } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+interface LocationSettingsLocation {
+  id: string;
+  name: string;
+  fixedRent?: number;
+  duesAmount?: number;
+  revenueShareRate?: number;
+  revenueThreshold?: number;
+  rentVatRate?: number;
+}
+
 interface Props {
-  location: any;
+  location: LocationSettingsLocation;
 }
 
 export function LocationSettingsForm({ location }: Props) {

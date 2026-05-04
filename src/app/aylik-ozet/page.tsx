@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { Calendar, Wallet, TrendingUp, CreditCard, Receipt, Anchor, ArrowDownRight, ArrowUpRight, Target, Activity, MapPin, Building2, FileText } from 'lucide-react';
+import { Calendar, TrendingUp, Receipt, Activity, Building2, FileText, type LucideIcon } from 'lucide-react';
 import MonthSelector from '@/features/ledger/components/MonthSelector';
 import { cn } from '@/lib/utils';
 
@@ -17,13 +17,16 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   const { data: allExpenses } = await supabase.from('Expense').select('*');
   const { data: investments } = await supabase.from('Investment').select('*');
 
-  const totalInv = (investments || []).reduce((acc: any, i: any) => acc + (i.totalAmount || 0), 0);
+  type InvestmentRow = { totalAmount?: number | null };
+  const totalInv = (investments || []).reduce((acc: number, i: InvestmentRow) => acc + (i.totalAmount || 0), 0);
   const monthlyAmortization = totalInv > 0 ? totalInv / 36 : 0; // 36 Aylık (3 Yıl) Amortisman
 
   const currentMonthStr = new Date().toISOString().slice(0, 7);
+  type PerfMonthRow = { month: string };
+  type ExpenseMonthRow = { month?: string | null; createdAt: string };
   let availableMonths = Array.from(new Set([
-    ...((performances || []).map((p: any) => new Date(p.month).toISOString().slice(0, 7))),
-    ...((allExpenses || []).map((e: any) => e.month ? e.month.slice(0, 7) : e.createdAt.slice(0, 7))),
+    ...((performances || []).map((p: PerfMonthRow) => new Date(p.month).toISOString().slice(0, 7))),
+    ...((allExpenses || []).map((e: ExpenseMonthRow) => e.month ? e.month.slice(0, 7) : e.createdAt.slice(0, 7))),
     currentMonthStr,
     '2026-04',
     '2026-03'
@@ -202,7 +205,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
                  </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                 {monthSpecificExpenses.map((exp: any) => (
+                 {monthSpecificExpenses.map((exp) => (
                     <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
                        <td className="px-8 py-5">
                           <div className="flex flex-col">
@@ -239,8 +242,8 @@ function SummaryStat({ label, val }: { label: string, val: string }) {
   );
 }
 
-function AnalysisCard({ label, val, icon: Icon, color }: any) {
-  const colors: any = {
+function AnalysisCard({ label, val, icon: Icon, color }: { label: string; val: number; icon: LucideIcon; color: 'blue' | 'rose' | 'amber' }) {
+  const colors: Record<'blue' | 'rose' | 'amber', string> = {
     blue: "bg-blue-600",
     rose: "bg-rose-600",
     amber: "bg-amber-600"

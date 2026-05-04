@@ -1,8 +1,9 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseUrl, getSupabaseAnonKey } from './env'
 
 export function createClient() {
   return createBrowserClient(
-    process.env.NEXT_PUBLIC_HESAPSUPABASE_URL!,
-    process.env.NEXT_PUBLIC_HESAPSUPABASE_ANON_KEY!
+    getSupabaseUrl(),
+    getSupabaseAnonKey()
   )
 }

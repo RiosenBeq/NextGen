@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getSupabaseUrl, getSupabaseAnonKey } from './env'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -7,8 +8,8 @@ export async function updateSession(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_HESAPSUPABASE_URL!,
-    process.env.NEXT_PUBLIC_HESAPSUPABASE_ANON_KEY!,
+    getSupabaseUrl(),
+    getSupabaseAnonKey(),
     {
       cookies: {
         getAll() {
@@ -38,18 +39,27 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Yönlendirme oluştururken Supabase'in yeni set ettiği session cookie'lerini
+  // koru. Aksi takdirde refreshlenen access token kaybolur ve kullanıcı bir
+  // sonraki istekte tekrar login'e yönlendirilir (redirect loop).
+  function redirectWithCookies(targetPath: string) {
+    const url = request.nextUrl.clone()
+    url.pathname = targetPath
+    const redirect = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirect.cookies.set(cookie)
+    })
+    return redirect
+  }
+
   // Kullanıcı giriş yapmamış ve login sayfasında değilse → login'e yönlendir
   if (!user && !isLoginPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectWithCookies('/login')
   }
 
   // Kullanıcı giriş yapmış ve login sayfasındaysa → dashboard'a yönlendir
   if (user && isLoginPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
+    return redirectWithCookies('/')
   }
 
   return supabaseResponse

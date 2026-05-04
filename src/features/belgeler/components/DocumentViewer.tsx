@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, X, FileText, Download, Trash2, Calendar, HardDrive } from 'lucide-react';
 import { deleteDocument } from '../actions';
@@ -51,13 +52,15 @@ export default function DocumentViewer({ documents, showDelete = true }: Props) 
             {/* Preview area */}
             <button
               onClick={() => { setViewUrl(doc.fileUrl); setViewType(doc.mimeType); }}
-              className="w-full aspect-square flex items-center justify-center p-4 cursor-pointer"
+              className="relative w-full aspect-square flex items-center justify-center p-4 cursor-pointer"
             >
               {isImage(doc.mimeType) ? (
-                <img
+                <Image
                   src={doc.fileUrl}
                   alt={doc.fileName}
-                  className="w-full h-full object-cover rounded-lg"
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover rounded-lg"
                 />
               ) : (
                 <div className="flex flex-col items-center gap-2 opacity-40 group-hover:opacity-80 transition-opacity">
@@ -136,9 +139,12 @@ export default function DocumentViewer({ documents, showDelete = true }: Props) 
               className="max-w-4xl w-full max-h-[85vh] overflow-auto rounded-2xl"
             >
               {isImage(viewType) ? (
-                <img
+                <Image
                   src={viewUrl}
                   alt="Belge"
+                  width={1600}
+                  height={1200}
+                  unoptimized
                   className="w-full h-auto rounded-2xl shadow-2xl"
                 />
               ) : (

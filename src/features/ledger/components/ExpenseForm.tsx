@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { useState, useRef } from 'react';
 import { addExpense, updateExpense, uploadExpenseAttachment } from '../actions';
@@ -448,7 +449,14 @@ export default function ExpenseForm({
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl border border-white relative z-10"
                 >
-                  <img src={previewUrl} alt="Fatura Önizleme" className="w-full h-auto object-cover max-h-48" />
+                  <Image
+                    src={previewUrl}
+                    alt="Fatura Önizleme"
+                    width={400}
+                    height={300}
+                    unoptimized
+                    className="w-full h-auto object-cover max-h-48"
+                  />
                 </motion.div>
               ) : file && isPdf && !fileError ? (
                 <motion.div

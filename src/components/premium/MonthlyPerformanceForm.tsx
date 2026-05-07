@@ -31,7 +31,7 @@ interface MonthlyPerformanceFormProps {
   onCancel?: () => void;
 }
 
-const inputBase = "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150";
+const inputBase = "w-full px-4 py-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200 min-h-[44px]";
 
 export default function MonthlyPerformanceForm({
   locations,
@@ -79,18 +79,17 @@ export default function MonthlyPerformanceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-600 text-sm">
-          <AlertCircle size={16} />
+        <div className="p-4 bg-[--danger-soft] rounded-xl flex items-center gap-2.5 text-[--danger] text-[14px]">
+          <AlertCircle size={16} strokeWidth={1.75} />
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Lokasyon Seçimi */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Lokasyon</label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Lokasyon</label>
           <div className="relative">
-            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--text-tertiary]" size={16} strokeWidth={1.75} />
             <select
               required
               value={formData.locationId}
@@ -101,15 +100,14 @@ export default function MonthlyPerformanceForm({
                 <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           </div>
         </div>
 
-        {/* Dönem Seçimi */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Dönem (Ay)</label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Dönem (Ay)</label>
           <div className="relative">
-            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--text-tertiary]" size={16} strokeWidth={1.75} />
             <input
               type="month"
               required
@@ -122,11 +120,10 @@ export default function MonthlyPerformanceForm({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Seans Sayısı */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Toplam Seans</label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Toplam Seans</label>
           <div className="relative">
-            <Activity className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Activity className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--text-tertiary]" size={16} strokeWidth={1.75} />
             <input
               type="number"
               required
@@ -138,11 +135,10 @@ export default function MonthlyPerformanceForm({
           </div>
         </div>
 
-        {/* Ekstra Gider */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Ekstra Gider (₺)</label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Ekstra Gider (₺)</label>
           <div className="relative">
-            <Coins className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Coins className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--text-tertiary]" size={16} strokeWidth={1.75} />
             <input
               type="number"
               placeholder="0"
@@ -154,22 +150,14 @@ export default function MonthlyPerformanceForm({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-slate-200/70 flex items-center justify-end gap-3">
+      <div className="pt-6 border-t border-[--border] flex items-center justify-end gap-3">
         {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors"
-          >
+          <button type="button" onClick={onCancel} className="elite-button-secondary">
             İptal
           </button>
         )}
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        <button type="submit" disabled={isLoading} className="elite-button-primary">
+          {isLoading ? <Loader2 size={16} className="animate-spin" strokeWidth={2} /> : <Save size={16} strokeWidth={1.75} />}
           {initialData ? 'Güncelle' : 'Kaydet'}
         </button>
       </div>

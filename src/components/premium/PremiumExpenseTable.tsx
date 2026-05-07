@@ -73,16 +73,16 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
+      <section className="apple-card p-5 md:p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative w-full lg:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary]" strokeWidth={1.75} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Gider açıklaması ara..."
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+              placeholder="Gider açıklaması ara…"
+              className="w-full h-11 rounded-full bg-[--bg-elevated] border border-transparent pl-11 pr-4 text-[15px] text-[--text] placeholder:text-[--text-tertiary] outline-none focus:border-[--accent] focus:bg-[--surface] transition-colors"
             />
           </div>
 
@@ -92,7 +92,7 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
               onChange={setFilterLocation}
               options={[{ value: 'all', label: 'Tüm Şubeler' }, ...locations.map((loc) => ({ value: loc.id, label: loc.name }))]}
             />
-            <div className="flex items-center gap-1 rounded-xl border border-slate-200 p-1">
+            <div className="flex items-center gap-1 rounded-full bg-[--bg-elevated] p-1">
               <TypeChip active={filterType === 'ALL'} onClick={() => setFilterType('ALL')} label="Tümü" />
               <TypeChip active={filterType === 'RECURRING'} onClick={() => setFilterType('RECURRING')} label="Aylık" />
               <TypeChip active={filterType === 'ONE_TIME'} onClick={() => setFilterType('ONE_TIME')} label="Tek Sefer" />
@@ -101,69 +101,88 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200/70 bg-white overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      <section className="apple-card overflow-hidden">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[920px]">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Gider</th>
-                <th className="text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Şube / Ödeyen</th>
-                <th className="text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Tarih</th>
-                <th className="text-right px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Tutar</th>
-                <th className="text-center px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Durum</th>
-                <th className="text-right px-6 py-3" />
+              <tr className="border-b border-[--border]">
+                <th className="text-left px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Gider</th>
+                <th className="text-left px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Şube / Ödeyen</th>
+                <th className="text-left px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Tarih</th>
+                <th className="text-right px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Tutar</th>
+                <th className="text-center px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Durum</th>
+                <th className="text-right px-6 py-4" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[--border-soft]">
               {filtered.map((exp) => (
-                <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => onView(exp)}>
+                <tr key={exp.id} className="hover:bg-[--bg-subtle] transition-colors cursor-pointer" onClick={() => onView(exp)}>
                   <td className="px-6 py-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                        <Receipt size={16} className="text-slate-500" />
+                      <div className="w-10 h-10 rounded-full bg-[--bg-elevated] flex items-center justify-center text-[--text-secondary]">
+                        <Receipt size={16} strokeWidth={1.75} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{exp.description}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{exp.type === 'RECURRING' ? 'Aylık Gider' : 'Tek Seferlik Gider'}</p>
+                        <p className="text-[15px] font-medium text-[--text] truncate" style={{ letterSpacing: '-0.005em' }}>{exp.description}</p>
+                        <p className="text-[12px] text-[--text-tertiary] mt-0.5">{exp.type === 'RECURRING' ? 'Aylık Gider' : 'Tek Seferlik Gider'}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-slate-800">{exp.location?.name || 'Genel'}</p>
-                    <p className="text-xs text-slate-500 inline-flex items-center gap-1 mt-0.5"><User size={12} /> {exp.paidBy || 'Ortak'}</p>
+                    <p className="text-[14px] text-[--text]">{exp.location?.name || 'Genel'}</p>
+                    <p className="text-[12px] text-[--text-tertiary] inline-flex items-center gap-1 mt-0.5">
+                      <User size={12} strokeWidth={1.75} /> {exp.paidBy || 'Ortak'}
+                    </p>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 tabular-nums">
-                    <p className="inline-flex items-center gap-1.5"><Calendar size={14} className="text-slate-400" /> {new Date(exp.createdAt).toLocaleDateString('tr-TR')}</p>
+                  <td className="px-6 py-4 text-[14px] text-[--text-secondary] tabular-nums">
+                    <p className="inline-flex items-center gap-1.5">
+                      <Calendar size={14} strokeWidth={1.75} className="text-[--text-tertiary]" />{' '}
+                      {new Date(exp.createdAt).toLocaleDateString('tr-TR')}
+                    </p>
                   </td>
                   <td className="px-6 py-4 text-right tabular-nums">
-                    <p className="text-sm font-semibold text-slate-900">{formatCurrency(exp.amountWithVat || 0)}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">KDV dahil</p>
+                    <p className="text-[15px] font-medium text-[--text]">{formatCurrency(exp.amountWithVat || 0)}</p>
+                    <p className="text-[12px] text-[--text-tertiary] mt-0.5">KDV dahil</p>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={cn(
-                      'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
-                      exp.isOfficial ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                      'inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-medium',
+                      exp.isOfficial ? 'bg-[--accent-soft] text-[--accent]' : 'bg-[--bg-elevated] text-[--text-secondary]'
                     )}>
                       {exp.isOfficial ? 'Resmi' : 'Belgesiz'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={(e) => { e.stopPropagation(); onEdit(exp); }} className="p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-                        <Edit2 size={14} />
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onEdit(exp); }}
+                        className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--text] hover:bg-[--bg-elevated] transition-colors"
+                        aria-label="Düzenle"
+                      >
+                        <Edit2 size={14} strokeWidth={1.75} />
                       </button>
-                      <button onClick={(e) => handleToggleSettled(exp.id, exp.description, e)} className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
-                        <CheckCircle2 size={14} />
+                      <button
+                        onClick={(e) => handleToggleSettled(exp.id, exp.description, e)}
+                        className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--accent] hover:bg-[--accent-soft] transition-colors"
+                        aria-label="Durum"
+                      >
+                        <CheckCircle2 size={14} strokeWidth={1.75} />
                       </button>
                       <button
                         onClick={(e) => handleDelete(exp.id, e)}
                         disabled={deletingId === exp.id}
-                        className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-50 transition-colors"
+                        className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--danger] hover:bg-[--danger-soft] disabled:opacity-50 transition-colors"
+                        aria-label="Sil"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={14} strokeWidth={1.75} />
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); onView(exp); }} className="p-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors">
-                        <Eye size={14} />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onView(exp); }}
+                        className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--text] hover:bg-[--bg-elevated] transition-colors"
+                        aria-label="Görüntüle"
+                      >
+                        <Eye size={14} strokeWidth={1.75} />
                       </button>
                     </div>
                   </td>
@@ -173,8 +192,8 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-16 text-center">
-                    <p className="text-sm font-medium text-slate-700">Filtreye uygun gider bulunamadı.</p>
-                    <p className="text-xs text-slate-500 mt-1">Arama veya filtre kriterlerini değiştirin.</p>
+                    <p className="text-[15px] font-medium text-[--text]">Filtreye uygun gider bulunamadı.</p>
+                    <p className="text-[13px] text-[--text-tertiary] mt-1">Arama veya filtre kriterlerini değiştirin.</p>
                   </td>
                 </tr>
               )}
@@ -182,9 +201,54 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
           </table>
         </div>
 
-        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs text-slate-600">
-          <span className="tabular-nums">{filtered.length} kayıt listeleniyor</span>
-          <span className="font-medium tabular-nums">Filtreli Toplam: <span className="text-slate-900 font-semibold">{formatCurrency(filteredTotal)}</span></span>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-[--border-soft]">
+          {filtered.map((exp) => (
+            <button
+              key={exp.id}
+              type="button"
+              onClick={() => onView(exp)}
+              className="w-full text-left p-5 hover:bg-[--bg-subtle] transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[--bg-elevated] flex items-center justify-center text-[--text-secondary] shrink-0">
+                  <Receipt size={16} strokeWidth={1.75} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[15px] font-medium text-[--text] truncate" style={{ letterSpacing: '-0.005em' }}>{exp.description}</p>
+                    <span className={cn(
+                      'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0',
+                      exp.isOfficial ? 'bg-[--accent-soft] text-[--accent]' : 'bg-[--bg-elevated] text-[--text-secondary]'
+                    )}>
+                      {exp.isOfficial ? 'Resmi' : 'Belgesiz'}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[--text-tertiary] mt-0.5">
+                    {exp.location?.name || 'Genel'} · {exp.type === 'RECURRING' ? 'Aylık' : 'Tek Sefer'} · {new Date(exp.createdAt).toLocaleDateString('tr-TR')}
+                  </p>
+                  <p className="text-[18px] font-semibold tabular-nums text-[--text] mt-2" style={{ letterSpacing: '-0.014em' }}>
+                    {formatCurrency(exp.amountWithVat || 0)}
+                  </p>
+                </div>
+              </div>
+            </button>
+          ))}
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <Receipt className="empty-state-icon" />
+              <p className="empty-state-title">Filtreye uygun kayıt yok</p>
+              <p className="empty-state-desc">Arama veya filtre kriterlerini değiştirin.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-[--border] bg-[--bg-subtle] flex items-center justify-between text-[13px]">
+          <span className="tabular-nums text-[--text-secondary]">{filtered.length} kayıt</span>
+          <span className="tabular-nums text-[--text-secondary]">
+            Filtreli Toplam:{' '}
+            <span className="text-[--text] font-medium">{formatCurrency(filteredTotal)}</span>
+          </span>
         </div>
       </section>
     </div>
@@ -196,9 +260,10 @@ function TypeChip({ active, label, onClick }: { active: boolean; label: string; 
     <button
       onClick={onClick}
       className={cn(
-        'h-8 px-3 rounded-lg text-xs font-medium transition-colors',
-        active ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'
+        'h-9 px-3.5 rounded-full text-[13px] font-medium transition-colors',
+        active ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
       )}
+      style={{ letterSpacing: '-0.005em' }}
     >
       {label}
     </button>
@@ -218,7 +283,7 @@ function SelectFilter({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-700 bg-white outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+      className="h-11 rounded-full bg-[--bg-elevated] border border-transparent px-4 text-[14px] text-[--text] outline-none focus:border-[--accent] focus:bg-[--surface] transition-colors min-h-[44px]"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>

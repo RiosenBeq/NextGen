@@ -5,12 +5,8 @@ import React, { useState } from 'react';
 import {
   TrendingUp,
   TrendingDown,
-  Wallet,
-  Filter,
   Download,
   ChevronRight,
-  ArrowRight,
-  Receipt,
   Calendar,
   Building2,
   Activity,
@@ -19,7 +15,9 @@ import {
   Plus,
   Trash2,
   Edit2,
-  Zap
+  Zap,
+  Receipt,
+  Wallet,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -31,7 +29,6 @@ import Link from 'next/link';
 import { toast } from '@/hooks/useToast';
 
 type GelirGiderLocation = { id: string; name: string };
-
 type GelirGiderCategory = { id: string; name: string };
 
 type GelirGiderEntry = {
@@ -57,20 +54,11 @@ type GelirGiderBreakdown = {
 };
 
 interface GelirGiderProps {
-  summary: {
-    gross: number;
-    expense: number;
-    net: number;
-    margin: number;
-  };
+  summary: { gross: number; expense: number; net: number; margin: number };
   entries: GelirGiderEntry[];
   categories: GelirGiderCategory[];
   locations: GelirGiderLocation[];
-  filters: {
-    month: string;
-    location: string;
-    category: string;
-  };
+  filters: { month: string; location: string; category: string };
   breakdown: GelirGiderBreakdown[];
   availableMonths: string[];
 }
@@ -81,7 +69,7 @@ export default function GelirGiderClientUI({
   locations,
   filters,
   breakdown,
-  availableMonths
+  availableMonths,
 }: GelirGiderProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,343 +77,371 @@ export default function GelirGiderClientUI({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   const handleDelete = async (perfId: string) => {
-    if (confirm("Bu performans kaydını silmek istediğinize emin misiniz?")) {
+    if (confirm('Bu performans kaydını silmek istediğinize emin misiniz?')) {
       const res = await deleteMonthlyPerformance(perfId);
       if (res.success) {
         setIsDrawerOpen(false);
         router.refresh();
       } else {
-        toast.error("Silme hatası: " + res.error);
+        toast.error('Silme hatası: ' + res.error);
       }
     }
   };
 
   const getMonthName = (monthId: string) => {
     if (!monthId) return 'Tümü';
-  const [y, m] = monthId.split('-');
+    const [y, m] = monthId.split('-');
     const d = new Date(parseInt(y), parseInt(m) - 1, 1);
-    return d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }).toUpperCase();
+    return d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
-      
-      {/* Premium Header */}
-      <header className="flex flex-col xl:flex-row xl:items-start justify-between gap-8">
-        <div className="space-y-1.5">
-           <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-100">
-                 <Wallet size={24} />
-              </div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Gelir & Gider Analizi</h1>
-           </div>
-           <p className="text-sm text-slate-500 font-medium italic pl-1">Ticari döküm, vergi analizi ve operasyonel performans merkezi.</p>
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
+      {/* Header */}
+      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+        <div>
+          <p className="apple-eyebrow">Finansal Akış</p>
+          <h1 className="apple-headline mt-3">Gelir & Gider</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            Ticari döküm, vergi analizi ve operasyonel performans bir arada.
+          </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-           {/* Month Filter */}
-           <div className="relative group min-w-[200px]">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-blue-600 transition-colors" size={16} />
-              <select 
-                value={filters.month}
-                onChange={(e) => window.location.href = `/gelir-gider?month=${e.target.value}&location=${filters.location}&category=${filters.category}`}
-                className="w-full pl-11 pr-10 py-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 appearance-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-sm tracking-widest cursor-pointer"
-              >
-                <option value="">TÜM DÖNEMLER</option>
-                {availableMonths.map(m => (
-                  <option key={m} value={m}>{getMonthName(m)}</option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><Filter size={14} /></div>
-           </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative min-w-[200px]">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[--text-tertiary] pointer-events-none" size={16} strokeWidth={1.75} />
+            <select
+              value={filters.month}
+              onChange={(e) => (window.location.href = `/gelir-gider?month=${e.target.value}&location=${filters.location}&category=${filters.category}`)}
+              className="w-full pl-11 pr-10 py-3 bg-[--bg-elevated] border border-transparent rounded-full text-[14px] text-[--text] appearance-none focus:bg-[--surface] focus:border-[--accent] transition-colors cursor-pointer min-h-[44px]"
+            >
+              <option value="">Tüm Dönemler</option>
+              {availableMonths.map((m) => (
+                <option key={m} value={m}>
+                  {getMonthName(m)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-           <button 
-             onClick={() => setIsModalOpen(true)}
-             className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2.5 active:scale-95 uppercase tracking-widest"
-           >
-              <Plus size={18} />
-              Yeni Kayıt Girişi
-           </button>
+          <button onClick={() => setIsModalOpen(true)} className="elite-button-primary">
+            <Plus size={16} strokeWidth={2} />
+            Yeni Kayıt
+          </button>
         </div>
       </header>
 
-      {/* Location Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-         <FilterLink 
-            href={`/gelir-gider?month=${filters.month}&location=all&category=${filters.category}`} 
-            active={filters.location === 'all'} 
-            label="TÜM ŞUBELER" 
-         />
-         {locations.map(loc => (
-            <FilterLink 
-               key={loc.id} 
-               href={`/gelir-gider?month=${filters.month}&location=${loc.id}&category=${filters.category}`} 
-               active={filters.location === loc.id} 
-               label={loc.name} 
-            />
-         ))}
+      {/* Location Filter */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <FilterLink
+          href={`/gelir-gider?month=${filters.month}&location=all&category=${filters.category}`}
+          active={filters.location === 'all'}
+          label="Tüm Şubeler"
+        />
+        {locations.map((loc) => (
+          <FilterLink
+            key={loc.id}
+            href={`/gelir-gider?month=${filters.month}&location=${loc.id}&category=${filters.category}`}
+            active={filters.location === loc.id}
+            label={loc.name}
+          />
+        ))}
       </div>
 
-      {/* High-Impact Summary Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         <KPICard label="Brüt Gelir" value={formatCurrency(summary.gross)} icon={<TrendingUp />} color="blue" subtitle="Ticari Ciro Akışı" trend="+12.4%" />
-         <KPICard label="Toplam Gider" value={formatCurrency(summary.expense)} icon={<TrendingDown />} color="rose" subtitle="Operasyonel Maliyetler" trend="-2.1%" />
-         <KPICard label="Net Nakit" value={formatCurrency(summary.net)} icon={<Activity />} color="emerald" subtitle="Serbest Nakit (KDV Dahil)" trend="+8.7%" />
-         <KPICard label="Kar Marjı" value={`%${summary.margin.toFixed(1)}`} icon={<Zap />} color="amber" subtitle="İşletme Verimliliği" trend="+1.5%" />
+      {/* Summary Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        <KPICard label="Brüt Gelir" value={formatCurrency(summary.gross)} icon={<TrendingUp />} subtitle="Ticari ciro akışı" />
+        <KPICard label="Toplam Gider" value={formatCurrency(summary.expense)} icon={<TrendingDown />} subtitle="Operasyonel maliyetler" />
+        <KPICard label="Net Nakit" value={formatCurrency(summary.net)} icon={<Activity />} subtitle="Serbest nakit (KDV dahil)" highlight={summary.net >= 0} />
+        <KPICard label="Kâr Marjı" value={`%${summary.margin.toFixed(1)}`} icon={<Zap />} subtitle="İşletme verimliliği" />
       </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-         {/* Ledgers / Table - Dynamic Cards on Mobile */}
-         <section className="xl:col-span-8 space-y-6">
-            <div className="flex items-center justify-between px-2">
-               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] italic">AYLIK FİNANSAL DÖKÜM</h3>
-               <button className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors flex items-center gap-1.5 border border-slate-100 bg-white px-3 py-1.5 rounded-lg shadow-sm">
-                  PDF RAPOR <Download size={14} />
-               </button>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 md:gap-8">
+        <section className="xl:col-span-8 space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="apple-eyebrow">Aylık Döküm</p>
+              <h3 className="apple-title-1 mt-2">Finansal Tablo</h3>
             </div>
+            <button className="elite-button-tertiary">
+              <Download size={14} strokeWidth={1.75} /> PDF
+            </button>
+          </div>
 
-            {/* Desktop Table */}
-            <div className="hidden md:block bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
-               <table className="w-full text-left border-collapse">
-                  <thead>
-                     <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dönem & Lokasyon</th>
-                        <th className="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Seans</th>
-                        <th className="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Brüt Ciro</th>
-                        <th className="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Net Gider</th>
-                        <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Net Kâr</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                     {entries.map((entry, idx) => (
-                        <tr 
-                          key={idx} 
-                          className="group hover:bg-slate-50/80 transition-all cursor-pointer" 
-                          onClick={() => { setSelectedEntry(entry); setIsDrawerOpen(true); }}
-                        >
-                           <td className="px-8 py-6">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all group-hover:scale-110">
-                                    <Calendar size={18} />
-                                 </div>
-                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-900 tracking-tight">{entry.month}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{entry.locationName}</span>
-                                 </div>
-                              </div>
-                           </td>
-                           <td className="px-6 py-6 text-center">
-                              <span className="px-3 py-1 bg-slate-50 text-slate-500 rounded-lg text-[11px] font-bold font-mono border border-slate-100">{entry.sessions}</span>
-                           </td>
-                           <td className="px-6 py-6 text-right font-bold text-slate-900 tabular-nums italic tracking-tighter text-base">₺{entry.grossRevenue?.toLocaleString('tr-TR')}</td>
-                           <td className="px-6 py-6 text-right">
-                              <div className="flex flex-col items-end">
-                                 <span className="font-bold text-rose-500 tabular-nums italic text-sm">-₺{entry.avmExpense?.toLocaleString('tr-TR')}</span>
-                                 <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">+KDV DAHİL</span>
-                              </div>
-                           </td>
-                           <td className="px-8 py-6 text-right">
-                              <div className={cn(
-                                "inline-flex items-center gap-2 px-4 py-2 rounded-xl border tabular-nums italic font-bold text-base shadow-sm ring-4 ring-transparent group-hover:ring-slate-100 transition-all",
-                                entry.netCash >= 0 ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
-                              )}>
-                                 ₺{entry.netCash?.toLocaleString('tr-TR')}
-                                 <ArrowRight size={16} />
-                              </div>
-                           </td>
-                        </tr>
-                     ))}
-                  </tbody>
-               </table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="md:hidden space-y-4">
-               {entries.map((entry, idx) => (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+          {/* Desktop Table */}
+          <div className="hidden md:block apple-card overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[--border]">
+                  <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Dönem & Lokasyon</th>
+                  <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-center">Seans</th>
+                  <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-right">Brüt Ciro</th>
+                  <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-right">Net Gider</th>
+                  <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-right">Net Kâr</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[--border-soft]">
+                {entries.map((entry, idx) => (
+                  <tr
                     key={idx}
-                    onClick={() => { setSelectedEntry(entry); setIsDrawerOpen(true); }}
-                    className="p-6 bg-white border border-slate-200 rounded-[32px] space-y-6 active:scale-[0.98] transition-all shadow-sm"
+                    className="group hover:bg-[--bg-subtle] transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedEntry(entry);
+                      setIsDrawerOpen(true);
+                    }}
                   >
-                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100"><Calendar size={20} /></div>
-                           <div className="flex flex-col">
-                              <span className="text-base font-bold text-slate-900 tracking-tight">{entry.month}</span>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{entry.locationName}</span>
-                           </div>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[--bg-elevated] flex items-center justify-center text-[--text-secondary]">
+                          <Calendar size={16} strokeWidth={1.75} />
                         </div>
-                        <div className="text-right">
-                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">SEANS</span>
-                           <span className="px-3 py-1 bg-slate-50 rounded-lg text-xs font-bold font-mono border border-slate-100">{entry.sessions}</span>
+                        <div className="flex flex-col">
+                          <span className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{entry.month}</span>
+                          <span className="text-[12px] text-[--text-tertiary]">{entry.locationName}</span>
                         </div>
-                     </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-center">
+                      <span className="text-[14px] tabular-nums text-[--text-secondary]">{entry.sessions}</span>
+                    </td>
+                    <td className="px-6 py-5 text-right text-[15px] font-medium tabular-nums text-[--text]">
+                      ₺{entry.grossRevenue?.toLocaleString('tr-TR')}
+                    </td>
+                    <td className="px-6 py-5 text-right text-[15px] tabular-nums text-[--text-secondary]">
+                      ₺{entry.avmExpense?.toLocaleString('tr-TR')}
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <span className={cn(
+                        'inline-flex items-center gap-1.5 text-[15px] font-medium tabular-nums',
+                        entry.netCash >= 0 ? 'text-[--text]' : 'text-[--text-secondary]'
+                      )}>
+                        ₺{entry.netCash?.toLocaleString('tr-TR')}
+                        <ChevronRight size={14} strokeWidth={1.75} className="text-[--text-tertiary] group-hover:text-[--text]" />
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
-                        <div className="space-y-1">
-                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">BRÜT CİRO</p>
-                           <p className="text-lg font-bold text-slate-900 italic tracking-tighter">₺{entry.grossRevenue?.toLocaleString('tr-TR')}</p>
-                        </div>
-                        <div className="space-y-1 text-right">
-                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOPLAM GİDER</p>
-                           <p className="text-lg font-bold text-rose-500 italic tracking-tighter">₺{entry.avmExpense?.toLocaleString('tr-TR')}</p>
-                        </div>
-                     </div>
-
-                     <div className={cn(
-                        "p-5 rounded-3xl flex items-center justify-between shadow-inner border border-transparent",
-                        entry.netCash >= 0 ? "bg-emerald-50 text-emerald-700 border-emerald-100/50" : "bg-rose-50 text-rose-700 border-rose-100/50"
-                     )}>
-                        <div>
-                           <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">NET NAKİT AKIŞI</p>
-                           <p className="text-2xl font-bold italic tracking-tighter mt-1 tabular-nums">₺{entry.netCash?.toLocaleString('tr-TR')}</p>
-                        </div>
-                        <ChevronRight className="opacity-40" />
-                     </div>
-                  </motion.div>
-               ))}
-            </div>
-         </section>
-
-         {/* Distribution / Breakdown Analysis */}
-         <section className="xl:col-span-4 space-y-6">
-            <div className="px-2"><h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] italic">GİDER DAĞILIMI</h3></div>
-            
-            <div className="bg-white border border-slate-200 rounded-[32px] p-8 space-y-8 shadow-sm">
-               <div className="space-y-7">
-                  {breakdown.map((item, i) => (
-                    <div key={i} className="space-y-3 group">
-                       <div className="flex items-end justify-between">
-                          <div className="flex flex-col">
-                             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{item.label}</span>
-                             <span className="text-[10px] font-medium text-slate-300 uppercase tracking-tighter mt-0.5">{item.subLabel}</span>
-                          </div>
-                          <motion.span 
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="text-sm font-bold text-slate-900 tracking-tighter italic"
-                          >
-                             ₺{item.value?.toLocaleString('tr-TR')}
-                          </motion.span>
-                       </div>
-                       <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner">
-                          <motion.div 
-                            initial={{ width: 0 }} 
-                            animate={{ width: `${(item.value / summary.expense) * 100}%` }} 
-                            transition={{ duration: 1, ease: "easeOut" }}
-                            className={cn("h-full rounded-full transition-all group-hover:brightness-110", item.color)} 
-                          />
-                       </div>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {entries.map((entry, idx) => (
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: idx * 0.04 }}
+                key={idx}
+                onClick={() => {
+                  setSelectedEntry(entry);
+                  setIsDrawerOpen(true);
+                }}
+                className="w-full text-left p-5 apple-card transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[--bg-elevated] text-[--text-secondary] flex items-center justify-center">
+                      <Calendar size={18} strokeWidth={1.75} />
                     </div>
-                  ))}
-               </div>
-               
-               <div className="pt-8 border-t border-slate-50">
-                  <div className="flex items-center justify-between p-6 rounded-[24px] bg-slate-900 text-white shadow-xl shadow-slate-200">
-                     <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOPLAM MALİYET</p>
-                        <p className="text-xs text-slate-500 font-medium italic">Operasyonel + AVM</p>
-                     </div>
-                     <span className="text-2xl font-bold italic tracking-tighter tabular-nums">₺{summary.expense?.toLocaleString('tr-TR')}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{entry.month}</span>
+                      <span className="text-[12px] text-[--text-tertiary]">{entry.locationName}</span>
+                    </div>
                   </div>
-               </div>
+                  <span className="text-[12px] text-[--text-tertiary] tabular-nums">{entry.sessions} seans</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 mt-4 border-t border-[--border]">
+                  <div>
+                    <p className="text-[12px] text-[--text-tertiary]">Brüt Ciro</p>
+                    <p className="text-[16px] font-medium tabular-nums text-[--text] mt-0.5">₺{entry.grossRevenue?.toLocaleString('tr-TR')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] text-[--text-tertiary]">Toplam Gider</p>
+                    <p className="text-[16px] font-medium tabular-nums text-[--text-secondary] mt-0.5">₺{entry.avmExpense?.toLocaleString('tr-TR')}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-[--border] flex items-center justify-between">
+                  <p className="text-[13px] text-[--text-secondary]">Net Nakit</p>
+                  <p className={cn(
+                    'text-[20px] font-semibold tabular-nums',
+                    entry.netCash >= 0 ? 'text-[--text]' : 'text-[--text-secondary]'
+                  )} style={{ letterSpacing: '-0.018em' }}>₺{entry.netCash?.toLocaleString('tr-TR')}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </section>
+
+        {/* Distribution */}
+        <section className="xl:col-span-4 space-y-5">
+          <div>
+            <p className="apple-eyebrow">Analiz</p>
+            <h3 className="apple-title-1 mt-2">Gider Dağılımı</h3>
+          </div>
+
+          <div className="apple-card p-6 space-y-6">
+            <div className="space-y-5">
+              {breakdown.map((item, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-end justify-between gap-3">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[13px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{item.label}</span>
+                      {item.subLabel && <span className="text-[12px] text-[--text-tertiary]">{item.subLabel}</span>}
+                    </div>
+                    <span className="text-[14px] font-medium tabular-nums text-[--text] shrink-0">
+                      ₺{item.value?.toLocaleString('tr-TR')}
+                    </span>
+                  </div>
+                  <div className="h-1 w-full bg-[--bg-elevated] rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(item.value / Math.max(summary.expense, 1)) * 100}%` }}
+                      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-[--text]"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-         </section>
+
+            <div className="pt-6 border-t border-[--border]">
+              <div className="rounded-[18px] bg-[--bg-elevated] px-5 py-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] text-[--text-secondary]">Toplam Maliyet</p>
+                  <p className="text-[12px] text-[--text-tertiary]">Operasyonel + AVM</p>
+                </div>
+                <span className="text-[22px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>
+                  ₺{summary.expense?.toLocaleString('tr-TR')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <PremiumModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Gider Girişi" maxWidth="max-w-xl">
         <ExpenseForm locations={locations} onClose={() => { setIsModalOpen(false); router.refresh(); }} />
       </PremiumModal>
 
-      <PremiumDrawer isOpen={isDrawerOpen} onClose={() => { setIsDrawerOpen(false); setIsEditing(false); }} title={isEditing ? "Verileri Güncelle" : "Dönem Finansal Detayı"}>
+      <PremiumDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => { setIsDrawerOpen(false); setIsEditing(false); }}
+        title={isEditing ? 'Verileri Güncelle' : 'Dönem Detayı'}
+      >
         {selectedEntry && (
-          <div className="space-y-10 py-6">
-             {isEditing ? (
-               <MonthlyPerformanceForm id={selectedEntry.perfId} initialData={{ sessions: selectedEntry.sessions, extraExpense: selectedEntry.extraExpense, extraNotes: selectedEntry.extraNotes ?? '', month: selectedEntry.monthId, locationName: selectedEntry.locationName }} onClose={() => setIsEditing(false)} onDelete={handleDelete} />
-             ) : (
-               <div className="space-y-10">
-                  {/* Drawer Header Card */}
-                  <div className="p-8 rounded-[32px] bg-slate-900 text-white space-y-6 shadow-2xl relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 transition-transform duration-1000">
-                        <Activity size={120} />
-                     </div>
-                     <div className="relative z-10 space-y-1.5">
-                        <div className="flex items-center gap-2 text-blue-400">
-                           <Calendar size={14} />
-                           <span className="text-[10px] font-bold uppercase tracking-widest">{selectedEntry.month}</span>
-                        </div>
-                        <p className="text-4xl font-bold italic tracking-tighter uppercase">{selectedEntry.locationName}</p>
-                     </div>
-                     <div className="relative z-10 grid grid-cols-2 gap-8 pt-8 border-t border-white/10 uppercase tracking-widest">
-                        <div className="space-y-1">
-                           <p className="text-[9px] font-bold text-slate-500">HAZIR MEVCUT</p>
-                           <p className="text-2xl font-bold italic">₺{selectedEntry.grossRevenue?.toLocaleString('tr-TR')}</p>
-                        </div>
-                        <div className="space-y-1 text-right">
-                           <p className="text-[9px] font-bold text-slate-500">SEANS HACMİ</p>
-                           <p className="text-2xl font-bold italic font-mono">{selectedEntry.sessions}</p>
-                        </div>
-                     </div>
+          <div className="space-y-8 py-4">
+            {isEditing ? (
+              <MonthlyPerformanceForm
+                id={selectedEntry.perfId}
+                initialData={{
+                  sessions: selectedEntry.sessions,
+                  extraExpense: selectedEntry.extraExpense,
+                  extraNotes: selectedEntry.extraNotes ?? '',
+                  month: selectedEntry.monthId,
+                  locationName: selectedEntry.locationName,
+                }}
+                onClose={() => setIsEditing(false)}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <div className="space-y-8">
+                <div className="rounded-[22px] bg-[--bg-elevated] p-6 space-y-5">
+                  <div className="flex items-center gap-2 text-[--text-secondary]">
+                    <Calendar size={14} strokeWidth={1.75} />
+                    <span className="text-[13px]">{selectedEntry.month}</span>
+                  </div>
+                  <p className="text-[28px] md:text-[32px] font-semibold text-[--text]" style={{ letterSpacing: '-0.025em' }}>{selectedEntry.locationName}</p>
+                  <div className="grid grid-cols-2 gap-6 pt-5 border-t border-[--border]">
+                    <div>
+                      <p className="text-[12px] text-[--text-tertiary]">Brüt Ciro</p>
+                      <p className="text-[20px] md:text-[22px] font-semibold tabular-nums text-[--text] mt-1" style={{ letterSpacing: '-0.018em' }}>
+                        ₺{selectedEntry.grossRevenue?.toLocaleString('tr-TR')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[12px] text-[--text-tertiary]">Seans</p>
+                      <p className="text-[20px] md:text-[22px] font-semibold tabular-nums text-[--text] mt-1" style={{ letterSpacing: '-0.018em' }}>
+                        {selectedEntry.sessions}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between pb-2 border-b border-[--border]">
+                    <h4 className="text-[13px] text-[--text-secondary] flex items-center gap-2">
+                      <Receipt size={14} strokeWidth={1.75} className="text-[--text-tertiary]" />
+                      Gider Analizi
+                    </h4>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[--bg-elevated] text-[--text-tertiary] hover:text-[--text] transition-colors"
+                        aria-label="Düzenle"
+                      >
+                        <Edit2 size={16} strokeWidth={1.75} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(selectedEntry.perfId)}
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[--danger-soft] text-[--text-tertiary] hover:text-[--danger] transition-colors"
+                        aria-label="Sil"
+                      >
+                        <Trash2 size={16} strokeWidth={1.75} />
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Expense Breakdown in Drawer */}
-                  <div className="space-y-8 px-1">
-                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                           <Receipt size={16} className="text-slate-300" />
-                           GİDER ANALİZİ
-                        </h4>
-                        <div className="flex items-center gap-3">
-                           <button onClick={() => setIsEditing(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-blue-600 transition-all active:scale-90"><Edit2 size={16} /></button>
-                           <button onClick={() => handleDelete(selectedEntry.perfId)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-rose-600 transition-all active:scale-90"><Trash2 size={16} /></button>
-                        </div>
-                     </div>
-
-                     <div className="space-y-4">
-                        <DetailMetric label="Sözleşme Ciro Payı" value={formatCurrency(selectedEntry.revenueShare)} icon={<HandCoins size={14} />} color="emerald" />
-                        <DetailMetric label="AVM Sabit Kira & Aidat" value={formatCurrency(selectedEntry.avmExpense - selectedEntry.revenueShare)} icon={<Building2 size={14} />} color="blue" />
-                        <DetailMetric label="Altyapı Komisyonları" value={formatCurrency(selectedEntry.totalCommission)} icon={<CreditCard size={14} />} color="amber" />
-                        {selectedEntry.extraExpense > 0 && <DetailMetric label="Operasyonel Ekstra" value={formatCurrency(selectedEntry.extraExpense)} icon={<Zap size={14} />} color="rose" />}
-                     </div>
-                     
-                     {selectedEntry.extraNotes && (
-                        <div className="p-6 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2">
-                           <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Operasyonel Notlar</p>
-                           <p className="text-sm font-medium text-amber-800 italic leading-relaxed">{selectedEntry.extraNotes}</p>
-                        </div>
-                     )}
+                  <div className="space-y-2">
+                    <DetailMetric label="Sözleşme Ciro Payı" value={formatCurrency(selectedEntry.revenueShare)} icon={<HandCoins size={14} strokeWidth={1.75} />} />
+                    <DetailMetric label="AVM Sabit Kira & Aidat" value={formatCurrency(selectedEntry.avmExpense - selectedEntry.revenueShare)} icon={<Building2 size={14} strokeWidth={1.75} />} />
+                    <DetailMetric label="Altyapı Komisyonları" value={formatCurrency(selectedEntry.totalCommission)} icon={<CreditCard size={14} strokeWidth={1.75} />} />
+                    {selectedEntry.extraExpense > 0 && (
+                      <DetailMetric label="Operasyonel Ekstra" value={formatCurrency(selectedEntry.extraExpense)} icon={<Zap size={14} strokeWidth={1.75} />} />
+                    )}
                   </div>
 
-                  {/* Net Result in Drawer */}
-                  <div className="pt-10 border-t border-slate-100 px-1">
-                     <div className={cn(
-                        "p-8 rounded-[32px] flex items-center justify-between border-2 shadow-xl",
-                        selectedEntry.netCash >= 0 ? "bg-emerald-50 border-emerald-100 text-emerald-900" : "bg-rose-50 border-rose-100 text-rose-900"
-                     )}>
-                        <div className="space-y-1">
-                           <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">NET NAKİT AKIŞI</p>
-                           <p className="text-4xl font-bold italic tracking-tighter tabular-nums">{formatCurrency(selectedEntry.netCash)}</p>
-                        </div>
-                        <div className={cn("w-16 h-16 rounded-3xl flex items-center justify-center shadow-lg", selectedEntry.netCash >= 0 ? "bg-emerald-500 text-white" : "bg-rose-500 text-white")}>
-                           <TrendingUp size={32} />
-                        </div>
-                     </div>
-                  </div>
+                  {selectedEntry.extraNotes && (
+                    <div className="p-5 rounded-xl bg-[--bg-elevated] space-y-2">
+                      <p className="text-[12px] text-[--text-tertiary]">Operasyonel Notlar</p>
+                      <p className="text-[14px] text-[--text] leading-relaxed">{selectedEntry.extraNotes}</p>
+                    </div>
+                  )}
+                </div>
 
-                  <button 
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="w-full py-5 bg-slate-100 text-slate-500 rounded-2xl text-sm font-bold transition-all hover:bg-slate-200 active:scale-[0.98] mt-6"
-                  >
-                    Detayları Kapat
-                  </button>
-               </div>
-             )}
+                <div className="pt-6 border-t border-[--border]">
+                  <div className="rounded-[22px] bg-[--bg-elevated] p-6 flex items-center justify-between">
+                    <div>
+                      <p className="text-[13px] text-[--text-secondary]">Net Nakit Akışı</p>
+                      <p className={cn(
+                        'text-[28px] md:text-[32px] font-semibold tabular-nums mt-1',
+                        selectedEntry.netCash >= 0 ? 'text-[--text]' : 'text-[--text-secondary]'
+                      )} style={{ letterSpacing: '-0.025em' }}>{formatCurrency(selectedEntry.netCash)}</p>
+                    </div>
+                    <div className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center',
+                      selectedEntry.netCash >= 0 ? 'bg-[--accent-soft] text-[--accent]' : 'bg-[--bg-elevated] text-[--text-tertiary]'
+                    )}>
+                      <Wallet size={20} strokeWidth={1.75} />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="w-full elite-button-secondary"
+                >
+                  Detayları Kapat
+                </button>
+              </div>
+            )}
           </div>
         )}
       </PremiumDrawer>
@@ -433,83 +449,65 @@ export default function GelirGiderClientUI({
   );
 }
 
-type KPICardColor = 'blue' | 'rose' | 'emerald' | 'amber';
-
 function KPICard({
   label,
   value,
   icon,
-  color,
   subtitle,
-  trend,
+  highlight,
 }: {
   label: string;
   value: string;
   icon: React.ReactElement;
-  color: KPICardColor;
   subtitle: string;
-  trend: string;
+  highlight?: boolean;
 }) {
-  const themes: Record<KPICardColor, { iconBg: string; border: string; trend: string }> = {
-    blue: { iconBg: "bg-blue-50 text-blue-600", border: "border-blue-100", trend: "bg-blue-50 text-blue-600" },
-    rose: { iconBg: "bg-rose-50 text-rose-600", border: "border-rose-100", trend: "bg-rose-50 text-rose-600" },
-    emerald: { iconBg: "bg-emerald-50 text-emerald-600", border: "border-emerald-100", trend: "bg-emerald-50 text-emerald-600" },
-    amber: { iconBg: "bg-amber-50 text-amber-600", border: "border-amber-100", trend: "bg-amber-50 text-amber-600" },
-  };
-  const theme = themes[color] || themes.blue;
-
   return (
-    <div className={cn("bg-white border border-slate-200 p-8 rounded-[32px] space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden", theme.border)}>
-       <div className="flex items-center justify-between">
-          <div className={cn("p-3.5 rounded-2xl transition-all shadow-inner", theme.iconBg)}>
-             {React.cloneElement(icon as React.ReactElement<{ size?: number; strokeWidth?: number }>, { size: 24, strokeWidth: 2 })}
-          </div>
-          <div className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-widest", theme.trend)}>
-             {trend}
-          </div>
-       </div>
-       <div className="space-y-1.5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-500">{label}</p>
-          <p className="text-3xl font-bold text-slate-900 tracking-tighter italic tabular-nums">{value}</p>
-       </div>
-       <p className="text-[10px] font-bold text-slate-300 uppercase italic tracking-[0.15em] border-t border-slate-50 pt-4 group-hover:text-slate-400 transition-colors">{subtitle}</p>
+    <div className="apple-card p-6 md:p-7 transition-all">
+      <div className="flex items-center justify-between">
+        <div className={cn(
+          'w-10 h-10 rounded-full flex items-center justify-center',
+          highlight ? 'bg-[--accent-soft] text-[--accent]' : 'bg-[--bg-elevated] text-[--text-secondary]'
+        )}>
+          {React.cloneElement(icon as React.ReactElement<{ size?: number; strokeWidth?: number }>, { size: 18, strokeWidth: 1.75 })}
+        </div>
+      </div>
+      <p className="text-[13px] text-[--text-secondary] mt-5" style={{ letterSpacing: '-0.005em' }}>{label}</p>
+      <p className="text-[24px] md:text-[28px] font-semibold tabular-nums text-[--text] mt-1" style={{ letterSpacing: '-0.022em' }}>
+        {value}
+      </p>
+      <p className="text-[12px] text-[--text-tertiary] mt-3">{subtitle}</p>
     </div>
   );
 }
 
-function FilterLink({ href, active, label }: { href: string, active: boolean, label: string }) {
+function FilterLink({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
-    <Link 
-      href={href} 
+    <Link
+      href={href}
       className={cn(
-        "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border whitespace-nowrap", 
-        active 
-          ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200" 
-          : "text-slate-400 border-transparent hover:text-slate-700 hover:border-slate-100"
+        'px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px] flex items-center',
+        active
+          ? 'bg-[--text] text-white'
+          : 'text-[--text-secondary] hover:text-[--text] hover:bg-[--bg-elevated]'
       )}
+      style={{ letterSpacing: '-0.005em' }}
     >
       {label}
     </Link>
   );
 }
 
-function DetailMetric({ label, value, icon, color }: { label: string, value: string, icon: React.ReactNode, color: string }) {
-  const bgColors: Record<string, string> = {
-    emerald: "bg-emerald-50 text-emerald-500 border-emerald-100/50",
-    blue: "bg-blue-50 text-blue-500 border-blue-100/50",
-    amber: "bg-amber-50 text-amber-500 border-amber-100/50",
-    rose: "bg-rose-50 text-rose-500 border-rose-100/50"
-  };
-
+function DetailMetric({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:scale-[1.01] transition-all cursor-default">
-       <div className="flex items-center gap-4">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border", bgColors[color] || "bg-slate-50 text-slate-400")}>
-             {icon}
-          </div>
-          <span className="text-sm font-bold text-slate-600">{label}</span>
-       </div>
-       <span className="text-lg font-bold text-slate-900 tabular-nums italic tracking-tighter">{value}</span>
+    <div className="flex items-center justify-between p-4 bg-[--surface] border border-[--border] rounded-xl transition-colors">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-[--bg-elevated] text-[--text-secondary] flex items-center justify-center">
+          {icon}
+        </div>
+        <span className="text-[14px] text-[--text]" style={{ letterSpacing: '-0.005em' }}>{label}</span>
+      </div>
+      <span className="text-[15px] font-medium tabular-nums text-[--text]">{value}</span>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
-import { FileText } from 'lucide-react';
 import { getSystemParameters } from '@/features/ledger/actions';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -137,40 +136,36 @@ export default async function ReportsPage({
   );
 
   return (
-    <div className="page-wrapper space-y-8 animate-fade-in">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-           <div className="w-14 h-14 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-400 shadow-xl">
-              <FileText size={28} />
-           </div>
-           <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-lg inline-block mb-1 border border-blue-200 text-blue-600 bg-blue-50/50 italic">
-                Sürekli Finansal Denetim
-              </span>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">
-                Nakit Akışı Raporu
-              </h1>
-           </div>
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <p className="apple-eyebrow">Finansal Denetim</p>
+          <h1 className="apple-headline mt-3">Nakit Akışı</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            Aylık nakit akışı, lokasyon bazlı dağılım ve operasyonel maliyet izleme.
+          </p>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200 rounded-2xl shadow-inner group">
-          <Link 
-            href="/raporlar?location=all" 
+        <div className="flex items-center gap-1 p-1 bg-[--bg-elevated] rounded-full overflow-x-auto">
+          <Link
+            href="/raporlar?location=all"
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all", 
-              filterLocation === 'all' ? "bg-white text-slate-900 shadow-md ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800"
+              'px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px] flex items-center',
+              filterLocation === 'all' ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
             )}
+            style={{ letterSpacing: '-0.005em' }}
           >
             Tümü
           </Link>
-          {(locations || []).map(loc => (
-            <Link 
-              key={loc.id} 
-              href={`/raporlar?location=${loc.id}`} 
+          {(locations || []).map((loc) => (
+            <Link
+              key={loc.id}
+              href={`/raporlar?location=${loc.id}`}
               className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap", 
-                filterLocation === loc.id ? "bg-white text-slate-900 shadow-md ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800"
+                'px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px] flex items-center',
+                filterLocation === loc.id ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
               )}
+              style={{ letterSpacing: '-0.005em' }}
             >
               {loc.name.split(' ')[0]}
             </Link>
@@ -178,7 +173,7 @@ export default async function ReportsPage({
         </div>
       </header>
 
-      <CashFlowClientUI 
+      <CashFlowClientUI
         locations={locations || []}
         initialData={filteredData}
         filterLocation={filterLocation}

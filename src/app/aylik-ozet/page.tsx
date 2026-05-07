@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { Calendar, TrendingUp, Receipt, Activity, Building2, FileText, type LucideIcon } from 'lucide-react';
+import { Activity, Building2, Receipt, FileText, type LucideIcon } from 'lucide-react';
 import MonthSelector from '@/features/ledger/components/MonthSelector';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +19,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
 
   type InvestmentRow = { totalAmount?: number | null };
   const totalInv = (investments || []).reduce((acc: number, i: InvestmentRow) => acc + (i.totalAmount || 0), 0);
-  const monthlyAmortization = totalInv > 0 ? totalInv / 36 : 0; // 36 Aylık (3 Yıl) Amortisman
+  const monthlyAmortization = totalInv > 0 ? totalInv / 36 : 0;
 
   const currentMonthStr = new Date().toISOString().slice(0, 7);
   type PerfMonthRow = { month: string };
@@ -50,7 +50,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
 
   for (const perf of currentPerformances) {
     const loc = perf.location;
-    
+
     const recurringTotal = (allExpenses || [])
         .filter(e => {
             if (e.type !== 'RECURRING') return false;
@@ -69,7 +69,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
           if (e.type === 'RECURRING') return false;
           const d = e.description || '';
           if (d.includes('[Sabit Kira]') || d.includes('[AVM Aidat]') || d.includes('[Ciro Payı]')) return false;
-          
+
           const expMonthStr = e.month ? e.month.slice(0, 7) : e.createdAt.slice(0, 7);
           return expMonthStr === selectedMonthStr && (!e.locationId || e.locationId === loc.id);
         })
@@ -107,154 +107,148 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   });
 
   return (
-    <div className="page-wrapper min-h-screen bg-slate-50 space-y-8 p-6 md:p-10">
-      
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-            <Calendar size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight uppercase">
-              {monthName} <span className="text-slate-400">Raporu</span>
-            </h1>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Operasyonel Finansal Analiz</p>
-          </div>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <p className="apple-eyebrow">Aylık Özet</p>
+          <h1 className="apple-headline mt-3">{monthName}</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            Operasyonel finansal analiz ve dönem performans özeti.
+          </p>
         </div>
-        
-        <div className="flex items-center gap-3 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dönem:</span>
+
+        <div className="flex items-center gap-3 px-4 py-2 bg-[--bg-elevated] rounded-full">
+          <span className="text-[12px] text-[--text-tertiary]">Dönem:</span>
           <MonthSelector availableMonths={availableMonths} selectedMonthStr={selectedMonthStr} />
         </div>
       </header>
 
-      {/* Main Stats (EBIT Focused) */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* EBITDA / Net Profit Card */}
-        <div className={cn(
-          "lg:col-span-2 p-10 rounded-[32px] border-2 flex flex-col justify-between min-h-[300px] shadow-sm",
-          isProfitable ? "bg-white border-emerald-100" : "bg-white border-rose-100"
-        )}>
+      {/* Main Stats */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
+        <div className="lg:col-span-2 apple-card p-8 md:p-10 flex flex-col justify-between min-h-[300px]">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
-                isProfitable ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100")}>
-                {isProfitable ? "Net Operasyonel Kar" : "Net Operasyonel Zarar"}
+              <span className={cn('chip', isProfitable ? 'chip-accent' : 'chip-red')}>
+                {isProfitable ? 'Net Operasyonel Kâr' : 'Net Operasyonel Zarar'}
               </span>
-              <span className="px-3 py-1 bg-slate-50 text-slate-500 border border-slate-100 rounded-full text-[10px] font-bold uppercase tracking-widest">AMORTİSMAN SONRASI (EBIT)</span>
+              <span className="chip">EBIT</span>
             </div>
             <div className="flex items-baseline gap-4">
-              <h2 className={cn("text-6xl font-bold tracking-tighter tabular-nums italic", isProfitable ? "text-slate-900" : "text-rose-600")}>
+              <h2 className={cn(
+                'text-[44px] md:text-[64px] font-semibold tabular-nums',
+                isProfitable ? 'text-[--text]' : 'text-[--danger]'
+              )} style={{ letterSpacing: '-0.025em' }}>
                 ₺{ebitProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
               </h2>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-10 pt-8 border-t border-slate-100">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-10 pt-8 border-t border-[--border]">
             <SummaryStat label="Kişi Başı" val={`₺${(ebitProfit / 4).toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`} />
-            <SummaryStat label="ROI" val={`%${((ebitProfit / totalInv) * 100).toFixed(1)}`} />
-            <SummaryStat label="Kar Marjı" val={`%${((rawNetCash / monthRevenue) * 100).toFixed(1)}`} />
+            <SummaryStat label="ROI" val={`%${totalInv > 0 ? ((ebitProfit / totalInv) * 100).toFixed(1) : '—'}`} />
+            <SummaryStat label="Kâr Marjı" val={`%${monthRevenue > 0 ? ((rawNetCash / monthRevenue) * 100).toFixed(1) : '—'}`} />
             <SummaryStat label="Hacim" val={`₺${monthRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`} />
           </div>
         </div>
 
-        {/* Amortization Detail Card */}
-        <div className="bg-white border border-slate-200 p-10 rounded-[32px] shadow-sm flex flex-col justify-between">
+        <div className="apple-card p-8 md:p-10 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-               <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-100"><TrendingUp size={20} /></div>
-               <h3 className="text-lg font-bold text-slate-900 uppercase">Amortisman</h3>
-            </div>
-            <div className="py-6 px-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <p className="text-3xl font-bold text-slate-900 italic tracking-tighter">₺{monthlyAmortization.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">Aylık Pay</p>
+            <p className="apple-eyebrow">Amortisman</p>
+            <h3 className="apple-title-1">Aylık Pay</h3>
+            <div className="rounded-[18px] bg-[--bg-elevated] p-5 text-center mt-3">
+              <p className="text-[28px] md:text-[32px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.025em' }}>
+                ₺{monthlyAmortization.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+              </p>
             </div>
           </div>
-          <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed text-center">
-            Yatırımın <span className="text-slate-600 font-bold">36 aylık</span> planına göre hesaplanan sabit maliyet.
+          <p className="text-[12px] text-[--text-tertiary] mt-6 leading-relaxed">
+            Yatırımın <span className="text-[--text-secondary] font-medium">36 aylık</span> planına göre hesaplanan sabit maliyet.
           </p>
         </div>
       </section>
 
       {/* Quick Analysis Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <AnalysisCard label="Brüt Satış" val={monthRevenue} icon={Activity} color="blue" />
-        <AnalysisCard label="Sabit Gider (AVM)" val={monthAvmFixed} icon={Building2} color="rose" />
-        <AnalysisCard label="Operasyonel" val={monthOperationalExpense + monthCommission} icon={Receipt} color="amber" />
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+        <AnalysisCard label="Brüt Satış" val={monthRevenue} icon={Activity} />
+        <AnalysisCard label="Sabit Gider (AVM)" val={monthAvmFixed} icon={Building2} />
+        <AnalysisCard label="Operasyonel" val={monthOperationalExpense + monthCommission} icon={Receipt} />
       </section>
 
       {/* Transaction Details */}
-      <section className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
-        <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-           <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400"><FileText size={18} /></div>
-              <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight">İşlem Bazlı Audit</h3>
-           </div>
+      <section className="apple-card overflow-hidden">
+        <div className="px-6 py-5 border-b border-[--border]">
+          <p className="apple-eyebrow">Audit</p>
+          <h3 className="apple-title-2 mt-1 flex items-center gap-2">
+            <FileText size={18} strokeWidth={1.75} className="text-[--text-tertiary]" />
+            İşlem Detayı
+          </h3>
         </div>
-        
+
         <div className="overflow-x-auto">
-           <table className="w-full text-left">
-              <thead>
-                 <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic border-b border-slate-100">
-                    <th className="px-8 py-5">Açıklama</th>
-                    <th className="text-center">Sorumlu</th>
-                    <th className="text-center">Tip</th>
-                    <th className="px-8 text-right">Tutar</th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                 {monthSpecificExpenses.map((exp) => (
-                    <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
-                       <td className="px-8 py-5">
-                          <div className="flex flex-col">
-                             <span className="text-sm font-bold text-slate-800">{exp.description}</span>
-                             <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{exp.location?.name || 'Genel'}</span>
-                          </div>
-                       </td>
-                       <td className="text-center">
-                          <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 uppercase">{exp.paidBy || 'MERKEZ'}</span>
-                       </td>
-                       <td className="text-center">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">{exp.type === 'RECURRING' ? 'Sabit' : 'Ad-hoc'}</span>
-                       </td>
-                       <td className="px-8 text-right">
-                          <span className="text-sm font-bold text-slate-900 tabular-nums italic">₺{exp.amountWithVat?.toLocaleString('tr-TR')}</span>
-                       </td>
-                    </tr>
-                 ))}
-              </tbody>
-           </table>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-[--border]">
+                <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Açıklama</th>
+                <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-center">Sorumlu</th>
+                <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-center">Tip</th>
+                <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-right">Tutar</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[--border-soft]">
+              {monthSpecificExpenses.map((exp) => (
+                <tr key={exp.id} className="hover:bg-[--bg-subtle] transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{exp.description}</span>
+                      <span className="text-[12px] text-[--text-tertiary] mt-0.5">{exp.location?.name || 'Genel'}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-[13px] text-[--text-secondary]">{exp.paidBy || 'Merkez'}</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-[13px] text-[--text-secondary]">{exp.type === 'RECURRING' ? 'Sabit' : 'Ad-hoc'}</span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <span className="text-[15px] font-medium tabular-nums text-[--text]">₺{exp.amountWithVat?.toLocaleString('tr-TR')}</span>
+                  </td>
+                </tr>
+              ))}
+              {monthSpecificExpenses.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-12 text-center text-[14px] text-[--text-tertiary]">
+                    Bu dönem için kayıt bulunmuyor.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
-
     </div>
   );
 }
 
-function SummaryStat({ label, val }: { label: string, val: string }) {
+function SummaryStat({ label, val }: { label: string; val: string }) {
   return (
-    <div className="space-y-1">
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-      <p className="text-lg font-bold text-slate-900 italic tracking-tighter">{val}</p>
+    <div>
+      <p className="text-[12px] text-[--text-tertiary]">{label}</p>
+      <p className="text-[18px] md:text-[20px] font-semibold tabular-nums text-[--text] mt-1" style={{ letterSpacing: '-0.014em' }}>{val}</p>
     </div>
   );
 }
 
-function AnalysisCard({ label, val, icon: Icon, color }: { label: string; val: number; icon: LucideIcon; color: 'blue' | 'rose' | 'amber' }) {
-  const colors: Record<'blue' | 'rose' | 'amber', string> = {
-    blue: "bg-blue-600",
-    rose: "bg-rose-600",
-    amber: "bg-amber-600"
-  };
+function AnalysisCard({ label, val, icon: Icon }: { label: string; val: number; icon: LucideIcon }) {
   return (
-    <div className="bg-white border border-slate-200 p-8 rounded-3xl space-y-4 shadow-sm">
-      <div className="flex items-center justify-between">
-         <div className={cn("p-2.5 rounded-xl text-white shadow-lg shadow-inner", colors[color])}><Icon size={18} /></div>
-         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+    <div className="apple-card p-6 md:p-7">
+      <div className="w-10 h-10 rounded-full bg-[--bg-elevated] text-[--text-secondary] flex items-center justify-center">
+        <Icon size={18} strokeWidth={1.75} />
       </div>
-      <p className="text-3xl font-bold text-slate-900 tabular-nums tracking-tighter italic">₺{val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
+      <p className="text-[13px] text-[--text-secondary] mt-5" style={{ letterSpacing: '-0.005em' }}>{label}</p>
+      <p className="text-[24px] md:text-[28px] font-semibold tabular-nums text-[--text] mt-1" style={{ letterSpacing: '-0.022em' }}>
+        ₺{val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+      </p>
     </div>
   );
 }

@@ -2,19 +2,17 @@
 import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
-import { 
-  Settings, 
-  ShieldCheck, 
-  Database, 
-  Users, 
-  MapPin, 
-  Sliders, 
+import {
+  ShieldCheck,
+  Database,
+  Users,
+  MapPin,
+  Sliders,
   HelpCircle,
   Trash2,
   Mail,
   UserPlus,
   Shield,
-  Zap,
   KeySquare,
   Lock,
   Loader2,
@@ -23,8 +21,7 @@ import {
   Eye,
   Cloud,
   Server,
-  Gauge,
-  Workflow
+  Workflow,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -68,7 +65,6 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // User Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -141,380 +137,342 @@ export default function SettingsClientUI({ locations, parameters, users, current
 
   const selectedProfile = users.find((u) => u.id === selectedProfileId);
   const superAdminCount = users.filter((user) => user.role === 'superadmin').length;
-  const liveMode = parameters?.SETTING_ANIMATION_SPEED === 2 ? 'Premium' : parameters?.SETTING_ANIMATION_SPEED === 1 ? 'Standart' : 'Hızlı';
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
-      
-      {/* Premium Header */}
-      <header className="flex flex-col md:flex-row md:items-start justify-between gap-8">
-        <div className="space-y-1.5">
-           <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-100">
-                 <Settings size={28} />
-              </div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Sistem Ayarları</h1>
-           </div>
-           <p className="text-sm text-slate-500 font-medium italic pl-1">
-              Operasyonel parametreler, lokasyon bazlı yapılandırmalar ve erişim kontrolü.
-           </p>
-        </div>
-        
-        <div className="hidden lg:flex items-center gap-4">
-           <div className="bg-white border border-slate-200 px-6 py-4 rounded-[24px] shadow-sm flex items-center gap-5">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg"><Zap size={20} /></div>
-              <div className="flex flex-col">
-                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">SİSTEM VERSİYON</span>
-                 <span className="text-sm font-bold text-slate-900 tracking-tight">Build 2026.0406 <span className="text-[10px] font-medium text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full ml-1">STABLE</span></span>
-              </div>
-           </div>
-        </div>
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
+      {/* Header */}
+      <header>
+        <p className="apple-eyebrow">Sistem</p>
+        <h1 className="apple-headline mt-3">Sistem Ayarları</h1>
+        <p className="mt-4 apple-body max-w-2xl">
+          Operasyonel parametreler, lokasyon yapılandırmaları ve erişim kontrolü.
+        </p>
       </header>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatusCard label="Aktif Şube" value={`${locations.length}`} description="Sistemde tanımlı lokasyon" icon={<MapPin size={16} />} tone="blue" />
-        <StatusCard label="Kullanıcı" value={`${users.length}`} description="Yetkili hesap adedi" icon={<Users size={16} />} tone="slate" />
-        <StatusCard label="Süper Admin" value={`${superAdminCount}`} description="Yüksek yetkili hesaplar" icon={<ShieldCheck size={16} />} tone="amber" />
-        <StatusCard label="Çalışma Modu" value={liveMode} description="Arayüz davranış profili" icon={<Gauge size={16} />} tone="emerald" />
+      {/* Status cards */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+        <StatusCard label="Aktif Şube" value={`${locations.length}`} icon={<MapPin size={18} strokeWidth={1.75} />} />
+        <StatusCard label="Kullanıcı" value={`${users.length}`} icon={<Users size={18} strokeWidth={1.75} />} />
+        <StatusCard label="Süper Admin" value={`${superAdminCount}`} icon={<ShieldCheck size={18} strokeWidth={1.75} />} highlight />
+        <StatusCard label="Build" value="2026.04" icon={<Database size={18} strokeWidth={1.75} />} />
       </section>
 
       {/* Tabs Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-         
-         <aside className="lg:col-span-3 space-y-2 lg:sticky lg:top-8">
-            <div className="p-1 bg-slate-50 rounded-[28px] border border-slate-200 space-y-1">
-               <TabButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} icon={<Sliders size={18} />} label="Genel Yapılandırma" />
-               <TabButton active={activeTab === 'locations'} onClick={() => setActiveTab('locations')} icon={<MapPin size={18} />} label="Şube Ayarları" />
-               <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="Erişim & Yetki" />
-               <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label="Profil Ayarları" />
-               <TabButton active={activeTab === 'integrations'} onClick={() => setActiveTab('integrations')} icon={<Workflow size={18} />} label="Entegrasyonlar" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
+        <aside className="lg:col-span-3 space-y-3 lg:sticky lg:top-20">
+          <div className="apple-card p-2 space-y-1">
+            <TabButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} icon={<Sliders size={16} strokeWidth={1.75} />} label="Genel" />
+            <TabButton active={activeTab === 'locations'} onClick={() => setActiveTab('locations')} icon={<MapPin size={16} strokeWidth={1.75} />} label="Şube" />
+            <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={16} strokeWidth={1.75} />} label="Erişim" />
+            <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={16} strokeWidth={1.75} />} label="Profil" />
+            <TabButton active={activeTab === 'integrations'} onClick={() => setActiveTab('integrations')} icon={<Workflow size={16} strokeWidth={1.75} />} label="Entegrasyon" />
+          </div>
+
+          <div className="apple-card p-5 bg-[--bg-elevated]">
+            <div className="flex items-center gap-2 text-[--accent]">
+              <HelpCircle size={14} strokeWidth={1.75} />
+              <span className="text-[12px] font-medium">Sistem Notu</span>
             </div>
-            
-            <div className="pt-6 px-4">
-               <div className="p-6 rounded-[24px] bg-blue-50 border border-blue-100/50 space-y-4">
-                  <div className="flex items-center gap-2 text-blue-600">
-                     <HelpCircle size={16} />
-                     <span className="text-[10px] font-bold uppercase tracking-widest">Sistem Notu</span>
+            <p className="text-[13px] text-[--text-secondary] mt-2 leading-relaxed">
+              Burada yapacağınız değişiklikler dashboard ve raporları geriye dönük etkileyebilir.
+            </p>
+          </div>
+        </aside>
+
+        <main className="lg:col-span-9">
+          <AnimatePresence mode="wait">
+            {activeTab === 'general' && (
+              <motion.div key="general" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
+                <SectionHeader title="Finansal Temeller" eyebrow="Parametreler" icon={<Database size={18} strokeWidth={1.75} />} />
+                <SystemParametersForm parameters={parameters} />
+              </motion.div>
+            )}
+
+            {activeTab === 'locations' && (
+              <motion.div key="locations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
+                <SectionHeader title="Şube Konfigürasyonu" eyebrow="Lokasyonlar" icon={<MapPin size={18} strokeWidth={1.75} />} />
+                <div className="grid grid-cols-1 gap-5">
+                  {locations.map((loc) => (
+                    <LocationSettingsForm key={loc.id} location={loc} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'users' && (
+              <motion.div key="users" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <SectionHeader title="Erişim Kontrolü" eyebrow="Yetkiler" icon={<ShieldCheck size={18} strokeWidth={1.75} />} />
+                  <button onClick={() => setIsUserModalOpen(true)} className="elite-button-primary">
+                    <UserPlus size={16} strokeWidth={1.75} /> Yeni Hesap
+                  </button>
+                </div>
+
+                <div className="apple-card overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-[--border]">
+                        <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary]">Kullanıcı</th>
+                        <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-center">Yetki</th>
+                        <th className="px-6 py-4 text-[13px] font-medium text-[--text-secondary] text-right">İşlem</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[--border-soft]">
+                      {users.map((user) => (
+                        <tr key={user.id} className="group hover:bg-[--bg-subtle] transition-colors">
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-[--bg-elevated] flex items-center justify-center text-[13px] font-medium text-[--text-secondary]">
+                                {user.fullName ? user.fullName.substring(0, 2).toUpperCase() : 'US'}
+                              </div>
+                              <div className="flex flex-col">
+                                {editingUserId === user.id ? (
+                                  <input
+                                    value={draftProfiles[user.id]?.fullName || ''}
+                                    onChange={(e) => handleDraftChange(user.id, 'fullName', e.target.value)}
+                                    className="h-9 px-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[14px] font-medium text-[--text] outline-none focus:bg-[--surface] focus:border-[--accent]"
+                                  />
+                                ) : (
+                                  <span className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{user.fullName || '—'}</span>
+                                )}
+                                <span className="text-[12px] text-[--text-tertiary]">{user.email}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-center">
+                            {editingUserId === user.id ? (
+                              <select
+                                value={draftProfiles[user.id]?.role || 'user'}
+                                onChange={(e) => handleDraftChange(user.id, 'role', e.target.value)}
+                                className="h-10 px-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[13px] focus:bg-[--surface] focus:border-[--accent]"
+                              >
+                                <option value="user">Standart</option>
+                                <option value="superadmin">Süper Admin</option>
+                              </select>
+                            ) : (
+                              <span className={cn('chip', user.role === 'superadmin' && 'chip-accent')}>
+                                {user.role === 'superadmin' ? <Shield size={12} strokeWidth={1.75} /> : <Users size={12} strokeWidth={1.75} />}
+                                {user.role === 'superadmin' ? 'Süper Admin' : 'Standart'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-5 text-right">
+                            <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => setSelectedProfileId(user.id)}
+                                className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--text] hover:bg-[--bg-elevated] transition-colors"
+                                aria-label="Profil"
+                              >
+                                <Eye size={14} strokeWidth={1.75} />
+                              </button>
+                              {editingUserId === user.id ? (
+                                <button
+                                  onClick={() => handleSaveUser(user.id)}
+                                  disabled={savingUserId === user.id}
+                                  className="elite-button-tertiary"
+                                >
+                                  {savingUserId === user.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} strokeWidth={1.75} />}
+                                  Kaydet
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setEditingUserId(user.id)}
+                                  className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--text] hover:bg-[--bg-elevated] transition-colors"
+                                  aria-label="Yetki Düzenle"
+                                >
+                                  <ShieldCheck size={14} strokeWidth={1.75} />
+                                </button>
+                              )}
+                              {user.id !== currentUser?.id ? (
+                                <button
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--danger] hover:bg-[--danger-soft] transition-colors"
+                                  aria-label="Sil"
+                                >
+                                  <Trash2 size={14} strokeWidth={1.75} />
+                                </button>
+                              ) : (
+                                <span className="text-[11px] font-medium text-[--accent] px-2">Siz</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'profile' && (
+              <motion.div key="profile" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
+                <SectionHeader title="Profilim" eyebrow="Kişisel" icon={<User size={18} strokeWidth={1.75} />} />
+                {currentUser && (
+                  <ProfileSettingsForm
+                    user={{
+                      id: currentUser.id,
+                      email: currentUser.email ?? '',
+                      fullName: currentUser.fullName ?? '',
+                      role: currentUser.role ?? '',
+                      birthDate: currentUser.birthDate,
+                      lastSignIn: currentUser.lastSignIn,
+                    }}
+                  />
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'integrations' && (
+              <motion.div key="integrations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
+                <SectionHeader title="Entegrasyonlar" eyebrow="Bağlantılar" icon={<Cloud size={18} strokeWidth={1.75} />} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="apple-card p-6 space-y-3">
+                    <p className="apple-eyebrow">Veri Servisi</p>
+                    <p className="text-[18px] font-medium text-[--text] inline-flex items-center gap-2">
+                      <Server size={18} strokeWidth={1.75} className="text-[--text-secondary]" /> Supabase
+                    </p>
+                    <p className="text-[14px] text-[--text-secondary] leading-relaxed">
+                      Notlar, giderler, loglar ve kullanıcı verileri Supabase üzerinde yönetiliyor.
+                    </p>
+                    <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-[13px] font-medium text-[--accent] hover:text-[--accent-hover]">
+                      Supabase panelini aç →
+                    </a>
                   </div>
-                  <p className="text-[11px] text-blue-800/70 font-medium leading-relaxed italic">
-                     Burada yapacağınız tüm değişiklikler finansal raporları ve dashboard metriklerini geriye dönük olarak etkileyebilir. Değişiklik yapmadan önce verileri doğrulayın.
+
+                  <div className="apple-card p-6 space-y-3">
+                    <p className="apple-eyebrow">Yayın Ortamı</p>
+                    <p className="text-[18px] font-medium text-[--text] inline-flex items-center gap-2">
+                      <Cloud size={18} strokeWidth={1.75} className="text-[--text-secondary]" /> Vercel
+                    </p>
+                    <p className="text-[14px] text-[--text-secondary] leading-relaxed">
+                      Uygulama dağıtımı ve çalışma zamanı Vercel altyapısında devam ediyor.
+                    </p>
+                    <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-[13px] font-medium text-[--accent] hover:text-[--accent-hover]">
+                      Vercel panelini aç →
+                    </a>
+                  </div>
+                </div>
+
+                <div className="apple-card p-6 bg-[--accent-soft]">
+                  <p className="text-[13px] font-medium text-[--accent]">Gelişmiş Ayar Notu</p>
+                  <p className="text-[14px] text-[--text-secondary] mt-2 leading-relaxed">
+                    Bu panelde yapılan değişiklikler tüm sistem ekranlarına anlık olarak yansıtılır.
                   </p>
-               </div>
-            </div>
-         </aside>
-
-         <main className="lg:col-span-9">
-            <AnimatePresence mode="wait">
-               {activeTab === 'general' && (
-                  <motion.div key="general" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                     <SectionHeader title="Finansal Temeller" icon={<Database className="text-blue-600" />} />
-                     <SystemParametersForm parameters={parameters} />
-                  </motion.div>
-               )}
-
-               {activeTab === 'locations' && (
-                  <motion.div key="locations" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                     <SectionHeader title="Aktif Şube Konfigürasyonu" icon={<MapPin className="text-emerald-600" />} />
-                     <div className="grid grid-cols-1 gap-8">
-                        {locations.map(loc => (
-                           <div key={loc.id} className="group transition-all">
-                              <LocationSettingsForm location={loc} />
-                           </div>
-                        ))}
-                     </div>
-                  </motion.div>
-               )}
-
-               {activeTab === 'users' && (
-                  <motion.div key="users" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                        <SectionHeader title="Yetkili Erişim Kontrolü" icon={<ShieldCheck className="text-slate-900" />} />
-                        <button 
-                           onClick={() => setIsUserModalOpen(true)} 
-                           className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-[11px] font-bold tracking-widest uppercase flex items-center justify-center gap-3 shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95"
-                        >
-                           <UserPlus size={18} /> Yeni Hesap Tanımla
-                        </button>
-                     </div>
-
-                     <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                           <thead>
-                              <tr className="bg-slate-50/50 border-b border-slate-100">
-                                 <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Yetkili Kullanıcı</th>
-                                 <th className="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Erişim Yetkisi</th>
-                                 <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">İşlemler</th>
-                              </tr>
-                           </thead>
-                           <tbody className="divide-y divide-slate-50">
-                              {users.map(user => (
-                                 <tr key={user.id} className="group hover:bg-slate-50/50 transition-all">
-                                    <td className="px-8 py-6">
-                                       <div className="flex items-center gap-4">
-                                          <div className={cn(
-                                             "w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm shadow-inner transition-transform group-hover:scale-110", 
-                                             user.role === 'superadmin' ? 'bg-slate-900 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'
-                                          )}>
-                                             {user.fullName ? user.fullName.substring(0, 2).toUpperCase() : 'US'}
-                                          </div>
-                                          <div className="flex flex-col">
-                                             {editingUserId === user.id ? (
-                                                <input
-                                                  value={draftProfiles[user.id]?.fullName || ''}
-                                                  onChange={(e) => handleDraftChange(user.id, 'fullName', e.target.value)}
-                                                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                                />
-                                             ) : (
-                                                <span className="text-sm font-bold text-slate-900 tracking-tight">{user.fullName || '—'}</span>
-                                             )}
-                                             <span className="text-[11px] font-medium text-slate-400">{user.email}</span>
-                                          </div>
-                                       </div>
-                                    </td>
-                                    <td className="px-6 py-6 text-center">
-                                       {editingUserId === user.id ? (
-                                          <select
-                                            value={draftProfiles[user.id]?.role || 'user'}
-                                            onChange={(e) => handleDraftChange(user.id, 'role', e.target.value)}
-                                            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-[11px] font-bold uppercase tracking-wider"
-                                          >
-                                            <option value="user">Standart Yetkili</option>
-                                            <option value="superadmin">Süper Admin</option>
-                                          </select>
-                                       ) : (
-                                          <span className={cn(
-                                            "inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm", 
-                                            user.role === 'superadmin' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                                          )}>
-                                            {user.role === 'superadmin' ? <Shield size={12} /> : <Users size={12} />}
-                                            {user.role === 'superadmin' ? 'SÜPER ADMİN' : 'STANDART YETKİLİ'}
-                                          </span>
-                                       )}
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <button
-                                            onClick={() => setSelectedProfileId(user.id)}
-                                            className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200"
-                                            title="Profili görüntüle"
-                                          >
-                                            <Eye size={16} />
-                                          </button>
-                                          {editingUserId === user.id ? (
-                                            <button
-                                              onClick={() => handleSaveUser(user.id)}
-                                              disabled={savingUserId === user.id}
-                                              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-60"
-                                            >
-                                              {savingUserId === user.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                              Kaydet
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={() => setEditingUserId(user.id)}
-                                              className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-900"
-                                              title="Yetkiyi düzenle"
-                                            >
-                                              <ShieldCheck size={16} />
-                                            </button>
-                                          )}
-                                          {user.id !== currentUser?.id ? (
-                                            <button 
-                                              onClick={() => handleDeleteUser(user.id)} 
-                                              className="p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100"
-                                              title="Erişimi Kaldır"
-                                            >
-                                              <Trash2 size={16} />
-                                            </button>
-                                          ) : (
-                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest italic px-2">SİZ</span>
-                                          )}
-                                       </div>
-                                    </td>
-                                 </tr>
-                              ))}
-                           </tbody>
-                        </table>
-                     </div>
-                  </motion.div>
-               )}
-
-               {activeTab === 'profile' && (
-                  <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                     <SectionHeader title="Kişisel Profilim" icon={<User className="text-blue-600" />} />
-                     {currentUser && (
-                       <ProfileSettingsForm
-                         user={{
-                           id: currentUser.id,
-                           email: currentUser.email ?? '',
-                           fullName: currentUser.fullName ?? '',
-                           role: currentUser.role ?? '',
-                           birthDate: currentUser.birthDate,
-                           lastSignIn: currentUser.lastSignIn,
-                         }}
-                       />
-                     )}
-                  </motion.div>
-               )}
-
-               {activeTab === 'integrations' && (
-                  <motion.div key="integrations" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                     <SectionHeader title="Supabase & Vercel Entegrasyonu" icon={<Cloud className="text-blue-600" />} />
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-3">
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">VERİ SERVİSİ</p>
-                           <p className="text-sm font-black text-slate-900 inline-flex items-center gap-2"><Server size={16} className="text-emerald-600" /> Supabase</p>
-                           <p className="text-xs text-slate-500 leading-relaxed">
-                              Notlar, giderler, loglar ve kullanıcı metadata verileri Supabase üzerinde yönetiliyor.
-                           </p>
-                           <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
-                              Supabase panelini aç
-                           </a>
-                        </div>
-
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-3">
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">YAYIN ORTAMI</p>
-                           <p className="text-sm font-black text-slate-900 inline-flex items-center gap-2"><Cloud size={16} className="text-slate-700" /> Vercel</p>
-                           <p className="text-xs text-slate-500 leading-relaxed">
-                              Uygulama dağıtımı ve çalışma zamanı Vercel altyapısında devam ediyor.
-                           </p>
-                           <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
-                              Vercel panelini aç
-                           </a>
-                        </div>
-                     </div>
-
-                     <div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-2">Gelişmiş Ayar Notu</p>
-                        <p className="text-sm text-blue-900/80 leading-relaxed">
-                           Bu panelde yapılan kullanıcı, profil ve parametre değişiklikleri tüm sistem ekranlarına anlık olarak yansıtılır.
-                           Özellikle log görüntüleme, dashboard analizleri ve not yönetimi bu ayarlara bağlı çalışır.
-                        </p>
-                     </div>
-                  </motion.div>
-               )}
-            </AnimatePresence>
-         </main>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
       </div>
 
       {/* Add User Modal */}
-      <PremiumModal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} title="Yeni Erişim Hattı Tanımla" maxWidth="max-w-xl">
-         <form onSubmit={handleCreateUser} className="p-8 space-y-8">
-            {formError && (
-               <div className="p-5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold uppercase tracking-widest flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-rose-600 shadow-sm"><Lock size={16} /></div>
-                  {formError}
-               </div>
-            )}
-            
-            <div className="space-y-6">
-               <InputGroup label="TAM AD SOYAD" value={fullName} onChange={setFullName} placeholder="Örn: Okan Berk..." />
-               <InputGroup label="KURUMSAL E-POSTA" icon={<Mail size={18} />} value={email} onChange={setEmail} type="email" placeholder="example@nextgen.com" />
-               <InputGroup label="ERİŞİM ŞİFRESİ" icon={<KeySquare size={18} />} value={password} onChange={setPassword} type="password" placeholder="••••••••" />
-               
-               <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1 italic">YETKİ SEVİYESİ</label>
-                  <div className="grid grid-cols-2 gap-4">
-                     <RoleButton active={role === 'user'} onClick={() => setRole('user')} label="STANDART" icon={<Users size={20} />} />
-                     <RoleButton active={role === 'superadmin'} onClick={() => setRole('superadmin')} label="SÜPER ADMİN" icon={<ShieldCheck size={20} />} isDark />
-                  </div>
-               </div>
+      <PremiumModal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} title="Yeni Hesap Tanımla" maxWidth="max-w-xl">
+        <form onSubmit={handleCreateUser} className="space-y-6 p-1">
+          {formError && (
+            <div className="p-4 rounded-xl bg-[--danger-soft] text-[--danger] text-[14px] flex items-center gap-3">
+              <Lock size={16} strokeWidth={1.75} />
+              {formError}
             </div>
+          )}
 
-            <button 
-               type="submit" 
-               disabled={isSubmitting} 
-               className="w-full h-16 bg-blue-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
-            >
-               {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> İŞLENİYOR...</> : <><UserPlus size={18} /> ERİŞİMİ AKTİF ET</> }
-            </button>
-         </form>
+          <div className="space-y-4">
+            <InputGroup label="Ad Soyad" value={fullName} onChange={setFullName} placeholder="Örn. Okan Berk" />
+            <InputGroup label="E-posta" icon={<Mail size={16} strokeWidth={1.75} />} value={email} onChange={setEmail} type="email" placeholder="ornek@nextgen.com" />
+            <InputGroup label="Şifre" icon={<KeySquare size={16} strokeWidth={1.75} />} value={password} onChange={setPassword} type="password" placeholder="••••••••" />
+
+            <div className="space-y-2">
+              <label className="text-[13px] font-medium text-[--text]">Yetki Seviyesi</label>
+              <div className="grid grid-cols-2 gap-3">
+                <RoleButton active={role === 'user'} onClick={() => setRole('user')} label="Standart" icon={<Users size={18} strokeWidth={1.75} />} />
+                <RoleButton active={role === 'superadmin'} onClick={() => setRole('superadmin')} label="Süper Admin" icon={<ShieldCheck size={18} strokeWidth={1.75} />} />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="elite-button-primary w-full">
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" strokeWidth={2} /> İşleniyor…
+              </>
+            ) : (
+              <>
+                <UserPlus size={16} strokeWidth={1.75} /> Hesap Oluştur
+              </>
+            )}
+          </button>
+        </form>
       </PremiumModal>
 
       <PremiumModal
         isOpen={Boolean(selectedProfile)}
         onClose={() => setSelectedProfileId(null)}
-        title="Profil Yönetimi"
+        title="Profil"
         maxWidth="max-w-lg"
       >
         {selectedProfile && (
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-1">
             <div className="flex items-center gap-4">
-              <div className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-sm",
-                selectedProfile.role === 'superadmin' ? 'bg-slate-900 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'
-              )}>
+              <div className="w-14 h-14 rounded-full bg-[--bg-elevated] flex items-center justify-center text-[15px] font-medium text-[--text-secondary]">
                 {selectedProfile.fullName ? selectedProfile.fullName.substring(0, 2).toUpperCase() : 'US'}
               </div>
               <div>
-                <p className="text-base font-bold text-slate-900">{selectedProfile.fullName || 'İsimsiz Kullanıcı'}</p>
-                <p className="text-xs text-slate-500">{selectedProfile.email}</p>
+                <p className="text-[18px] font-medium text-[--text]" style={{ letterSpacing: '-0.014em' }}>
+                  {selectedProfile.fullName || 'İsimsiz Kullanıcı'}
+                </p>
+                <p className="text-[13px] text-[--text-tertiary]">{selectedProfile.email}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <InfoItem label="Rol" value={selectedProfile.role === 'superadmin' ? 'Süper Admin' : 'Standart Yetkili'} />
-              <InfoItem
-                label="Son Giriş"
-                value={selectedProfile.lastSignIn ? new Date(selectedProfile.lastSignIn).toLocaleString('tr-TR') : 'Kayıt Yok'}
-              />
-              <InfoItem
-                label="Kayıt Tarihi"
-                value={selectedProfile.createdAt ? new Date(selectedProfile.createdAt).toLocaleDateString('tr-TR') : '—'}
-              />
-              <InfoItem label="Kullanıcı ID" value={selectedProfile.id.slice(0, 8)} />
+            <div className="grid grid-cols-2 gap-3">
+              <InfoItem label="Rol" value={selectedProfile.role === 'superadmin' ? 'Süper Admin' : 'Standart'} />
+              <InfoItem label="Son Giriş" value={selectedProfile.lastSignIn ? new Date(selectedProfile.lastSignIn).toLocaleString('tr-TR') : '—'} />
+              <InfoItem label="Kayıt Tarihi" value={selectedProfile.createdAt ? new Date(selectedProfile.createdAt).toLocaleDateString('tr-TR') : '—'} />
+              <InfoItem label="ID" value={selectedProfile.id.slice(0, 8)} />
             </div>
 
-            <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3">
-              Yetki ve ad-soyad güncellemeleri için kullanıcı satırındaki <b>kalkan</b> ikonunu kullanabilirsiniz.
+            <p className="text-[13px] text-[--text-secondary] bg-[--bg-elevated] rounded-xl p-3 leading-relaxed">
+              Yetki ve ad-soyad güncellemeleri için kullanıcı satırındaki kalkan ikonunu kullanabilirsiniz.
             </p>
           </div>
         )}
       </PremiumModal>
-
     </div>
   );
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">{label}</p>
-      <p className="text-sm font-semibold text-slate-800 mt-1 break-words">{value}</p>
+    <div className="rounded-xl bg-[--bg-elevated] p-3">
+      <p className="text-[12px] text-[--text-tertiary]">{label}</p>
+      <p className="text-[14px] font-medium text-[--text] mt-1 break-words">{value}</p>
     </div>
   );
 }
 
-function SectionHeader({ title, icon }: { title: string, icon: React.ReactElement }) {
+function SectionHeader({ title, eyebrow, icon }: { title: string; eyebrow: string; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-4 group">
-       <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition-all">
-          {React.cloneElement(icon as React.ReactElement<{ size?: number }>, { size: 24 })}
-       </div>
-       <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase">{title}</h2>
+    <div>
+      <p className="apple-eyebrow flex items-center gap-2">
+        {icon}
+        {eyebrow}
+      </p>
+      <h2 className="apple-title-1 mt-2">{title}</h2>
     </div>
   );
 }
 
-function TabButton({ active, label, icon, onClick }: { active: boolean, label: string, icon: React.ReactNode, onClick: () => void }) {
+function TabButton({ active, label, icon, onClick }: { active: boolean; label: string; icon: React.ReactNode; onClick: () => void }) {
   return (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       className={cn(
-         "w-full p-4 flex items-center gap-4 rounded-[22px] transition-all text-left", 
-         active 
-            ? "bg-white text-slate-900 shadow-sm border border-slate-200" 
-            : "text-slate-400 hover:text-slate-600 border border-transparent"
+        'w-full p-3 flex items-center gap-3 rounded-xl transition-colors text-left min-h-[44px]',
+        active ? 'bg-[--bg-elevated] text-[--text] font-medium' : 'text-[--text-secondary] hover:text-[--text] hover:bg-[--bg-elevated]'
       )}
     >
-       <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center transition-all", 
-          active ? "bg-slate-900 text-white shadow-lg" : "bg-white border border-slate-100 text-slate-400"
-       )}>
-          {icon}
-       </div>
-       <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
+      <span className={cn(active ? 'text-[--accent]' : 'text-[--text-tertiary]')}>{icon}</span>
+      <span className="text-[14px]" style={{ letterSpacing: '-0.005em' }}>{label}</span>
     </button>
   );
 }
@@ -536,20 +494,20 @@ function InputGroup({
 }) {
   return (
     <div className="space-y-2">
-       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{label}</label>
-       <div className="relative group">
-          {icon && <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">{icon}</div>}
-          <input 
-            type={type} 
-            value={value} 
-            onChange={e => onChange(e.target.value)} 
-            className={cn(
-               "w-full h-14 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all outline-none placeholder:text-slate-300", 
-               icon ? "pl-14 pr-6" : "px-6"
-            )} 
-            placeholder={placeholder} 
-          />
-       </div>
+      <label className="text-[13px] font-medium text-[--text]">{label}</label>
+      <div className="relative">
+        {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[--text-tertiary]">{icon}</div>}
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            'w-full h-12 bg-[--bg-elevated] border border-transparent rounded-xl text-[15px] text-[--text] focus:bg-[--surface] focus:border-[--accent] transition-colors outline-none placeholder:text-[--text-tertiary]',
+            icon ? 'pl-11 pr-4' : 'px-4'
+          )}
+          placeholder={placeholder}
+        />
+      </div>
     </div>
   );
 }
@@ -559,32 +517,25 @@ function RoleButton({
   label,
   icon,
   onClick,
-  isDark = false,
 }: {
   active: boolean;
   label: string;
   icon: React.ReactNode;
   onClick: () => void;
-  isDark?: boolean;
 }) {
   return (
-    <button 
-      type="button" 
-      onClick={onClick} 
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-         "flex-1 p-6 rounded-[24px] border-2 transition-all text-left flex flex-col gap-4", 
-         active 
-            ? (isDark ? "bg-slate-900 border-slate-900 text-white shadow-2xl" : "bg-white border-blue-500 text-slate-900 shadow-xl") 
-            : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
+        'p-4 rounded-xl border transition-colors text-left flex flex-col gap-3 min-h-[44px]',
+        active ? 'bg-[--bg-elevated] border-[--accent] text-[--text]' : 'bg-transparent border-[--border] text-[--text-secondary] hover:bg-[--bg-elevated]'
       )}
     >
-       <div className={cn(
-          "w-12 h-12 rounded-2xl flex items-center justify-center font-bold shadow-inner", 
-          active ? (isDark ? "bg-slate-800 text-white" : "bg-blue-500 text-white") : "bg-white text-slate-200"
-       )}>
-          {icon}
-       </div>
-       <span className="text-[11px] font-bold uppercase tracking-widest">{label}</span>
+      <div className={cn('w-9 h-9 rounded-full flex items-center justify-center', active ? 'bg-[--accent] text-white' : 'bg-[--bg-elevated] text-[--text-tertiary]')}>
+        {icon}
+      </div>
+      <span className="text-[14px] font-medium" style={{ letterSpacing: '-0.005em' }}>{label}</span>
     </button>
   );
 }
@@ -592,31 +543,21 @@ function RoleButton({
 function StatusCard({
   label,
   value,
-  description,
   icon,
-  tone,
+  highlight = false,
 }: {
   label: string;
   value: string;
-  description: string;
   icon: React.ReactNode;
-  tone: 'blue' | 'slate' | 'amber' | 'emerald';
+  highlight?: boolean;
 }) {
-  const tones = {
-    blue: 'border-blue-200 bg-blue-50',
-    slate: 'border-slate-200 bg-white',
-    amber: 'border-amber-200 bg-amber-50',
-    emerald: 'border-emerald-200 bg-emerald-50',
-  };
-
   return (
-    <div className={cn('rounded-2xl border p-4 shadow-sm', tones[tone])}>
+    <div className="apple-card p-5 md:p-6">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
-        <span className="text-slate-500">{icon}</span>
+        <p className="text-[12px] text-[--text-tertiary]">{label}</p>
+        <span className={cn(highlight ? 'text-[--accent]' : 'text-[--text-tertiary]')}>{icon}</span>
       </div>
-      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{description}</p>
+      <p className="mt-2 text-[24px] md:text-[28px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>{value}</p>
     </div>
   );
 }

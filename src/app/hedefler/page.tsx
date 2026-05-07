@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { createClient } from '@/utils/supabase/server';
-import { Target, Trophy, Flame, Zap, CheckCircle2, Circle, TrendingUp, Wallet } from 'lucide-react';
+import { Trophy, Flame, Zap, CheckCircle2, TrendingUp, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLocationInsights } from '@/features/ledger/actions';
 
-export const metadata = { title: 'Hedefler ve Gamification — NextGenBox' };
+export const metadata = { title: 'Hedefler — NextGenBox' };
 export const dynamic = 'force-dynamic';
 
 export default async function TargetsPage() {
@@ -41,124 +41,136 @@ export default async function TargetsPage() {
   });
 
   return (
-    <div className="page-wrapper space-y-8 animate-fade-in">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-100">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100 flex items-center gap-1">
-              <Trophy size={12} /> Oyunlaştırma
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <Target className="w-7 h-7 text-orange-500" />
-            Hedefler & Projeksiyon
-          </h1>
-          <p className="text-sm text-slate-500 mt-2 font-medium">Yatırım geri dönüşü, aylık hedefler ve senaryo projeksiyonlarını tek panelden izleyin.</p>
-        </div>
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
+      <header>
+        <p className="apple-eyebrow">Projeksiyon</p>
+        <h1 className="apple-headline mt-3">Hedefler & Projeksiyon</h1>
+        <p className="mt-4 apple-body max-w-2xl">
+          Yatırım geri dönüşü, aylık hedefler ve senaryo projeksiyonlarını tek panelden izleyin.
+        </p>
       </header>
 
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <InfoCard label="Toplam Yatırım" value={`₺${totalInvestment.toLocaleString('tr-TR')}`} icon={<Wallet className="w-4 h-4" />} />
-        <InfoCard label="Toplam Net Nakit" value={`₺${totalNetCash.toLocaleString('tr-TR')}`} icon={<TrendingUp className="w-4 h-4" />} />
-        <InfoCard label="Amorti Durumu" value={`%${paybackPercentage.toFixed(1)}`} icon={<Flame className="w-4 h-4" />} />
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+        <InfoCard label="Toplam Yatırım" value={`₺${totalInvestment.toLocaleString('tr-TR')}`} icon={<Wallet className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
+        <InfoCard label="Toplam Net Nakit" value={`₺${totalNetCash.toLocaleString('tr-TR')}`} icon={<TrendingUp className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
+        <InfoCard label="Amorti Durumu" value={`%${paybackPercentage.toFixed(1)}`} icon={<Flame className="w-[18px] h-[18px]" strokeWidth={1.75} />} highlight />
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="premium-card p-5 sm:p-8 border-2 border-emerald-100 bg-gradient-to-b from-white to-emerald-50/30">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+        <div className="apple-card p-6 md:p-8">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <Flame className="text-emerald-500" />
-                Ana Sermaye Amortisi
-              </h2>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Toplam ₺{totalInvestment.toLocaleString('tr-TR')} yatırımın geri dönüş oranı.</p>
+              <p className="apple-eyebrow flex items-center gap-2">
+                <Trophy size={14} strokeWidth={1.75} /> Amorti
+              </p>
+              <h2 className="apple-title-1 mt-2">Ana Sermaye Geri Dönüşü</h2>
+              <p className="text-[14px] text-[--text-secondary] mt-2">
+                Toplam ₺{totalInvestment.toLocaleString('tr-TR')} yatırımın geri dönüş oranı.
+              </p>
             </div>
             {isPaybackComplete ? (
-              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-                <CheckCircle2 size={24} />
+              <div className="w-12 h-12 bg-[--accent] rounded-full flex items-center justify-center text-white">
+                <CheckCircle2 size={24} strokeWidth={1.75} />
               </div>
             ) : (
-              <div className="text-right">
-                <span className="text-3xl font-black text-emerald-600 tabular-nums">%{paybackPercentage.toFixed(1)}</span>
-              </div>
+              <span className="text-[28px] md:text-[32px] font-semibold text-[--accent] tabular-nums" style={{ letterSpacing: '-0.025em' }}>
+                %{paybackPercentage.toFixed(1)}
+              </span>
             )}
           </div>
 
           <div className="space-y-3">
-            <div className="h-6 bg-slate-100 rounded-full overflow-hidden shadow-inner flex">
-              <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-1000 ease-out relative" style={{ width: `${paybackPercentage}%` }}>
-                <div className="absolute inset-0 bg-white/20" style={{ backgroundImage: 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)', backgroundSize: '1rem 1rem' }} />
-              </div>
+            <div className="h-2 bg-[--bg-elevated] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[--accent] transition-all duration-700"
+                style={{ width: `${paybackPercentage}%` }}
+              />
             </div>
-            <div className="flex justify-between text-xs font-bold text-slate-500">
-              <span>0 ₺</span>
-              <span>Yatırım: ₺{totalInvestment.toLocaleString('tr-TR')}</span>
+            <div className="flex justify-between text-[12px] text-[--text-tertiary] tabular-nums">
+              <span>₺0</span>
+              <span>₺{totalInvestment.toLocaleString('tr-TR')}</span>
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-emerald-100/50 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-600 font-black shadow-sm">!</div>
-            <div>
-              <p className="text-xs font-bold text-slate-700">Tahmini Kalan Yol</p>
-              <p className="text-sm font-black text-emerald-700">₺{Math.max(0, totalInvestment - totalNetCash).toLocaleString('tr-TR')} Net Kâr Kaldı</p>
-            </div>
+          <div className="mt-8 pt-6 border-t border-[--border]">
+            <p className="text-[13px] text-[--text-secondary]">Tahmini kalan</p>
+            <p className="text-[18px] font-semibold tabular-nums text-[--text] mt-1" style={{ letterSpacing: '-0.014em' }}>
+              ₺{Math.max(0, totalInvestment - totalNetCash).toLocaleString('tr-TR')}
+              <span className="text-[14px] font-normal text-[--text-secondary] ml-2">net kâr</span>
+            </p>
           </div>
         </div>
 
-        <div className="premium-card p-5 sm:p-8 border border-slate-100">
+        <div className="apple-card p-6 md:p-8">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <Zap className="text-blue-500" />
-                Bu Ayki Ciro Hedefi
-              </h2>
-              <p className="text-xs text-slate-500 mt-1 font-medium">{new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })} dönemi için hedeflenen brüt satış hacmi.</p>
+              <p className="apple-eyebrow flex items-center gap-2">
+                <Zap size={14} strokeWidth={1.75} /> Bu Ay
+              </p>
+              <h2 className="apple-title-1 mt-2">Ciro Hedefi</h2>
+              <p className="text-[14px] text-[--text-secondary] mt-2">
+                {new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })} dönemi brüt satış hedefi.
+              </p>
             </div>
-            <div className="text-right">
-              <span className="text-3xl font-black text-blue-600 tabular-nums">%{monthlyProgress.toFixed(1)}</span>
-            </div>
+            <span className="text-[28px] md:text-[32px] font-semibold text-[--accent] tabular-nums" style={{ letterSpacing: '-0.025em' }}>
+              %{monthlyProgress.toFixed(1)}
+            </span>
           </div>
 
           <div className="space-y-3">
-            <div className="h-6 bg-slate-100 rounded-full overflow-hidden shadow-inner flex">
-              <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-1000 ease-out flex items-center justify-end pr-2" style={{ width: `${Math.max(5, monthlyProgress)}%` }}>
-                {monthlyProgress > 15 && <span className="text-[10px] text-white font-bold opacity-80">₺{currentGross.toLocaleString('tr-TR')}</span>}
-              </div>
+            <div className="h-2 bg-[--bg-elevated] rounded-full overflow-hidden">
+              <div className="h-full bg-[--accent] transition-all duration-700" style={{ width: `${Math.max(2, monthlyProgress)}%` }} />
             </div>
-            <div className="flex justify-between text-xs font-bold text-slate-500">
-              <span>0 ₺</span>
-              <span>Hedef: ₺{monthlyRevenueTarget.toLocaleString('tr-TR')}</span>
+            <div className="flex justify-between text-[12px] text-[--text-tertiary] tabular-nums">
+              <span>₺{currentGross.toLocaleString('tr-TR')}</span>
+              <span>₺{monthlyRevenueTarget.toLocaleString('tr-TR')}</span>
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between relative">
-            <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-100 -z-10 -translate-y-1/2" />
+          <div className="mt-8 pt-6 border-t border-[--border] grid grid-cols-4 gap-2">
             {[
               { p: 25, label: 'Isınma' },
-              { p: 50, label: 'Yarı Yol' },
-              { p: 75, label: 'İyi Ritim' },
-              { p: 100, label: 'Kusursuz!' }
+              { p: 50, label: 'Yarı yol' },
+              { p: 75, label: 'Ritim' },
+              { p: 100, label: 'Tamam' },
             ].map((step, i) => (
               <div key={i} className="flex flex-col items-center gap-2">
-                <div className={cn('w-6 h-6 rounded-full border-4 flex items-center justify-center transition-colors', monthlyProgress >= step.p ? 'border-blue-500 bg-white' : 'border-slate-200 bg-white')}>
-                  {monthlyProgress >= step.p && <Circle className="w-2 h-2 fill-blue-500 text-blue-500" />}
-                </div>
-                <span className={cn('text-[9px] uppercase font-black tracking-widest', monthlyProgress >= step.p ? 'text-blue-600' : 'text-slate-400')}>{step.label}</span>
+                <div
+                  className={cn(
+                    'w-4 h-4 rounded-full transition-colors',
+                    monthlyProgress >= step.p ? 'bg-[--accent]' : 'bg-[--bg-elevated]'
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-[11px] font-medium',
+                    monthlyProgress >= step.p ? 'text-[--text]' : 'text-[--text-tertiary]'
+                  )}
+                >
+                  {step.label}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">3 Aylık Projeksiyon Simülasyonu</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="space-y-5">
+        <div>
+          <p className="apple-eyebrow">Simülasyon</p>
+          <h2 className="apple-title-1 mt-2">3 Aylık Projeksiyon</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
           {monthlyProjection.map((p) => (
-            <div key={p.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{p.label}</p>
-              <p className="mt-1 text-xl font-black text-slate-900">₺{p.projectedRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
-              <p className="text-xs text-slate-500 mt-1">Hedef gerçekleşme: %{p.projectedProgress.toFixed(1)}</p>
-              <p className="text-xs mt-2 font-semibold text-rose-600">Kalan hedef farkı: ₺{p.gap.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</p>
+            <div key={p.label} className="apple-card p-5 md:p-6">
+              <p className="text-[13px] text-[--text-secondary]">{p.label}</p>
+              <p className="mt-2 text-[24px] md:text-[28px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>
+                ₺{p.projectedRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-[13px] text-[--text-tertiary] mt-2">Hedef: %{p.projectedProgress.toFixed(1)}</p>
+              <p className="text-[13px] text-[--text-secondary] mt-1">
+                Kalan: ₺{p.gap.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+              </p>
             </div>
           ))}
         </div>
@@ -167,14 +179,14 @@ export default async function TargetsPage() {
   );
 }
 
-function InfoCard({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
+function InfoCard({ label, value, icon, highlight }: { label: string; value: string; icon: ReactNode; highlight?: boolean }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-        <div className="text-slate-500">{icon}</div>
-      </div>
-      <p className="mt-2 text-lg font-bold text-slate-900">{value}</p>
+    <div className="apple-card p-5 md:p-6">
+      <div className={cn(highlight ? 'text-[--accent]' : 'text-[--text-tertiary]')}>{icon}</div>
+      <p className="text-[13px] text-[--text-secondary] mt-3" style={{ letterSpacing: '-0.005em' }}>{label}</p>
+      <p className="mt-1 text-[20px] md:text-[24px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.018em' }}>
+        {value}
+      </p>
     </div>
   );
 }

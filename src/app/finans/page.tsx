@@ -1,6 +1,5 @@
 import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
-import { Target } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -264,35 +263,28 @@ export default async function FinansalTablo({
   ].filter((item) => item.amount > 0);
 
   return (
-    <div className="page-wrapper space-y-8 animate-fade-in">
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
 
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-lg border" style={{ color: '#2F6BFF', background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
-              Tahmini Verimlilik
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-            <Target className="w-6 h-6 text-slate-400" />
-            Finansal Analiz
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Karlılık senaryoları, başabaş noktası analizleri ve lokasyon bazlı sabit gider dökümü.
+          <p className="apple-eyebrow">Tahmini Verimlilik</p>
+          <h1 className="apple-headline mt-3">Finansal Analiz</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            Karlılık senaryoları, başabaş noktası ve lokasyon bazlı sabit gider dökümü.
           </p>
         </div>
 
         <div className="flex gap-3 items-center flex-wrap">
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-xl">
+          <div className="flex items-center gap-1 p-1 bg-[--bg-elevated] rounded-full">
             <Link
                 href={`/finans?month=all`}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
-                  filterMonth === 'all' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                  "px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px] flex items-center",
+                  filterMonth === 'all' ? "bg-[--surface] text-[--text]" : "text-[--text-secondary] hover:text-[--text]"
                 )}
               >
-                HEPSİ
+                Hepsi
               </Link>
             {allMonths.map(m => {
               const label = new Date(m + '-01').toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' });
@@ -301,8 +293,8 @@ export default async function FinansalTablo({
                   key={m}
                   href={`/finans?month=${m}`}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
-                    filterMonth === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                    "px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px] flex items-center",
+                    filterMonth === m ? "bg-[--surface] text-[--text]" : "text-[--text-secondary] hover:text-[--text]"
                   )}
                 >
                   {label}
@@ -310,9 +302,9 @@ export default async function FinansalTablo({
               );
             })}
           </div>
-          <div className="premium-card px-4 py-2.5 flex items-center gap-2">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Bilet Fiyatı</span>
-            <span className="text-sm font-bold text-slate-900">₺{sessionPrice}</span>
+          <div className="apple-card px-4 py-2 flex items-center gap-2">
+            <span className="text-[12px] text-[--text-tertiary]">Bilet</span>
+            <span className="text-[14px] font-medium tabular-nums text-[--text]">₺{sessionPrice}</span>
           </div>
         </div>
       </header>
@@ -327,13 +319,13 @@ export default async function FinansalTablo({
       />
 
       {/* Fixed Expenses per AVM */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Lokasyon Bazlı Sabit Giderler</h2>
-          <div className="flex-1 section-divider" />
+      <section className="space-y-6">
+        <div>
+          <p className="apple-eyebrow">Lokasyonlar</p>
+          <h2 className="apple-title-1 mt-2">Sabit Giderler</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
           {((locations || []) as LocationRow[]).map((loc: LocationRow) => {
             const recurringForLoc = getRecurringTotal(loc.id);
             return (
@@ -356,10 +348,10 @@ export default async function FinansalTablo({
       />
 
       {/* FAQ Section */}
-      <section className="space-y-4 pb-8">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Parametre Bilgi Merkezi</h2>
-          <div className="flex-1 section-divider" />
+      <section className="space-y-6">
+        <div>
+          <p className="apple-eyebrow">Bilgi</p>
+          <h2 className="apple-title-1 mt-2">Parametre Bilgi Merkezi</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -369,16 +361,9 @@ export default async function FinansalTablo({
              { q: "AVM kira ve ciro payı modeli nedir?", a: "Sözleşmeli kira tutarı (Ham Kira + %20 KDV) ve aidata ek olarak, cironun belirli bir yüzdesini aşarsa 'Ciro Payı' devreye girer." },
              { q: "Bütün giderlere KDV dahil mi?", a: "Evet, bu tablodaki tüm giderler (Kira, Aidat, Komisyon ve Ek Masraflar) KDV dahil reel ödeme tutarlarını yansıtır." },
            ].map((item, idx) => (
-             <div key={idx} className="premium-card p-5 hover:shadow-md transition-all group">
-                <div className="flex gap-3">
-                   <div className="w-8 h-8 rounded-full border flex items-center justify-center shrink-0" style={{ background: 'rgba(47,107,255,0.05)', borderColor: 'rgba(47,107,255,0.15)' }}>
-                      <span className="text-[10px] font-bold" style={{ color: '#2F6BFF' }}>Q</span>
-                   </div>
-                   <div className="space-y-2">
-                      <h4 className="text-sm font-bold text-slate-900">{item.q}</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">{item.a}</p>
-                   </div>
-                </div>
+             <div key={idx} className="apple-card p-6 transition-colors">
+                <h4 className="apple-title-2">{item.q}</h4>
+                <p className="mt-2 text-[14px] text-[--text-secondary] leading-relaxed">{item.a}</p>
              </div>
            ))}
         </div>

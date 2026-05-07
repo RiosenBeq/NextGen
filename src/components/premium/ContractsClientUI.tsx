@@ -27,25 +27,13 @@ type ContractDoc = {
   createdAt?: string;
 };
 
-type LocationOption = {
-  id: string;
-  name: string;
-};
+type LocationOption = { id: string; name: string };
 
-const ALLOWED_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-];
+const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE_MB = 15;
 
-const cardShadow =
-  'shadow-[0_1px_3px_rgba(15,23,42,0.04),_0_1px_2px_rgba(15,23,42,0.06)]';
-
 const inputBase =
-  'w-full rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150';
+  'w-full rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200';
 
 export default function ContractsClientUI({
   initialContracts,
@@ -79,17 +67,13 @@ export default function ContractsClientUI({
     setSuccessMsg('');
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError(
-        'Desteklenmeyen dosya türü. Yalnızca PDF, JPG, PNG ve WebP kabul edilmektedir.'
-      );
+      setError('Desteklenmeyen dosya türü. Yalnızca PDF, JPG, PNG ve WebP kabul edilmektedir.');
       return;
     }
 
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > MAX_SIZE_MB) {
-      setError(
-        `Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum ${MAX_SIZE_MB}MB yüklenebilir.`
-      );
+      setError(`Dosya boyutu çok büyük (${sizeMB.toFixed(1)}MB). Maksimum ${MAX_SIZE_MB}MB.`);
       return;
     }
 
@@ -149,53 +133,45 @@ export default function ContractsClientUI({
   };
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
+      {/* Header */}
+      <header>
+        <p className="apple-eyebrow">Belge Arşivi</p>
+        <h1 className="apple-headline mt-3">Sözleşmeler</h1>
+        <p className="mt-4 apple-body max-w-2xl">
+          Lokasyon bazlı kira ve operasyon sözleşmelerini güvenli şekilde yönetin.
+        </p>
+      </header>
+
       {/* Upload Section */}
-      <section
-        className={cn(
-          'rounded-2xl border border-slate-200/70 bg-white p-6 space-y-5',
-          cardShadow
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Upload className="w-5 h-5 text-blue-600" strokeWidth={2} />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-              Sözleşme Yükle
-            </h2>
-            <p className="text-sm text-slate-500">
-              PDF, JPG, PNG veya WebP formatında, maksimum {MAX_SIZE_MB}MB.
-            </p>
-          </div>
+      <section className="apple-card p-6 space-y-5">
+        <div>
+          <p className="apple-eyebrow">Yükle</p>
+          <h2 className="apple-title-1 mt-2">Sözleşme Ekle</h2>
+          <p className="mt-2 text-[14px] text-[--text-secondary]">
+            PDF, JPG, PNG veya WebP. Maksimum {MAX_SIZE_MB}MB.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="relative sm:col-span-2">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
             <select
               value={locationId}
               onChange={(e) => setLocationId(e.target.value)}
-              className={`${inputBase} pl-10 pr-10 py-2.5 appearance-none cursor-pointer`}
+              className={`${inputBase} pl-10 pr-10 py-3 appearance-none cursor-pointer min-h-[44px]`}
             >
               <option value="global">Genel Sözleşme</option>
               {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </option>
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           </div>
 
-          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 transition-all duration-200">
-            {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            {uploading ? 'Yükleniyor...' : 'Dosya Seç'}
+          <label className="elite-button-primary cursor-pointer">
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} /> : <Upload className="w-4 h-4" strokeWidth={1.75} />}
+            {uploading ? 'Yükleniyor…' : 'Dosya Seç'}
             <input
               type="file"
               ref={fileInputRef}
@@ -216,27 +192,25 @@ export default function ContractsClientUI({
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           className={cn(
-            'rounded-2xl border border-dashed p-8 text-center transition-all duration-200 cursor-pointer',
+            'rounded-[18px] border border-dashed p-8 text-center transition-colors duration-200 cursor-pointer',
             isDragging
-              ? 'border-blue-400 bg-blue-50/50'
-              : 'border-slate-200 bg-slate-50/40 hover:border-slate-300 hover:bg-slate-50/70'
+              ? 'border-[--accent] bg-[--accent-soft]'
+              : 'border-[--border-strong] bg-[--bg-subtle] hover:border-[--text-tertiary]'
           )}
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload
             className={cn(
-              'w-8 h-8 mx-auto mb-2 transition-colors',
-              isDragging ? 'text-blue-500' : 'text-slate-300'
+              'w-8 h-8 mx-auto mb-3 transition-colors',
+              isDragging ? 'text-[--accent]' : 'text-[--text-tertiary]'
             )}
             strokeWidth={1.5}
           />
-          <p className="text-sm font-medium text-slate-600">
-            {isDragging
-              ? 'Dosyayı buraya bırakın...'
-              : 'Sözleşmeyi buraya sürükleyin veya tıklayın'}
+          <p className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>
+            {isDragging ? 'Dosyayı buraya bırakın…' : 'Sürükleyin veya tıklayın'}
           </p>
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-2">
-            PDF, JPG, PNG, WebP
+          <p className="text-[12px] text-[--text-tertiary] mt-2">
+            PDF · JPG · PNG · WebP
           </p>
         </div>
 
@@ -246,11 +220,11 @@ export default function ContractsClientUI({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3"
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-2 rounded-xl bg-[--danger-soft] px-4 py-3"
             >
-              <AlertCircle size={16} className="text-rose-500 shrink-0" />
-              <p className="text-sm text-rose-600 font-medium">{error}</p>
+              <AlertCircle size={16} strokeWidth={1.75} className="text-[--danger] shrink-0" />
+              <p className="text-[14px] text-[--danger] font-medium">{error}</p>
             </motion.div>
           )}
           {successMsg && (
@@ -258,60 +232,46 @@ export default function ContractsClientUI({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3"
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-2 rounded-xl bg-[--accent-soft] px-4 py-3"
             >
-              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-              <p className="text-sm text-emerald-700 font-medium">{successMsg}</p>
+              <CheckCircle2 size={16} strokeWidth={1.75} className="text-[--accent] shrink-0" />
+              <p className="text-[14px] text-[--accent] font-medium">{successMsg}</p>
             </motion.div>
           )}
         </AnimatePresence>
       </section>
 
       {/* Contracts List */}
-      <section
-        className={cn(
-          'rounded-2xl border border-slate-200/70 bg-white p-6',
-          cardShadow
-        )}
-      >
+      <section className="apple-card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-          <h3 className="text-base font-semibold tracking-tight text-slate-900">
-            Yüklü Sözleşmeler{' '}
-            <span className="text-slate-400 font-medium tabular-nums">
-              ({filteredContracts.length})
-            </span>
-          </h3>
+          <div>
+            <p className="apple-eyebrow">Arşiv</p>
+            <h3 className="apple-title-1 mt-2">
+              Yüklü Sözleşmeler <span className="text-[--text-tertiary] font-normal tabular-nums">({filteredContracts.length})</span>
+            </h3>
+          </div>
           <div className="relative">
             <select
               value={filterLoc}
               onChange={(e) => setFilterLoc(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 pr-8 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150 appearance-none cursor-pointer"
+              className="rounded-full bg-[--bg-elevated] border border-transparent px-4 py-2 pr-10 text-[13px] text-[--text] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors appearance-none cursor-pointer min-h-[36px]"
             >
               <option value="all">Tüm Lokasyonlar</option>
               <option value="global">Genel</option>
               {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </option>
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           </div>
         </div>
 
         {filteredContracts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/40 p-10 text-center">
-            <FileText
-              className="w-10 h-10 text-slate-300 mx-auto mb-3"
-              strokeWidth={1.5}
-            />
-            <p className="text-sm font-medium text-slate-500">
-              Henüz sözleşme yüklenmedi.
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Yukarıdaki formu kullanarak sözleşme yükleyebilirsiniz.
-            </p>
+          <div className="empty-state">
+            <FileText className="empty-state-icon" />
+            <p className="empty-state-title">Henüz sözleşme yüklenmedi</p>
+            <p className="empty-state-desc">Yukarıdaki formu kullanarak sözleşme yükleyebilirsiniz.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -322,49 +282,43 @@ export default function ContractsClientUI({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                   layout
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 p-3.5 hover:bg-slate-50/50 hover:border-slate-300/70 transition-all duration-200"
+                  className="flex items-center justify-between gap-3 rounded-xl p-3.5 hover:bg-[--bg-subtle] transition-colors duration-200"
                 >
                   <div className="min-w-0 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5 text-blue-600" strokeWidth={1.75} />
+                    <div className="w-10 h-10 rounded-full bg-[--bg-elevated] flex items-center justify-center shrink-0 text-[--text-secondary]">
+                      <FileText className="w-5 h-5" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
+                      <p className="text-[15px] font-medium text-[--text] truncate" style={{ letterSpacing: '-0.005em' }}>
                         {doc.fileName}
                       </p>
-                      <p className="text-xs text-slate-500 tabular-nums">
-                        {doc.relatedId === 'global'
-                          ? 'Genel'
-                          : locationNameMap.get(doc.relatedId) || 'Lokasyon'}{' '}
-                        • {formatDocumentDate(doc)}
+                      <p className="text-[12px] text-[--text-tertiary] tabular-nums">
+                        {doc.relatedId === 'global' ? 'Genel' : locationNameMap.get(doc.relatedId) || 'Lokasyon'} · {formatDocumentDate(doc)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     {doc.fileUrl && (
                       <Link
                         href={doc.fileUrl}
                         target="_blank"
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors duration-200 inline-flex items-center gap-1.5"
+                        className="rounded-full bg-[--bg-elevated] px-3 py-1.5 text-[12px] font-medium text-[--text-secondary] hover:text-[--text] transition-colors inline-flex items-center gap-1.5 min-h-[36px]"
                       >
-                        <ExternalLink size={12} />
-                        Görüntüle
+                        <ExternalLink size={12} strokeWidth={1.75} />
+                        Aç
                       </Link>
                     )}
                     <button
                       type="button"
                       onClick={() => handleDelete(doc.id)}
                       disabled={deletingId === doc.id}
-                      className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 transition-colors duration-200 disabled:opacity-60"
+                      className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--danger] hover:bg-[--danger-soft] disabled:opacity-60 transition-colors"
+                      aria-label="Sil"
                     >
-                      {deletingId === doc.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
+                      {deletingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" strokeWidth={1.75} />}
                     </button>
                   </div>
                 </motion.div>

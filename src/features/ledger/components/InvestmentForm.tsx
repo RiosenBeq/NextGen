@@ -31,7 +31,7 @@ interface Props {
   onClose?: () => void;
 }
 
-const inputBase = "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150";
+const inputBase = "w-full px-4 py-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200 min-h-[44px]";
 
 export function InvestmentForm({ locations, initialData, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,12 +66,9 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
 
   if (!showForm && !initialData) {
     return (
-      <button
-        onClick={() => setShowForm(true)}
-        className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors flex items-center gap-2"
-      >
-        <Plus size={16} />
-        Yeni Yatırım (CAPEX) Ekle
+      <button onClick={() => setShowForm(true)} className="elite-button-secondary">
+        <Plus size={16} strokeWidth={1.75} />
+        Yeni Yatırım Ekle
       </button>
     );
   }
@@ -80,7 +77,7 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Yatırım Kalemi</label>
+          <label className="text-[13px] font-medium text-[--text]">Yatırım Kalemi</label>
           <input
             {...register('description')}
             className={inputBase}
@@ -89,7 +86,7 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Lokasyon</label>
+          <label className="text-[13px] font-medium text-[--text]">Lokasyon</label>
           <select {...register('locationId')} className={cn(inputBase, "appearance-none cursor-pointer")}>
             <option value="">Lokasyon Seçin</option>
             {locations.map(loc => (
@@ -101,7 +98,7 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Tutar</label>
+          <label className="text-[13px] font-medium text-[--text]">Tutar</label>
           <input
             type="number"
             step="0.01"
@@ -112,35 +109,26 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Para Birimi</label>
+          <label className="text-[13px] font-medium text-[--text]">Para Birimi</label>
           <select {...register('currency')} className={cn(inputBase, "appearance-none cursor-pointer")}>
-            <option value="TL">Turkish Lira (₺)</option>
-            <option value="USD">Dollar ($)</option>
+            <option value="TRY">Türk Lirası (₺)</option>
+            <option value="USD">Dolar ($)</option>
             <option value="EUR">Euro (€)</option>
           </select>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Notlar (Opsiyonel)</label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Notlar (Opsiyonel)</label>
           <input type="text" {...register('notes')} className={inputBase} placeholder="..." />
         </div>
       </div>
 
-      <div className="pt-6 border-t border-slate-200/70 flex items-center justify-end gap-3">
-        <button
-          type="button"
-          onClick={handleClose}
-          disabled={isSubmitting}
-          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+      <div className="pt-6 border-t border-[--border] flex items-center justify-end gap-3">
+        <button type="button" onClick={handleClose} disabled={isSubmitting} className="elite-button-secondary">
           Vazgeç
         </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (initialData ? <Edit size={16} /> : <Plus size={16} />)}
-          {initialData ? 'Yatırımı Güncelle' : 'Yatırımı Kaydet'}
+        <button type="submit" disabled={isSubmitting} className="elite-button-primary">
+          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} /> : (initialData ? <Edit size={16} strokeWidth={1.75} /> : <Plus size={16} strokeWidth={1.75} />)}
+          {initialData ? 'Güncelle' : 'Kaydet'}
         </button>
       </div>
     </form>
@@ -153,10 +141,10 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 4 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.08)]"
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="apple-card p-6"
     >
       {content}
     </motion.div>

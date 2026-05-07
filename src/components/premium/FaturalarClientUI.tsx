@@ -50,9 +50,6 @@ interface FaturalarProps {
   locations: Array<{ id: string; name: string }>;
 }
 
-const cardShadow =
-  'shadow-[0_1px_3px_rgba(15,23,42,0.04),_0_1px_2px_rgba(15,23,42,0.06)]';
-
 export default function FaturalarClientUI({
   invoices: initialInvoices,
   avmExpenses: initialAvmExpenses,
@@ -169,126 +166,91 @@ export default function FaturalarClientUI({
   };
 
   return (
-    <div className="space-y-8 pb-24">
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-            Kurumsal Belge Arşivi
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-            E-Faturalar ve Dekontlar
-          </h1>
-          <p className="text-sm text-slate-500 max-w-xl">
-            Sisteme yüklenen tüm gider evrakları, PDF faturalar ve ödeme dekontları
-            burada saklanır.
+        <div>
+          <p className="apple-eyebrow">Belge Arşivi</p>
+          <h1 className="apple-headline mt-3">Faturalar & Belgeler</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            E-faturalar, dekontlar ve gider evrakları tek panelde.
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary]" strokeWidth={1.75} />
             <input
               type="text"
-              placeholder="Belge veya şube ara..."
+              placeholder="Belge veya şube ara…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
+              className="w-full pl-11 pr-4 py-3 rounded-full bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors min-h-[44px]"
             />
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200"
-          >
-            <Plus size={16} />
-            Yeni Belge Ekle
+          <button onClick={() => setIsModalOpen(true)} className="elite-button-primary">
+            <Plus size={16} strokeWidth={2} />
+            Yeni Belge
           </button>
         </div>
       </header>
 
       {/* AVM Section */}
-      <section
-        className={cn(
-          'rounded-2xl border border-slate-200/70 bg-white p-6 space-y-5',
-          cardShadow
-        )}
-      >
+      <section className="apple-card p-6 space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-              AVM Fatura & Ödeme Takibi
-            </h2>
-            <p className="text-sm text-slate-500 max-w-2xl">
-              Kira / aidat / ciro payı kayıtlarını buradan fatura tutarına göre
-              güncelleyin. Bu bölüm operasyonel hesaplardan ayrı takip içindir.
+          <div>
+            <p className="apple-eyebrow">AVM Takibi</p>
+            <h2 className="apple-title-1 mt-2">Fatura & Ödeme</h2>
+            <p className="mt-2 text-[15px] text-[--text-secondary] max-w-2xl" style={{ letterSpacing: '-0.005em' }}>
+              Kira / aidat / ciro payı kayıtlarını fatura tutarına göre güncelleyin.
             </p>
           </div>
-          <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-500">
-            Otomatik kira kayıtları desteklenir
-          </span>
+          <span className="chip">Otomatik kira destekli</span>
         </div>
 
         {avmExpenses.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-400">
+          <div className="rounded-[18px] border border-dashed border-[--border-strong] p-8 text-center text-[14px] text-[--text-tertiary]">
             Bu ay için AVM gider kaydı bulunamadı.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {avmExpenses.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-slate-200/70 bg-white p-4 space-y-3 hover:border-slate-300/70 transition-all duration-200"
-              >
+              <div key={item.id} className="rounded-[18px] border border-[--border] bg-[--surface] p-5 space-y-4 transition-colors hover:border-[--border-strong]">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900 line-clamp-2">
+                  <p className="text-[15px] font-medium text-[--text] line-clamp-2" style={{ letterSpacing: '-0.005em' }}>
                     {item.description}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5 tabular-nums">
-                    {item.location?.name || 'Genel'} · ₺
-                    {item.amountWithVat?.toLocaleString('tr-TR')}
+                  <p className="text-[12px] text-[--text-tertiary] mt-1 tabular-nums">
+                    {item.location?.name || 'Genel'} · ₺{item.amountWithVat?.toLocaleString('tr-TR')}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      handleToggleAvm(item.id, 'isSettled', Boolean(item.isSettled))
-                    }
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                    onClick={() => handleToggleAvm(item.id, 'isSettled', Boolean(item.isSettled))}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[--bg-elevated] px-3 py-1.5 text-[12px] font-medium text-[--text-secondary] hover:text-[--text] transition-colors min-h-[32px]"
                   >
-                    {Boolean(item.isSettled) ? (
-                      <CheckSquare size={14} className="text-emerald-600" />
-                    ) : (
-                      <Square size={14} />
-                    )}
-                    Ödeme Yapıldı
+                    {Boolean(item.isSettled) ? <CheckSquare size={14} strokeWidth={1.75} className="text-[--accent]" /> : <Square size={14} strokeWidth={1.75} />}
+                    Ödeme
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      handleToggleAvm(item.id, 'isOfficial', item.isOfficial)
-                    }
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                    onClick={() => handleToggleAvm(item.id, 'isOfficial', item.isOfficial)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[--bg-elevated] px-3 py-1.5 text-[12px] font-medium text-[--text-secondary] hover:text-[--text] transition-colors min-h-[32px]"
                   >
-                    {item.isOfficial ? (
-                      <CheckSquare size={14} className="text-blue-600" />
-                    ) : (
-                      <Square size={14} />
-                    )}
-                    Fatura Geldi
+                    {item.isOfficial ? <CheckSquare size={14} strokeWidth={1.75} className="text-[--accent]" /> : <Square size={14} strokeWidth={1.75} />}
+                    Fatura
                   </button>
 
-                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                    <Upload size={14} />
-                    {uploadingAvmId === item.id ? 'Yükleniyor...' : 'Fatura Yükle'}
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[--bg-elevated] px-3 py-1.5 text-[12px] font-medium text-[--text-secondary] hover:text-[--text] transition-colors min-h-[32px]">
+                    <Upload size={14} strokeWidth={1.75} />
+                    {uploadingAvmId === item.id ? 'Yükleniyor…' : 'Yükle'}
                     <input
                       type="file"
                       className="hidden"
                       accept=".pdf,.jpg,.jpeg,.png,.webp"
-                      onChange={(e) =>
-                        handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)
-                      }
+                      onChange={(e) => handleUploadAvmInvoice(item.id, e.target.files?.[0] || null)}
                     />
                   </label>
                 </div>
@@ -301,14 +263,11 @@ export default function FaturalarClientUI({
                     onChange={(e) =>
                       setAvmDrafts((prev) => ({
                         ...prev,
-                        [item.id]: {
-                          ...getAvmDraft(item),
-                          amountWithVat: Number(e.target.value || 0),
-                        },
+                        [item.id]: { ...getAvmDraft(item), amountWithVat: Number(e.target.value || 0) },
                       }))
                     }
-                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
-                    placeholder="Fatura Tutarı (KDV Dahil)"
+                    className="rounded-xl bg-[--bg-elevated] border border-transparent px-3 py-2 text-[14px] text-[--text] tabular-nums focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors min-h-[40px]"
+                    placeholder="Tutar (KDV dahil)"
                   />
                   <input
                     type="text"
@@ -319,18 +278,16 @@ export default function FaturalarClientUI({
                         [item.id]: { ...getAvmDraft(item), paidBy: e.target.value },
                       }))
                     }
-                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
-                    placeholder="Ödeyen Hesap"
+                    className="rounded-xl bg-[--bg-elevated] border border-transparent px-3 py-2 text-[14px] text-[--text] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors min-h-[40px]"
+                    placeholder="Ödeyen"
                   />
                   <button
                     type="button"
                     onClick={() => handleSaveAvmFinancials(item)}
                     disabled={savingAvmId === item.id}
-                    className="rounded-lg bg-slate-900 text-white hover:bg-slate-800 px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
+                    className="rounded-full bg-[--text] hover:bg-black text-white px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-60 min-h-[40px]"
                   >
-                    {savingAvmId === item.id
-                      ? 'Kaydediliyor...'
-                      : 'Tutar/Ödeyen Güncelle'}
+                    {savingAvmId === item.id ? 'Kaydediliyor…' : 'Güncelle'}
                   </button>
                 </div>
               </div>
@@ -346,23 +303,15 @@ export default function FaturalarClientUI({
             <motion.div
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="py-20 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center gap-4"
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="empty-state apple-card"
             >
-              <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/70 flex items-center justify-center text-slate-300">
-                <FileText size={32} strokeWidth={1.5} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold tracking-tight text-slate-900">
-                  Henüz Belge Bulunmuyor
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Aramaya uygun bir evrak bulunamadı veya henüz yükleme yapılmadı.
-                </p>
-              </div>
+              <FileText className="empty-state-icon" />
+              <p className="empty-state-title">Henüz Belge Bulunmuyor</p>
+              <p className="empty-state-desc">Aramaya uygun bir evrak bulunamadı veya henüz yükleme yapılmadı.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
               {filteredInvoices.map((inv, idx) => {
                 const attachmentUrl = inv.attachmentUrl ?? undefined;
                 const isPdf = attachmentUrl?.toLowerCase().includes('.pdf') ?? false;
@@ -371,24 +320,19 @@ export default function FaturalarClientUI({
                   <motion.div
                     layout
                     key={inv.id}
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: idx * 0.03, ease: 'easeOut' }}
-                    className={cn(
-                      'group bg-white rounded-2xl border border-slate-200/70 overflow-hidden flex flex-col h-full hover:shadow-md hover:border-slate-300/70 transition-all duration-200',
-                      cardShadow
-                    )}
+                    transition={{ duration: 0.35, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
+                    className="group apple-card overflow-hidden flex flex-col h-full"
                   >
                     {/* Preview */}
-                    <div className="h-44 bg-slate-50 border-b border-slate-100 flex items-center justify-center relative overflow-hidden">
+                    <div className="h-44 bg-[--bg-elevated] border-b border-[--border] flex items-center justify-center relative overflow-hidden">
                       {isPdf ? (
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-14 h-14 rounded-xl bg-white border border-slate-200/70 flex items-center justify-center text-blue-600">
-                            <FileText size={26} strokeWidth={1.5} />
+                        <div className="flex flex-col items-center gap-2.5">
+                          <div className="w-12 h-12 rounded-full bg-[--surface] flex items-center justify-center text-[--text-secondary]">
+                            <FileText size={22} strokeWidth={1.5} />
                           </div>
-                          <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
-                            PDF Arşivi
-                          </span>
+                          <span className="text-[11px] font-medium text-[--text-tertiary]">PDF</span>
                         </div>
                       ) : (
                         <div className="w-full h-full relative">
@@ -401,8 +345,8 @@ export default function FaturalarClientUI({
                               className="object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs font-medium text-slate-400">
-                              Önizleme bulunamadı
+                            <div className="w-full h-full flex items-center justify-center text-[12px] text-[--text-tertiary]">
+                              Önizleme yok
                             </div>
                           )}
                         </div>
@@ -414,51 +358,44 @@ export default function FaturalarClientUI({
                           href={attachmentUrl || '#'}
                           target="_blank"
                           className={cn(
-                            'w-9 h-9 bg-white rounded-lg text-slate-600 shadow-sm border border-slate-200/70 flex items-center justify-center transition-colors',
-                            attachmentUrl
-                              ? 'hover:bg-slate-50 hover:text-blue-600'
-                              : 'pointer-events-none opacity-40'
+                            'w-9 h-9 bg-white rounded-full text-[--text-secondary] border border-[--border] flex items-center justify-center transition-colors',
+                            attachmentUrl ? 'hover:text-[--text]' : 'pointer-events-none opacity-40'
                           )}
+                          aria-label="Görüntüle"
                         >
-                          <Eye size={16} />
+                          <Eye size={16} strokeWidth={1.75} />
                         </Link>
                         <Link
                           href={attachmentUrl || '#'}
                           download
                           target="_blank"
                           className={cn(
-                            'w-9 h-9 bg-white rounded-lg text-slate-600 shadow-sm border border-slate-200/70 flex items-center justify-center transition-colors',
-                            attachmentUrl
-                              ? 'hover:bg-slate-50 hover:text-blue-600'
-                              : 'pointer-events-none opacity-40'
+                            'w-9 h-9 bg-white rounded-full text-[--text-secondary] border border-[--border] flex items-center justify-center transition-colors',
+                            attachmentUrl ? 'hover:text-[--text]' : 'pointer-events-none opacity-40'
                           )}
+                          aria-label="İndir"
                         >
-                          <Download size={16} />
+                          <Download size={16} strokeWidth={1.75} />
                         </Link>
                         <button
                           type="button"
                           onClick={() => handleDelete(inv.id)}
                           disabled={deletingId === inv.id}
-                          className="w-9 h-9 bg-white rounded-lg text-slate-600 hover:text-rose-600 hover:bg-slate-50 disabled:text-slate-300 disabled:cursor-not-allowed shadow-sm border border-slate-200/70 flex items-center justify-center transition-colors"
+                          className="w-9 h-9 bg-white rounded-full text-[--text-secondary] hover:text-[--danger] disabled:opacity-40 border border-[--border] flex items-center justify-center transition-colors"
+                          aria-label="Sil"
                         >
-                          {deletingId === inv.id ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : (
-                            <Trash2 size={16} />
-                          )}
+                          {deletingId === inv.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={16} strokeWidth={1.75} />}
                         </button>
                       </div>
 
                       <div className="absolute top-3 left-3">
                         <span
                           className={cn(
-                            'px-2.5 py-1 rounded-lg text-[10px] font-medium uppercase tracking-wider border',
-                            inv.isOfficial
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                              : 'bg-blue-50 text-blue-600 border-blue-200'
+                            'px-2.5 py-1 rounded-full text-[11px] font-medium',
+                            inv.isOfficial ? 'bg-[--accent-soft] text-[--accent]' : 'bg-white/90 text-[--text-secondary] border border-[--border]'
                           )}
                         >
-                          {inv.isOfficial ? 'Resmi Fatura' : 'Dekont / Fiş'}
+                          {inv.isOfficial ? 'Resmi' : 'Dekont'}
                         </span>
                       </div>
                     </div>
@@ -466,55 +403,43 @@ export default function FaturalarClientUI({
                     {/* Info */}
                     <div className="p-5 flex flex-col flex-1 space-y-4">
                       <div className="flex justify-between items-start gap-3">
-                        <h4 className="font-semibold text-slate-900 text-sm tracking-tight line-clamp-2 leading-snug">
+                        <h4 className="text-[15px] font-medium text-[--text] line-clamp-2 leading-snug" style={{ letterSpacing: '-0.005em' }}>
                           {inv.description}
                         </h4>
-                        <span className="font-semibold text-rose-600 text-sm tabular-nums shrink-0">
+                        <span className="text-[15px] font-medium tabular-nums text-[--text] shrink-0">
                           ₺{inv.amountWithVat?.toLocaleString('tr-TR')}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 mt-auto">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
-                            Lokasyon
-                          </p>
-                          <div className="flex items-center gap-1.5 text-xs text-slate-700 truncate">
-                            <MapPin size={12} className="text-slate-400" />
+                        <div>
+                          <p className="text-[12px] text-[--text-tertiary]">Lokasyon</p>
+                          <div className="flex items-center gap-1.5 text-[13px] text-[--text] truncate mt-0.5">
+                            <MapPin size={12} strokeWidth={1.75} className="text-[--text-tertiary]" />
                             {inv.location?.name || 'Genel Merkez'}
                           </div>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
-                            Tarih
-                          </p>
-                          <div className="flex items-center gap-1.5 text-xs text-slate-700 tabular-nums">
-                            <Calendar size={12} className="text-slate-400" />
-                            {new Date(inv.createdAt).toLocaleDateString('tr-TR', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
+                        <div>
+                          <p className="text-[12px] text-[--text-tertiary]">Tarih</p>
+                          <div className="flex items-center gap-1.5 text-[13px] text-[--text] tabular-nums mt-0.5">
+                            <Calendar size={12} strokeWidth={1.75} className="text-[--text-tertiary]" />
+                            {new Date(inv.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
-                            Kayıt Kaynağı
-                          </p>
-                          <span className="text-xs font-medium text-slate-700">
-                            {inv.paidBy}
-                          </span>
+                      <div className="pt-4 border-t border-[--border] flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-[12px] text-[--text-tertiary]">Kaynak</p>
+                          <span className="text-[13px] text-[--text]">{inv.paidBy}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleDelete(inv.id)}
                           disabled={deletingId === inv.id}
-                          className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 rounded-full bg-[--bg-elevated] text-[--text-secondary] hover:text-[--danger] hover:bg-[--danger-soft] transition-colors text-[12px] font-medium disabled:opacity-60"
                         >
-                          {deletingId === inv.id ? 'Siliniyor...' : 'Belgeyi Sil'}
+                          {deletingId === inv.id ? 'Siliniyor…' : 'Sil'}
                         </button>
                       </div>
                     </div>

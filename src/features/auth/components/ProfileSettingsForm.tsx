@@ -17,7 +17,7 @@ interface ProfileSettingsProps {
 }
 
 const inputBase =
-  'w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150';
+  'w-full px-4 py-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200 min-h-[44px]';
 
 export function ProfileSettingsForm({ user }: ProfileSettingsProps) {
   const [fullName, setFullName] = useState(user.fullName || '');
@@ -58,38 +58,39 @@ export function ProfileSettingsForm({ user }: ProfileSettingsProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="rounded-2xl border border-slate-200/70 bg-white p-6 md:p-8"
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="apple-card p-6 md:p-8"
     >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-semibold tabular-nums">
+          <div className="w-12 h-12 rounded-full bg-[--bg-elevated] text-[--text-secondary] flex items-center justify-center text-[14px] font-medium tabular-nums">
             {initials}
           </div>
           <div>
-            <h3 className="text-xl font-semibold tracking-tight text-slate-900">Profil Ayarları</h3>
-            <p className="text-sm text-slate-500 mt-0.5">İsim, doğum tarihi ve şifre bilgilerinizi buradan güncelleyebilirsiniz.</p>
+            <p className="apple-eyebrow">Profil</p>
+            <h3 className="apple-title-1 mt-1">Hesap Ayarları</h3>
+            <p className="text-[14px] text-[--text-secondary] mt-1">İsim, doğum tarihi ve şifre bilgilerinizi güncelleyin.</p>
           </div>
         </div>
         {status === 'success' && (
-          <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600">
-            <CheckCircle2 size={14} /> Başarıyla kaydedildi
+          <div className="chip-accent inline-flex items-center gap-2">
+            <CheckCircle2 size={14} strokeWidth={1.75} /> Kaydedildi
           </div>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <InputField label="Ad Soyad" icon={<User size={16} />} value={fullName} onChange={setFullName} placeholder="Tam adınız" />
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <InputField label="Ad Soyad" icon={<User size={16} strokeWidth={1.75} />} value={fullName} onChange={setFullName} placeholder="Tam adınız" />
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">E-posta</label>
+          <label className="text-[13px] font-medium text-[--text]">E-posta</label>
           <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Mail size={16} />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[--text-tertiary]">
+              <Mail size={16} strokeWidth={1.75} />
             </div>
-            <div className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-500 truncate">
+            <div className="w-full pl-10 pr-4 py-3 rounded-xl bg-[--bg-elevated] text-[15px] text-[--text-tertiary] truncate min-h-[44px] flex items-center">
               {user.email}
             </div>
           </div>
@@ -97,7 +98,7 @@ export function ProfileSettingsForm({ user }: ProfileSettingsProps) {
 
         <InputField
           label="Doğum Tarihi"
-          icon={<CalendarDays size={16} />}
+          icon={<CalendarDays size={16} strokeWidth={1.75} />}
           value={birthDate}
           onChange={setBirthDate}
           type="date"
@@ -106,37 +107,33 @@ export function ProfileSettingsForm({ user }: ProfileSettingsProps) {
 
         <InputField
           label="Yeni Şifre"
-          icon={<Lock size={16} />}
+          icon={<Lock size={16} strokeWidth={1.75} />}
           value={password}
           onChange={setPassword}
           type="password"
           placeholder="Boş bırakırsanız değişmez"
         />
 
-        <div className="md:col-span-2 rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 space-y-2">
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">Hesap Bilgileri</p>
-          <p className="text-sm text-slate-700 inline-flex items-center gap-2">
-            <Shield size={14} className="text-slate-400" /> Rol: <span className="font-medium text-slate-900">{user.role}</span>
+        <div className="md:col-span-2 rounded-xl bg-[--bg-elevated] p-4 space-y-2">
+          <p className="text-[12px] text-[--text-tertiary]">Hesap Bilgileri</p>
+          <p className="text-[14px] text-[--text] inline-flex items-center gap-2">
+            <Shield size={14} strokeWidth={1.75} className="text-[--text-tertiary]" /> Rol: <span className="font-medium">{user.role}</span>
           </p>
-          <p className="text-xs text-slate-500 tabular-nums">
+          <p className="text-[12px] text-[--text-tertiary] tabular-nums">
             Son giriş: {user.lastSignIn ? new Date(user.lastSignIn).toLocaleString('tr-TR') : '—'}
           </p>
         </div>
 
         {status === 'error' && (
-          <div className="md:col-span-2 rounded-xl border border-rose-200/70 bg-rose-50 px-4 py-3 text-sm text-rose-600 inline-flex items-center gap-2">
-            <AlertCircle size={16} /> {errorMsg}
+          <div className="md:col-span-2 rounded-xl bg-[--danger-soft] px-4 py-3 text-[14px] text-[--danger] inline-flex items-center gap-2">
+            <AlertCircle size={16} strokeWidth={1.75} /> {errorMsg}
           </div>
         )}
 
-        <div className="md:col-span-2 pt-6 border-t border-slate-200/70 flex justify-end gap-3">
-          <button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2 transition-colors"
-          >
-            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Profili Güncelle
+        <div className="md:col-span-2 pt-6 border-t border-[--border] flex justify-end gap-3">
+          <button type="submit" disabled={isSubmitting || !isDirty} className="elite-button-primary">
+            {isSubmitting ? <Loader2 size={16} className="animate-spin" strokeWidth={2} /> : <Save size={16} strokeWidth={1.75} />}
+            Güncelle
           </button>
         </div>
       </form>
@@ -161,9 +158,9 @@ function InputField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <label className="text-[13px] font-medium text-[--text]">{label}</label>
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{icon}</div>
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[--text-tertiary]">{icon}</div>
         <input
           type={type}
           value={value}

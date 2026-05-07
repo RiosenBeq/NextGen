@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import React, { useRef, useState } from 'react';
 import {
   Plus,
-  Wallet,
   FileText,
   AlertCircle,
   CheckCircle2,
@@ -49,9 +48,6 @@ interface LocationItem {
 interface DocumentItem {
   id: string;
 }
-
-const cardShadow =
-  'shadow-[0_1px_3px_rgba(15,23,42,0.04),_0_1px_2px_rgba(15,23,42,0.06)]';
 
 export default function ExpensesClientUI({
   expenses,
@@ -99,33 +95,28 @@ export default function ExpensesClientUI({
   };
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-            Gider Yönetim Merkezi
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 inline-flex items-center gap-3">
-            <Wallet className="w-7 h-7 text-slate-400" strokeWidth={1.75} />
-            Gider Yönetimi
-          </h1>
-          <p className="text-sm text-slate-500 max-w-2xl">
+        <div>
+          <p className="apple-eyebrow">Gider Yönetimi</p>
+          <h1 className="apple-headline mt-3">Gider Kayıtları</h1>
+          <p className="mt-4 apple-body max-w-2xl">
             Gider kayıtları, belge durumu ve ödeme detaylarını tek panelden yönetin.
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <MetricCard label="Bu Ay" value={formatCurrency(thisMonthTotal)} subtle />
-          <MetricCard label="Toplam" value={formatCurrency(total)} />
+          <MetricCard label="Bu Ay" value={formatCurrency(thisMonthTotal)} />
+          <MetricCard label="Toplam" value={formatCurrency(total)} highlight />
           <button
             onClick={() => {
               setEditingExpense(null);
               setShowForm(true);
             }}
-            className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200"
+            className="elite-button-primary"
           >
-            <Plus size={16} /> Yeni Gider
+            <Plus size={16} strokeWidth={2} /> Yeni Gider
           </button>
         </div>
       </header>
@@ -170,41 +161,25 @@ export default function ExpensesClientUI({
         title="Gider Detayı"
       >
         {selectedExpense && (
-          <div className="space-y-6 py-2">
-            <div
-              className={`rounded-2xl border border-slate-200/70 bg-slate-50/50 p-5 ${cardShadow}`}
-            >
-              <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                Tutar
-              </p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">
+          <div className="space-y-6 py-4">
+            <div className="rounded-[18px] bg-[--bg-elevated] p-5">
+              <p className="text-[12px] text-[--text-tertiary]">Tutar</p>
+              <p className="mt-1 text-[28px] md:text-[32px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.025em' }}>
                 {formatCurrency(selectedExpense.amountWithVat)}
               </p>
             </div>
 
             <div className="space-y-4">
               <DetailRow label="Açıklama" value={selectedExpense.description} />
-              <DetailRow
-                label="Tip"
-                value={selectedExpense.type === 'RECURRING' ? 'Aylık' : 'Tek Sefer'}
-              />
-              <DetailRow
-                label="Durum"
-                value={selectedExpense.isOfficial ? 'Resmi Evrak' : 'Belgesiz'}
-              />
-              <DetailRow
-                label="Şube"
-                value={selectedExpense.location?.name || 'Genel'}
-              />
-              <DetailRow
-                label="Tarih"
-                value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')}
-              />
+              <DetailRow label="Tip" value={selectedExpense.type === 'RECURRING' ? 'Aylık' : 'Tek Sefer'} />
+              <DetailRow label="Durum" value={selectedExpense.isOfficial ? 'Resmi Evrak' : 'Belgesiz'} />
+              <DetailRow label="Şube" value={selectedExpense.location?.name || 'Genel'} />
+              <DetailRow label="Tarih" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
             </div>
 
-            <div className="pt-4 border-t border-slate-100 space-y-3">
-              <p className="text-xs font-medium uppercase tracking-widest text-slate-400 inline-flex items-center gap-2">
-                <FileText size={14} /> Belge Durumu
+            <div className="pt-5 border-t border-[--border] space-y-3">
+              <p className="text-[13px] text-[--text-secondary] inline-flex items-center gap-2">
+                <FileText size={14} strokeWidth={1.75} className="text-[--text-tertiary]" /> Belge Durumu
               </p>
 
               {selectedExpense.attachmentUrl ? (
@@ -212,17 +187,17 @@ export default function ExpensesClientUI({
                   href={selectedExpense.attachmentUrl}
                   target="_blank"
                   rel="noopener"
-                  className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 hover:bg-emerald-100/60 transition-colors duration-200"
+                  className="flex items-center justify-between rounded-xl bg-[--bg-elevated] hover:bg-[#ECECEE] px-4 py-3 transition-colors duration-200"
                 >
-                  <div className="inline-flex items-center gap-2 text-emerald-700 text-sm font-medium">
-                    <CheckCircle2 size={16} /> Belge mevcut
+                  <div className="inline-flex items-center gap-2 text-[14px] font-medium text-[--text]">
+                    <CheckCircle2 size={16} strokeWidth={1.75} className="text-[--accent]" /> Belge mevcut
                   </div>
-                  <ChevronRight size={16} className="text-emerald-500" />
+                  <ChevronRight size={16} strokeWidth={1.75} className="text-[--text-tertiary]" />
                 </a>
               ) : (
                 <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 w-full">
-                    <AlertCircle size={16} /> Belge bulunmuyor
+                  <div className="inline-flex items-center gap-2 text-[14px] text-[--danger] bg-[--danger-soft] rounded-xl px-4 py-3 w-full">
+                    <AlertCircle size={16} strokeWidth={1.75} /> Belge bulunmuyor
                   </div>
                   <input
                     type="file"
@@ -234,15 +209,15 @@ export default function ExpensesClientUI({
                   <button
                     onClick={() => fileRef.current?.click()}
                     disabled={isUploading}
-                    className="w-full rounded-xl border border-dashed border-slate-300 px-4 py-4 text-sm font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-200 inline-flex items-center justify-center gap-2"
+                    className="w-full rounded-full border border-[--border-strong] px-4 py-3 text-[14px] font-medium text-[--text] hover:bg-[--bg-elevated] transition-colors duration-200 inline-flex items-center justify-center gap-2 min-h-[48px]"
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 size={16} className="animate-spin" /> Yükleniyor...
+                        <Loader2 size={16} className="animate-spin" strokeWidth={2} /> Yükleniyor…
                       </>
                     ) : (
                       <>
-                        <UploadCloud size={16} /> Belge Ekle
+                        <UploadCloud size={16} strokeWidth={1.75} /> Belge Ekle
                       </>
                     )}
                   </button>
@@ -259,34 +234,16 @@ export default function ExpensesClientUI({
 function MetricCard({
   label,
   value,
-  subtle = false,
+  highlight = false,
 }: {
   label: string;
   value: string;
-  subtle?: boolean;
+  highlight?: boolean;
 }) {
-  const cardShadow =
-    'shadow-[0_1px_3px_rgba(15,23,42,0.04),_0_1px_2px_rgba(15,23,42,0.06)]';
   return (
-    <div
-      className={`min-w-[160px] rounded-2xl border p-4 ${cardShadow} ${
-        subtle
-          ? 'bg-white border-slate-200/70'
-          : 'bg-slate-900 border-slate-900'
-      }`}
-    >
-      <p
-        className={`text-xs font-medium uppercase tracking-widest ${
-          subtle ? 'text-slate-400' : 'text-slate-400'
-        }`}
-      >
-        {label}
-      </p>
-      <p
-        className={`mt-1 text-xl font-semibold tracking-tight tabular-nums ${
-          subtle ? 'text-slate-900' : 'text-white'
-        }`}
-      >
+    <div className={`min-w-[160px] rounded-[18px] border border-[--border] p-4 ${highlight ? 'bg-[--bg-elevated]' : 'bg-[--surface]'}`}>
+      <p className="text-[12px] text-[--text-tertiary]">{label}</p>
+      <p className="mt-1 text-[20px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.018em' }}>
         {value}
       </p>
     </div>
@@ -296,10 +253,8 @@ function MetricCard({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-        {label}
-      </p>
-      <p className="text-sm font-medium text-slate-900">{value}</p>
+      <p className="text-[12px] text-[--text-tertiary]">{label}</p>
+      <p className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{value}</p>
     </div>
   );
 }

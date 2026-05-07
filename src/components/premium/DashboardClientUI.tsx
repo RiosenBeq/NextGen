@@ -78,39 +78,10 @@ interface DashboardProps {
   allExpenses: DashboardExpense[];
 }
 
-type AccentTone = 'blue' | 'emerald' | 'rose' | 'amber';
-
-const TONE_STYLES: Record<AccentTone, { iconBg: string; iconText: string; chipBg: string; chipText: string }> = {
-  blue: {
-    iconBg: 'bg-blue-50',
-    iconText: 'text-blue-600',
-    chipBg: 'bg-blue-50',
-    chipText: 'text-blue-600',
-  },
-  emerald: {
-    iconBg: 'bg-emerald-50',
-    iconText: 'text-emerald-600',
-    chipBg: 'bg-emerald-50',
-    chipText: 'text-emerald-600',
-  },
-  rose: {
-    iconBg: 'bg-rose-50',
-    iconText: 'text-rose-600',
-    chipBg: 'bg-rose-50',
-    chipText: 'text-rose-600',
-  },
-  amber: {
-    iconBg: 'bg-amber-50',
-    iconText: 'text-amber-600',
-    chipBg: 'bg-amber-50',
-    chipText: 'text-amber-600',
-  },
-};
-
 const fadeInUp = {
-  initial: { opacity: 0, y: 6 },
+  initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.25, ease: 'easeOut' as const },
+  transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 };
 
 export default function DashboardClientUI({
@@ -169,7 +140,6 @@ export default function DashboardClientUI({
 
   const belgesizKayit = recentExpenses.filter((gider) => !gider.attachmentUrl).length;
 
-  // ── Bu ay ↔ geçen ay karşılaştırma kartları için yardımcılar ────────────
   const monthLabel = (yyyymm: string) => {
     const [y, m] = yyyymm.split('-');
     if (!y || !m) return yyyymm;
@@ -189,47 +159,42 @@ export default function DashboardClientUI({
     previousValue: string;
     previousLabel: string;
     pct: number | null;
-    // Pozitif yön (artış iyi mi?). Profit/Revenue/Sessions için: true.
     higherIsBetter: boolean;
-    accent: AccentTone;
   };
 
   const trendCards: MoMTrend[] = [
     {
       id: 'profit',
       title: 'Net Kâr',
-      icon: <Wallet size={16} />,
+      icon: <Wallet size={18} strokeWidth={1.75} />,
       currentValue: formatCurrency(stats.currentMonth.profit),
       currentLabel: monthLabel(stats.currentMonthId),
       previousValue: formatCurrency(stats.previousMonth.profit),
       previousLabel: monthLabel(stats.previousMonthId),
       pct: stats.growth.profit,
       higherIsBetter: true,
-      accent: stats.currentMonth.profit >= 0 ? 'emerald' : 'rose',
     },
     {
       id: 'revenue',
       title: 'Aylık Ciro',
-      icon: <TrendingUp size={16} />,
+      icon: <TrendingUp size={18} strokeWidth={1.75} />,
       currentValue: formatCurrency(stats.currentMonth.revenue),
       currentLabel: monthLabel(stats.currentMonthId),
       previousValue: formatCurrency(stats.previousMonth.revenue),
       previousLabel: monthLabel(stats.previousMonthId),
       pct: stats.growth.revenue,
       higherIsBetter: true,
-      accent: 'blue',
     },
     {
       id: 'sessions',
       title: 'Seans Hacmi',
-      icon: <Activity size={16} />,
+      icon: <Activity size={18} strokeWidth={1.75} />,
       currentValue: `${formatCompact(stats.currentMonth.sessions)} seans`,
       currentLabel: monthLabel(stats.currentMonthId),
       previousValue: `${formatCompact(stats.previousMonth.sessions)} seans`,
       previousLabel: monthLabel(stats.previousMonthId),
       pct: stats.growth.sessions,
       higherIsBetter: true,
-      accent: 'amber',
     },
   ];
 
@@ -237,29 +202,32 @@ export default function DashboardClientUI({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="space-y-8 pb-20"
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-12 md:space-y-16"
     >
       {/* Header Section */}
-      <motion.div {...fadeInUp} className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Genel Bakış</h1>
-          <p className="text-sm text-slate-500">Sistem genelindeki finansal performans ve analiz merkezi.</p>
+      <motion.header {...fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <p className="apple-eyebrow">Genel Bakış</p>
+          <h1 className="apple-headline mt-3">Finansal kontrol merkezi.</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            Sistem genelindeki performans, gider akışı ve aylık karşılaştırmalar bir arada.
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors duration-200 shadow-sm"
+            className="elite-button-primary"
           >
-            <Plus size={16} />
-            Yeni Gider Girişi
+            <Plus size={16} strokeWidth={2} />
+            Yeni Gider
           </button>
         </div>
-      </motion.div>
+      </motion.header>
 
       {/* Summary Cards - Flipping KPIs */}
-      <motion.div {...fadeInUp} transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}>
+      <motion.section {...fadeInUp} transition={{ ...fadeInUp.transition, delay: 0.05 }}>
         <InteractiveKPICards
           totalRevenue={stats.revenue}
           totalExpense={stats.expense}
@@ -269,13 +237,13 @@ export default function DashboardClientUI({
           expenses={allExpenses}
           allMonthCount={allMonthCount}
         />
-      </motion.div>
+      </motion.section>
 
-      {/* MoM Trend Cards — bu ay vs geçen ay */}
+      {/* MoM Trend Cards */}
       <motion.section
         {...fadeInUp}
-        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+        transition={{ ...fadeInUp.transition, delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5"
       >
         {trendCards.map((card) => (
           <TrendCard key={card.id} card={card} />
@@ -283,17 +251,18 @@ export default function DashboardClientUI({
       </motion.section>
 
       {/* Main Content Grid */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Analiz Merkezi */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 md:gap-6">
         <motion.div
           {...fadeInUp}
-          transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
-          className="xl:col-span-8 bg-white border border-slate-200/70 rounded-2xl p-6 sm:p-8 shadow-sm"
+          transition={{ ...fadeInUp.transition, delay: 0.15 }}
+          className="xl:col-span-8 apple-card p-6 md:p-8"
         >
-          <div className="space-y-1 mb-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Analiz</p>
-            <h3 className="text-lg font-semibold tracking-tight text-slate-900">Finansal Analiz Merkezi</h3>
-            <p className="text-sm text-slate-500">Aksiyon alınabilir finansal analiz kartları.</p>
+          <div className="mb-8">
+            <p className="apple-eyebrow">Analiz</p>
+            <h3 className="apple-title-1 mt-2">Finansal Analiz Merkezi</h3>
+            <p className="mt-2 text-[15px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>
+              Aksiyon alınabilir finansal göstergeler.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,7 +270,6 @@ export default function DashboardClientUI({
               title="Ortalama Gider"
               value={formatCurrency(ortalamaGider)}
               description="Son kayıtlar baz alınarak ortalama gider tutarı."
-              tone="blue"
               onClick={() => setIsAverageExpenseModalOpen(true)}
               clickable
             />
@@ -309,19 +277,17 @@ export default function DashboardClientUI({
               title="Resmi Evrak Oranı"
               value={`%${resmiOran.toFixed(1)}`}
               description="Kayıtların resmi evrak ile işlenme oranı."
-              tone="emerald"
             />
             <AnalyzerCard
               title="Belgesiz Son Kayıt"
               value={`${belgesizKayit}`}
-              description="Son kayıtlar içinde belgesi eksik olan gider adedi."
-              tone="rose"
+              description="Son kayıtlar içinde belgesi eksik gider sayısı."
             />
             <AnalyzerCard
               title="Net Nakit Durumu"
               value={formatCurrency(stats.profit)}
               description="Toplam gelir-gider sonrası kalan net nakit."
-              tone={stats.profit >= 0 ? 'emerald' : 'rose'}
+              negative={stats.profit < 0}
             />
           </div>
         </motion.div>
@@ -329,30 +295,26 @@ export default function DashboardClientUI({
         {/* Recent Transactions */}
         <motion.div
           {...fadeInUp}
-          transition={{ duration: 0.25, ease: 'easeOut', delay: 0.2 }}
-          className="xl:col-span-4 bg-white border border-slate-200/70 rounded-2xl overflow-hidden shadow-sm flex flex-col"
+          transition={{ ...fadeInUp.transition, delay: 0.2 }}
+          className="xl:col-span-4 apple-card overflow-hidden flex flex-col"
         >
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Receipt size={18} className="text-slate-400" />
-              <h3 className="text-lg font-semibold tracking-tight text-slate-900">Son Kayıtlar</h3>
+          <div className="px-6 py-5 border-b border-[--border] flex items-center justify-between">
+            <div>
+              <p className="apple-eyebrow">Audit</p>
+              <h3 className="apple-title-2 mt-1">Son Kayıtlar</h3>
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-              Audit
-            </span>
+            <Receipt size={18} strokeWidth={1.75} className="text-[--text-tertiary]" />
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {recentExpenses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
-                  <Receipt size={20} />
-                </div>
-                <p className="text-sm font-medium text-slate-600">Kayıt bulunamadı</p>
-                <p className="mt-1 text-xs text-slate-400">Yeni bir gider girdiğinizde burada listelenir.</p>
+              <div className="empty-state">
+                <Receipt className="empty-state-icon" />
+                <p className="empty-state-title">Kayıt bulunamadı</p>
+                <p className="empty-state-desc">Yeni bir gider girdiğinizde burada listelenir.</p>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-[--border-soft]">
                 {recentExpenses.map((exp, idx) => (
                   <li key={exp.id || idx}>
                     <button
@@ -361,14 +323,16 @@ export default function DashboardClientUI({
                         setSelectedExpense(exp);
                         setIsDrawerOpen(true);
                       }}
-                      className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left hover:bg-slate-50 transition-colors duration-200"
+                      className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left hover:bg-[--bg-subtle] transition-colors duration-200 min-h-[60px]"
                     >
                       <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-medium text-slate-900 truncate">{exp.description}</span>
+                        <span className="text-[15px] font-medium text-[--text] truncate" style={{ letterSpacing: '-0.005em' }}>
+                          {exp.description}
+                        </span>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs font-medium text-slate-500">{exp.location?.name || 'Genel'}</span>
-                          <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <span className="text-xs text-slate-400">
+                          <span className="text-[12px] text-[--text-tertiary]">{exp.location?.name || 'Genel'}</span>
+                          <span className="w-1 h-1 rounded-full bg-[--text-quaternary]" />
+                          <span className="text-[12px] text-[--text-tertiary]">
                             {exp.createdAt
                               ? new Date(exp.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
                               : '-'}
@@ -377,8 +341,8 @@ export default function DashboardClientUI({
                       </div>
                       <span
                         className={cn(
-                          'text-sm font-semibold tabular-nums tracking-tight whitespace-nowrap',
-                          exp.isOfficial ? 'text-slate-900' : 'text-slate-500'
+                          'text-[15px] font-medium tabular-nums whitespace-nowrap',
+                          exp.isOfficial ? 'text-[--text]' : 'text-[--text-secondary]'
                         )}
                       >
                         {formatCurrency(exp.amountWithVat)}
@@ -390,13 +354,13 @@ export default function DashboardClientUI({
             )}
           </div>
 
-          <div className="px-4 py-3 border-t border-slate-100 text-center">
+          <div className="px-6 py-3 border-t border-[--border] text-center">
             <Link
               href="/gelir-gider"
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center justify-center gap-1.5"
+              className="text-[14px] font-medium text-[--accent] hover:text-[--accent-hover] transition-colors inline-flex items-center justify-center gap-1.5"
             >
               Tümünü Görüntüle
-              <ChevronRight size={14} />
+              <ChevronRight size={14} strokeWidth={2} />
             </Link>
           </div>
         </motion.div>
@@ -405,17 +369,15 @@ export default function DashboardClientUI({
       {/* User Notes Section */}
       <motion.section
         {...fadeInUp}
-        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.25 }}
-        className="bg-white border border-slate-200/70 rounded-2xl p-6 sm:p-8 shadow-sm"
+        transition={{ ...fadeInUp.transition, delay: 0.25 }}
+        className="apple-card p-6 md:p-8"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-            <FileText size={18} />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold tracking-tight text-slate-900">Kişisel Notlar</h3>
-            <p className="text-sm text-slate-500 mt-0.5">Operasyonel notlar ve hatırlatıcılar.</p>
-          </div>
+        <div className="mb-8">
+          <p className="apple-eyebrow">Not Defteri</p>
+          <h3 className="apple-title-1 mt-2">Kişisel Notlar</h3>
+          <p className="mt-2 text-[15px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>
+            Operasyonel notlar ve hatırlatıcılar.
+          </p>
         </div>
         <NoteList initialNotes={notes} />
       </motion.section>
@@ -428,9 +390,9 @@ export default function DashboardClientUI({
       <PremiumDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="İşlem Detayı">
         {selectedExpense && (
           <div className="space-y-8 py-4">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Net Tutar</p>
-              <p className="text-3xl font-semibold text-slate-900 tabular-nums tracking-tight">
+            <div className="p-6 rounded-[18px] bg-[--bg-elevated] space-y-2">
+              <p className="text-[13px] text-[--text-secondary]">Net Tutar</p>
+              <p className="text-[32px] font-semibold text-[--text] tabular-nums" style={{ letterSpacing: '-0.025em' }}>
                 {formatCurrency(selectedExpense.amountWithVat)}
               </p>
             </div>
@@ -442,9 +404,9 @@ export default function DashboardClientUI({
               <DetailRow label="Lokasyon" value={selectedExpense.location?.name || 'Tümü'} />
               <DetailRow label="Tarih" value={new Date(selectedExpense.createdAt).toLocaleString('tr-TR')} />
 
-              <div className="pt-6 border-t border-slate-100 space-y-4">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <FileText size={14} className="text-slate-400" />
+              <div className="pt-6 border-t border-[--border] space-y-4">
+                <p className="text-[13px] text-[--text-secondary] flex items-center gap-2">
+                  <FileText size={14} strokeWidth={1.75} className="text-[--text-tertiary]" />
                   Belge Durumu
                 </p>
 
@@ -453,21 +415,19 @@ export default function DashboardClientUI({
                     href={selectedExpense.attachmentUrl}
                     target="_blank"
                     rel="noopener"
-                    className="flex items-center justify-between p-4 rounded-xl bg-emerald-50 border border-emerald-100 group hover:bg-emerald-100/60 transition-colors duration-200"
+                    className="flex items-center justify-between p-4 rounded-xl bg-[--bg-elevated] hover:bg-[#ECECEE] transition-colors duration-200"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="bg-white p-2 rounded-lg text-emerald-600 shadow-sm border border-emerald-100">
-                        <CheckCircle2 size={16} />
-                      </div>
-                      <span className="text-sm font-medium text-emerald-700">Belge Mevcut</span>
+                      <CheckCircle2 size={18} strokeWidth={1.75} className="text-[--accent]" />
+                      <span className="text-[14px] font-medium text-[--text]">Belge Mevcut</span>
                     </div>
-                    <ChevronRight size={16} className="text-emerald-500 group-hover:translate-x-1 transition-transform duration-200" />
+                    <ChevronRight size={16} strokeWidth={1.75} className="text-[--text-tertiary]" />
                   </a>
                 ) : (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-50 border border-rose-100">
-                      <AlertCircle size={16} className="text-rose-600" />
-                      <span className="text-sm font-medium text-rose-700">Belge Bulunmuyor</span>
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-[--danger-soft]">
+                      <AlertCircle size={18} strokeWidth={1.75} className="text-[--danger]" />
+                      <span className="text-[14px] font-medium text-[--danger]">Belge Bulunmuyor</span>
                     </div>
                     <input
                       type="file"
@@ -480,15 +440,15 @@ export default function DashboardClientUI({
                       type="button"
                       onClick={() => fileRef.current?.click()}
                       disabled={isUploading}
-                      className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl border border-dashed border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/40 transition-colors duration-200 text-sm font-medium"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full border border-[--border-strong] text-[--text] hover:bg-[--bg-elevated] transition-colors duration-200 text-[14px] font-medium min-h-[48px]"
                     >
                       {isUploading ? (
                         <>
-                          <Loader2 size={16} className="animate-spin" /> Yükleniyor...
+                          <Loader2 size={16} className="animate-spin" strokeWidth={2} /> Yükleniyor…
                         </>
                       ) : (
                         <>
-                          <UploadCloud size={16} /> Belge Ekle
+                          <UploadCloud size={16} strokeWidth={1.75} /> Belge Ekle
                         </>
                       )}
                     </button>
@@ -500,7 +460,7 @@ export default function DashboardClientUI({
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
-              className="w-full py-3.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors duration-200 shadow-sm"
+              className="elite-button-primary w-full"
             >
               Pencereyi Kapat
             </button>
@@ -515,22 +475,22 @@ export default function DashboardClientUI({
         maxWidth="max-w-lg"
       >
         <div className="p-6 space-y-4">
-          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
-            <p className="text-xs font-medium uppercase tracking-wider text-blue-700">Gösterilen Değer</p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{formatCurrency(ortalamaGider)}</p>
+          <div className="rounded-[18px] bg-[--bg-elevated] p-5">
+            <p className="text-[13px] text-[--text-secondary]">Gösterilen Değer</p>
+            <p className="mt-2 text-[28px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>{formatCurrency(ortalamaGider)}</p>
           </div>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Bu değer, sistemdeki tüm gider kayıtlarının <b>KDV dahil toplam tutarlarının</b> ortalamasıdır.
+          <p className="text-[15px] text-[--text-secondary] leading-relaxed">
+            Bu değer, sistemdeki tüm gider kayıtlarının <b className="text-[--text]">KDV dahil toplam tutarlarının</b> ortalamasıdır.
           </p>
-          <div className="rounded-xl border border-slate-200/70 bg-slate-50 p-4 space-y-2 text-sm">
-            <p className="font-medium text-slate-700">Formül</p>
-            <p className="text-slate-600">Ortalama Gider = Toplam Gider Tutarı / Gider Kayıt Adedi</p>
-            <p className="text-xs text-slate-500">
+          <div className="rounded-xl bg-[--bg-elevated] p-4 space-y-2 text-[14px]">
+            <p className="font-medium text-[--text]">Formül</p>
+            <p className="text-[--text-secondary]">Ortalama Gider = Toplam Gider Tutarı / Gider Kayıt Adedi</p>
+            <p className="text-[12px] text-[--text-tertiary]">
               Toplam Tutar:{' '}
-              <b className="tabular-nums">
+              <b className="tabular-nums text-[--text]">
                 {formatCurrency(allExpenses.reduce((toplam, gider) => toplam + (gider.amountWithVat || 0), 0))}
               </b>{' '}
-              • Kayıt Adedi: <b className="tabular-nums">{allExpenses.length}</b>
+              · Kayıt Adedi: <b className="tabular-nums text-[--text]">{allExpenses.length}</b>
             </p>
           </div>
         </div>
@@ -542,8 +502,8 @@ export default function DashboardClientUI({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</span>
-      <p className="text-sm font-medium text-slate-900">{value}</p>
+      <span className="text-[12px] text-[--text-tertiary]">{label}</span>
+      <p className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>{value}</p>
     </div>
   );
 }
@@ -559,14 +519,10 @@ type TrendCardProps = {
     previousLabel: string;
     pct: number | null;
     higherIsBetter: boolean;
-    accent: AccentTone;
   };
 };
 
 function TrendCard({ card }: TrendCardProps) {
-  const tone = TONE_STYLES[card.accent];
-
-  // Yön + renk: pct null ise nötr badge, sayı ise yüksek/düşük göre yeşil/kırmızı.
   const direction =
     card.pct === null ? 'neutral' : card.pct > 0 ? 'up' : card.pct < 0 ? 'down' : 'flat';
   const isGood =
@@ -576,13 +532,6 @@ function TrendCard({ card }: TrendCardProps) {
         ? direction === 'up'
         : direction === 'down';
 
-  const badgeStyles =
-    isGood === null
-      ? 'bg-slate-100 text-slate-600 border-slate-200'
-      : isGood
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-        : 'bg-rose-50 text-rose-700 border-rose-200/60';
-
   const ArrowIcon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : ArrowRight;
 
   const pctLabel =
@@ -591,31 +540,35 @@ function TrendCard({ card }: TrendCardProps) {
       : `${card.pct > 0 ? '+' : ''}${card.pct.toFixed(1)}%`;
 
   return (
-    <article className="rounded-2xl bg-white border border-slate-200/70 shadow-sm hover:shadow-md hover:border-slate-300/60 transition-all duration-200 p-6">
+    <article className="apple-card p-6 md:p-7">
       <div className="flex items-start justify-between gap-3">
-        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', tone.iconBg, tone.iconText)}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[--bg-elevated] text-[--text-secondary]">
           {card.icon}
         </div>
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium tabular-nums',
-            badgeStyles
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium tabular-nums',
+            isGood === null
+              ? 'bg-[--bg-elevated] text-[--text-secondary]'
+              : isGood
+                ? 'bg-[--accent-soft] text-[--accent]'
+                : 'bg-[--bg-elevated] text-[--text-secondary]'
           )}
         >
-          <ArrowIcon size={12} />
+          <ArrowIcon size={12} strokeWidth={2} />
           {pctLabel}
         </span>
       </div>
 
-      <p className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-500">{card.title}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+      <p className="mt-6 text-[13px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>{card.title}</p>
+      <p className="mt-1 text-[28px] md:text-[32px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>
         {card.currentValue}
       </p>
-      <p className="mt-1 text-xs text-slate-500">{card.currentLabel}</p>
+      <p className="mt-1 text-[12px] text-[--text-tertiary]">{card.currentLabel}</p>
 
-      <div className="mt-4 pt-4 border-t border-slate-100 flex items-baseline justify-between gap-3">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">vs Geçen Ay</span>
-        <span className="text-sm font-medium tabular-nums tracking-tight text-slate-600">
+      <div className="mt-5 pt-4 border-t border-[--border] flex items-baseline justify-between gap-3">
+        <span className="text-[12px] text-[--text-tertiary]">vs Geçen Ay</span>
+        <span className="text-[14px] font-medium tabular-nums text-[--text-secondary]">
           {card.previousValue}
         </span>
       </div>
@@ -627,43 +580,44 @@ function AnalyzerCard({
   title,
   value,
   description,
-  tone,
   onClick,
   clickable = false,
+  negative = false,
 }: {
   title: string;
   value: string;
   description: string;
-  tone: AccentTone;
   onClick?: () => void;
   clickable?: boolean;
+  negative?: boolean;
 }) {
-  const t = TONE_STYLES[tone];
-
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={!clickable}
       className={cn(
-        'rounded-2xl border border-slate-200/70 bg-white p-5 text-left w-full shadow-sm transition-all duration-200',
+        'rounded-[18px] border border-[--border] bg-[--surface] p-5 text-left w-full transition-all duration-200',
         clickable
-          ? 'hover:shadow-md hover:border-slate-300/60 cursor-pointer'
+          ? 'hover:border-[--border-strong] hover:bg-[--bg-subtle] cursor-pointer'
           : 'cursor-default'
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <span className={cn('w-2 h-2 rounded-full', t.iconText.replace('text-', 'bg-'))} />
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{title}</p>
-        </div>
+        <p className="text-[13px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>{title}</p>
         {clickable && (
-          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-md', t.chipBg, t.chipText)}>
-            Detay
+          <span className="text-[12px] font-medium text-[--accent]">
+            Detay →
           </span>
         )}
       </div>
-      <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
-      <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{description}</p>
+      <p className={cn(
+        'mt-3 text-[24px] md:text-[28px] font-semibold tabular-nums',
+        negative ? 'text-[--text-secondary]' : 'text-[--text]'
+      )} style={{ letterSpacing: '-0.022em' }}>
+        {value}
+      </p>
+      <p className="mt-1.5 text-[13px] text-[--text-tertiary] leading-relaxed">{description}</p>
     </button>
   );
 }

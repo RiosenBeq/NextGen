@@ -24,7 +24,7 @@ export default function ClientShell({ children, userEmail, userFullName, userRol
   return (
     <>
       <Sidebar userEmail={userEmail} userFullName={userFullName} userRole={userRole} />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[--bg]">
         <Topbar
           onToggleMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           isOpen={mobileMenuOpen}
@@ -32,8 +32,8 @@ export default function ClientShell({ children, userEmail, userFullName, userRol
           userFullName={userFullName}
           userRole={userRole}
         />
-        <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-48 lg:pb-0">
-          <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
+        <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-32 lg:pb-0">
+          <div className="max-w-[1200px] mx-auto px-5 md:px-8 lg:px-12 py-6 md:py-10 lg:py-14 animate-fade-in">
             {children}
           </div>
         </div>

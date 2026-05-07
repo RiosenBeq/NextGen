@@ -27,24 +27,14 @@ import {
 } from '@/features/avm-payments/actions';
 
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  Kira: 'Kira (Sabit)',
-  Aidat: 'Aidat & Ortak Gider',
-  CiroPay: 'Cirodan Pay',
-  Diger: 'Diğer AVM Ödemesi',
+  Kira: 'Kira',
+  Aidat: 'Aidat',
+  CiroPay: 'Ciro Payı',
+  Diger: 'Diğer',
 };
-
-const PAYMENT_TYPE_COLORS: Record<string, string> = {
-  Kira: 'bg-blue-50 text-blue-700 border-blue-200',
-  Aidat: 'bg-amber-50 text-amber-700 border-amber-200',
-  CiroPay: 'bg-purple-50 text-purple-700 border-purple-200',
-  Diger: 'bg-slate-50 text-slate-600 border-slate-200',
-};
-
-const cardShadow =
-  'shadow-[0_1px_3px_rgba(15,23,42,0.04),_0_1px_2px_rgba(15,23,42,0.06)]';
 
 const inputBase =
-  'w-full h-11 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150';
+  'w-full h-11 rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200';
 
 type AvmPayment = {
   id: string;
@@ -76,20 +66,7 @@ function getCurrentMonth() {
 
 function formatMonth(month: string) {
   const [year, m] = month.split('-');
-  const months = [
-    'Ocak',
-    'Şubat',
-    'Mart',
-    'Nisan',
-    'Mayıs',
-    'Haziran',
-    'Temmuz',
-    'Ağustos',
-    'Eylül',
-    'Ekim',
-    'Kasım',
-    'Aralık',
-  ];
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   return `${months[parseInt(m, 10) - 1]} ${year}`;
 }
 
@@ -165,220 +142,142 @@ export default function AvmPaymentsClientUI({
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-            Bağımsız Takip Modülü
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 inline-flex items-center gap-3">
-            <Receipt className="w-7 h-7 text-slate-400" strokeWidth={1.75} />
-            AVM Ödeme Takibi
-          </h1>
-          <p className="text-sm text-slate-500 max-w-2xl">
-            Kira, aidat ve ciro payı ödemelerinizi manuel olarak girin ve ödeme
-            durumlarını takip edin.
+        <div>
+          <p className="apple-eyebrow">AVM Takibi</p>
+          <h1 className="apple-headline mt-3">Ödeme Kayıtları</h1>
+          <p className="mt-4 apple-body max-w-2xl">
+            Kira, aidat ve ciro payı ödemelerini manuel olarak takip edin.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 shrink-0"
-        >
-          <Plus size={16} /> Yeni Ödeme Ekle
+        <button onClick={() => setShowForm(true)} className="elite-button-primary">
+          <Plus size={16} strokeWidth={2} /> Yeni Ödeme
         </button>
       </header>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          label="Toplam Tutar"
-          value={formatCurrency(stats.total)}
-          icon={<CircleDollarSign className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Ödenen"
-          value={formatCurrency(stats.paidTotal)}
-          accent="emerald"
-          icon={<CheckCircle2 className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Bekleyen"
-          value={formatCurrency(stats.unpaidTotal)}
-          accent="amber"
-          icon={<Clock className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Kayıt Sayısı"
-          value={`${stats.paidCount} / ${filtered.length}`}
-          icon={<Receipt className="w-4 h-4" />}
-        />
+        <StatCard label="Toplam Tutar" value={formatCurrency(stats.total)} icon={<CircleDollarSign className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
+        <StatCard label="Ödenen" value={formatCurrency(stats.paidTotal)} highlight icon={<CheckCircle2 className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
+        <StatCard label="Bekleyen" value={formatCurrency(stats.unpaidTotal)} icon={<Clock className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
+        <StatCard label="Kayıt" value={`${stats.paidCount} / ${filtered.length}`} icon={<Receipt className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
       </div>
 
       {/* Filters */}
-      <section
-        className={cn(
-          'rounded-2xl border border-slate-200/70 bg-white p-4',
-          cardShadow
-        )}
-      >
+      <section className="apple-card p-4 md:p-5">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
             <select
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 pl-10 pr-10 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150 appearance-none cursor-pointer"
+              className="w-full h-11 rounded-full bg-[--bg-elevated] border border-transparent pl-11 pr-10 text-[14px] text-[--text] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors appearance-none cursor-pointer"
             >
               <option value="all">Tüm Aylar</option>
               {availableMonths.map((m) => (
-                <option key={m} value={m}>
-                  {formatMonth(m)}
-                </option>
+                <option key={m} value={m}>{formatMonth(m)}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           </div>
           <div className="relative flex-1">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
             <select
               value={filterLocation}
               onChange={(e) => setFilterLocation(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 pl-10 pr-10 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150 appearance-none cursor-pointer"
+              className="w-full h-11 rounded-full bg-[--bg-elevated] border border-transparent pl-11 pr-10 text-[14px] text-[--text] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors appearance-none cursor-pointer"
             >
               <option value="all">Tüm Lokasyonlar</option>
               {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </option>
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           </div>
         </div>
       </section>
 
       {/* Payment List */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
-          <Receipt className="w-10 h-10 text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
-          <p className="text-sm font-medium text-slate-500">
-            AVM ödeme kaydı bulunamadı.
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Yeni ödeme eklemek için yukarıdaki butonu kullanın.
-          </p>
+        <div className="empty-state apple-card">
+          <Receipt className="empty-state-icon" />
+          <p className="empty-state-title">AVM ödeme kaydı bulunamadı</p>
+          <p className="empty-state-desc">Yeni ödeme eklemek için yukarıdaki butonu kullanın.</p>
         </div>
       ) : (
         <>
           {/* Desktop Table */}
-          <div
-            className={cn(
-              'hidden md:block rounded-2xl border border-slate-200/70 bg-white overflow-hidden',
-              cardShadow
-            )}
-          >
-            <table className="w-full text-sm">
+          <div className="hidden md:block apple-card overflow-hidden">
+            <table className="w-full text-[14px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Durum
-                  </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Lokasyon
-                  </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Ay
-                  </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Tip
-                  </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Açıklama
-                  </th>
-                  <th className="text-right px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Tutar
-                  </th>
-                  <th className="text-center px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    İşlem
-                  </th>
+                <tr className="border-b border-[--border]">
+                  <th className="text-left px-5 py-4 text-[13px] font-medium text-[--text-secondary]">Durum</th>
+                  <th className="text-left px-5 py-4 text-[13px] font-medium text-[--text-secondary]">Lokasyon</th>
+                  <th className="text-left px-5 py-4 text-[13px] font-medium text-[--text-secondary]">Ay</th>
+                  <th className="text-left px-5 py-4 text-[13px] font-medium text-[--text-secondary]">Tip</th>
+                  <th className="text-left px-5 py-4 text-[13px] font-medium text-[--text-secondary]">Açıklama</th>
+                  <th className="text-right px-5 py-4 text-[13px] font-medium text-[--text-secondary]">Tutar</th>
+                  <th className="px-5 py-4" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[--border-soft]">
                 <AnimatePresence>
                   {filtered.map((payment) => (
                     <motion.tr
                       key={payment.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                      className={cn(
-                        'transition-colors duration-200 hover:bg-slate-50/50',
-                        payment.isPaid && 'bg-emerald-50/30'
-                      )}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                      className="hover:bg-[--bg-subtle] transition-colors"
                     >
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-4">
                         <button
                           type="button"
                           onClick={() => handleTogglePaid(payment)}
                           disabled={togglingId === payment.id}
-                          className="inline-flex items-center gap-2 text-xs font-medium transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-2 text-[13px] font-medium transition-colors disabled:opacity-50"
                         >
                           {togglingId === payment.id ? (
-                            <Loader2
-                              size={16}
-                              className="animate-spin text-slate-400"
-                            />
+                            <Loader2 size={16} className="animate-spin text-[--text-tertiary]" />
                           ) : payment.isPaid ? (
-                            <CheckSquare size={16} className="text-emerald-600" />
+                            <CheckSquare size={16} strokeWidth={1.75} className="text-[--accent]" />
                           ) : (
-                            <Square size={16} className="text-slate-300" />
+                            <Square size={16} strokeWidth={1.75} className="text-[--text-tertiary]" />
                           )}
-                          <span
-                            className={
-                              payment.isPaid ? 'text-emerald-700' : 'text-slate-500'
-                            }
-                          >
+                          <span className={payment.isPaid ? 'text-[--text]' : 'text-[--text-secondary]'}>
                             {payment.isPaid ? 'Ödendi' : 'Bekliyor'}
                           </span>
                         </button>
                       </td>
-                      <td className="px-5 py-3 font-medium text-slate-900">
+                      <td className="px-5 py-4 text-[14px] text-[--text]">
                         {getLocationName(payment.location)}
                       </td>
-                      <td className="px-5 py-3 text-slate-600 tabular-nums">
+                      <td className="px-5 py-4 text-[14px] text-[--text-secondary] tabular-nums">
                         {formatMonth(payment.month)}
                       </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className={cn(
-                            'inline-block rounded-lg border px-2 py-0.5 text-xs font-medium',
-                            PAYMENT_TYPE_COLORS[payment.paymentType] ||
-                              PAYMENT_TYPE_COLORS.Diger
-                          )}
-                        >
+                      <td className="px-5 py-4">
+                        <span className="chip">
                           {PAYMENT_TYPE_LABELS[payment.paymentType] || payment.paymentType}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-slate-500 truncate max-w-[200px]">
+                      <td className="px-5 py-4 text-[14px] text-[--text-tertiary] truncate max-w-[200px]">
                         {payment.description || '—'}
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold text-slate-900 tabular-nums">
+                      <td className="px-5 py-4 text-right text-[15px] font-medium tabular-nums text-[--text]">
                         {formatCurrency(payment.amount)}
                       </td>
-                      <td className="px-5 py-3 text-center">
+                      <td className="px-5 py-4 text-right">
                         <button
                           type="button"
                           onClick={() => handleDelete(payment.id)}
                           disabled={deletingId === payment.id}
-                          className="rounded-lg border border-rose-200 bg-rose-50 p-1.5 text-rose-600 hover:bg-rose-100 transition-colors duration-200 disabled:opacity-50"
+                          className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--danger] hover:bg-[--danger-soft] transition-colors disabled:opacity-50"
+                          aria-label="Sil"
                         >
-                          {deletingId === payment.id ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : (
-                            <Trash2 size={14} />
-                          )}
+                          {deletingId === payment.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} strokeWidth={1.75} />}
                         </button>
                       </td>
                     </motion.tr>
@@ -391,74 +290,52 @@ export default function AvmPaymentsClientUI({
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
             {filtered.map((payment) => (
-              <div
-                key={payment.id}
-                className={cn(
-                  'rounded-2xl border bg-white p-4 space-y-3',
-                  cardShadow,
-                  payment.isPaid ? 'border-emerald-200' : 'border-slate-200/70'
-                )}
-              >
+              <div key={payment.id} className="apple-card p-5 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-[15px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>
                       {getLocationName(payment.location)}
                     </p>
-                    <p className="text-xs text-slate-500 tabular-nums">
+                    <p className="text-[12px] text-[--text-tertiary] tabular-nums mt-0.5">
                       {formatMonth(payment.month)}
                     </p>
                   </div>
-                  <span
-                    className={cn(
-                      'inline-block rounded-lg border px-2 py-0.5 text-xs font-medium',
-                      PAYMENT_TYPE_COLORS[payment.paymentType] ||
-                        PAYMENT_TYPE_COLORS.Diger
-                    )}
-                  >
+                  <span className="chip">
                     {PAYMENT_TYPE_LABELS[payment.paymentType] || payment.paymentType}
                   </span>
                 </div>
 
                 {payment.description && (
-                  <p className="text-xs text-slate-500">{payment.description}</p>
+                  <p className="text-[13px] text-[--text-secondary]">{payment.description}</p>
                 )}
 
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-lg font-semibold tracking-tight text-slate-900 tabular-nums">
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-[--border]">
+                  <p className="text-[20px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.018em' }}>
                     {formatCurrency(payment.amount)}
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => handleTogglePaid(payment)}
                       disabled={togglingId === payment.id}
                       className={cn(
-                        'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-200 disabled:opacity-50',
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors disabled:opacity-50 min-h-[36px]',
                         payment.isPaid
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                          ? 'bg-[--accent-soft] text-[--accent]'
+                          : 'bg-[--bg-elevated] text-[--text-secondary]'
                       )}
                     >
-                      {togglingId === payment.id ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : payment.isPaid ? (
-                        <CheckSquare size={14} />
-                      ) : (
-                        <Square size={14} />
-                      )}
+                      {togglingId === payment.id ? <Loader2 size={14} className="animate-spin" /> : payment.isPaid ? <CheckSquare size={14} strokeWidth={1.75} /> : <Square size={14} strokeWidth={1.75} />}
                       {payment.isPaid ? 'Ödendi' : 'Bekliyor'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(payment.id)}
                       disabled={deletingId === payment.id}
-                      className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 transition-colors duration-200 disabled:opacity-50"
+                      className="w-9 h-9 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--danger] hover:bg-[--danger-soft] transition-colors disabled:opacity-50"
+                      aria-label="Sil"
                     >
-                      {deletingId === payment.id ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Trash2 size={14} />
-                      )}
+                      {deletingId === payment.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} strokeWidth={1.75} />}
                     </button>
                   </div>
                 </div>
@@ -472,7 +349,7 @@ export default function AvmPaymentsClientUI({
       <PremiumModal
         isOpen={showForm}
         onClose={() => setShowForm(false)}
-        title="Yeni AVM Ödemesi Ekle"
+        title="Yeni AVM Ödemesi"
         maxWidth="max-w-lg"
       >
         <AddAvmPaymentForm
@@ -491,31 +368,21 @@ export default function AvmPaymentsClientUI({
 function StatCard({
   label,
   value,
-  accent = 'slate',
+  highlight = false,
   icon,
 }: {
   label: string;
   value: string;
-  accent?: 'slate' | 'emerald' | 'amber';
+  highlight?: boolean;
   icon: React.ReactNode;
 }) {
-  const colors = {
-    slate: 'border-slate-200/70 bg-white text-slate-900',
-    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    amber: 'border-amber-200 bg-amber-50 text-amber-900',
-  };
-  const iconColors = {
-    slate: 'text-slate-400',
-    emerald: 'text-emerald-500',
-    amber: 'text-amber-500',
-  };
   return (
-    <div className={cn('rounded-2xl border p-4', cardShadow, colors[accent])}>
-      <div className={cn('mb-1', iconColors[accent])}>{icon}</div>
-      <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-        {label}
+    <div className="apple-card p-5 md:p-6">
+      <div className={highlight ? 'text-[--accent]' : 'text-[--text-tertiary]'}>{icon}</div>
+      <p className="text-[12px] text-[--text-tertiary] mt-3">{label}</p>
+      <p className="mt-1 text-[20px] md:text-[22px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.018em' }}>
+        {value}
       </p>
-      <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">{value}</p>
     </div>
   );
 }
@@ -568,13 +435,12 @@ function AddAvmPaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 p-1">
-      {/* Location */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-slate-700">
-          Lokasyon <span className="text-rose-500">*</span>
+      <div className="space-y-2">
+        <label className="text-[13px] font-medium text-[--text]">
+          Lokasyon <span className="text-[--danger]">*</span>
         </label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           <select
             required
             value={form.locationId}
@@ -582,21 +448,16 @@ function AddAvmPaymentForm({
             className={`${inputBase} pl-10 pr-10 appearance-none cursor-pointer`}
           >
             {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>
-                {loc.name}
-              </option>
+              <option key={loc.id} value={loc.id}>{loc.name}</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
         </div>
       </div>
 
-      {/* Month + Type */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">
-            Ay <span className="text-rose-500">*</span>
-          </label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Ay <span className="text-[--danger]">*</span></label>
           <input
             type="month"
             required
@@ -605,10 +466,8 @@ function AddAvmPaymentForm({
             className={`${inputBase} px-3 cursor-pointer tabular-nums`}
           />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">
-            Ödeme Tipi <span className="text-rose-500">*</span>
-          </label>
+        <div className="space-y-2">
+          <label className="text-[13px] font-medium text-[--text]">Tip <span className="text-[--danger]">*</span></label>
           <div className="relative">
             <select
               required
@@ -616,25 +475,20 @@ function AddAvmPaymentForm({
               onChange={(e) => setForm({ ...form, paymentType: e.target.value })}
               className={`${inputBase} px-3 pr-10 appearance-none cursor-pointer`}
             >
-              <option value="Kira">Kira (Sabit)</option>
-              <option value="Aidat">Aidat & Ortak Gider</option>
-              <option value="CiroPay">Cirodan Pay</option>
+              <option value="Kira">Kira</option>
+              <option value="Aidat">Aidat</option>
+              <option value="CiroPay">Ciro Payı</option>
               <option value="Diger">Diğer</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-tertiary] pointer-events-none" strokeWidth={1.75} />
           </div>
         </div>
       </div>
 
-      {/* Amount */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-slate-700">
-          Tutar (KDV Dahil) <span className="text-rose-500">*</span>
-        </label>
+      <div className="space-y-2">
+        <label className="text-[13px] font-medium text-[--text]">Tutar (KDV Dahil) <span className="text-[--danger]">*</span></label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-slate-500 text-base">
-            ₺
-          </span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[--text-secondary]">₺</span>
           <input
             type="number"
             step="0.01"
@@ -643,46 +497,38 @@ function AddAvmPaymentForm({
             placeholder="0.00"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="w-full h-12 rounded-xl border border-slate-200 bg-white pl-9 pr-4 text-lg font-medium text-slate-900 tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150"
+            className="w-full h-12 rounded-xl bg-[--bg-elevated] border border-transparent pl-9 pr-4 text-[17px] font-medium text-[--text] tabular-nums placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors"
           />
         </div>
       </div>
 
-      {/* Description */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-slate-700">
-          Açıklama (İsteğe Bağlı)
-        </label>
+      <div className="space-y-2">
+        <label className="text-[13px] font-medium text-[--text]">Açıklama (İsteğe Bağlı)</label>
         <input
           type="text"
-          placeholder="Ör: Nisan ayı kira bedeli..."
+          placeholder="Ör: Nisan ayı kira bedeli…"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           className={`${inputBase} px-3`}
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+      <div className="flex items-center justify-end gap-3 pt-3 border-t border-[--border]">
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors duration-200"
+          className="elite-button-tertiary"
         >
           Vazgeç
         </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors duration-200 disabled:opacity-60 inline-flex items-center gap-2"
-        >
+        <button type="submit" disabled={loading} className="elite-button-primary">
           {loading ? (
             <>
-              <Loader2 size={16} className="animate-spin" /> Kaydediliyor...
+              <Loader2 size={16} className="animate-spin" /> Kaydediliyor…
             </>
           ) : (
-            'Ödemeyi Kaydet'
+            'Kaydet'
           )}
         </button>
       </div>

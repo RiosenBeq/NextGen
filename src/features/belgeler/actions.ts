@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAuditLog } from '@/lib/audit';
+import { requireUser } from '@/lib/auth-guards';
+import { getErrorMessage } from '@/lib/errors';
 
 async function getAdminSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,8 +37,33 @@ function sanitizeStorageSegment(input: string) {
     .toLowerCase();
 }
 
+/**
+ * Supabase Storage public URL'inden bucket-relative path'i güvenli şekilde çıkarır.
+ * URL kötüyse veya bucket farklıysa null döner; storage cleanup sessizce atlanır.
+ */
+function extractDocumentsStoragePath(publicUrl: string): string | null {
+  try {
+    const parsed = new URL(publicUrl);
+    const marker = '/storage/v1/object/public/documents/';
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    const path = parsed.pathname.slice(idx + marker.length);
+    return path || null;
+  } catch {
+    const fallbackIdx = publicUrl.indexOf('/documents/');
+    if (fallbackIdx === -1) return null;
+    const path = publicUrl.slice(fallbackIdx + '/documents/'.length);
+    return path || null;
+  }
+}
+
 export async function uploadDocument(formData: FormData) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const adminSupabase = await getAdminSupabase();
     const file = formData.get('file') as File;
@@ -144,7 +171,8 @@ export async function uploadDocument(formData: FormData) {
 
     await createAuditLog('CREATE', 'Document', relatedId, {
       fileName: file.name,
-      fileType: relatedType
+      fileType: relatedType,
+      uploadedBy: guard.user.id,
     });
 
     revalidatePath('/giderler');
@@ -152,10 +180,9 @@ export async function uploadDocument(formData: FormData) {
     revalidatePath('/sozlesmeler');
     revalidatePath('/faturalar');
     return { success: true, publicUrl };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Dosya yüklenemedi.';
+  } catch (error) {
     console.error('Document upload error:', error);
-    return { success: false, error: message };
+    return { success: false, error: getErrorMessage(error, 'Dosya yüklenemedi.') };
   }
 }
 
@@ -170,7 +197,7 @@ export async function getDocuments(relatedType?: string, relatedId?: string) {
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Document fetch error:', error);
     return [];
   }
@@ -178,6 +205,11 @@ export async function getDocuments(relatedType?: string, relatedId?: string) {
 
 export async function deleteDocument(id: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const adminSupabase = await getAdminSupabase();
     const supabase = await createClient();
     const dbClient = adminSupabase || supabase;
@@ -186,10 +218,13 @@ export async function deleteDocument(id: string) {
     const { data: doc } = await dbClient.from('Document').select('fileUrl').eq('id', id).single();
 
     if (doc?.fileUrl) {
-      // Delete from storage
-      const path = doc.fileUrl.split('/documents/')[1];
-      if (path) {
-        await (adminSupabase || supabase).storage.from('documents').remove([path]);
+      const storagePath = extractDocumentsStoragePath(doc.fileUrl);
+      if (storagePath) {
+        const { error: storageError } = await (adminSupabase || supabase)
+          .storage.from('documents').remove([storagePath]);
+        if (storageError) {
+          console.warn('Storage remove warning:', storageError.message);
+        }
       }
     }
 
@@ -197,13 +232,14 @@ export async function deleteDocument(id: string) {
     const { error } = await dbClient.from('Document').delete().eq('id', id);
     if (error) throw error;
 
+    await createAuditLog('DELETE', 'Document', id, { deletedBy: guard.user.id });
+
     revalidatePath('/giderler');
     revalidatePath('/gelir-gider');
     revalidatePath('/sozlesmeler');
     revalidatePath('/faturalar');
     return { success: true };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Belge silinemedi.';
-    return { success: false, error: message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, 'Belge silinemedi.') };
   }
 }

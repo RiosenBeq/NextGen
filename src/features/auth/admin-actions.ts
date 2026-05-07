@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { createAuditLog } from '@/lib/audit';
 import { getErrorMessage } from '@/lib/errors';
+import { requireSuperAdmin } from '@/lib/auth-guards';
 
 const supabaseAdminOptions = {
   auth: {
@@ -45,12 +46,15 @@ type UpdateUserInput = z.input<typeof updateUserSchema>;
  */
 export async function createSystemUser(data: NewUserInput) {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const validatedData = newUserSchema.parse(data);
 
-    // TODO: Gerçekte caller'ın admin olup olmadığını kontrol eden bir Middleware mekanizmasına ek olarak buradan da kontrol edilebilir.
-
     const adminAuthClient = getAdminClient();
-    
+
     // Auth admin api üzerinden kullanıcı yarat
     const { data: userData, error } = await adminAuthClient.auth.admin.createUser({
       email: validatedData.email,
@@ -66,12 +70,14 @@ export async function createSystemUser(data: NewUserInput) {
       throw error;
     }
 
-    await createAuditLog('CREATE', 'AuthUser', userData?.user?.id || 'new', { 
-      email: validatedData.email, 
-      role: validatedData.role 
+    await createAuditLog('CREATE', 'AuthUser', userData?.user?.id || 'new', {
+      email: validatedData.email,
+      role: validatedData.role,
+      createdBy: guard.user.id
     });
 
     revalidatePath('/kullanicilar');
+    revalidatePath('/ayarlar');
     return { success: true, user: { id: userData.user.id, email: userData.user.email } };
   } catch (error) {
     console.error("Create User Error:", error);
@@ -83,15 +89,20 @@ export async function createSystemUser(data: NewUserInput) {
 }
 
 /**
- * Sistemdeki tüm kullanıcıları listeler (Yalnızca Admin)
+ * Sistemdeki tüm kullanıcıları listeler (Yalnızca Super Admin)
  */
 export async function getSystemUsers() {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return [];
+    }
+
     const adminAuthClient = getAdminClient();
     const { data, error } = await adminAuthClient.auth.admin.listUsers();
-    
+
     if (error) throw error;
-    
+
     return data.users.map(u => ({
       id: u.id,
       email: u.email,
@@ -107,18 +118,28 @@ export async function getSystemUsers() {
 }
 
 /**
- * Bir kullanıcıyı siler
+ * Bir kullanıcıyı siler (Sadece Super Admin)
  */
 export async function deleteSystemUser(userId: string) {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
+    if (userId === guard.user.id) {
+      return { success: false, error: 'Kendi hesabınızı silemezsiniz.' };
+    }
+
     const adminAuthClient = getAdminClient();
     const { error } = await adminAuthClient.auth.admin.deleteUser(userId);
-    
+
     if (error) throw error;
 
-    await createAuditLog('DELETE', 'AuthUser', userId);
+    await createAuditLog('DELETE', 'AuthUser', userId, { deletedBy: guard.user.id });
 
     revalidatePath('/kullanicilar');
+    revalidatePath('/ayarlar');
     return { success: true };
   } catch (error) {
     return { success: false, error: getErrorMessage(error) };
@@ -127,6 +148,11 @@ export async function deleteSystemUser(userId: string) {
 
 export async function updateSystemUserAccess(data: UpdateUserInput) {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const validatedData = updateUserSchema.parse(data);
     const adminAuthClient = getAdminClient();
 
@@ -134,6 +160,18 @@ export async function updateSystemUserAccess(data: UpdateUserInput) {
     if (getUserError) throw getUserError;
 
     const currentMetadata = userData.user?.user_metadata || {};
+
+    // Son superadmin korumalı: kendi rolünü düşürmeye çalışırken başka superadmin yoksa engelle
+    if (validatedData.userId === guard.user.id && validatedData.role !== 'superadmin') {
+      const { data: list } = await adminAuthClient.auth.admin.listUsers();
+      const otherSuperadmins = (list?.users || []).filter(u =>
+        u.id !== guard.user!.id && u.user_metadata?.role === 'superadmin'
+      );
+      if (otherSuperadmins.length === 0) {
+        return { success: false, error: 'Sistemde başka süper admin yok; kendi rolünüzü düşüremezsiniz.' };
+      }
+    }
+
     const { error: updateError } = await adminAuthClient.auth.admin.updateUserById(validatedData.userId, {
       user_metadata: {
         ...currentMetadata,
@@ -148,6 +186,7 @@ export async function updateSystemUserAccess(data: UpdateUserInput) {
       role: validatedData.role,
       fullName: validatedData.fullName,
       action: 'UPDATE_ACCESS_PROFILE',
+      updatedBy: guard.user.id,
     });
 
     revalidatePath('/ayarlar');

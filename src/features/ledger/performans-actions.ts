@@ -3,22 +3,18 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { getErrorMessage } from '@/lib/errors';
+import { requireUser } from '@/lib/auth-guards';
+import {
+  addMonthlyPerformance,
+  deleteMonthlyPerformance as deleteMonthlyPerformanceCore,
+} from './actions';
 
+function toMonthIdUTC(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
 
-function normalizeMonthInput(monthInput: string) {
-  const parsed = new Date(monthInput);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error('Geçersiz ay bilgisi.');
-  }
-
-  const normalized = new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), 1, 0, 0, 0, 0));
-  const monthId = `${normalized.getUTCFullYear()}-${String(normalized.getUTCMonth() + 1).padStart(2, '0')}`;
-
-  return {
-    normalizedMonth: normalized.toISOString(),
-    monthId,
-    deterministicId: (locationId: string) => `perf_${monthId}_${locationId}`,
-  };
+function deterministicMonthlyId(locationId: string, month: Date): string {
+  return `perf_${toMonthIdUTC(month)}_${locationId}`;
 }
 
 export async function upsertDailyPerformance(data: {
@@ -29,8 +25,13 @@ export async function upsertDailyPerformance(data: {
   extraMetrics?: Record<string, unknown>;
 }) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
-    
+
     const { data: record, error } = await supabase
       .from('DailyPerformance')
       .upsert({
@@ -64,19 +65,32 @@ export async function upsertDailyPerformance(data: {
   }
 }
 
+/**
+ * Verilen tarihin ait olduğu ayı (UTC) seçer ve DailyPerformance toplamını
+ * MonthlyPerformance'a yansıtır. Tarih sınırı UTC üzerinden hesaplanır;
+ * sunucu yerel saatinden bağımsızdır.
+ */
 async function syncMonthlyPerformance(locationId: string, dateStr: string) {
   const supabase = await createClient();
-  const date = new Date(dateStr);
-  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
-  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).toISOString();
+  const reference = new Date(dateStr);
+  if (Number.isNaN(reference.getTime())) {
+    console.warn('Invalid date passed to syncMonthlyPerformance:', dateStr);
+    return;
+  }
 
-  // Get all daily entries for this month
+  const startOfMonth = new Date(Date.UTC(
+    reference.getUTCFullYear(), reference.getUTCMonth(), 1, 0, 0, 0, 0
+  ));
+  const endOfMonth = new Date(Date.UTC(
+    reference.getUTCFullYear(), reference.getUTCMonth() + 1, 0, 23, 59, 59, 999
+  ));
+
   const { data: dailies, error } = await supabase
     .from('DailyPerformance')
     .select('sessionCount')
     .eq('locationId', locationId)
-    .gte('date', startOfMonth)
-    .lte('date', endOfMonth);
+    .gte('date', startOfMonth.toISOString())
+    .lte('date', endOfMonth.toISOString());
 
   if (error) {
     console.error("Aggregation Error:", error);
@@ -85,15 +99,12 @@ async function syncMonthlyPerformance(locationId: string, dateStr: string) {
 
   const totalSessions = (dailies || []).reduce((acc, curr) => acc + (curr.sessionCount || 0), 0);
 
-  // Update MonthlyPerformance (The Financial Table)
-  const { normalizedMonth, deterministicId } = normalizeMonthInput(startOfMonth);
-
   const { error: upsertError } = await supabase
     .from('MonthlyPerformance')
     .upsert({
-      id: deterministicId(locationId),
-      locationId: locationId,
-      month: normalizedMonth,
+      id: deterministicMonthlyId(locationId, startOfMonth),
+      locationId,
+      month: startOfMonth.toISOString(),
       sessionCount: totalSessions,
       updatedAt: new Date().toISOString(),
     }, {
@@ -124,7 +135,8 @@ export async function getDailyPerformanceHistory(locationId: string, limit = 30)
 }
 
 /**
- * MonthlyPerformance CRUD
+ * MonthlyPerformance upsert — `addMonthlyPerformance`'a delege eder.
+ * Auth check, audit log ve revalidation'ı tek noktadan tutmak için.
  */
 export async function upsertMonthlyPerformance(data: {
   id?: string;
@@ -133,63 +145,28 @@ export async function upsertMonthlyPerformance(data: {
   sessionCount: number;
   extraExpenseAmount?: number;
 }) {
-  try {
-    const supabase = await createClient();
-    
-    const { normalizedMonth, deterministicId } = normalizeMonthInput(data.month);
-    const targetId = deterministicId(data.locationId);
-
-    const { data: record, error } = await supabase
-      .from('MonthlyPerformance')
-      .upsert({
-        id: targetId,
-        locationId: data.locationId,
-        month: normalizedMonth,
-        sessionCount: data.sessionCount,
-        extraExpenseAmount: data.extraExpenseAmount || 0,
-        updatedAt: new Date().toISOString(),
-      }, {
-        onConflict: 'id'
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    revalidatePath('/performans');
-    revalidatePath('/raporlar');
-    revalidatePath('/gelir-gider');
-    revalidatePath('/');
-    
-    return { success: true, data: record };
-  } catch (error) {
-    console.error("Monthly Upsert Error:", error);
-    return { success: false, error: getErrorMessage(error) };
-  }
-}
-
-export async function deleteMonthlyPerformance(id: string) {
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
-    if (error) throw error;
-
-    revalidatePath('/performans');
-    revalidatePath('/raporlar');
-    revalidatePath('/gelir-gider');
-    revalidatePath('/');
-    return { success: true };
-  } catch (error) {
-    console.error("Monthly Delete Error:", error);
-    return { success: false, error: getErrorMessage(error) };
-  }
+  return addMonthlyPerformance({
+    locationId: data.locationId,
+    month: data.month,
+    sessionCount: data.sessionCount,
+    extraExpenseAmount: data.extraExpenseAmount,
+  });
 }
 
 /**
- * DailyPerformance CRUD
+ * MonthlyPerformance silme — ledger/actions.ts içindeki tek otoritatif fonksiyona delege.
  */
+export async function deleteMonthlyPerformance(id: string) {
+  return deleteMonthlyPerformanceCore(id);
+}
+
 export async function deleteDailyPerformance(id: string, locationId: string, dateStr: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.from('DailyPerformance').delete().eq('id', id);
     if (error) throw error;

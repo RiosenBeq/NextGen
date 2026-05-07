@@ -1,9 +1,15 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { loginSchema, type LoginFormState } from '@/lib/auth-schemas';
 import { getErrorMessage } from '@/lib/errors';
+import { requireUser } from '@/lib/auth-guards';
+
+const updateProfileSchema = z.object({
+  fullName: z.string().trim().min(2, 'Ad soyad en az 2 karakter olmalıdır.').max(120, 'Ad soyad çok uzun.'),
+});
 
 export async function login(
   state: LoginFormState,
@@ -58,22 +64,27 @@ export async function logout(): Promise<void> {
 
 export async function updateProfile(formData: FormData) {
   try {
-    const fullName = formData.get('fullName')?.toString() || '';
-    if (fullName.trim().length < 2) {
-      return { success: false, error: 'Ad soyad alanı çok kısa.' };
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
     }
+
+    const parsed = updateProfileSchema.parse({
+      fullName: formData.get('fullName')?.toString() || '',
+    });
 
     const supabase = await createClient();
     const { error } = await supabase.auth.updateUser({
-      data: { full_name: fullName }
+      data: { full_name: parsed.fullName }
     });
 
     if (error) throw error;
-    
-    // Yalnızca başarılı olursa layout'u revalidate et
-    // redirect değil, çünkü modal ClientSide kapanacak
+
     return { success: true };
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
+    }
     return { success: false, error: getErrorMessage(error, 'Profil güncellenirken bir hata oluştu.') };
   }
 }

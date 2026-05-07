@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
 import { getErrorMessage } from '@/lib/errors';
+import { requireUser, requireSuperAdmin } from '@/lib/auth-guards';
 import prisma from '@/lib/db';
 import type { z } from 'zod';
 
@@ -36,6 +37,11 @@ function normalizeMonthInput(monthInput: string | Date) {
 
 export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
 
@@ -74,6 +80,11 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
 export async function updateMonthlyPerformance(id: string, data: MonthlyPerformanceInput) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
 
@@ -111,11 +122,16 @@ export async function updateMonthlyPerformance(id: string, data: MonthlyPerforma
 
 export async function deleteMonthlyPerformance(id: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
     if (error) throw error;
 
-    await createAuditLog('DELETE', 'MonthlyPerformance', id);
+    await createAuditLog('DELETE', 'MonthlyPerformance', id, { deletedBy: guard.user.id });
 
     revalidatePath('/performans');
     revalidatePath('/');
@@ -130,6 +146,11 @@ export async function deleteMonthlyPerformance(id: string) {
 
 export async function addExpense(data: ExpenseInput) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const validatedData = expenseSchema.parse(data);
     const amountWithoutVat = Math.max(0, validatedData.amount || 0);
     const vatRate = Math.max(0, Math.min(100, validatedData.vatRate || 0));
@@ -157,19 +178,25 @@ export async function addExpense(data: ExpenseInput) {
 
     if (error) throw error;
 
+    let documentWarning: string | undefined;
     if (validatedData.attachmentUrl) {
-      await supabase.from('Document').insert({
+      const { error: docError } = await supabase.from('Document').insert({
         fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge',
         relatedType: 'expense',
         relatedId: record.id
       });
+      if (docError) {
+        console.warn('Document insert warning (devam ediliyor):', docError.message);
+        documentWarning = 'Gider kaydedildi; Document izleme kaydı oluşturulamadı.';
+      }
     }
 
     await createAuditLog('CREATE', 'Expense', record.id, {
       description: validatedData.description,
       amount: amountWithVat,
-      locationId: validatedData.locationId
+      locationId: validatedData.locationId,
+      createdBy: guard.user.id
     });
 
     revalidatePath('/giderler');
@@ -177,7 +204,7 @@ export async function addExpense(data: ExpenseInput) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/faturalar');
-    return { success: true };
+    return { success: true, warning: documentWarning };
   } catch (error) {
     console.error("Add Expense Error:", error);
     return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
@@ -186,6 +213,11 @@ export async function addExpense(data: ExpenseInput) {
 
 export async function updateExpense(id: string, data: ExpenseInput) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const validatedData = expenseSchema.parse(data);
     const supabase = await createClient();
     const vatRate = Math.max(0, Math.min(100, validatedData.vatRate || 0));
@@ -212,18 +244,24 @@ export async function updateExpense(id: string, data: ExpenseInput) {
 
     if (error) throw error;
 
+    let documentWarning: string | undefined;
     if (validatedData.attachmentUrl) {
-      await supabase.from('Document').insert({
+      const { error: docError } = await supabase.from('Document').insert({
         fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge (Grup)',
         relatedType: 'expense',
         relatedId: id
       });
+      if (docError) {
+        console.warn('Document insert warning (devam ediliyor):', docError.message);
+        documentWarning = 'Gider güncellendi; Document izleme kaydı oluşturulamadı.';
+      }
     }
 
     await createAuditLog('UPDATE', 'Expense', id, {
       description: validatedData.description,
-      amount: amountWithVat
+      amount: amountWithVat,
+      updatedBy: guard.user.id
     });
 
     revalidatePath('/giderler');
@@ -231,7 +269,7 @@ export async function updateExpense(id: string, data: ExpenseInput) {
     revalidatePath('/gelir-gider');
     revalidatePath('/raporlar');
     revalidatePath('/faturalar');
-    return { success: true };
+    return { success: true, warning: documentWarning };
   } catch (error) {
     console.error("Update Expense Error:", error);
     return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
@@ -240,6 +278,11 @@ export async function updateExpense(id: string, data: ExpenseInput) {
 
 export async function uploadExpenseAttachment(formData: FormData) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     // 1. Sunucu taraflı güvenli yükleme için Admin yetkisini kullan (Bypass RLS on upload)
     const supabaseUrl = process.env.NEXT_PUBLIC_HESAPSUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -315,8 +358,13 @@ export async function uploadExpenseAttachment(formData: FormData) {
 }
 export async function updateExpenseAttachment(id: string, fileUrl: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
-    
+
     // 1. Always persist attachment on expense first.
     const { error: updateError } = await supabase
       .from('Expense')
@@ -360,6 +408,11 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
 
 export async function deleteExpenseAttachment(id: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
 
     const { data: expense, error: expenseError } = await supabase
@@ -372,9 +425,12 @@ export async function deleteExpenseAttachment(id: string) {
 
     const attachmentUrl = expense?.attachmentUrl;
     if (attachmentUrl) {
-      const path = attachmentUrl.split('/documents/')[1];
-      if (path) {
-        await supabase.storage.from('documents').remove([path]);
+      const storagePath = extractDocumentsStoragePath(attachmentUrl);
+      if (storagePath) {
+        const { error: removeError } = await supabase.storage.from('documents').remove([storagePath]);
+        if (removeError) {
+          console.warn('Storage remove warning:', removeError.message);
+        }
       }
     }
 
@@ -412,11 +468,16 @@ export async function deleteExpenseAttachment(id: string) {
 
 export async function deleteExpense(id: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.from('Expense').delete().eq('id', id);
     if (error) throw error;
-    
-    await createAuditLog('DELETE', 'Expense', id);
+
+    await createAuditLog('DELETE', 'Expense', id, { deletedBy: guard.user.id });
 
     revalidatePath('/giderler');
     revalidatePath('/');
@@ -432,6 +493,11 @@ export async function deleteExpense(id: string) {
 
 export async function addInvestment(data: InvestmentInput) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const validatedData = investmentSchema.parse(data);
     const amount = Math.max(0, validatedData.amount || 0);
     if (amount <= 0) {
@@ -469,6 +535,11 @@ export async function addInvestment(data: InvestmentInput) {
 
 export async function updateInvestment(id: string, data: InvestmentInput) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz yatırım ID.' };
     }
@@ -506,11 +577,16 @@ export async function updateInvestment(id: string, data: InvestmentInput) {
 
 export async function deleteInvestment(id: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.from('Investment').delete().eq('id', id);
     if (error) throw error;
-    
-    await createAuditLog('DELETE', 'Investment', id);
+
+    await createAuditLog('DELETE', 'Investment', id, { deletedBy: guard.user.id });
 
     revalidatePath('/yatirimlar');
     revalidatePath('/giderler');
@@ -523,6 +599,11 @@ export async function deleteInvestment(id: string) {
 
 export async function updateLocationParameters(id: string, data: LocationParamsInput) {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz lokasyon ID.' };
     }
@@ -661,6 +742,11 @@ export async function getSystemParameters() {
 
 export async function updateSystemParameter(key: string, value: number) {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const allowedKeys = [
       'SESSION_PRICE_INCL_VAT', 
       'VAT_RATE', 
@@ -698,6 +784,11 @@ export async function updateSystemParameter(key: string, value: number) {
 
 export async function resetSystemParameters() {
   try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const defaults = {
       'SESSION_PRICE_INCL_VAT': 300,
       'VAT_RATE': 20,
@@ -732,6 +823,11 @@ export async function resetSystemParameters() {
 
 export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: boolean; isOfficial?: boolean }) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const payload: Record<string, boolean> = {};
     if (typeof updates.isSettled === 'boolean') payload.isSettled = updates.isSettled;
     if (typeof updates.isOfficial === 'boolean') payload.isOfficial = updates.isOfficial;
@@ -755,6 +851,11 @@ export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: 
 
 export async function updateAvmExpenseFinancials(id: string, updates: { amountWithVat?: number; paidBy?: string }) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const payload: Record<string, string | number> = {};
 
     if (typeof updates.amountWithVat === 'number' && Number.isFinite(updates.amountWithVat)) {
@@ -797,24 +898,34 @@ export async function updateAvmExpenseFinancials(id: string, updates: { amountWi
 }
 
 export async function toggleExpenseSettled(id: string, currentDesc: string) {
+  const guard = await requireUser();
+  if (guard.error || !guard.user) {
+    return { success: false, error: guard.error };
+  }
+
   const isSettled = currentDesc.includes('[MAHSUP]');
-  const newDesc = isSettled 
+  const newDesc = isSettled
     ? currentDesc.replace('[MAHSUP] ', '')
     : `[MAHSUP] ${currentDesc}`;
-    
+
   const supabase = await createClient();
   const { error } = await supabase.from('Expense').update({ description: newDesc }).eq('id', id);
   if (error) return { success: false, error: error.message };
-  
+
   revalidatePath('/giderler');
   return { success: true };
 }
 
 export async function autoSettleOldExpenses() {
+  const guard = await requireSuperAdmin();
+  if (guard.error || !guard.user) {
+    return { success: false, error: guard.error };
+  }
+
   const supabase = await createClient();
   const { data: expenses } = await supabase.from('Expense').select('id, description');
-  
-  if (!expenses) return { success: true };
+
+  if (!expenses) return { success: true, count: 0 };
 
   let count = 0;
   for (const exp of expenses) {
@@ -824,6 +935,28 @@ export async function autoSettleOldExpenses() {
       count++;
     }
   }
+  await createAuditLog('UPDATE', 'Expense', 'BULK', { action: 'AUTO_SETTLE', count, by: guard.user.id });
   revalidatePath('/giderler');
   return { success: true, count };
+}
+
+/**
+ * Supabase Storage public URL'inden bucket-relative path'i güvenli şekilde çıkarır.
+ * URL kötüyse veya bucket farklıysa null döner; storage cleanup sessizce atlanır.
+ */
+function extractDocumentsStoragePath(publicUrl: string): string | null {
+  try {
+    const parsed = new URL(publicUrl);
+    const marker = '/storage/v1/object/public/documents/';
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    const path = parsed.pathname.slice(idx + marker.length);
+    return path || null;
+  } catch {
+    // Fallback for non-URL string formats
+    const fallbackIdx = publicUrl.indexOf('/documents/');
+    if (fallbackIdx === -1) return null;
+    const path = publicUrl.slice(fallbackIdx + '/documents/'.length);
+    return path || null;
+  }
 }

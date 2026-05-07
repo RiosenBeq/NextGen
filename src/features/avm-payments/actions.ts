@@ -4,9 +4,16 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { avmPaymentSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
+import { requireUser } from '@/lib/auth-guards';
+import { getErrorMessage } from '@/lib/errors';
 
 export async function addAvmPayment(data: unknown) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     const validated = avmPaymentSchema.parse(data);
     const amount = Math.max(0, validated.amount || 0);
 
@@ -32,22 +39,24 @@ export async function addAvmPayment(data: unknown) {
       paymentType: validated.paymentType,
       month: validated.month,
       amount,
+      createdBy: guard.user.id,
     });
 
     revalidatePath('/avm-odemeleri');
     return { success: true };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.';
+  } catch (error) {
     console.error('Add AvmPayment Error:', error);
-    return { success: false, error: message };
+    return { success: false, error: getErrorMessage(error, 'Bilinmeyen bir hata oluştu.') };
   }
 }
 
-export async function updateAvmPayment(
-  id: string,
-  data: unknown
-) {
+export async function updateAvmPayment(id: string, data: unknown) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     if (!id) return { success: false, error: 'Geçersiz kayıt ID.' };
 
     const validated = avmPaymentSchema.parse(data);
@@ -71,19 +80,24 @@ export async function updateAvmPayment(
     await createAuditLog('UPDATE', 'AvmPayment', id, {
       paymentType: validated.paymentType,
       amount,
+      updatedBy: guard.user.id,
     });
 
     revalidatePath('/avm-odemeleri');
     return { success: true };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Güncelleme hatası.';
+  } catch (error) {
     console.error('Update AvmPayment Error:', error);
-    return { success: false, error: message };
+    return { success: false, error: getErrorMessage(error, 'Güncelleme hatası.') };
   }
 }
 
 export async function toggleAvmPaymentPaid(id: string, currentlyPaid: boolean) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     if (!id) return { success: false, error: 'Geçersiz kayıt ID.' };
 
     const supabase = await createClient();
@@ -101,18 +115,23 @@ export async function toggleAvmPaymentPaid(id: string, currentlyPaid: boolean) {
 
     await createAuditLog('UPDATE', 'AvmPayment', id, {
       action: newPaid ? 'MARK_PAID' : 'MARK_UNPAID',
+      by: guard.user.id,
     });
 
     revalidatePath('/avm-odemeleri');
     return { success: true };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Durum güncellenemedi.';
-    return { success: false, error: message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, 'Durum güncellenemedi.') };
   }
 }
 
 export async function deleteAvmPayment(id: string) {
   try {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
     if (!id) return { success: false, error: 'Geçersiz kayıt ID.' };
 
     const supabase = await createClient();
@@ -120,12 +139,11 @@ export async function deleteAvmPayment(id: string) {
 
     if (error) throw error;
 
-    await createAuditLog('DELETE', 'AvmPayment', id);
+    await createAuditLog('DELETE', 'AvmPayment', id, { deletedBy: guard.user.id });
 
     revalidatePath('/avm-odemeleri');
     return { success: true };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Silme işlemi başarısız.';
-    return { success: false, error: message };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, 'Silme işlemi başarısız.') };
   }
 }

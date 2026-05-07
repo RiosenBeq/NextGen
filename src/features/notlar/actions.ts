@@ -3,9 +3,13 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-function userIdColumnMissing(error: unknown) {
-  if (!(error instanceof Error)) return false;
-  return String(error.message || '').includes("Could not find the 'userId' column of 'Note'");
+function userIdColumnMissing(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  // Supabase PostgrestError'larında message özelliği var ama prototype Error değil.
+  const message = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+    ? (error as { message: string }).message
+    : '';
+  return message.includes("Could not find the 'userId' column of 'Note'");
 }
 
 export async function getNotes() {

@@ -1571,3 +1571,153 @@ body {
     border: 1px solid #ccc;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   SHADCN DIALOG / SHEET ANIMATIONS
+   Radix data-state'e bağlı animasyonlar (tw-animate-css yerine raw CSS)
+   ══════════════════════════════════════════════════════════ */
+
+@keyframes sui-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes sui-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes sui-dialog-show {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes sui-dialog-hide {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, calc(-50% + 4px)) scale(0.97); }
+}
+
+@keyframes sui-slide-up-show {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes sui-slide-up-hide {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+
+@keyframes sui-slide-right-show {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes sui-slide-right-hide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+
+@keyframes sui-slide-left-show {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes sui-slide-left-hide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+@keyframes sui-slide-down-show {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes sui-slide-down-hide {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+}
+
+/* Overlay (backdrop) — hem Dialog hem Sheet için */
+.sui-overlay[data-state="open"] {
+  animation: sui-fade-in 0.18s var(--ease-apple);
+}
+
+.sui-overlay[data-state="closed"] {
+  animation: sui-fade-out 0.16s var(--ease-apple);
+}
+
+/* Centered dialog */
+.sui-dialog-content[data-state="open"] {
+  animation: sui-dialog-show 0.22s var(--ease-apple);
+}
+
+.sui-dialog-content[data-state="closed"] {
+  animation: sui-dialog-hide 0.18s var(--ease-apple);
+}
+
+/* Sheet — bottom (mobile bottom sheet) */
+.sui-sheet-bottom[data-state="open"] {
+  animation: sui-slide-up-show 0.28s var(--ease-apple);
+}
+
+.sui-sheet-bottom[data-state="closed"] {
+  animation: sui-slide-up-hide 0.22s var(--ease-apple);
+}
+
+/* Sheet — right (desktop drawer) */
+.sui-sheet-right[data-state="open"] {
+  animation: sui-slide-right-show 0.28s var(--ease-apple);
+}
+
+.sui-sheet-right[data-state="closed"] {
+  animation: sui-slide-right-hide 0.22s var(--ease-apple);
+}
+
+/* Sheet — left */
+.sui-sheet-left[data-state="open"] {
+  animation: sui-slide-left-show 0.28s var(--ease-apple);
+}
+
+.sui-sheet-left[data-state="closed"] {
+  animation: sui-slide-left-hide 0.22s var(--ease-apple);
+}
+
+/* Sheet — top */
+.sui-sheet-top[data-state="open"] {
+  animation: sui-slide-down-show 0.28s var(--ease-apple);
+}
+
+.sui-sheet-top[data-state="closed"] {
+  animation: sui-slide-down-hide 0.22s var(--ease-apple);
+}
+
+/* Responsive sheet: mobilde bottom slide, desktop'ta right slide */
+.sui-sheet-responsive[data-state="open"] {
+  animation: sui-slide-up-show 0.28s var(--ease-apple);
+}
+
+.sui-sheet-responsive[data-state="closed"] {
+  animation: sui-slide-up-hide 0.22s var(--ease-apple);
+}
+
+@media (min-width: 768px) {
+  .sui-sheet-responsive[data-state="open"] {
+    animation: sui-slide-right-show 0.28s var(--ease-apple);
+  }
+  .sui-sheet-responsive[data-state="closed"] {
+    animation: sui-slide-right-hide 0.22s var(--ease-apple);
+  }
+}
+
+/* Reduced motion respekti */
+@media (prefers-reduced-motion: reduce) {
+  .sui-overlay[data-state],
+  .sui-dialog-content[data-state],
+  .sui-sheet-bottom[data-state],
+  .sui-sheet-right[data-state],
+  .sui-sheet-left[data-state],
+  .sui-sheet-top[data-state],
+  .sui-sheet-responsive[data-state] {
+    animation-duration: 0.01ms !important;
+  }
+}

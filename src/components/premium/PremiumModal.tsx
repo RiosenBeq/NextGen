@@ -75,7 +75,7 @@ export function PremiumModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-md"
+            className="fixed inset-0 bg-[#1C1C1E]"
             onClick={onClose}
           />
 
@@ -86,8 +86,8 @@ export function PremiumModal({
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              'relative w-full rounded-[22px] border border-[--border] bg-[--surface]',
-              'shadow-[0_30px_80px_rgba(0,0,0,0.18),0_8px_24px_rgba(0,0,0,0.08)]',
+              'relative w-full rounded-[22px] border border-white/10 bg-[--surface]',
+              'shadow-[0_30px_80px_rgba(0,0,0,0.55),0_8px_24px_rgba(0,0,0,0.35)]',
               'max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden flex flex-col',
               'my-auto',
               maxWidth
@@ -197,8 +197,8 @@ export function PremiumDrawer({
     : 'fixed inset-x-0 bottom-0 z-[9999] flex max-h-[92dvh] w-full';
 
   const panelClass = isDesktop
-    ? 'relative flex h-full w-full flex-col border-l border-[--border] bg-[--surface] shadow-[-30px_0_80px_rgba(0,0,0,0.18),-8px_0_24px_rgba(0,0,0,0.08)]'
-    : 'relative flex w-full flex-col rounded-t-[22px] border-t border-[--border] bg-[--surface] shadow-[0_-20px_60px_rgba(0,0,0,0.18)] max-h-[92dvh]';
+    ? 'relative flex h-full w-full flex-col border-l border-white/10 bg-[--surface] shadow-[-30px_0_80px_rgba(0,0,0,0.55),-8px_0_24px_rgba(0,0,0,0.35)]'
+    : 'relative flex w-full flex-col rounded-t-[22px] border-t border-white/10 bg-[--surface] shadow-[0_-20px_60px_rgba(0,0,0,0.55)] max-h-[92dvh]';
 
   const content = (
     <AnimatePresence>
@@ -210,7 +210,7 @@ export function PremiumDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             onClick={onClose}
-            className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-md"
+            className="fixed inset-0 z-[9998] bg-[#1C1C1E]"
           />
 
           <motion.div

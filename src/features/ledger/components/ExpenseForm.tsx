@@ -204,15 +204,15 @@ export default function ExpenseForm({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const inputBase = "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150";
+  const inputBase = "w-full px-4 py-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200 min-h-[44px]";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Section: Temel Bilgiler */}
       <section className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">
-            İşlem Açıklaması <span className="text-rose-500">*</span>
+          <label className="text-[13px] font-medium text-[--text]">
+            İşlem Açıklaması <span className="text-[--danger]">*</span>
           </label>
           <input
             type="text"
@@ -226,8 +226,8 @@ export default function ExpenseForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">
-              İşlem Tarihi <span className="text-rose-500">*</span>
+            <label className="text-[13px] font-medium text-[--text]">
+              İşlem Tarihi <span className="text-[--danger]">*</span>
             </label>
             <div className="relative">
               <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -242,7 +242,7 @@ export default function ExpenseForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Lokasyon</label>
+            <label className="text-[13px] font-medium text-[--text]">Lokasyon</label>
             <div className="relative">
               <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <select
@@ -262,16 +262,16 @@ export default function ExpenseForm({
       </section>
 
       {/* Section: Miktar & KDV */}
-      <section className="space-y-5 pt-6 border-t border-slate-200/70">
-        <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-slate-900">Miktar & KDV</h3>
-          <p className="text-xs text-slate-500">Matrah ve oran bilgilerini girin</p>
+      <section className="space-y-5 pt-6 border-t border-[--border]">
+        <div>
+          <p className="apple-eyebrow">Tutar</p>
+          <h3 className="apple-title-2 mt-1">Miktar & KDV</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">
-              Matrah (KDV Hariç) <span className="text-rose-500">*</span>
+            <label className="text-[13px] font-medium text-[--text]">
+              Matrah (KDV Hariç) <span className="text-[--danger]">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₺</span>
@@ -289,7 +289,7 @@ export default function ExpenseForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">KDV Oranı</label>
+            <label className="text-[13px] font-medium text-[--text]">KDV Oranı</label>
             <div className="relative">
               <Percent className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <select
@@ -313,14 +313,14 @@ export default function ExpenseForm({
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="rounded-xl bg-slate-50/50 border border-slate-200/50 p-5 flex items-center justify-between"
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-[18px] bg-[--bg-elevated] p-5 flex items-center justify-between"
             >
               <div>
-                <p className="text-xs text-slate-500">Ödenecek Toplam (KDV Dahil)</p>
-                <p className="text-xs text-slate-400 mt-0.5">Nihai işlem maliyeti</p>
+                <p className="text-[13px] text-[--text-secondary]">Ödenecek Toplam (KDV Dahil)</p>
+                <p className="text-[12px] text-[--text-tertiary] mt-0.5">Nihai işlem maliyeti</p>
               </div>
-              <span className="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
+              <span className="text-[22px] md:text-[24px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>
                 ₺{totalWithVat.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </motion.div>
@@ -329,7 +329,7 @@ export default function ExpenseForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Ödeme Tipi</label>
+            <label className="text-[13px] font-medium text-[--text]">Ödeme Tipi</label>
             <div className="relative">
               <select
                 className={cn(inputBase, "pr-10 appearance-none cursor-pointer")}
@@ -345,7 +345,7 @@ export default function ExpenseForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Kategori</label>
+            <label className="text-[13px] font-medium text-[--text]">Kategori</label>
             <div className="relative">
               <select
                 className={cn(inputBase, "pr-10 appearance-none cursor-pointer")}
@@ -362,7 +362,7 @@ export default function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Ödemeyi Yapan</label>
+          <label className="text-[13px] font-medium text-[--text]">Ödemeyi Yapan</label>
           <div className="flex flex-wrap gap-2">
             {[
               { id: 'Ortak Hesap', label: 'Ortak Hesap' },
@@ -378,10 +378,10 @@ export default function ExpenseForm({
                   type="button"
                   onClick={() => setFormData({ ...formData, paidBy: partner.id })}
                   className={cn(
-                    "px-4 py-2 rounded-xl border text-sm font-medium transition-colors",
+                    "px-4 py-2 rounded-full text-[13px] font-medium transition-colors min-h-[36px]",
                     isSelected
-                      ? "bg-slate-900 border-slate-900 text-white"
-                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                      ? "bg-[--text] text-white"
+                      : "bg-[--bg-elevated] text-[--text-secondary] hover:text-[--text]"
                   )}
                 >
                   {partner.label}
@@ -393,21 +393,22 @@ export default function ExpenseForm({
       </section>
 
       {/* Section: Belge Yükleme */}
-      <section className="space-y-4 pt-6 border-t border-slate-200/70">
-        <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-slate-900">Belge Yükleme</h3>
-          <p className="text-xs text-slate-500">Fatura veya makbuz dosyasını ekleyin (opsiyonel)</p>
+      <section className="space-y-4 pt-6 border-t border-[--border]">
+        <div>
+          <p className="apple-eyebrow">Belge</p>
+          <h3 className="apple-title-2 mt-1">Belge Yükleme</h3>
+          <p className="text-[13px] text-[--text-tertiary] mt-1">Fatura veya makbuz dosyasını ekleyin (opsiyonel)</p>
         </div>
 
         <div
           onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "group relative flex flex-col items-center justify-center p-8 rounded-xl border border-dashed transition-colors duration-150 cursor-pointer",
+            "group relative flex flex-col items-center justify-center p-8 rounded-[18px] border border-dashed transition-colors duration-200 cursor-pointer",
             file && !fileError
-              ? "border-emerald-300 bg-emerald-50/40"
+              ? "border-[--accent] bg-[--accent-soft]"
               : fileError
-              ? "border-rose-300 bg-rose-50/40"
-              : "border-slate-300 bg-slate-50/50 hover:border-blue-400 hover:bg-blue-50/40"
+              ? "border-[--danger] bg-[--danger-soft]"
+              : "border-[--border-strong] bg-[--bg-elevated] hover:border-[--text-tertiary]"
           )}
         >
           <input
@@ -446,12 +447,12 @@ export default function ExpenseForm({
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="flex flex-col items-center gap-3 relative z-10"
               >
-                <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-emerald-500">
-                  <FileText size={24} strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-full bg-[--surface] flex items-center justify-center text-[--accent]">
+                  <FileText size={22} strokeWidth={1.5} />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-slate-900 truncate max-w-[240px]">{file.name}</p>
-                  <p className="text-xs text-emerald-600 mt-0.5">{formatFileSize(file.size)} · PDF hazır</p>
+                  <p className="text-[14px] font-medium text-[--text] truncate max-w-[240px]" style={{ letterSpacing: '-0.005em' }}>{file.name}</p>
+                  <p className="text-[12px] text-[--accent] mt-0.5">{formatFileSize(file.size)} · PDF hazır</p>
                 </div>
               </motion.div>
             ) : fileError ? (
@@ -462,11 +463,11 @@ export default function ExpenseForm({
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="flex flex-col items-center gap-3 relative z-10 text-center"
               >
-                <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
-                  <AlertCircle size={20} />
+                <div className="w-12 h-12 rounded-full bg-[--surface] flex items-center justify-center text-[--danger]">
+                  <AlertCircle size={20} strokeWidth={1.75} />
                 </div>
-                <p className="text-xs text-rose-600">{fileError}</p>
-                <span className="text-xs font-medium text-slate-700">Tekrar denemek için tıklayın</span>
+                <p className="text-[13px] text-[--danger]">{fileError}</p>
+                <span className="text-[13px] font-medium text-[--text-secondary]">Tekrar denemek için tıklayın</span>
               </motion.div>
             ) : (
               <motion.div
@@ -476,12 +477,12 @@ export default function ExpenseForm({
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="flex flex-col items-center gap-3 relative z-10"
               >
-                <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 transition-colors group-hover:text-blue-500">
-                  <Upload size={20} />
+                <div className="w-12 h-12 rounded-full bg-[--surface] flex items-center justify-center text-[--text-tertiary] transition-colors group-hover:text-[--text]">
+                  <Upload size={20} strokeWidth={1.75} />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-slate-700">Belge veya fotoğraf yükleyin</p>
-                  <p className="text-xs text-slate-500 mt-0.5">PDF, JPG, PNG · Maks 15MB</p>
+                  <p className="text-[14px] font-medium text-[--text]" style={{ letterSpacing: '-0.005em' }}>Belge veya fotoğraf yükleyin</p>
+                  <p className="text-[12px] text-[--text-tertiary] mt-0.5">PDF · JPG · PNG · Maks 15MB</p>
                 </div>
               </motion.div>
             )}
@@ -492,9 +493,9 @@ export default function ExpenseForm({
               type="button"
               onClick={removeFile}
               aria-label="Dosyayı kaldır"
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white text-slate-500 hover:bg-slate-50 hover:text-rose-500 border border-slate-200 transition-colors z-20 flex items-center justify-center"
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[--surface] text-[--text-tertiary] hover:text-[--danger] border border-[--border] transition-colors z-20 flex items-center justify-center"
             >
-              <X size={14} />
+              <X size={14} strokeWidth={1.75} />
             </button>
           )}
         </div>
@@ -506,13 +507,13 @@ export default function ExpenseForm({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-50/50 border border-slate-200/50"
+              className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[--bg-elevated]"
             >
               {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && (
-                <Loader2 size={14} className="animate-spin text-blue-600" />
+                <Loader2 size={14} className="animate-spin text-[--accent]" />
               )}
-              {uploadStatus === 'done' && <CheckCircle2 size={14} className="text-emerald-500" />}
-              <span className="text-xs text-slate-600">
+              {uploadStatus === 'done' && <CheckCircle2 size={14} strokeWidth={1.75} className="text-[--accent]" />}
+              <span className="text-[13px] text-[--text-secondary]">
                 {uploadStatus === 'compressing' ? 'Görsel optimize ediliyor...' :
                  uploadStatus === 'uploading' ? 'Buluta yükleniyor...' : 'Yükleme başarılı!'}
               </span>
@@ -522,26 +523,15 @@ export default function ExpenseForm({
       </section>
 
       {/* Footer */}
-      <div className="pt-6 border-t border-slate-200/70 flex items-center justify-end gap-3">
+      <div className="pt-6 border-t border-[--border] flex items-center justify-end gap-3">
         {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button type="button" onClick={onClose} disabled={loading} className="elite-button-secondary">
             Vazgeç
           </button>
         )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {loading
-            ? 'İşleniyor...'
-            : initialData ? 'Değişiklikleri Kaydet' : 'Kaydı Tamamla'}
+        <button type="submit" disabled={loading} className="elite-button-primary">
+          {loading && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
+          {loading ? 'İşleniyor…' : initialData ? 'Değişiklikleri Kaydet' : 'Kaydı Tamamla'}
         </button>
       </div>
     </form>

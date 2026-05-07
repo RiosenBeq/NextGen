@@ -10,7 +10,7 @@ interface Props {
 }
 
 const inputBase =
-  'w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-150 tabular-nums';
+  'w-full px-4 py-3 rounded-xl bg-[--bg-elevated] border border-transparent text-[15px] text-[--text] placeholder:text-[--text-tertiary] focus:outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors duration-200 tabular-nums min-h-[44px]';
 
 export function SystemParametersForm({ parameters }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,27 +45,25 @@ export function SystemParametersForm({ parameters }: Props) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="p-6 md:p-8 bg-white border border-slate-200/70 rounded-2xl"
+      className="apple-card p-6 md:p-8"
     >
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
-            <Settings2 size={20} />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900 tracking-tight">Finansal Yapılandırma</h3>
-            <p className="text-sm text-slate-500 mt-0.5">Sistem geneli parametreler.</p>
-          </div>
+      <div className="flex items-start justify-between mb-8 gap-4">
+        <div>
+          <p className="apple-eyebrow flex items-center gap-2">
+            <Settings2 size={14} strokeWidth={1.75} /> Finans
+          </p>
+          <h3 className="apple-title-1 mt-2">Finansal Yapılandırma</h3>
+          <p className="text-[14px] text-[--text-secondary] mt-2">Sistem geneli parametreler.</p>
         </div>
         {success && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/70 text-emerald-600 text-xs font-medium inline-flex items-center gap-2"
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="chip-accent inline-flex items-center gap-2"
           >
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Başarıyla güncellendi
+            <div className="w-1.5 h-1.5 rounded-full bg-[--accent]" />
+            Güncellendi
           </motion.div>
         )}
       </div>
@@ -73,8 +71,8 @@ export function SystemParametersForm({ parameters }: Props) {
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-              <DollarSign size={14} className="text-slate-400" /> Oturum Fiyatı (₺)
+            <label className="text-[13px] font-medium text-[--text] flex items-center gap-2">
+              <DollarSign size={14} strokeWidth={1.75} className="text-[--text-tertiary]" /> Oturum Fiyatı (₺)
             </label>
             <input
               name="SESSION_PRICE_INCL_VAT"
@@ -86,8 +84,8 @@ export function SystemParametersForm({ parameters }: Props) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-              <Percent size={14} className="text-slate-400" /> Genel KDV Oranı (%)
+            <label className="text-[13px] font-medium text-[--text] flex items-center gap-2">
+              <Percent size={14} strokeWidth={1.75} className="text-[--text-tertiary]" /> Genel KDV Oranı (%)
             </label>
             <input
               name="VAT_RATE"
@@ -99,8 +97,8 @@ export function SystemParametersForm({ parameters }: Props) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-              <Percent size={14} className="text-slate-400" /> Kurumlar Vergisi (%)
+            <label className="text-[13px] font-medium text-[--text] flex items-center gap-2">
+              <Percent size={14} strokeWidth={1.75} className="text-[--text-tertiary]" /> Kurumlar Vergisi (%)
             </label>
             <input
               name="CORP_TAX_RATE"
@@ -112,14 +110,10 @@ export function SystemParametersForm({ parameters }: Props) {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-slate-200/70 flex justify-end">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-medium text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
-          >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
-            Değişiklikleri kaydet
+        <div className="pt-6 border-t border-[--border] flex justify-end">
+          <button type="submit" disabled={isSubmitting} className="elite-button-primary">
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} /> : <Save size={16} strokeWidth={1.75} />}
+            Kaydet
           </button>
         </div>
       </form>

@@ -76,7 +76,7 @@ export default function CashFlowClientUI({ locations, initialData }: CashFlowCli
   ];
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* KPI's */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
         {kpis.map((kpi, idx) => (
@@ -85,7 +85,7 @@ export default function CashFlowClientUI({ locations, initialData }: CashFlowCli
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="apple-card p-6 md:p-7"
+            className="apple-card p-5 sm:p-6 md:p-7"
           >
             <div className={cn(
               'w-10 h-10 rounded-full flex items-center justify-center',

@@ -107,7 +107,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   });
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
@@ -241,7 +241,7 @@ function SummaryStat({ label, val }: { label: string; val: string }) {
 
 function AnalysisCard({ label, val, icon: Icon }: { label: string; val: number; icon: LucideIcon }) {
   return (
-    <div className="apple-card p-6 md:p-7">
+    <div className="apple-card p-5 sm:p-6 md:p-7">
       <div className="w-10 h-10 rounded-full bg-[--bg-elevated] text-[--text-secondary] flex items-center justify-center">
         <Icon size={18} strokeWidth={1.75} />
       </div>

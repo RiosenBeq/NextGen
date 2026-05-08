@@ -52,7 +52,7 @@ export default function FinanceSummaryCards({
 
   return (
     <>
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {cards.map((kpi) => {
           const Icon = kpi.icon;
           return (
@@ -62,24 +62,24 @@ export default function FinanceSummaryCards({
               onClick={kpi.clickable ? () => setOpen(true) : undefined}
               disabled={!kpi.clickable}
               className={cn(
-                'apple-card p-6 text-left transition-all duration-200',
+                'apple-card p-4 sm:p-5 md:p-6 text-left transition-all duration-200 min-h-[44px]',
                 kpi.clickable
                   ? 'hover:border-[--border-strong] cursor-pointer'
                   : 'cursor-default'
               )}
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[--bg-elevated] text-[--text-secondary]">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center bg-[--bg-elevated] text-[--text-secondary]">
                 <Icon className="w-[18px] h-[18px]" strokeWidth={1.75} />
               </div>
-              <p className="text-[13px] text-[--text-secondary] mt-5" style={{ letterSpacing: '-0.005em' }}>{kpi.label}</p>
+              <p className="text-[12px] sm:text-[13px] text-[--text-secondary] mt-3 sm:mt-5 line-clamp-1" style={{ letterSpacing: '-0.005em' }}>{kpi.label}</p>
               <h2 className={cn(
-                'text-[24px] md:text-[28px] font-semibold tabular-nums mt-1',
+                'font-semibold tabular-nums mt-1 break-words',
                 kpi.negative ? 'text-[--text-secondary]' : 'text-[--text]'
-              )} style={{ letterSpacing: '-0.022em' }}>
+              )} style={{ letterSpacing: '-0.022em', fontSize: 'clamp(18px, 5vw, 28px)' }}>
                 ₺{kpi.value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
               </h2>
               {kpi.clickable && (
-                <p className="mt-3 text-[12px] font-medium text-[--accent]">Detayı Gör →</p>
+                <p className="mt-2 sm:mt-3 text-[12px] font-medium text-[--accent]">Detayı Gör →</p>
               )}
             </button>
           );

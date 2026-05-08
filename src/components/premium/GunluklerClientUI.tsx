@@ -57,7 +57,7 @@ export default function GunluklerClientUI({ loglar }: { loglar: LogKaydi[] }) {
   };
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       <header>
         <p className="apple-eyebrow">Sistem</p>
         <h1 className="apple-headline mt-3">Sistem <span className="hero-serif text-gradient-aurora">logları</span></h1>

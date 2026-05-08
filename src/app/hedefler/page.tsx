@@ -41,7 +41,7 @@ export default async function TargetsPage() {
   });
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       <header>
         <p className="apple-eyebrow">Projeksiyon</p>
         <h1 className="apple-headline mt-3">Hedefler &amp; <span className="hero-serif text-gradient-sunset">projeksiyon</span></h1>
@@ -57,7 +57,7 @@ export default async function TargetsPage() {
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
-        <div className="apple-card p-6 md:p-8">
+        <div className="apple-card p-5 sm:p-6 md:p-8">
           <div className="flex justify-between items-start mb-8">
             <div>
               <p className="apple-eyebrow flex items-center gap-2">
@@ -101,7 +101,7 @@ export default async function TargetsPage() {
           </div>
         </div>
 
-        <div className="apple-card p-6 md:p-8">
+        <div className="apple-card p-5 sm:p-6 md:p-8">
           <div className="flex justify-between items-start mb-8">
             <div>
               <p className="apple-eyebrow flex items-center gap-2">

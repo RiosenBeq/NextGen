@@ -100,7 +100,7 @@ export default function GelirGiderClientUI({
   };
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
         <div>
@@ -287,7 +287,7 @@ export default function GelirGiderClientUI({
             <h3 className="apple-title-1 mt-2">Gider Dağılımı</h3>
           </div>
 
-          <div className="apple-card p-6 space-y-6">
+          <div className="apple-card p-5 sm:p-6 space-y-6">
             <div className="space-y-5">
               {breakdown.map((item, i) => (
                 <div key={i} className="space-y-2">
@@ -463,7 +463,7 @@ function KPICard({
   highlight?: boolean;
 }) {
   return (
-    <div className="apple-card p-6 md:p-7 transition-all">
+    <div className="apple-card p-5 sm:p-6 md:p-7 transition-all">
       <div className="flex items-center justify-between">
         <div className={cn(
           'w-10 h-10 rounded-full flex items-center justify-center',

@@ -133,7 +133,7 @@ export default function ContractsClientUI({
   };
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header>
         <p className="apple-eyebrow">Belge Arşivi</p>
@@ -144,7 +144,7 @@ export default function ContractsClientUI({
       </header>
 
       {/* Upload Section */}
-      <section className="apple-card p-6 space-y-5">
+      <section className="apple-card p-5 sm:p-6 space-y-5">
         <div>
           <p className="apple-eyebrow">Yükle</p>
           <h2 className="apple-title-1 mt-2">Sözleşme Ekle</h2>
@@ -243,7 +243,7 @@ export default function ContractsClientUI({
       </section>
 
       {/* Contracts List */}
-      <section className="apple-card p-6">
+      <section className="apple-card p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <div>
             <p className="apple-eyebrow">Arşiv</p>

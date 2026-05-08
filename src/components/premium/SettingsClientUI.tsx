@@ -139,7 +139,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
   const superAdminCount = users.filter((user) => user.role === 'superadmin').length;
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header>
         <p className="apple-eyebrow">Sistem</p>
@@ -150,7 +150,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
       </header>
 
       {/* Status cards */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
         <StatusCard label="Aktif Şube" value={`${locations.length}`} icon={<MapPin size={18} strokeWidth={1.75} />} />
         <StatusCard label="Kullanıcı" value={`${users.length}`} icon={<Users size={18} strokeWidth={1.75} />} />
         <StatusCard label="Süper Admin" value={`${superAdminCount}`} icon={<ShieldCheck size={18} strokeWidth={1.75} />} highlight />
@@ -327,7 +327,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
                 <SectionHeader title="Entegrasyonlar" eyebrow="Bağlantılar" icon={<Cloud size={18} strokeWidth={1.75} />} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="apple-card p-6 space-y-3">
+                  <div className="apple-card p-5 sm:p-6 space-y-3">
                     <p className="apple-eyebrow">Veri Servisi</p>
                     <p className="text-[18px] font-medium text-[--text] inline-flex items-center gap-2">
                       <Server size={18} strokeWidth={1.75} className="text-[--text-secondary]" /> Supabase
@@ -340,7 +340,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
                     </a>
                   </div>
 
-                  <div className="apple-card p-6 space-y-3">
+                  <div className="apple-card p-5 sm:p-6 space-y-3">
                     <p className="apple-eyebrow">Yayın Ortamı</p>
                     <p className="text-[18px] font-medium text-[--text] inline-flex items-center gap-2">
                       <Cloud size={18} strokeWidth={1.75} className="text-[--text-secondary]" /> Vercel
@@ -354,7 +354,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
                   </div>
                 </div>
 
-                <div className="apple-card p-6 bg-[--accent-soft]">
+                <div className="apple-card p-5 sm:p-6 bg-[--accent-soft]">
                   <p className="text-[13px] font-medium text-[--accent]">Gelişmiş Ayar Notu</p>
                   <p className="text-[14px] text-[--text-secondary] mt-2 leading-relaxed">
                     Bu panelde yapılan değişiklikler tüm sistem ekranlarına anlık olarak yansıtılır.

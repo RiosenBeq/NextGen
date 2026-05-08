@@ -142,7 +142,7 @@ export default function AvmPaymentsClientUI({
     new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -158,7 +158,7 @@ export default function AvmPaymentsClientUI({
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Toplam Tutar" value={formatCurrency(stats.total)} icon={<CircleDollarSign className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
         <StatCard label="Ödenen" value={formatCurrency(stats.paidTotal)} highlight icon={<CheckCircle2 className="w-[18px] h-[18px]" strokeWidth={1.75} />} />
         <StatCard label="Bekleyen" value={formatCurrency(stats.unpaidTotal)} icon={<Clock className="w-[18px] h-[18px]" strokeWidth={1.75} />} />

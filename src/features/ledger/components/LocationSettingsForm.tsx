@@ -52,7 +52,7 @@ export function LocationSettingsForm({ location }: Props) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="apple-card p-6 md:p-8"
+      className="apple-card p-5 sm:p-6 md:p-8"
     >
       <div className="flex items-start justify-between mb-8 gap-4">
         <div className="flex items-center gap-3">

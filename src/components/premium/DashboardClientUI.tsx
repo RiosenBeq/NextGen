@@ -203,11 +203,11 @@ export default function DashboardClientUI({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="space-y-12 md:space-y-16"
+      className="space-y-8 sm:space-y-12 md:space-y-16"
     >
       {/* Hero Section */}
-      <motion.header {...fadeInUp} className="hero-card p-7 md:p-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+      <motion.header {...fadeInUp} className="hero-card p-5 sm:p-7 md:p-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8">
           <div className="max-w-2xl">
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] text-white/85"
@@ -281,7 +281,7 @@ export default function DashboardClientUI({
         <motion.div
           {...fadeInUp}
           transition={{ ...fadeInUp.transition, delay: 0.15 }}
-          className="xl:col-span-8 apple-card p-6 md:p-8 relative overflow-hidden"
+          className="xl:col-span-8 apple-card p-5 sm:p-6 md:p-8 relative overflow-hidden"
         >
           <div
             aria-hidden
@@ -406,7 +406,7 @@ export default function DashboardClientUI({
       <motion.section
         {...fadeInUp}
         transition={{ ...fadeInUp.transition, delay: 0.25 }}
-        className="apple-card p-6 md:p-8 relative overflow-hidden"
+        className="apple-card p-5 sm:p-6 md:p-8 relative overflow-hidden"
       >
         <div
           aria-hidden
@@ -592,7 +592,7 @@ function TrendCard({ card }: TrendCardProps) {
         : 'var(--grad-sunset)';
 
   return (
-    <article className="apple-card p-6 md:p-7 relative overflow-hidden">
+    <article className="apple-card p-5 sm:p-6 md:p-7 relative overflow-hidden">
       <span
         aria-hidden
         className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-30 blur-2xl pointer-events-none"

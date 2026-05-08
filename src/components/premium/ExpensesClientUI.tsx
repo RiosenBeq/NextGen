@@ -100,7 +100,7 @@ export default function ExpensesClientUI({
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="apple-eyebrow">Gider Yönetimi</p>
-          <h1 className="apple-headline mt-3">Gider Kayıtları</h1>
+          <h1 className="apple-headline mt-3">Gider <span className="hero-serif text-gradient-sunset">kayıtları</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Gider kayıtları, belge durumu ve ödeme detaylarını tek panelden yönetin.
           </p>

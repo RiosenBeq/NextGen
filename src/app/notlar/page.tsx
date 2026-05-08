@@ -17,7 +17,7 @@ export default async function NotesPage() {
       <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Hafıza Merkezi</p>
-          <h1 className="apple-headline mt-3">Notlar & Ajanda</h1>
+          <h1 className="apple-headline mt-3">Notlar &amp; <span className="hero-serif text-gradient-aurora">ajanda</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Operasyonel kararları, protokolleri ve ekip notlarını tek noktadan yönetin.
           </p>

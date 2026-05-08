@@ -112,7 +112,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Aylık Özet</p>
-          <h1 className="apple-headline mt-3">{monthName}</h1>
+          <h1 className="apple-headline mt-3"><span className="text-gradient-aurora">{monthName}</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Operasyonel finansal analiz ve dönem performans özeti.
           </p>

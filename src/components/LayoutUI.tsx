@@ -62,7 +62,7 @@ function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' 
       <button
         onClick={handleLogout}
         disabled={isPending}
-        className="w-11 h-11 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--text] hover:bg-[--bg-elevated] transition-colors duration-200"
+        className="w-11 h-11 flex items-center justify-center rounded-full text-[--text-tertiary] hover:text-[--text] hover:bg-white/70 transition-colors duration-200"
         title="Çıkış Yap"
         aria-label="Çıkış Yap"
       >
@@ -75,7 +75,7 @@ function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' 
     <button
       onClick={handleLogout}
       disabled={isPending}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-normal text-[--text-secondary] hover:text-[--text] hover:bg-[--bg-elevated] transition-colors duration-200"
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium text-white/70 hover:text-white hover:bg-white/8 transition-colors duration-200"
     >
       <LogOut className={cn("w-4 h-4", isPending && "animate-spin")} strokeWidth={1.75} />
       <span>{isPending ? 'Çıkılıyor…' : 'Çıkış Yap'}</span>
@@ -83,7 +83,10 @@ function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' 
   );
 }
 
-function navLinkClasses(isActive: boolean) {
+function navLinkClasses(isActive: boolean, dark = false) {
+  if (dark) {
+    return cn("sidebar-link", isActive && "active");
+  }
   return cn(
     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] transition-colors duration-200",
     isActive
@@ -92,17 +95,45 @@ function navLinkClasses(isActive: boolean) {
   );
 }
 
-function BrandMark({ size = 'md' }: { size?: 'sm' | 'md' }) {
+function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 'auto' | 'light' | 'dark' }) {
+  const isLight = tone === 'light';
   return (
     <div className="flex items-center gap-2.5">
       <span
+        className="relative flex items-center justify-center rounded-xl"
+        style={{
+          width: size === 'sm' ? 28 : 32,
+          height: size === 'sm' ? 28 : 32,
+          background: 'var(--grad-aurora)',
+          boxShadow: '0 6px 16px rgba(79, 70, 229, 0.45)',
+        }}
+        aria-hidden
+      >
+        <span
+          className="absolute inset-[2px] rounded-[10px] flex items-center justify-center"
+          style={{
+            background: 'rgba(11, 16, 35, 0.85)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <span
+            className="font-extrabold text-white leading-none"
+            style={{ fontSize: size === 'sm' ? 13 : 14, letterSpacing: '-0.04em' }}
+          >
+            NG
+          </span>
+        </span>
+      </span>
+      <span
         className={cn(
-          "font-semibold tracking-tight text-[--text] leading-none",
-          size === 'sm' ? "text-[17px]" : "text-[19px]"
+          "font-semibold tracking-tight leading-none",
+          size === 'sm' ? "text-[17px]" : "text-[19px]",
+          isLight ? "text-white" : "text-[--text]"
         )}
         style={{ letterSpacing: '-0.022em' }}
       >
-        NextGen<span className="text-[--accent]">Box</span>
+        NextGen
+        <span className="text-gradient-aurora">Box</span>
       </span>
     </div>
   );
@@ -120,18 +151,22 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
     <motion.aside
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="w-64 shrink-0 hidden lg:flex flex-col h-screen relative z-50 bg-[--surface] border-r border-[--border]"
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="sidebar-shell w-64 shrink-0 hidden lg:flex flex-col h-screen relative z-50"
     >
       {/* Logo */}
-      <div className="h-[64px] flex items-center px-6">
+      <div className="h-[72px] flex items-center px-5 relative z-[2]">
         <Link href="/" className="flex items-center">
-          <BrandMark />
+          <BrandMark tone="light" />
         </Link>
       </div>
 
+      <div className="px-5 relative z-[2]">
+        <div className="divider-gradient" />
+      </div>
+
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5 relative z-[2] custom-scrollbar">
         {categories.map((cat) => {
           const visibleLinks = navLinks.filter(l => {
             if (l.category !== cat) return false;
@@ -142,10 +177,10 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
 
           return (
             <div key={cat}>
-              <p className="px-3 text-[12px] font-medium text-[--text-quaternary] mb-2" style={{ letterSpacing: '-0.005em' }}>
+              <p className="sidebar-section-label px-3 mb-2.5">
                 {cat}
               </p>
-              <nav className="space-y-0.5">
+              <nav className="space-y-1">
                 {visibleLinks.map((link) => {
                   const isActive = pathname === link.href;
                   const Icon = link.icon;
@@ -153,16 +188,16 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={navLinkClasses(isActive)}
+                      className={navLinkClasses(isActive, true)}
                     >
                       <Icon
-                        className={cn(
-                          "w-[18px] h-[18px] shrink-0",
-                          isActive ? "text-[--accent]" : "text-[--text-tertiary]"
-                        )}
+                        className="w-[18px] h-[18px] shrink-0"
                         strokeWidth={1.75}
                       />
                       <span>{link.label}</span>
+                      {isActive && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/90 shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+                      )}
                     </Link>
                   );
                 })}
@@ -173,14 +208,17 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
       </div>
 
       {/* Footer — User + Logout */}
-      <div className="p-3 border-t border-[--border] space-y-1">
-        <div className="flex items-center gap-3 p-3 rounded-xl">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[--bg-elevated]">
-            <User className="w-[18px] h-[18px] text-[--text-secondary]" strokeWidth={1.75} />
+      <div className="p-3 border-t border-[--sidebar-border] space-y-2 relative z-[2]">
+        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+            style={{ background: 'var(--grad-aurora)', boxShadow: '0 6px 14px rgba(79, 70, 229, 0.45)' }}
+          >
+            <User className="w-[18px] h-[18px]" strokeWidth={2} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-[--text] truncate" style={{ letterSpacing: '-0.005em' }}>{displayName}</p>
-            <p className="text-[12px] text-[--text-tertiary] truncate">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
+            <p className="text-[13px] font-semibold text-white truncate" style={{ letterSpacing: '-0.005em' }}>{displayName}</p>
+            <p className="text-[11px] text-white/55 truncate uppercase tracking-wider">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
           </div>
         </div>
         <LogoutButton variant="sidebar" />
@@ -221,38 +259,42 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
     <>
       <header
         className={cn(
-          "h-[56px] flex items-center justify-between px-4 md:px-6 sticky top-0 z-40 transition-colors duration-200 backdrop-blur-xl",
-          scrolled ? "bg-white/72 border-b border-[--border]" : "bg-white/72 border-b border-transparent"
+          "topbar-glass h-[64px] flex items-center justify-between px-4 md:px-6 sticky top-0 z-40 transition-colors duration-200",
+          !scrolled && "border-b-transparent"
         )}
-        style={{ backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)' }}
       >
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onToggleMenu}
-            className="lg:hidden w-11 h-11 flex items-center justify-center rounded-full hover:bg-[--bg-elevated] transition-colors duration-200"
+            className="lg:hidden w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/70 transition-colors duration-200"
             aria-label="Menü"
           >
             <Menu className="w-5 h-5 text-[--text]" strokeWidth={1.75} />
           </button>
 
           {/* Breadcrumb */}
-          <nav className="hidden md:flex items-center gap-1.5 overflow-hidden min-w-0">
+          <nav className="hidden md:flex items-center gap-2 overflow-hidden min-w-0 px-3 py-1.5 rounded-full bg-white/55 border border-white/60 backdrop-blur-md">
+            <span
+              aria-hidden
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ background: 'var(--grad-aurora)', boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)' }}
+            />
             {breadcrumbs.map((crumb, i) => (
               <React.Fragment key={crumb.href}>
                 <Link
                   href={crumb.href}
                   className={cn(
-                    "text-[13px] transition-colors duration-200 whitespace-nowrap",
+                    "text-[12px] transition-colors duration-200 whitespace-nowrap",
                     i === breadcrumbs.length - 1
-                      ? "text-[--text] font-medium"
-                      : "text-[--text-tertiary] hover:text-[--text] font-normal"
+                      ? "text-[--text] font-semibold"
+                      : "text-[--text-tertiary] hover:text-[--text] font-medium"
                   )}
                   style={{ letterSpacing: '-0.005em' }}
                 >
                   {crumb.label}
                 </Link>
                 {i < breadcrumbs.length - 1 && (
-                  <ChevronRight className="w-3.5 h-3.5 text-[--text-quaternary] shrink-0" strokeWidth={1.75} />
+                  <ChevronRight className="w-3 h-3 text-[--text-quaternary] shrink-0" strokeWidth={2} />
                 )}
               </React.Fragment>
             ))}
@@ -263,21 +305,24 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
           <BrandMark size="sm" />
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <LogoutButton variant="topbar" />
           <button
             onClick={() => setProfileModalOpen(true)}
-            className="flex items-center gap-2.5 cursor-pointer hover:bg-[--bg-elevated] py-1.5 px-1.5 rounded-full transition-colors duration-200"
+            className="flex items-center gap-2.5 cursor-pointer hover:bg-white/70 py-1 pl-3 pr-1 rounded-full transition-colors duration-200 border border-white/55 bg-white/35 backdrop-blur-md"
             aria-label="Profil"
           >
             <div className="hidden md:flex flex-col items-end">
-              <p className="text-[13px] font-medium text-[--text] leading-none mb-0.5" style={{ letterSpacing: '-0.005em' }}>
+              <p className="text-[13px] font-semibold text-[--text] leading-none mb-0.5" style={{ letterSpacing: '-0.005em' }}>
                 {displayName}
               </p>
-              <p className="text-[11px] text-[--text-tertiary]">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
+              <p className="text-[10px] text-[--text-tertiary] uppercase tracking-wider">{userRole === 'superadmin' ? 'Üst Yönetici' : 'Yönetim'}</p>
             </div>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[--bg-elevated]">
-              <User className="w-[18px] h-[18px] text-[--text-secondary]" strokeWidth={1.75} />
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+              style={{ background: 'var(--grad-aurora)', boxShadow: '0 6px 14px rgba(79, 70, 229, 0.4)' }}
+            >
+              <User className="w-[18px] h-[18px]" strokeWidth={2} />
             </div>
           </button>
         </div>
@@ -314,26 +359,30 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
               onClick={onToggleMenu}
             />
             <motion.div
-              initial={{ x: -288 }}
+              initial={{ x: -304 }}
               animate={{ x: 0 }}
-              exit={{ x: -288 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed top-0 left-0 w-72 h-full z-[70] overflow-y-auto lg:hidden bg-[--surface] border-r border-[--border]"
+              exit={{ x: -304 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="sidebar-shell fixed top-0 left-0 w-72 h-full z-[70] overflow-y-auto lg:hidden flex flex-col"
             >
-              <div className="flex items-center justify-between px-5 h-[64px] border-b border-[--border]">
+              <div className="flex items-center justify-between px-5 h-[72px] relative z-[2]">
                 <Link href="/" className="flex items-center" onClick={onToggleMenu}>
-                  <BrandMark size="sm" />
+                  <BrandMark size="sm" tone="light" />
                 </Link>
                 <button
                   onClick={onToggleMenu}
-                  className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-[--bg-elevated] transition-colors duration-200"
+                  className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors duration-200 text-white"
                   aria-label="Kapat"
                 >
-                  <X className="w-5 h-5 text-[--text]" strokeWidth={1.75} />
+                  <X className="w-5 h-5" strokeWidth={1.75} />
                 </button>
               </div>
 
-              <nav className="p-3 space-y-0.5" role="navigation">
+              <div className="px-5 relative z-[2]">
+                <div className="divider-gradient" />
+              </div>
+
+              <nav className="p-3 space-y-1 flex-1 relative z-[2]" role="navigation">
                 {navLinks.filter(l => {
                   if (userRole !== 'superadmin' && (l.href === '/ayarlar' || l.href === '/gunlukler')) return false;
                   return true;
@@ -345,13 +394,10 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                       key={link.href}
                       href={link.href}
                       onClick={onToggleMenu}
-                      className={navLinkClasses(isActive)}
+                      className={navLinkClasses(isActive, true)}
                     >
                       <Icon
-                        className={cn(
-                          "w-[18px] h-[18px] shrink-0",
-                          isActive ? "text-[--accent]" : "text-[--text-tertiary]"
-                        )}
+                        className="w-[18px] h-[18px] shrink-0"
                         strokeWidth={1.75}
                       />
                       <span>{link.label}</span>
@@ -360,7 +406,7 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                 })}
               </nav>
 
-              <div className="p-3 mt-2 border-t border-[--border]">
+              <div className="p-3 border-t border-[--sidebar-border] relative z-[2]">
                 <LogoutButton variant="sidebar" />
               </div>
             </motion.div>
@@ -384,14 +430,12 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
 
   return (
     <nav
-      className="lg:hidden fixed left-1/2 -translate-x-1/2 z-50 backdrop-blur-2xl bg-white/80 border border-[--border] rounded-full max-w-[92vw]"
+      className="mobile-pill-nav lg:hidden fixed left-1/2 -translate-x-1/2 z-50 rounded-full max-w-[92vw]"
       style={{
         bottom: 'max(16px, env(safe-area-inset-bottom))',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       }}
     >
-      <div className="flex items-center gap-1 px-2 py-1.5" role="navigation">
+      <div className="flex items-center gap-1 px-2 py-1.5 relative z-[1]" role="navigation">
         {mobileLinks.map(link => {
           const isActive = pathname === link.href;
           const Icon = link.icon;
@@ -400,13 +444,21 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3.5 py-2 rounded-full transition-colors duration-200 min-w-[58px] min-h-[44px] justify-center",
-                isActive ? "text-[--accent]" : "text-[--text-secondary] hover:text-[--text]"
+                "relative flex flex-col items-center gap-0.5 px-3.5 py-2 rounded-full transition-colors duration-200 min-w-[58px] min-h-[44px] justify-center",
+                isActive ? "text-white" : "text-[--text-secondary] hover:text-[--text]"
               )}
               aria-current={isActive ? 'page' : undefined}
+              style={
+                isActive
+                  ? {
+                      background: 'var(--grad-aurora)',
+                      boxShadow: '0 8px 22px rgba(79, 70, 229, 0.40)',
+                    }
+                  : undefined
+              }
             >
-              <Icon className="w-[20px] h-[20px]" strokeWidth={isActive ? 2 : 1.75} />
-              <span className="text-[10px] font-medium" style={{ letterSpacing: '-0.005em' }}>{link.label}</span>
+              <Icon className="w-[20px] h-[20px]" strokeWidth={isActive ? 2.25 : 1.75} />
+              <span className="text-[10px] font-semibold" style={{ letterSpacing: '0.01em' }}>{link.label}</span>
             </Link>
           );
         })}

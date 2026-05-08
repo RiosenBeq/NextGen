@@ -269,7 +269,7 @@ export default async function FinansalTablo({
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Tahmini Verimlilik</p>
-          <h1 className="apple-headline mt-3">Finansal Analiz</h1>
+          <h1 className="apple-headline mt-3">Finansal <span className="hero-serif text-gradient-aurora">analiz</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Karlılık senaryoları, başabaş noktası ve lokasyon bazlı sabit gider dökümü.
           </p>

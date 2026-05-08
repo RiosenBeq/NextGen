@@ -60,7 +60,7 @@ export default function GunluklerClientUI({ loglar }: { loglar: LogKaydi[] }) {
     <div className="space-y-12 md:space-y-16 animate-fade-in">
       <header>
         <p className="apple-eyebrow">Sistem</p>
-        <h1 className="apple-headline mt-3">Sistem Logları</h1>
+        <h1 className="apple-headline mt-3">Sistem <span className="hero-serif text-gradient-aurora">logları</span></h1>
         <p className="mt-4 apple-body max-w-2xl">
           Tüm sistem işlemleri ve değişiklik geçmişi.
         </p>

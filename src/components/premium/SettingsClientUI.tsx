@@ -143,7 +143,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
       {/* Header */}
       <header>
         <p className="apple-eyebrow">Sistem</p>
-        <h1 className="apple-headline mt-3">Sistem Ayarları</h1>
+        <h1 className="apple-headline mt-3">Sistem <span className="hero-serif text-gradient-aurora">ayarları</span></h1>
         <p className="mt-4 apple-body max-w-2xl">
           Operasyonel parametreler, lokasyon yapılandırmaları ve erişim kontrolü.
         </p>

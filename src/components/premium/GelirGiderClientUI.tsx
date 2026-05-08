@@ -105,7 +105,7 @@ export default function GelirGiderClientUI({
       <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Finansal Akış</p>
-          <h1 className="apple-headline mt-3">Gelir & Gider</h1>
+          <h1 className="apple-headline mt-3">Gelir &amp; <span className="hero-serif text-gradient-emerald">gider</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Ticari döküm, vergi analizi ve operasyonel performans bir arada.
           </p>

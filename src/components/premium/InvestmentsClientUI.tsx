@@ -84,7 +84,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Capex</p>
-          <h1 className="apple-headline mt-3">Yatırım & Demirbaş</h1>
+          <h1 className="apple-headline mt-3">Yatırım &amp; <span className="hero-serif text-gradient-emerald">demirbaş</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Sabit yatırım kalemlerini, yeni nesil kabin alımlarını ve geri dönüş sürelerini stratejik olarak yönetin.
           </p>

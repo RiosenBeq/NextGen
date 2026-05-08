@@ -44,7 +44,7 @@ export default async function TargetsPage() {
     <div className="space-y-12 md:space-y-16 animate-fade-in">
       <header>
         <p className="apple-eyebrow">Projeksiyon</p>
-        <h1 className="apple-headline mt-3">Hedefler & Projeksiyon</h1>
+        <h1 className="apple-headline mt-3">Hedefler &amp; <span className="hero-serif text-gradient-sunset">projeksiyon</span></h1>
         <p className="mt-4 apple-body max-w-2xl">
           Yatırım geri dönüşü, aylık hedefler ve senaryo projeksiyonlarını tek panelden izleyin.
         </p>

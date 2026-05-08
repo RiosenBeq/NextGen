@@ -66,7 +66,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Günlük Operasyon</p>
-          <h1 className="apple-headline mt-3">Performans Yönetimi</h1>
+          <h1 className="apple-headline mt-3">Performans <span className="hero-serif text-gradient-aurora">yönetimi</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Günlük seans girişlerini ve operasyonel verileri yönetin.
           </p>

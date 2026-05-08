@@ -171,7 +171,7 @@ export default function FaturalarClientUI({
       <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Belge Arşivi</p>
-          <h1 className="apple-headline mt-3">Faturalar & Belgeler</h1>
+          <h1 className="apple-headline mt-3">Faturalar &amp; <span className="hero-serif text-gradient-emerald">belgeler</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             E-faturalar, dekontlar ve gider evrakları tek panelde.
           </p>

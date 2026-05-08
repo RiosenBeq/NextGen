@@ -137,7 +137,7 @@ export default function ContractsClientUI({
       {/* Header */}
       <header>
         <p className="apple-eyebrow">Belge Arşivi</p>
-        <h1 className="apple-headline mt-3">Sözleşmeler</h1>
+        <h1 className="apple-headline mt-3"><span className="hero-serif text-gradient-aurora">Sözleşmeler</span></h1>
         <p className="mt-4 apple-body max-w-2xl">
           Lokasyon bazlı kira ve operasyon sözleşmelerini güvenli şekilde yönetin.
         </p>

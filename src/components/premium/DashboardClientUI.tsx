@@ -205,24 +205,50 @@ export default function DashboardClientUI({
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="space-y-12 md:space-y-16"
     >
-      {/* Header Section */}
-      <motion.header {...fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <p className="apple-eyebrow">Genel Bakış</p>
-          <h1 className="apple-headline mt-3">Finansal kontrol merkezi.</h1>
-          <p className="mt-4 apple-body max-w-2xl">
-            Sistem genelindeki performans, gider akışı ve aylık karşılaştırmalar bir arada.
-          </p>
-        </div>
-        <div>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="elite-button-primary"
-          >
-            <Plus size={16} strokeWidth={2} />
-            Yeni Gider
-          </button>
+      {/* Hero Section */}
+      <motion.header {...fadeInUp} className="hero-card p-7 md:p-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="max-w-2xl">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] text-white/85"
+              style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.14)' }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: 'var(--violet)', boxShadow: '0 0 10px var(--violet)' }}
+              />
+              Genel Bakış · Bugün
+            </div>
+            <h1
+              className="mt-5 leading-[1.02] text-white"
+              style={{ fontSize: 'clamp(36px, 4.6vw, 56px)', fontWeight: 700, letterSpacing: '-0.025em' }}
+            >
+              Finansal kontrol{' '}
+              <span className="hero-serif" style={{ background: 'linear-gradient(135deg, #C7B8FF 0%, #FFA8E2 60%, #7BE8FF 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>
+                merkezi
+              </span>.
+            </h1>
+            <p className="mt-5 text-[15px] md:text-[17px] text-white/72 leading-relaxed max-w-xl">
+              Sistem genelindeki performans, gider akışı ve aylık karşılaştırmalar tek bir tasarım dilinde.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:items-end">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="elite-button-primary"
+            >
+              <Plus size={16} strokeWidth={2.25} />
+              Yeni Gider
+            </button>
+            <Link
+              href="/performans"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[14px] font-semibold text-white/90 hover:text-white border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] backdrop-blur-md transition-colors"
+            >
+              Performans Gir
+              <ArrowRight size={14} strokeWidth={2.25} />
+            </Link>
+          </div>
         </div>
       </motion.header>
 
@@ -255,17 +281,22 @@ export default function DashboardClientUI({
         <motion.div
           {...fadeInUp}
           transition={{ ...fadeInUp.transition, delay: 0.15 }}
-          className="xl:col-span-8 apple-card p-6 md:p-8"
+          className="xl:col-span-8 apple-card p-6 md:p-8 relative overflow-hidden"
         >
-          <div className="mb-8">
+          <div
+            aria-hidden
+            className="deco-orb deco-orb--violet"
+            style={{ width: 220, height: 220, top: -80, right: -60, opacity: 0.35 }}
+          />
+          <div className="mb-8 relative">
             <p className="apple-eyebrow">Analiz</p>
-            <h3 className="apple-title-1 mt-2">Finansal Analiz Merkezi</h3>
+            <h3 className="apple-title-1 mt-3">Finansal Analiz Merkezi</h3>
             <p className="mt-2 text-[15px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>
               Aksiyon alınabilir finansal göstergeler.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
             <AnalyzerCard
               title="Ortalama Gider"
               value={formatCurrency(ortalamaGider)}
@@ -301,9 +332,14 @@ export default function DashboardClientUI({
           <div className="px-6 py-5 border-b border-[--border] flex items-center justify-between">
             <div>
               <p className="apple-eyebrow">Audit</p>
-              <h3 className="apple-title-2 mt-1">Son Kayıtlar</h3>
+              <h3 className="apple-title-2 mt-2">Son Kayıtlar</h3>
             </div>
-            <Receipt size={18} strokeWidth={1.75} className="text-[--text-tertiary]" />
+            <span
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-white"
+              style={{ background: 'var(--grad-aurora)', boxShadow: '0 6px 16px rgba(79, 70, 229, 0.30)' }}
+            >
+              <Receipt size={18} strokeWidth={2} />
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -370,16 +406,25 @@ export default function DashboardClientUI({
       <motion.section
         {...fadeInUp}
         transition={{ ...fadeInUp.transition, delay: 0.25 }}
-        className="apple-card p-6 md:p-8"
+        className="apple-card p-6 md:p-8 relative overflow-hidden"
       >
-        <div className="mb-8">
+        <div
+          aria-hidden
+          className="deco-orb deco-orb--cyan"
+          style={{ width: 240, height: 240, bottom: -100, left: -80, opacity: 0.35 }}
+        />
+        <div className="mb-8 relative">
           <p className="apple-eyebrow">Not Defteri</p>
-          <h3 className="apple-title-1 mt-2">Kişisel Notlar</h3>
+          <h3 className="apple-title-1 mt-3">
+            Kişisel <span className="hero-serif text-gradient-aurora">notlar</span>
+          </h3>
           <p className="mt-2 text-[15px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>
             Operasyonel notlar ve hatırlatıcılar.
           </p>
         </div>
-        <NoteList initialNotes={notes} />
+        <div className="relative">
+          <NoteList initialNotes={notes} />
+        </div>
       </motion.section>
 
       {/* Modals & Drawers */}
@@ -539,36 +584,51 @@ function TrendCard({ card }: TrendCardProps) {
       ? 'Yetersiz veri'
       : `${card.pct > 0 ? '+' : ''}${card.pct.toFixed(1)}%`;
 
+  const iconGradient =
+    card.id === 'profit'
+      ? 'var(--grad-aurora)'
+      : card.id === 'revenue'
+        ? 'var(--grad-emerald)'
+        : 'var(--grad-sunset)';
+
   return (
-    <article className="apple-card p-6 md:p-7">
-      <div className="flex items-start justify-between gap-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[--bg-elevated] text-[--text-secondary]">
+    <article className="apple-card p-6 md:p-7 relative overflow-hidden">
+      <span
+        aria-hidden
+        className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-30 blur-2xl pointer-events-none"
+        style={{ background: iconGradient }}
+      />
+      <div className="flex items-start justify-between gap-3 relative">
+        <div
+          className="w-11 h-11 rounded-2xl flex items-center justify-center text-white"
+          style={{ background: iconGradient, boxShadow: '0 8px 18px rgba(79, 70, 229, 0.25)' }}
+        >
           {card.icon}
         </div>
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium tabular-nums',
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold tabular-nums border',
             isGood === null
-              ? 'bg-[--bg-elevated] text-[--text-secondary]'
+              ? 'bg-[--bg-elevated] text-[--text-secondary] border-[--border]'
               : isGood
-                ? 'bg-[--accent-soft] text-[--accent]'
-                : 'bg-[--bg-elevated] text-[--text-secondary]'
+                ? 'bg-[--success-soft] text-[--success] border-[--success-tint]'
+                : 'bg-[--danger-soft] text-[--danger] border-[--danger-tint]'
           )}
         >
-          <ArrowIcon size={12} strokeWidth={2} />
+          <ArrowIcon size={12} strokeWidth={2.5} />
           {pctLabel}
         </span>
       </div>
 
-      <p className="mt-6 text-[13px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>{card.title}</p>
-      <p className="mt-1 text-[28px] md:text-[32px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>
+      <p className="mt-6 text-[12px] uppercase tracking-wider font-semibold text-[--text-tertiary]">{card.title}</p>
+      <p className="mt-2 text-[30px] md:text-[36px] font-bold tabular-nums text-[--text]" style={{ letterSpacing: '-0.025em' }}>
         {card.currentValue}
       </p>
       <p className="mt-1 text-[12px] text-[--text-tertiary]">{card.currentLabel}</p>
 
       <div className="mt-5 pt-4 border-t border-[--border] flex items-baseline justify-between gap-3">
         <span className="text-[12px] text-[--text-tertiary]">vs Geçen Ay</span>
-        <span className="text-[14px] font-medium tabular-nums text-[--text-secondary]">
+        <span className="text-[14px] font-semibold tabular-nums text-[--text-secondary]">
           {card.previousValue}
         </span>
       </div>

@@ -147,7 +147,7 @@ export default function AvmPaymentsClientUI({
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="apple-eyebrow">AVM Takibi</p>
-          <h1 className="apple-headline mt-3">Ödeme Kayıtları</h1>
+          <h1 className="apple-headline mt-3">Ödeme <span className="hero-serif text-gradient-aurora">kayıtları</span></h1>
           <p className="mt-4 apple-body max-w-2xl">
             Kira, aidat ve ciro payı ödemelerini manuel olarak takip edin.
           </p>

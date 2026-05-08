@@ -409,44 +409,84 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════
-   CARDS
+   CARDS — premium tiered system
+   Layered: base background + inner top-light bevel + soft border
+   + multi-stop shadow + optional aurora ring on hover/active.
    ══════════════════════════════════════════════════════════ */
 
 .premium-card,
 .apple-card {
   position: relative;
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 60%),
+    var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 1px 2px rgba(11, 16, 35, 0.04),
+    0 4px 14px rgba(11, 16, 35, 0.06),
+    0 18px 40px -22px rgba(11, 16, 35, 0.18);
   transition:
-    box-shadow 0.4s var(--ease-apple),
-    border-color 0.4s var(--ease-apple),
-    transform 0.4s var(--ease-apple);
+    box-shadow 0.45s var(--ease-apple),
+    border-color 0.45s var(--ease-apple),
+    transform 0.45s var(--ease-apple);
+  isolation: isolate;
 }
 
+/* Aurora gradient ring — hover/active'de fade-in */
 .premium-card::before,
 .apple-card::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(140deg, rgba(79, 70, 229, 0.18), transparent 35%, transparent 65%, rgba(217, 70, 239, 0.14));
+  padding: 1.2px;
+  background: linear-gradient(
+    140deg,
+    rgba(79, 70, 229, 0.55) 0%,
+    rgba(139, 92, 246, 0.30) 30%,
+    transparent 55%,
+    rgba(217, 70, 239, 0.25) 80%,
+    rgba(6, 182, 212, 0.40) 100%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
-  transition: opacity 0.4s var(--ease-apple);
+  transition: opacity 0.45s var(--ease-apple);
   pointer-events: none;
+  z-index: 1;
+}
+
+/* Üstte kayan ışık çizgisi — refined glass yansıması */
+.premium-card::after,
+.apple-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    transparent 100%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .premium-card:hover,
 .apple-card:hover {
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(79, 70, 229, 0.18);
-  transform: translateY(-3px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 24px rgba(11, 16, 35, 0.08),
+    0 24px 56px -22px rgba(79, 70, 229, 0.30);
+  border-color: rgba(79, 70, 229, 0.20);
+  transform: translateY(-2px);
 }
 
 .premium-card:hover::before,
@@ -454,12 +494,17 @@ body {
   opacity: 1;
 }
 
-/* Vurgu kartı — aurora gradient ring her zaman görünür */
+/* Vurgu kartı — aurora ring her zaman görünür (kalıcı highlight) */
 .aurora-card {
   position: relative;
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 60%),
+    var(--surface);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 24px rgba(11, 16, 35, 0.10),
+    0 24px 56px -28px rgba(79, 70, 229, 0.36);
   isolation: isolate;
 }
 
@@ -476,6 +521,51 @@ body {
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
+}
+
+/* Stat card — belirgin sayısal vurgu için tek kart varyantı */
+.stat-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 6px 18px rgba(11, 16, 35, 0.06),
+    0 20px 44px -28px rgba(11, 16, 35, 0.18);
+  isolation: isolate;
+  overflow: hidden;
+  transition: box-shadow 0.4s var(--ease-apple), transform 0.4s var(--ease-apple);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--grad-aurora);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 12px 32px rgba(11, 16, 35, 0.10),
+    0 28px 64px -28px rgba(79, 70, 229, 0.40);
+}
+
+/* Section card — daha sakin, dahili kompozisyonlar için */
+.section-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 2px rgba(11, 16, 35, 0.03);
+  overflow: hidden;
 }
 
 /* Hero kart — büyük gradient zemin, beyaz iç içerik */
@@ -2158,76 +2248,101 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════
-   PREMIUM DIALOG / SHEET — Aurora glass overlay + gradient ring
+   PREMIUM DIALOG / SHEET — couture glass overlay + aurora ring
    ══════════════════════════════════════════════════════════ */
 
 .sui-dialog-overlay {
   background:
-    radial-gradient(at 14% 14%, rgba(79, 70, 229, 0.18) 0px, transparent 45%),
-    radial-gradient(at 86% 86%, rgba(217, 70, 239, 0.14) 0px, transparent 45%),
-    rgba(11, 16, 35, 0.45);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+    radial-gradient(at 18% 16%, rgba(79, 70, 229, 0.22) 0px, transparent 50%),
+    radial-gradient(at 84% 80%, rgba(217, 70, 239, 0.16) 0px, transparent 50%),
+    radial-gradient(at 60% 30%, rgba(6, 182, 212, 0.10) 0px, transparent 55%),
+    rgba(11, 16, 35, 0.55);
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
 }
 
 .sui-premium-dialog,
 .sui-premium-sheet {
   position: fixed;
-  background: var(--surface);
+  background:
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.06) 0px, transparent 38%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.05) 0px, transparent 38%),
+    var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 26px;
   box-shadow:
-    0 32px 80px rgba(11, 16, 35, 0.30),
-    0 12px 28px rgba(11, 16, 35, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.92) inset,
     0 0 0 1px rgba(11, 16, 35, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    0 18px 36px rgba(11, 16, 35, 0.10),
+    0 36px 88px rgba(11, 16, 35, 0.32);
   isolation: isolate;
 }
 
+/* Aurora gradient ring */
 .sui-premium-dialog::before,
 .sui-premium-sheet::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
+  padding: 1.25px;
   background: linear-gradient(
     160deg,
-    rgba(79, 70, 229, 0.45) 0%,
-    rgba(217, 70, 239, 0.18) 35%,
-    transparent 60%,
-    rgba(6, 182, 212, 0.32) 100%
+    rgba(79, 70, 229, 0.58) 0%,
+    rgba(139, 92, 246, 0.30) 28%,
+    rgba(217, 70, 239, 0.20) 50%,
+    transparent 70%,
+    rgba(6, 182, 212, 0.42) 100%
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
+}
+
+/* Üstte kayan ışık çizgisi — couture glass effect */
+.sui-premium-dialog::after,
+.sui-premium-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  border-radius: inherit inherit 0 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    transparent 100%
+  );
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Sheet variant'lar için kenar yarıçapı düzeltmesi */
 .sui-sheet-bottom,
 .sui-sheet-responsive {
-  border-radius: 26px 26px 0 0;
+  border-radius: 28px 28px 0 0;
 }
 
 .sui-sheet-right,
 .sui-sheet-left {
-  border-radius: 24px 0 0 24px;
+  border-radius: 26px 0 0 26px;
 }
 
 @media (min-width: 768px) {
   .sui-sheet-responsive {
-    border-radius: 24px 0 0 24px;
+    border-radius: 26px 0 0 26px;
   }
 }
 
 .sui-sheet-top {
-  border-radius: 0 0 24px 24px;
+  border-radius: 0 0 26px 26px;
 }
 
-/* Header — aurora glow vurgusu (üst kenarda gradient çizgi) */
+/* Header — refined aurora vurgusu, üst kenarda incecik gradient çizgi */
 .sui-dialog-header {
   border-bottom: 1px solid var(--border-soft);
   background:
@@ -2237,20 +2352,72 @@ body {
 .sui-dialog-header::before {
   content: "";
   position: absolute;
-  inset: 0 24px auto 24px;
-  height: 2px;
-  bottom: -1px;
-  top: auto;
+  inset: auto 28px 0 28px;
+  height: 1.5px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(79, 70, 229, 0.55) 30%,
-    rgba(217, 70, 239, 0.55) 70%,
+    rgba(79, 70, 229, 0.50) 25%,
+    rgba(139, 92, 246, 0.55) 50%,
+    rgba(217, 70, 239, 0.50) 75%,
     transparent 100%
   );
   opacity: 0.55;
   pointer-events: none;
   border-radius: 2px;
+}
+
+/* Refined typography lockup */
+.sui-dialog-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sui-dialog-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad-aurora);
+}
+
+/* Footer — sticky-friendly, üstte gradient çizgi */
+.sui-dialog-footer {
+  position: relative;
+  border-top: 1px solid var(--border-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(246, 244, 238, 0.55) 100%);
+}
+
+.sui-dialog-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 28px auto 28px;
+  height: 1.5px;
+  top: -1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(79, 70, 229, 0.30) 50%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Bottom-sheet handle — aurora vurgusu */
+.sui-sheet-handle {
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--grad-aurora);
+  opacity: 0.45;
 }
 
 @media (max-width: 768px) {
@@ -2262,8 +2429,14 @@ body {
   .sui-premium-dialog,
   .sui-premium-sheet {
     box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.92) inset,
       0 18px 44px rgba(11, 16, 35, 0.24),
       0 6px 14px rgba(11, 16, 35, 0.12);
+  }
+
+  .sui-dialog-header::before,
+  .sui-dialog-footer::before {
+    inset-inline: 20px;
   }
 }
 
@@ -2283,13 +2456,14 @@ body {
 }
 
 @keyframes sui-dialog-show {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(0.96); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0%   { opacity: 0; transform: translate(-50%, calc(-48% + 12px)) scale(0.94); }
+  60%  { opacity: 1; transform: translate(-50%, calc(-50% - 1px)) scale(1.005); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes sui-dialog-hide {
   from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to   { opacity: 0; transform: translate(-50%, calc(-50% + 4px)) scale(0.97); }
+  to   { opacity: 0; transform: translate(-50%, calc(-50% + 6px)) scale(0.96); }
 }
 
 @keyframes sui-slide-up-show {
@@ -2343,11 +2517,11 @@ body {
 
 /* Centered dialog */
 .sui-dialog-content[data-state="open"] {
-  animation: sui-dialog-show 0.22s var(--ease-apple);
+  animation: sui-dialog-show 0.34s var(--ease-snappy);
 }
 
 .sui-dialog-content[data-state="closed"] {
-  animation: sui-dialog-hide 0.18s var(--ease-apple);
+  animation: sui-dialog-hide 0.20s var(--ease-apple);
 }
 
 /* Sheet — bottom (mobile bottom sheet) */

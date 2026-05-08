@@ -38,6 +38,7 @@ interface PremiumModalProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
+  eyebrow?: string;
   children: React.ReactNode;
   maxWidth?: string;
 }
@@ -47,13 +48,14 @@ export function PremiumModal({
   onClose,
   title,
   subtitle,
+  eyebrow,
   children,
   maxWidth = 'max-w-2xl',
 }: PremiumModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={cn(maxWidth)}>
-        <DialogHeader>
+        <DialogHeader eyebrow={eyebrow}>
           <DialogTitle>{title || 'Form'}</DialogTitle>
           {subtitle && <DialogDescription>{subtitle}</DialogDescription>}
         </DialogHeader>
@@ -68,6 +70,7 @@ interface PremiumDrawerProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
+  eyebrow?: string;
   children: React.ReactNode;
 }
 
@@ -76,12 +79,13 @@ export function PremiumDrawer({
   onClose,
   title,
   subtitle = 'Kayıt detayları ve düzenleme alanı',
+  eyebrow,
   children,
 }: PremiumDrawerProps) {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="responsive">
-        <SheetHeader>
+        <SheetHeader eyebrow={eyebrow}>
           <SheetTitle>{title || 'Detaylar'}</SheetTitle>
           {subtitle && <SheetDescription>{subtitle}</SheetDescription>}
         </SheetHeader>

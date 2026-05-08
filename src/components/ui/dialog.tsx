@@ -59,15 +59,20 @@ DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
   className,
+  eyebrow,
+  children,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: React.HTMLAttributes<HTMLDivElement> & { eyebrow?: string }) => (
   <div
     className={cn(
-      "sui-dialog-header relative flex flex-col gap-1.5 px-6 sm:px-8 pt-7 pb-5 pr-16",
+      "sui-dialog-header relative flex flex-col gap-2 px-6 sm:px-8 pt-7 pb-5 pr-16",
       className
     )}
     {...props}
-  />
+  >
+    {eyebrow && <span className="sui-dialog-eyebrow">{eyebrow}</span>}
+    {children}
+  </div>
 )
 DialogHeader.displayName = "DialogHeader"
 
@@ -76,7 +81,7 @@ const DialogBody = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex-1 overflow-y-auto px-6 sm:px-8 py-6", className)}
+    className={cn("flex-1 overflow-y-auto px-6 sm:px-8 py-6 sm:py-7", className)}
     {...props}
   />
 )
@@ -88,7 +93,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end gap-3 px-6 sm:px-8 py-5 border-t border-[--border-soft]",
+      "sui-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 px-6 sm:px-8 py-4 sm:py-5",
       className
     )}
     {...props}
@@ -103,10 +108,13 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-[22px] sm:text-[24px] font-semibold text-[--text] truncate",
+      "font-semibold text-[--text] leading-tight",
       className
     )}
-    style={{ letterSpacing: "-0.022em" }}
+    style={{
+      letterSpacing: "-0.024em",
+      fontSize: "clamp(20px, 3.4vw, 26px)",
+    }}
     {...props}
   />
 ))
@@ -118,7 +126,8 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-[14px] text-[--text-secondary]", className)}
+    className={cn("text-[14px] sm:text-[15px] text-[--text-secondary] leading-relaxed", className)}
+    style={{ letterSpacing: "-0.005em" }}
     {...props}
   />
 ))

@@ -18,7 +18,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-[9998] bg-white/70 backdrop-blur-2xl backdrop-saturate-150 sui-overlay",
+      "fixed inset-0 z-[9998] sui-overlay sui-dialog-overlay",
       className
     )}
     {...props}
@@ -28,19 +28,19 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-[9999] gap-0 bg-[--surface] shadow-[0_24px_60px_rgba(15,23,42,0.18),0_8px_24px_rgba(15,23,42,0.10)] flex flex-col",
+  "sui-premium-sheet fixed z-[9999] gap-0 flex flex-col",
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b border-[--border-strong] sui-sheet-top",
+        top: "inset-x-0 top-0 sui-sheet-top",
         bottom:
-          "inset-x-0 bottom-0 border-t border-[--border-strong] rounded-t-[22px] max-h-[92dvh] sui-sheet-bottom",
+          "inset-x-0 bottom-0 rounded-t-[26px] max-h-[92dvh] sui-sheet-bottom",
         left:
-          "inset-y-0 left-0 h-full w-3/4 sm:max-w-lg border-r border-[--border-strong] sui-sheet-left",
+          "inset-y-0 left-0 h-full w-[88%] sm:max-w-lg sui-sheet-left",
         right:
-          "inset-y-0 right-0 h-full w-full sm:max-w-lg border-l border-[--border-strong] sui-sheet-right",
+          "inset-y-0 right-0 h-full w-full sm:max-w-lg sui-sheet-right",
         responsive:
-          "inset-x-0 bottom-0 border-t border-[--border-strong] rounded-t-[22px] max-h-[92dvh] sui-sheet-responsive md:inset-x-auto md:bottom-auto md:inset-y-0 md:right-0 md:h-full md:w-full md:max-w-lg md:rounded-none md:max-h-none md:border-l",
+          "inset-x-0 bottom-0 rounded-t-[26px] max-h-[92dvh] sui-sheet-responsive md:inset-x-auto md:bottom-auto md:inset-y-0 md:right-0 md:h-full md:w-full md:max-w-lg md:rounded-none md:max-h-none",
       },
     },
     defaultVariants: {
@@ -68,17 +68,21 @@ const SheetContent = React.forwardRef<
     >
       {/* Drag handle (only for bottom-sheet variants) */}
       {(side === "bottom" || side === "responsive") && (
-        <div className="flex justify-center pt-2 pb-1 md:hidden">
-          <div className="w-10 h-1 rounded-full bg-[--border-strong]" />
+        <div className="flex justify-center pt-2.5 pb-1 md:hidden">
+          <div
+            className="w-12 h-1.5 rounded-full"
+            style={{ background: 'var(--grad-aurora)', opacity: 0.4 }}
+            aria-hidden
+          />
         </div>
       )}
       {children}
       {showClose && (
         <SheetPrimitive.Close
-          className="absolute right-4 top-4 sm:right-6 sm:top-6 w-11 h-11 rounded-full text-[--text-tertiary] transition-colors hover:bg-[--bg-elevated] hover:text-[--text] flex items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[--accent-soft]"
+          className="absolute right-4 top-4 sm:right-5 sm:top-5 w-10 h-10 rounded-full text-[--text-tertiary] transition-all hover:bg-[--bg-elevated] hover:text-[--text] flex items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[--accent-soft] z-[2]"
           aria-label="Kapat"
         >
-          <X size={20} strokeWidth={1.75} />
+          <X size={18} strokeWidth={2} />
         </SheetPrimitive.Close>
       )}
     </SheetPrimitive.Content>
@@ -92,7 +96,7 @@ const SheetHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-1 px-6 sm:px-8 pt-5 sm:pt-7 pb-5 border-b border-[--border-soft] pr-16",
+      "sui-dialog-header relative flex flex-col gap-1.5 px-6 sm:px-8 pt-5 sm:pt-6 pb-5 pr-16",
       className
     )}
     {...props}

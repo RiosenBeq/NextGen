@@ -1476,19 +1476,25 @@ body {
 
 /* Mobile bottom navbar — pill aurora */
 .mobile-pill-nav {
-  position: relative;
+  /* NOT — position bilinçli olarak burada set EDILMEZ. Tailwind'in
+     `fixed` utility'si layout layer'ında çalışsın diye CSS'te override
+     etmiyoruz. Eskiden buradaki `position: relative` `fixed`'i ezip
+     nav'ın scroll ile sürüklenmesine yol açıyordu. */
   width: 360px;
-  max-width: calc(100vw - 28px);
+  max-width: calc(100vw - 24px);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow:
-    0 20px 48px rgba(11, 16, 35, 0.20),
-    0 4px 12px rgba(11, 16, 35, 0.06),
-    0 0 0 1px rgba(79, 70, 229, 0.08);
+    0 24px 56px rgba(11, 16, 35, 0.22),
+    0 6px 14px rgba(11, 16, 35, 0.08),
+    0 0 0 1px rgba(79, 70, 229, 0.10);
   backdrop-filter: blur(22px) saturate(180%);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   isolation: isolate;
+  /* Notch/safe-area altındaki cihazlarda kayan içerik üzerine
+     overlay gibi durmasını sağlamak için will-change hint */
+  will-change: transform;
 }
 
 .mobile-pill-nav::before {
@@ -1524,9 +1530,11 @@ body {
 }
 
 /* Mobil bottom-nav clearance — content alttaki pill nav + safe-area
-   yüksekliğini hesaba kat, lg üstünde sıfırla */
+   yüksekliğini hesaba kat, lg üstünde sıfırla.
+   Hesap: nav yüksekliği ~68px + FAB taşması 22px + 14px alt boşluk
+   + safe-area = 120px + safe-area */
 .page-scroll {
-  padding-bottom: calc(108px + env(safe-area-inset-bottom));
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 1024px) {
@@ -2146,6 +2154,116 @@ body {
   .apple-card {
     box-shadow: none;
     border: 1px solid #ccc;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   PREMIUM DIALOG / SHEET — Aurora glass overlay + gradient ring
+   ══════════════════════════════════════════════════════════ */
+
+.sui-dialog-overlay {
+  background:
+    radial-gradient(at 14% 14%, rgba(79, 70, 229, 0.18) 0px, transparent 45%),
+    radial-gradient(at 86% 86%, rgba(217, 70, 239, 0.14) 0px, transparent 45%),
+    rgba(11, 16, 35, 0.45);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+.sui-premium-dialog,
+.sui-premium-sheet {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow:
+    0 32px 80px rgba(11, 16, 35, 0.30),
+    0 12px 28px rgba(11, 16, 35, 0.16),
+    0 0 0 1px rgba(11, 16, 35, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  isolation: isolate;
+}
+
+.sui-premium-dialog::before,
+.sui-premium-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgba(79, 70, 229, 0.45) 0%,
+    rgba(217, 70, 239, 0.18) 35%,
+    transparent 60%,
+    rgba(6, 182, 212, 0.32) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Sheet variant'lar için kenar yarıçapı düzeltmesi */
+.sui-sheet-bottom,
+.sui-sheet-responsive {
+  border-radius: 26px 26px 0 0;
+}
+
+.sui-sheet-right,
+.sui-sheet-left {
+  border-radius: 24px 0 0 24px;
+}
+
+@media (min-width: 768px) {
+  .sui-sheet-responsive {
+    border-radius: 24px 0 0 24px;
+  }
+}
+
+.sui-sheet-top {
+  border-radius: 0 0 24px 24px;
+}
+
+/* Header — aurora glow vurgusu (üst kenarda gradient çizgi) */
+.sui-dialog-header {
+  border-bottom: 1px solid var(--border-soft);
+  background:
+    linear-gradient(180deg, rgba(79, 70, 229, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.sui-dialog-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 24px auto 24px;
+  height: 2px;
+  bottom: -1px;
+  top: auto;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(79, 70, 229, 0.55) 30%,
+    rgba(217, 70, 239, 0.55) 70%,
+    transparent 100%
+  );
+  opacity: 0.55;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  .sui-premium-dialog::before,
+  .sui-premium-sheet::before {
+    display: none;
+  }
+
+  .sui-premium-dialog,
+  .sui-premium-sheet {
+    box-shadow:
+      0 18px 44px rgba(11, 16, 35, 0.24),
+      0 6px 14px rgba(11, 16, 35, 0.12);
   }
 }
 

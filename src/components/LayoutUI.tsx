@@ -438,7 +438,7 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
         key={link.href}
         href={link.href}
         className={cn(
-          "mobile-nav-link relative flex flex-col items-center gap-[3px] flex-1 min-w-[44px] min-h-[48px] justify-center rounded-2xl px-2 transition-colors duration-200",
+          "mobile-nav-link relative flex flex-col items-center justify-center gap-1 flex-1 min-w-[56px] h-[52px] rounded-2xl px-2 transition-colors duration-200",
           isActive ? "text-[--accent]" : "text-[--text-secondary] active:text-[--text]"
         )}
         aria-current={isActive ? 'page' : undefined}
@@ -446,45 +446,46 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
         {isActive && (
           <span
             aria-hidden
-            className="absolute top-1.5 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full"
+            className="absolute top-1 left-1/2 -translate-x-1/2 w-5 h-[3px] rounded-full"
             style={{ background: 'var(--grad-aurora)', boxShadow: '0 0 10px rgba(139, 92, 246, 0.55)' }}
           />
         )}
         <Icon className="w-[20px] h-[20px]" strokeWidth={isActive ? 2.25 : 1.75} />
-        <span className="text-[10px] font-semibold leading-none" style={{ letterSpacing: '0.01em' }}>{link.label}</span>
+        <span className="text-[10px] font-semibold leading-none tracking-wide">{link.label}</span>
       </Link>
     );
   };
 
   return (
     <nav
-      className="mobile-pill-nav lg:hidden fixed left-1/2 -translate-x-1/2 z-50 max-w-[94vw]"
+      className="mobile-pill-nav lg:hidden !fixed left-1/2 -translate-x-1/2 z-[60]"
       style={{
-        bottom: 'max(14px, env(safe-area-inset-bottom))',
+        bottom: 'calc(env(safe-area-inset-bottom) + 14px)',
       }}
       aria-label="Mobil navigasyon"
     >
-      <div className="flex items-center gap-1 px-2 py-1.5 relative z-[1]" role="navigation">
+      <div className="flex items-stretch gap-0.5 px-2.5 py-2 relative" role="navigation">
         {leftLinks.map(renderLink)}
-        <Link
-          href="/performans"
-          aria-label="Performans Ekle"
-          className="mobile-nav-fab relative flex items-center justify-center rounded-full shrink-0 mx-1 text-white"
-          style={{
-            width: 52,
-            height: 52,
-            marginTop: -22,
-            background: 'var(--grad-aurora)',
-            boxShadow: '0 12px 28px rgba(79, 70, 229, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.85)',
-          }}
-        >
-          <span
-            aria-hidden
-            className="absolute inset-[3px] rounded-full pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0) 55%)' }}
-          />
-          <PlusCircle className="w-[22px] h-[22px] relative" strokeWidth={2.25} />
-        </Link>
+        <div className="relative flex items-center justify-center w-[60px] shrink-0">
+          <Link
+            href="/performans"
+            aria-label="Performans Ekle"
+            className="mobile-nav-fab absolute -top-5 left-1/2 -translate-x-1/2 flex items-center justify-center rounded-full text-white"
+            style={{
+              width: 52,
+              height: 52,
+              background: 'var(--grad-aurora)',
+              boxShadow: '0 14px 32px rgba(79, 70, 229, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.92)',
+            }}
+          >
+            <span
+              aria-hidden
+              className="absolute inset-[3px] rounded-full pointer-events-none"
+              style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 55%)' }}
+            />
+            <PlusCircle className="w-[22px] h-[22px] relative" strokeWidth={2.25} />
+          </Link>
+        </div>
         {rightLinks.map(renderLink)}
       </div>
     </nav>

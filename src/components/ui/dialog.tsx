@@ -18,7 +18,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[9998] bg-white/70 backdrop-blur-2xl backdrop-saturate-150 sui-overlay",
+      "fixed inset-0 z-[9998] sui-overlay sui-dialog-overlay",
       className
     )}
     {...props}
@@ -37,7 +37,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-[9999] grid w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-0 rounded-[22px] border border-[--border-strong] bg-[--surface] shadow-[0_24px_60px_rgba(15,23,42,0.18),0_8px_24px_rgba(15,23,42,0.10)]",
+        "sui-premium-dialog fixed left-1/2 top-1/2 z-[9999] grid w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-0",
         "max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden flex flex-col sui-dialog-content",
         className
       )}
@@ -46,10 +46,10 @@ const DialogContent = React.forwardRef<
       {children}
       {showClose && (
         <DialogPrimitive.Close
-          className="absolute right-4 top-4 sm:right-6 sm:top-6 w-11 h-11 rounded-full text-[--text-tertiary] transition-colors hover:bg-[--bg-elevated] hover:text-[--text] flex items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[--accent-soft]"
+          className="absolute right-4 top-4 sm:right-5 sm:top-5 w-10 h-10 rounded-full text-[--text-tertiary] transition-all hover:bg-[--bg-elevated] hover:text-[--text] flex items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[--accent-soft] z-[2]"
           aria-label="Kapat"
         >
-          <X size={20} strokeWidth={1.75} />
+          <X size={18} strokeWidth={2} />
         </DialogPrimitive.Close>
       )}
     </DialogPrimitive.Content>
@@ -63,7 +63,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-1 px-6 sm:px-8 pt-7 pb-5 border-b border-[--border-soft] pr-16",
+      "sui-dialog-header relative flex flex-col gap-1.5 px-6 sm:px-8 pt-7 pb-5 pr-16",
       className
     )}
     {...props}

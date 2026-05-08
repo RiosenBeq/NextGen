@@ -16,19 +16,20 @@ export async function getNotes() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase.from('Note').select('*');
-  if (user) query = query.eq('userId', user.id);
+  // Oturum yoksa hiçbir şey döndürme — başkasının notlarını sızdırma.
+  if (!user) return [];
 
-  let { data, error } = await query.order('createdAt', { ascending: false });
+  const { data, error } = await supabase
+    .from('Note')
+    .select('*')
+    .eq('userId', user.id)
+    .order('createdAt', { ascending: false });
 
-  // Eski şemalarda userId kolonu yoksa fallback
+  // Eski şemalarda userId kolonu yoksa fallback — yine de yetkisiz okumayı
+  // önlemek için boş döndür (tüm notları leaklemekten iyi).
   if (error && userIdColumnMissing(error)) {
-    const fallback = await supabase
-      .from('Note')
-      .select('*')
-      .order('createdAt', { ascending: false });
-    data = fallback.data;
-    error = fallback.error;
+    console.warn('Note.userId kolonu yok — şema migrate edilmeli. Boş liste döndürülüyor.');
+    return [];
   }
 
   if (error) {
@@ -46,35 +47,24 @@ export async function addNote(title: string, content: string = '', color: string
   }
   const id = `note_${crypto.randomUUID()}`;
   
-  let { data, error } = await supabase
+  const { data, error } = await supabase
     .from('Note')
-    .insert([{ 
-      id, 
+    .insert([{
+      id,
       userId: user.id,
-      title, 
-      content, 
-      color, 
-      createdAt: new Date().toISOString(), 
-      updatedAt: new Date().toISOString() 
+      title,
+      content,
+      color,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }])
     .select()
     .single();
 
   if (error && userIdColumnMissing(error)) {
-    const fallback = await supabase
-      .from('Note')
-      .insert([{
-        id,
-        title,
-        content,
-        color,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }])
-      .select()
-      .single();
-    data = fallback.data;
-    error = fallback.error;
+    // Şema henüz userId taşımıyor — fallback insert kullanıcıyı kaybedeceği için
+    // güvenli değil; reddedip migrasyon zorunluluğunu sinyalliyoruz.
+    return { success: false, error: 'Sistem güncellemesi gerekiyor: Note.userId kolonu eksik.' };
   }
 
   if (error) {
@@ -95,7 +85,7 @@ export async function updateNote(id: string | number, title: string, content: st
   }
   
   // Ensure we only update notes that belong to the user
-  let { data, error } = await supabase
+  const { data, error } = await supabase
     .from('Note')
     .update({ title, content, color, updatedAt: new Date().toISOString() })
     .eq('id', id)
@@ -104,14 +94,9 @@ export async function updateNote(id: string | number, title: string, content: st
     .single();
 
   if (error && userIdColumnMissing(error)) {
-    const fallback = await supabase
-      .from('Note')
-      .update({ title, content, color, updatedAt: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-    data = fallback.data;
-    error = fallback.error;
+    // Eski şemada userId yok → kullanıcıya ait olduğunu doğrulayamayız.
+    // Başka kullanıcının notunu güncelleme riskine karşı reddet.
+    return { success: false, error: 'Sistem güncellemesi gerekiyor: Note.userId kolonu eksik.' };
   }
 
   if (error) {
@@ -131,18 +116,15 @@ export async function deleteNote(id: string | number) {
     return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
   }
   
-  let { error } = await supabase
+  const { error } = await supabase
     .from('Note')
     .delete()
     .eq('id', id)
     .eq('userId', user.id);
 
   if (error && userIdColumnMissing(error)) {
-    const fallback = await supabase
-      .from('Note')
-      .delete()
-      .eq('id', id);
-    error = fallback.error;
+    // Sahiplik doğrulanamayan silme; başkasının notunu silme riski → reddet.
+    return { success: false, error: 'Sistem güncellemesi gerekiyor: Note.userId kolonu eksik.' };
   }
 
   if (error) {

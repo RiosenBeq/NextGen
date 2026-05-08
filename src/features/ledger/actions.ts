@@ -158,6 +158,7 @@ export async function addExpense(data: ExpenseInput) {
 
     const supabase = await createClient();
 
+    const hasAttachment = Boolean(validatedData.attachmentUrl);
     const { data: record, error } = await supabase
       .from('Expense')
       .insert({
@@ -168,7 +169,8 @@ export async function addExpense(data: ExpenseInput) {
         amountWithoutVat,
         amountWithVat,
         vatRate,
-        isOfficial: validatedData.isOfficial || Boolean(validatedData.attachmentUrl),
+        isOfficial: validatedData.isOfficial || hasAttachment,
+        attachmentUrl: validatedData.attachmentUrl || null,
         month: validatedData.month || null,
         paidBy: validatedData.paidBy || 'Ortak Hesap',
         categoryId: validatedData.categoryId || null,
@@ -224,20 +226,26 @@ export async function updateExpense(id: string, data: ExpenseInput) {
     const amountWithoutVat = Math.max(0, validatedData.amount || 0);
     const amountWithVat = amountWithoutVat * (1 + vatRate / 100);
 
+    const hasAttachment = Boolean(validatedData.attachmentUrl);
+    const updatePayload: Record<string, unknown> = {
+      locationId: validatedData.locationId || null,
+      description: validatedData.description,
+      type: validatedData.type,
+      amountWithoutVat: amountWithoutVat,
+      amountWithVat: amountWithVat,
+      vatRate: vatRate,
+      isOfficial: validatedData.isOfficial || hasAttachment,
+      month: validatedData.month || null,
+      paidBy: validatedData.paidBy || 'Ortak Hesap',
+      categoryId: validatedData.categoryId || null,
+    };
+    if (hasAttachment) {
+      updatePayload.attachmentUrl = validatedData.attachmentUrl;
+    }
+
     const { error } = await supabase
       .from('Expense')
-      .update({
-        locationId: validatedData.locationId || null,
-        description: validatedData.description,
-        type: validatedData.type,
-        amountWithoutVat: amountWithoutVat,
-        amountWithVat: amountWithVat,
-        vatRate: vatRate,
-        isOfficial: validatedData.isOfficial || Boolean(validatedData.attachmentUrl),
-        month: validatedData.month || null,
-        paidBy: validatedData.paidBy || 'Ortak Hesap',
-        categoryId: validatedData.categoryId || null,
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
@@ -436,7 +444,7 @@ export async function deleteExpenseAttachment(id: string) {
 
     const { error: updateError } = await supabase
       .from('Expense')
-      .update({ attachmentUrl: null })
+      .update({ attachmentUrl: null, isOfficial: false })
       .eq('id', id);
 
     if (updateError) throw updateError;
@@ -505,10 +513,11 @@ export async function addInvestment(data: InvestmentInput) {
     }
 
     const supabase = await createClient();
+    const investmentId = `inv_${crypto.randomUUID()}`;
     const { error } = await supabase
       .from('Investment')
       .insert({
-        id: `inv_${crypto.randomUUID()}`,
+        id: investmentId,
         locationId: validatedData.locationId,
         description: validatedData.description,
         currency: validatedData.currency,
@@ -519,9 +528,11 @@ export async function addInvestment(data: InvestmentInput) {
 
     if (error) throw error;
 
-    await createAuditLog('CREATE', 'Investment', 'new', { 
-      description: validatedData.description, 
-      amount: amount 
+    await createAuditLog('CREATE', 'Investment', investmentId, {
+      description: validatedData.description,
+      amount: amount,
+      locationId: validatedData.locationId,
+      createdBy: guard.user.id,
     });
 
     revalidatePath('/yatirimlar');

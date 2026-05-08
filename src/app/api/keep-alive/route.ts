@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey } from '@/utils/supabase/env';
 
@@ -13,9 +13,26 @@ export const revalidate = 0;
  *
  * Cookie/auth kullanmaz; salt anon-key ile bağımsız bir client açar (proxy
  * middleware /api/* için auth check'i zaten atlıyor — bkz. proxy.ts).
+ *
+ * Güvenlik: CRON_SECRET ortam değişkeni tanımlıysa istekler
+ * `Authorization: Bearer <secret>` veya `?secret=<secret>` zorunluluğu taşır.
+ * Tanımlı değilse (legacy deployments) endpoint açık kalır.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const startedAt = Date.now();
+
+  const expectedSecret = process.env.CRON_SECRET;
+  if (expectedSecret) {
+    const headerSecret = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+    const querySecret = request.nextUrl.searchParams.get('secret');
+    const provided = headerSecret || querySecret;
+    if (provided !== expectedSecret) {
+      return NextResponse.json(
+        { ok: false, error: 'Unauthorized' },
+        { status: 401, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+  }
 
   try {
     const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {

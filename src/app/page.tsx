@@ -20,14 +20,6 @@ type LocationLite = {
   duesAmount: number;
   revenueShareRate?: number | null;
 };
-type PerformanceRow = {
-  id: string;
-  month: string;
-  locationId: string;
-  sessionCount: number;
-  extraExpenseAmount?: number | null;
-  location?: LocationLite | null;
-};
 type ExpenseRow = {
   id: string;
   type: string;
@@ -98,10 +90,6 @@ export default async function DashboardPage() {
     return acc;
   }, {} as Record<string, unknown>);
 
-  const activeLocationCount = (performances
-    ? [...new Set(performances.map((p: PerformanceRow) => p.locationId))].length
-    : 1) || 1;
-
   const monthlyTotals: Record<string, { revenue: number; profit: number; sessions: number }> = {};
   let totalManualRevenue = 0;
   let totalManualNetCash = 0;
@@ -128,6 +116,15 @@ export default async function DashboardPage() {
       existing.extraExpenseAmount += Number(perf.extraExpenseAmount || 0);
     }
   }
+
+  // Global (locationId=null) giderleri kaç aktif lokasyona böleceğiz?
+  // consolidatedMap içindeki distinct locationId sayısı, bu hesabın gerçek
+  // tabanıdır (en az 1 — sıfıra bölmeyi her zaman engelle).
+  const distinctLocationIds = new Set<string>();
+  for (const perf of consolidatedMap.values()) {
+    if (perf.location?.id) distinctLocationIds.add(perf.location.id);
+  }
+  const activeLocationCount = Math.max(1, distinctLocationIds.size);
 
   for (const perf of consolidatedMap.values()) {
     const loc = perf.location;

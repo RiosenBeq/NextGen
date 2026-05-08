@@ -69,11 +69,7 @@ const SheetContent = React.forwardRef<
       {/* Drag handle (only for bottom-sheet variants) */}
       {(side === "bottom" || side === "responsive") && (
         <div className="flex justify-center pt-2.5 pb-1 md:hidden">
-          <div
-            className="w-12 h-1.5 rounded-full"
-            style={{ background: 'var(--grad-aurora)', opacity: 0.4 }}
-            aria-hidden
-          />
+          <div className="sui-sheet-handle" aria-hidden />
         </div>
       )}
       {children}
@@ -92,15 +88,20 @@ SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({
   className,
+  eyebrow,
+  children,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: React.HTMLAttributes<HTMLDivElement> & { eyebrow?: string }) => (
   <div
     className={cn(
-      "sui-dialog-header relative flex flex-col gap-1.5 px-6 sm:px-8 pt-5 sm:pt-6 pb-5 pr-16",
+      "sui-dialog-header relative flex flex-col gap-2 px-6 sm:px-8 pt-5 sm:pt-6 pb-5 pr-16",
       className
     )}
     {...props}
-  />
+  >
+    {eyebrow && <span className="sui-dialog-eyebrow">{eyebrow}</span>}
+    {children}
+  </div>
 )
 SheetHeader.displayName = "SheetHeader"
 
@@ -110,7 +111,7 @@ const SheetBody = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex-1 overflow-y-auto px-6 sm:px-8 py-6",
+      "flex-1 overflow-y-auto px-6 sm:px-8 py-6 sm:py-7",
       className
     )}
     style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
@@ -125,7 +126,7 @@ const SheetFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end gap-3 px-6 sm:px-8 py-5 border-t border-[--border-soft]",
+      "sui-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 px-6 sm:px-8 py-4 sm:py-5",
       className
     )}
     {...props}
@@ -140,10 +141,13 @@ const SheetTitle = React.forwardRef<
   <SheetPrimitive.Title
     ref={ref}
     className={cn(
-      "text-[22px] sm:text-[24px] font-semibold text-[--text] truncate",
+      "font-semibold text-[--text] leading-tight",
       className
     )}
-    style={{ letterSpacing: "-0.022em" }}
+    style={{
+      letterSpacing: "-0.024em",
+      fontSize: "clamp(20px, 3.4vw, 26px)",
+    }}
     {...props}
   />
 ))
@@ -155,7 +159,8 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn("text-[14px] text-[--text-secondary]", className)}
+    className={cn("text-[14px] sm:text-[15px] text-[--text-secondary] leading-relaxed", className)}
+    style={{ letterSpacing: "-0.005em" }}
     {...props}
   />
 ))

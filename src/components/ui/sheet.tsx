@@ -17,7 +17,10 @@ const SheetOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
-    className={cn("fixed inset-0 z-[9998] bg-[#3A3A3C] sui-overlay", className)}
+    className={cn(
+      "fixed inset-0 z-[9998] bg-white/70 backdrop-blur-2xl backdrop-saturate-150 sui-overlay",
+      className
+    )}
     {...props}
     ref={ref}
   />
@@ -25,19 +28,19 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-[9999] gap-0 bg-[--surface] shadow-[0_30px_80px_rgba(0,0,0,0.55),0_8px_24px_rgba(0,0,0,0.35)] flex flex-col",
+  "fixed z-[9999] gap-0 bg-[--surface] shadow-[0_24px_60px_rgba(15,23,42,0.18),0_8px_24px_rgba(15,23,42,0.10)] flex flex-col",
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b border-white/10 sui-sheet-top",
+        top: "inset-x-0 top-0 border-b border-[--border-strong] sui-sheet-top",
         bottom:
-          "inset-x-0 bottom-0 border-t border-white/10 rounded-t-[22px] max-h-[92dvh] sui-sheet-bottom",
+          "inset-x-0 bottom-0 border-t border-[--border-strong] rounded-t-[22px] max-h-[92dvh] sui-sheet-bottom",
         left:
-          "inset-y-0 left-0 h-full w-3/4 sm:max-w-lg border-r border-white/10 sui-sheet-left",
+          "inset-y-0 left-0 h-full w-3/4 sm:max-w-lg border-r border-[--border-strong] sui-sheet-left",
         right:
-          "inset-y-0 right-0 h-full w-full sm:max-w-lg border-l border-white/10 sui-sheet-right",
+          "inset-y-0 right-0 h-full w-full sm:max-w-lg border-l border-[--border-strong] sui-sheet-right",
         responsive:
-          "inset-x-0 bottom-0 border-t border-white/10 rounded-t-[22px] max-h-[92dvh] sui-sheet-responsive md:inset-x-auto md:bottom-auto md:inset-y-0 md:right-0 md:h-full md:w-full md:max-w-lg md:rounded-none md:max-h-none md:border-l",
+          "inset-x-0 bottom-0 border-t border-[--border-strong] rounded-t-[22px] max-h-[92dvh] sui-sheet-responsive md:inset-x-auto md:bottom-auto md:inset-y-0 md:right-0 md:h-full md:w-full md:max-w-lg md:rounded-none md:max-h-none md:border-l",
       },
     },
     defaultVariants: {

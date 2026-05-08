@@ -136,7 +136,7 @@ export default async function ReportsPage({
   );
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Finansal Denetim</p>

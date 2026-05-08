@@ -25,7 +25,7 @@ export default function FlipFinanceCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group relative w-full text-left apple-card p-6 hover:border-[--border-strong] transition-all duration-200"
+        className="group relative w-full text-left apple-card p-5 sm:p-6 hover:border-[--border-strong] transition-all duration-200"
         aria-label={`${locationName} gider kartı detayı`}
       >
         <div className="flex items-start justify-between">

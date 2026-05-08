@@ -421,47 +421,71 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname();
   if (hidden) return null;
 
-  const mobileLinks = [
+  const leftLinks = [
     { href: "/", label: "Ana", icon: Home },
     { href: "/gelir-gider", label: "Finans", icon: Wallet },
+  ];
+  const rightLinks = [
     { href: "/raporlar", label: "Rapor", icon: TrendingUp },
     { href: "/giderler", label: "Gider", icon: CreditCard },
   ];
 
+  const renderLink = (link: { href: string; label: string; icon: typeof Home }) => {
+    const isActive = pathname === link.href;
+    const Icon = link.icon;
+    return (
+      <Link
+        key={link.href}
+        href={link.href}
+        className={cn(
+          "mobile-nav-link relative flex flex-col items-center gap-[3px] flex-1 min-w-[44px] min-h-[48px] justify-center rounded-2xl px-2 transition-colors duration-200",
+          isActive ? "text-[--accent]" : "text-[--text-secondary] active:text-[--text]"
+        )}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        {isActive && (
+          <span
+            aria-hidden
+            className="absolute top-1.5 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full"
+            style={{ background: 'var(--grad-aurora)', boxShadow: '0 0 10px rgba(139, 92, 246, 0.55)' }}
+          />
+        )}
+        <Icon className="w-[20px] h-[20px]" strokeWidth={isActive ? 2.25 : 1.75} />
+        <span className="text-[10px] font-semibold leading-none" style={{ letterSpacing: '0.01em' }}>{link.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <nav
-      className="mobile-pill-nav lg:hidden fixed left-1/2 -translate-x-1/2 z-50 rounded-full max-w-[92vw]"
+      className="mobile-pill-nav lg:hidden fixed left-1/2 -translate-x-1/2 z-50 max-w-[94vw]"
       style={{
-        bottom: 'max(16px, env(safe-area-inset-bottom))',
+        bottom: 'max(14px, env(safe-area-inset-bottom))',
       }}
+      aria-label="Mobil navigasyon"
     >
       <div className="flex items-center gap-1 px-2 py-1.5 relative z-[1]" role="navigation">
-        {mobileLinks.map(link => {
-          const isActive = pathname === link.href;
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "relative flex flex-col items-center gap-0.5 px-3.5 py-2 rounded-full transition-colors duration-200 min-w-[58px] min-h-[44px] justify-center",
-                isActive ? "text-white" : "text-[--text-secondary] hover:text-[--text]"
-              )}
-              aria-current={isActive ? 'page' : undefined}
-              style={
-                isActive
-                  ? {
-                      background: 'var(--grad-aurora)',
-                      boxShadow: '0 8px 22px rgba(79, 70, 229, 0.40)',
-                    }
-                  : undefined
-              }
-            >
-              <Icon className="w-[20px] h-[20px]" strokeWidth={isActive ? 2.25 : 1.75} />
-              <span className="text-[10px] font-semibold" style={{ letterSpacing: '0.01em' }}>{link.label}</span>
-            </Link>
-          );
-        })}
+        {leftLinks.map(renderLink)}
+        <Link
+          href="/performans"
+          aria-label="Performans Ekle"
+          className="mobile-nav-fab relative flex items-center justify-center rounded-full shrink-0 mx-1 text-white"
+          style={{
+            width: 52,
+            height: 52,
+            marginTop: -22,
+            background: 'var(--grad-aurora)',
+            boxShadow: '0 12px 28px rgba(79, 70, 229, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.85)',
+          }}
+        >
+          <span
+            aria-hidden
+            className="absolute inset-[3px] rounded-full pointer-events-none"
+            style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0) 55%)' }}
+          />
+          <PlusCircle className="w-[22px] h-[22px] relative" strokeWidth={2.25} />
+        </Link>
+        {rightLinks.map(renderLink)}
       </div>
     </nav>
   );

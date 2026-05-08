@@ -45,7 +45,7 @@ export function SystemParametersForm({ parameters }: Props) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="apple-card p-6 md:p-8"
+      className="apple-card p-5 sm:p-6 md:p-8"
     >
       <div className="flex items-start justify-between mb-8 gap-4">
         <div>

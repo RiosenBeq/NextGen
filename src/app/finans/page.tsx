@@ -263,7 +263,7 @@ export default async function FinansalTablo({
   ].filter((item) => item.amount > 0);
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
 
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -361,7 +361,7 @@ export default async function FinansalTablo({
              { q: "AVM kira ve ciro payı modeli nedir?", a: "Sözleşmeli kira tutarı (Ham Kira + %20 KDV) ve aidata ek olarak, cironun belirli bir yüzdesini aşarsa 'Ciro Payı' devreye girer." },
              { q: "Bütün giderlere KDV dahil mi?", a: "Evet, bu tablodaki tüm giderler (Kira, Aidat, Komisyon ve Ek Masraflar) KDV dahil reel ödeme tutarlarını yansıtır." },
            ].map((item, idx) => (
-             <div key={idx} className="apple-card p-6 transition-colors">
+             <div key={idx} className="apple-card p-5 sm:p-6 transition-colors">
                 <h4 className="apple-title-2">{item.q}</h4>
                 <p className="mt-2 text-[14px] text-[--text-secondary] leading-relaxed">{item.a}</p>
              </div>

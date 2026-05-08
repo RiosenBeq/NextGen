@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { PremiumModal } from "@/components/premium/PremiumModal";
 
 const cardBase =
-  "apple-card p-6 min-h-[220px] transition-all duration-300";
+  "apple-card p-5 sm:p-6 min-h-[220px] transition-all duration-300";
 
 const eyebrow = "text-[13px] text-[--text-secondary] mt-4";
 const valueLg = "text-[24px] md:text-[28px] font-semibold tabular-nums text-[--text] mt-1";

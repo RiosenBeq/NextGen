@@ -95,7 +95,7 @@ export default function ExpensesClientUI({
   };
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>

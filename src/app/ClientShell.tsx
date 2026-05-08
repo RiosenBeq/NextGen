@@ -32,8 +32,10 @@ export default function ClientShell({ children, userEmail, userFullName, userRol
           userFullName={userFullName}
           userRole={userRole}
         />
-        <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-32 lg:pb-0">
-          <div className="max-w-[1240px] mx-auto px-5 md:px-8 lg:px-12 py-8 md:py-12 lg:py-16 animate-fade-in">
+        <div
+          className="flex-1 overflow-y-auto relative z-10 custom-scrollbar lg:pb-0 page-scroll"
+        >
+          <div className="max-w-[1240px] mx-auto px-4 sm:px-5 md:px-8 lg:px-12 py-6 sm:py-8 md:py-12 lg:py-16 animate-fade-in">
             {children}
           </div>
         </div>

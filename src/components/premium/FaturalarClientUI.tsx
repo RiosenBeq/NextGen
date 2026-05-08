@@ -166,7 +166,7 @@ export default function FaturalarClientUI({
   };
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
         <div>
@@ -196,7 +196,7 @@ export default function FaturalarClientUI({
       </header>
 
       {/* AVM Section */}
-      <section className="apple-card p-6 space-y-5">
+      <section className="apple-card p-5 sm:p-6 space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <p className="apple-eyebrow">AVM Takibi</p>

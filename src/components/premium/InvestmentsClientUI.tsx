@@ -79,7 +79,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
   });
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
@@ -337,7 +337,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
-    <div className="apple-card p-6 md:p-7">
+    <div className="apple-card p-5 sm:p-6 md:p-7">
       <div className="w-10 h-10 rounded-full bg-[--bg-elevated] flex items-center justify-center text-[--text-secondary] mb-5">
         {icon}
       </div>

@@ -61,7 +61,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
   const avgSessionPerDay = history.length > 0 ? Math.round(totalSessions / history.length) : 0;
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
@@ -88,7 +88,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
             <DailyPerformanceForm locations={locations} onSuccess={() => router.refresh()} />
           </div>
 
-          <div className="apple-card p-6">
+          <div className="apple-card p-5 sm:p-6">
             <p className="apple-eyebrow">Bilgilendirme</p>
             <p className="text-[14px] text-[--text-secondary] leading-relaxed mt-3">
               Girdiğiniz günlük veriler, ilgili döneme ait <span className="text-[--text] font-medium">Nakit Akışı</span> raporlarına otomatik olarak aktarılır.
@@ -284,7 +284,7 @@ function FilterLink({ href, active, label }: { href: string; active: boolean; la
 
 function StatCard({ label, value, subtitle }: { label: string; value: string; subtitle: string }) {
   return (
-    <div className="apple-card p-6">
+    <div className="apple-card p-5 sm:p-6">
       <p className="text-[13px] text-[--text-secondary]" style={{ letterSpacing: '-0.005em' }}>{label}</p>
       <p className="mt-1 text-[24px] md:text-[28px] font-semibold tabular-nums text-[--text]" style={{ letterSpacing: '-0.022em' }}>{value}</p>
       <p className="text-[12px] text-[--text-tertiary] mt-2">{subtitle}</p>

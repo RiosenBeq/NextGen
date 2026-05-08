@@ -13,7 +13,7 @@ export default async function NotesPage() {
   const notes = await getNotes();
 
   return (
-    <div className="space-y-12 md:space-y-16 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
       <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
         <div>
           <p className="apple-eyebrow">Hafıza Merkezi</p>

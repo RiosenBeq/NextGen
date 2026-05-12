@@ -37,7 +37,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "sui-premium-dialog fixed left-1/2 top-1/2 z-[9999] grid w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-0",
+        "sui-premium-dialog fixed left-1/2 top-1/2 z-[9999] grid w-[calc(100%-1.5rem)] max-w-2xl gap-0",
         "max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden flex flex-col sui-dialog-content",
         className
       )}

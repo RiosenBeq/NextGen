@@ -2278,6 +2278,15 @@ body {
   isolation: isolate;
 }
 
+/* Centered dialog: keep transform-based centering so the keyframe
+   animation (which also uses `transform`) overrides cleanly.
+   Tailwind v4'ün `-translate-*` utility'leri CSS `translate` property'sini
+   kullanıyor; animation `transform` kullanıyor → ikisi çakışmadan üst üste
+   biniyordu, popup ilk frame'de yanlış konumda gözüküyordu. */
+.sui-premium-dialog {
+  transform: translate(-50%, -50%);
+}
+
 /* Aurora gradient ring */
 .sui-premium-dialog::before,
 .sui-premium-sheet::before {

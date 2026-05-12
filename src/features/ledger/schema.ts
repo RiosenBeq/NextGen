@@ -27,10 +27,10 @@ export const expenseSchema = z.object({
   paidBy: z.string().optional(),
   categoryId: z.string().nullable().optional(),
   locationId: z.string().nullable().optional(),
-  attachmentUrl: z.preprocess(
-    (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
-    z.string().url().nullable().optional(),
-  ),
+  attachmentUrl: z
+    .union([z.string().url(), z.literal(''), z.null()])
+    .optional()
+    .transform((v) => (v && v !== '' ? v : null)),
 });
 
 export const investmentSchema = z.object({

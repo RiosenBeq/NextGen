@@ -111,7 +111,7 @@ export function InvestmentForm({ locations, initialData, onClose }: Props) {
         <div className="space-y-1.5">
           <label className="text-[13px] font-medium text-[--text]">Para Birimi</label>
           <select {...register('currency')} className={cn(inputBase, "appearance-none cursor-pointer")}>
-            <option value="TRY">Türk Lirası (₺)</option>
+            <option value="TL">Türk Lirası (₺)</option>
             <option value="USD">Dolar ($)</option>
             <option value="EUR">Euro (€)</option>
           </select>

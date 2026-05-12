@@ -2777,3 +2777,134 @@ select,
 option {
   color-scheme: light;
 }
+
+/* ══════════════════════════════════════════════════════════
+   SUI-CHIP — Unified toggle/filter pill system
+   Tek bir tasarım dili: "Ödemeyi Yapan" partner seçici, filter row'lar,
+   segmented control'lar hepsi aynı görünüm. Seçili state aurora gradient
+   ile çok belirgin; hover ve active state hassas.
+   ══════════════════════════════════════════════════════════ */
+
+.sui-chip-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Segmented control container — chip'ler içinde gömülü, gri arkaplanlı */
+.sui-chip-group--segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  background: var(--bg-elevated);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 16, 35, 0.04);
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.sui-chip-group--segmented::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tek bir chip — default (inactive) durum */
+.sui-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  background-color: rgba(11, 16, 35, 0.045);
+  color: var(--text-secondary);
+  transition:
+    background-color 0.2s var(--ease-apple),
+    color 0.2s var(--ease-apple),
+    border-color 0.2s var(--ease-apple),
+    transform 0.15s var(--ease-apple),
+    box-shadow 0.2s var(--ease-apple);
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sui-chip:hover:not(.sui-chip--active):not(:disabled) {
+  background-color: rgba(79, 70, 229, 0.08);
+  color: var(--text);
+  border-color: rgba(79, 70, 229, 0.12);
+}
+
+.sui-chip:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.20);
+}
+
+.sui-chip:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.sui-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Selected state — aurora gradient + white text + glow.
+   Çok belirgin, "bu seçildi" hissi açık. */
+.sui-chip--active {
+  background: var(--grad-aurora);
+  color: #fff;
+  border-color: rgba(79, 70, 229, 0.30);
+  font-weight: 700;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.32) inset,
+    0 6px 16px rgba(79, 70, 229, 0.36),
+    0 2px 4px rgba(79, 70, 229, 0.18);
+}
+
+.sui-chip--active:hover {
+  filter: brightness(1.08) saturate(1.05);
+}
+
+/* Segmented control içindeki aktif chip — gradient yerine beyaz surface
+   (segmented control klasik tasarımı) */
+.sui-chip-group--segmented .sui-chip--active {
+  background: var(--surface);
+  color: var(--text);
+  border-color: transparent;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.92) inset,
+    0 0 0 1px rgba(11, 16, 35, 0.06),
+    0 4px 10px rgba(11, 16, 35, 0.08);
+}
+
+/* Compact varyant — küçük chip'ler için (12px font, 32px height) */
+.sui-chip--compact {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Mobile — daha büyük touch target */
+@media (max-width: 768px) {
+  .sui-chip {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 15px;
+  }
+  .sui-chip--compact {
+    min-height: 36px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

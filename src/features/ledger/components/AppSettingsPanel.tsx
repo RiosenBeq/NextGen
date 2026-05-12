@@ -166,7 +166,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
 
                   <div className="flex-shrink-0">
                     {setting.type === 'select' ? (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="sui-chip-group">
                         {setting.options?.map((opt: SettingOption) => {
                           const isActive = (params[setting.key] || 0) === opt.value;
                           return (
@@ -174,12 +174,7 @@ export default function AppSettingsPanel({ initialParams }: { initialParams: Rec
                               key={opt.value}
                               onClick={() => handleUpdate(setting.key, opt.value)}
                               disabled={loading === setting.key}
-                              className={cn(
-                                "px-4 py-2 rounded-xl text-sm font-medium border transition-colors shrink-0",
-                                isActive
-                                  ? "bg-slate-900 text-white border-slate-900"
-                                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                              )}
+                              className={cn('sui-chip', isActive && 'sui-chip--active')}
                               title={opt.description}
                             >
                               {opt.label}

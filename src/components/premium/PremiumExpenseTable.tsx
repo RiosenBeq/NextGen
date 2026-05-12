@@ -92,7 +92,7 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
               onChange={setFilterLocation}
               options={[{ value: 'all', label: 'Tüm Şubeler' }, ...locations.map((loc) => ({ value: loc.id, label: loc.name }))]}
             />
-            <div className="flex items-center gap-1 rounded-full bg-[--bg-elevated] p-1">
+            <div className="sui-chip-group sui-chip-group--segmented">
               <TypeChip active={filterType === 'ALL'} onClick={() => setFilterType('ALL')} label="Tümü" />
               <TypeChip active={filterType === 'RECURRING'} onClick={() => setFilterType('RECURRING')} label="Aylık" />
               <TypeChip active={filterType === 'ONE_TIME'} onClick={() => setFilterType('ONE_TIME')} label="Tek Sefer" />
@@ -257,14 +257,7 @@ export default function PremiumExpenseTable({ expenses, locations, onView, onEdi
 
 function TypeChip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'h-9 px-3.5 rounded-full text-[13px] font-medium transition-colors',
-        active ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
-      )}
-      style={{ letterSpacing: '-0.005em' }}
-    >
+    <button onClick={onClick} className={cn('sui-chip sui-chip--compact', active && 'sui-chip--active')}>
       {label}
     </button>
   );

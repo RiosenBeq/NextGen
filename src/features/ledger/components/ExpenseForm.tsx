@@ -363,7 +363,7 @@ export default function ExpenseForm({
 
         <div className="space-y-2">
           <label className="text-[13px] font-medium text-[--text]">Ödemeyi Yapan</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="sui-chip-group">
             {[
               { id: 'Ortak Hesap', label: 'Ortak Hesap' },
               { id: 'Okan', label: 'Okan' },
@@ -377,12 +377,7 @@ export default function ExpenseForm({
                   key={partner.id}
                   type="button"
                   onClick={() => setFormData({ ...formData, paidBy: partner.id })}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-[13px] font-medium transition-colors min-h-[36px]",
-                    isSelected
-                      ? "bg-[--text] text-white"
-                      : "bg-[--bg-elevated] text-[--text-secondary] hover:text-[--text]"
-                  )}
+                  className={cn('sui-chip', isSelected && 'sui-chip--active')}
                 >
                   {partner.label}
                 </button>

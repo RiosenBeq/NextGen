@@ -136,7 +136,7 @@ export default function GelirGiderClientUI({
       </header>
 
       {/* Location Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+      <div className="sui-chip-group">
         <FilterLink
           href={`/gelir-gider?month=${filters.month}&location=all&category=${filters.category}`}
           active={filters.location === 'all'}
@@ -483,16 +483,7 @@ function KPICard({
 
 function FilterLink({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
-    <Link
-      href={href}
-      className={cn(
-        'px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px] flex items-center',
-        active
-          ? 'bg-[--text] text-white'
-          : 'text-[--text-secondary] hover:text-[--text] hover:bg-[--bg-elevated]'
-      )}
-      style={{ letterSpacing: '-0.005em' }}
-    >
+    <Link href={href} className={cn('sui-chip', active && 'sui-chip--active')}>
       {label}
     </Link>
   );

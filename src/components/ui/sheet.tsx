@@ -75,10 +75,10 @@ const SheetContent = React.forwardRef<
       {children}
       {showClose && (
         <SheetPrimitive.Close
-          className="absolute right-4 top-4 sm:right-5 sm:top-5 w-10 h-10 rounded-full text-[--text-tertiary] transition-all hover:bg-[--bg-elevated] hover:text-[--text] flex items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[--accent-soft] z-[2]"
+          className="absolute right-3.5 top-3.5 sm:right-5 sm:top-5 w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-[--bg-elevated]/60 text-[--text-secondary] transition-all hover:bg-[--bg-elevated] hover:text-[--text] active:scale-95 flex items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[--accent-soft] z-[3]"
           aria-label="Kapat"
         >
-          <X size={18} strokeWidth={2} />
+          <X size={18} strokeWidth={2.25} />
         </SheetPrimitive.Close>
       )}
     </SheetPrimitive.Content>
@@ -94,7 +94,7 @@ const SheetHeader = ({
 }: React.HTMLAttributes<HTMLDivElement> & { eyebrow?: string }) => (
   <div
     className={cn(
-      "sui-dialog-header relative flex flex-col gap-2 px-6 sm:px-8 pt-5 sm:pt-6 pb-5 pr-16",
+      "sui-dialog-header relative flex flex-col gap-3 px-6 sm:px-8 pt-9 sm:pt-10 pb-5 pr-16",
       className
     )}
     {...props}

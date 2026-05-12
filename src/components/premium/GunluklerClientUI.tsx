@@ -87,16 +87,12 @@ export default function GunluklerClientUI({ loglar }: { loglar: LogKaydi[] }) {
               className="h-11 rounded-full bg-[--bg-elevated] border border-transparent pl-11 pr-4 text-[14px] text-[--text] outline-none focus:bg-[--surface] focus:border-[--accent] transition-colors"
             />
           </div>
-          <div className="flex items-center gap-1 p-1 bg-[--bg-elevated] rounded-full">
+          <div className="sui-chip-group sui-chip-group--segmented">
             {(['ALL', 'CREATE', 'UPDATE', 'DELETE'] as const).map((islem) => (
               <button
                 key={islem}
                 onClick={() => setIslemFiltresi(islem)}
-                className={cn(
-                  'px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors min-h-[36px]',
-                  islemFiltresi === islem ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
-                )}
-                style={{ letterSpacing: '-0.005em' }}
+                className={cn('sui-chip sui-chip--compact', islemFiltresi === islem && 'sui-chip--active')}
               >
                 {islem === 'ALL' ? 'Tümü' : islem === 'CREATE' ? 'Oluşturma' : islem === 'UPDATE' ? 'Güncelleme' : 'Silme'}
               </button>

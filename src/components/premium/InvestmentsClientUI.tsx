@@ -132,7 +132,7 @@ export default function InvestmentsClientUI({ investments, locations, total, cou
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-1 p-1 bg-[--bg-elevated] rounded-full overflow-x-auto">
+          <div className="sui-chip-group sui-chip-group--segmented">
             <FilterButton active={filterLocation === 'all'} onClick={() => setFilterLocation('all')} label="Tümü" />
             {locations.map((loc) => (
               <FilterButton key={loc.id} active={filterLocation === loc.id} onClick={() => setFilterLocation(loc.id)} label={loc.name} />
@@ -350,14 +350,7 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 
 function FilterButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'px-4 py-2 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap min-h-[36px]',
-        active ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
-      )}
-      style={{ letterSpacing: '-0.005em' }}
-    >
+    <button onClick={onClick} className={cn('sui-chip sui-chip--compact', active && 'sui-chip--active')}>
       {label}
     </button>
   );

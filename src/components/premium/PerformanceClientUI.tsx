@@ -106,7 +106,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
                 Giriş Geçmişi
               </h3>
             </div>
-            <div className="flex items-center gap-1 p-1 bg-[--bg-elevated] rounded-full overflow-x-auto">
+            <div className="sui-chip-group sui-chip-group--segmented">
               <FilterLink href="/performans?location=all" active={historyLocId === '' || historyLocId === 'all'} label="Tümü" />
               {locations.map((loc) => (
                 <FilterLink key={loc.id} href={`/performans?location=${loc.id}`} active={historyLocId === loc.id} label={loc.name} />
@@ -269,14 +269,7 @@ export default function PerformanceClientUI({ locations, history, historyLocId }
 
 function FilterLink({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
-    <a
-      href={href}
-      className={cn(
-        'px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-colors whitespace-nowrap min-h-[32px] flex items-center',
-        active ? 'bg-[--surface] text-[--text]' : 'text-[--text-secondary] hover:text-[--text]'
-      )}
-      style={{ letterSpacing: '-0.005em' }}
-    >
+    <a href={href} className={cn('sui-chip sui-chip--compact', active && 'sui-chip--active')}>
       {label}
     </a>
   );

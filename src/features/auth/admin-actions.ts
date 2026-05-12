@@ -29,7 +29,10 @@ const newUserSchema = z.object({
   email: z.string().email("Geçerli bir e-posta adresi giriniz."),
   password: z.string().min(8, "Şifre en az 8 karakter olmalıdır."),
   role: z.enum(['superadmin', 'user']).default('user'),
-  fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır.").optional()
+  fullName: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+    z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır.").optional(),
+  ),
 });
 type NewUserInput = z.input<typeof newUserSchema>;
 

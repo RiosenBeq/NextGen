@@ -18,6 +18,18 @@ interface PerformanceFormProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
+function toIsoMonth(value: string): string {
+  if (!value) return new Date().toISOString();
+  if (value.includes('T')) return value;
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(value);
+  if (!match) {
+    const fallback = new Date(value);
+    return Number.isNaN(fallback.getTime()) ? new Date().toISOString() : fallback.toISOString();
+  }
+  const [, y, m, d] = match;
+  return new Date(Date.UTC(Number(y), Number(m) - 1, Number(d ?? '01'))).toISOString();
+}
+
 export default function MonthlyPerformanceForm({ id, initialData, onClose, onDelete }: PerformanceFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
@@ -29,9 +41,10 @@ export default function MonthlyPerformanceForm({ id, initialData, onClose, onDel
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const monthIso = toIsoMonth(initialData.month);
     const data = {
       locationId: 'dummy', // Not used for update but required by Zod schema if not lax
-      month: initialData.month,
+      month: monthIso,
       sessionCount: Number(formData.get('sessions')),
       extraExpenseAmount: Number(formData.get('extraExpense')),
       extraExpenseNotes: formData.get('extraNotes') as string,

@@ -2682,21 +2682,35 @@ select:focus {
     0 2px 8px rgba(79, 70, 229, 0.12);
 }
 
-/* Option styling — tarayıcı limitli ama checked vurgusu çoğu yerde çalışır */
+/* Option styling — tarayıcı `<option>` shadow DOM'una CSS var inherit
+   etmiyor; solid hex/rgb değerler kullanılıyor. Gradient ve box-shadow
+   option'da çalışmaz, sadece flat background. Font 17px ile base input
+   ile aynı seviyede (15px görsel olarak küçük kalıyordu). */
 select option {
-  background: var(--surface);
-  color: var(--text);
+  background-color: #FFFFFF;
+  color: #0B1023;
   padding: 14px 18px;
-  font-size: 15px;
+  font-size: 17px;
+  line-height: 1.5;
   font-weight: 500;
   border: none;
 }
 
 select option:checked,
 select option[selected] {
-  background: linear-gradient(0deg, var(--accent-soft), var(--accent-soft));
-  color: var(--accent);
+  background-color: #E0DEF5;
+  color: #4F46E5;
   font-weight: 700;
+}
+
+/* Hover state — Firefox + bazı Chromium sürümlerinde çalışır */
+select option:hover {
+  background-color: #F4F2EC;
+  color: #0B1023;
+}
+
+select option:disabled {
+  color: rgba(11, 16, 35, 0.4);
 }
 
 select:disabled {

@@ -57,7 +57,13 @@ export function PremiumModal({
       <DialogContent className={cn(maxWidth)}>
         <DialogHeader eyebrow={eyebrow}>
           <DialogTitle>{title || 'Form'}</DialogTitle>
-          {subtitle && <DialogDescription>{subtitle}</DialogDescription>}
+          {subtitle ? (
+            <DialogDescription>{subtitle}</DialogDescription>
+          ) : (
+            <DialogDescription className="sr-only">
+              {title || 'Form'} penceresi
+            </DialogDescription>
+          )}
         </DialogHeader>
         <DialogBody>{children}</DialogBody>
       </DialogContent>
@@ -87,7 +93,13 @@ export function PremiumDrawer({
       <SheetContent side="responsive">
         <SheetHeader eyebrow={eyebrow}>
           <SheetTitle>{title || 'Detaylar'}</SheetTitle>
-          {subtitle && <SheetDescription>{subtitle}</SheetDescription>}
+          {subtitle ? (
+            <SheetDescription>{subtitle}</SheetDescription>
+          ) : (
+            <SheetDescription className="sr-only">
+              {title || 'Detaylar'} paneli
+            </SheetDescription>
+          )}
         </SheetHeader>
         <SheetBody>{children}</SheetBody>
       </SheetContent>

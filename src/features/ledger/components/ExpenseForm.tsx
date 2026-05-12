@@ -123,7 +123,7 @@ export default function ExpenseForm({
 
     setLoading(true);
     try {
-      let attachmentUrl = initialData?.attachmentUrl || '';
+      let attachmentUrl: string | null = initialData?.attachmentUrl || null;
 
       if (file) {
         let fileToUpload: File = file;

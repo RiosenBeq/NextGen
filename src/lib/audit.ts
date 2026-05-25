@@ -2,7 +2,6 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { headers } from 'next/headers';
-import { resolveActiveProfile } from '@/lib/profile-context';
 
 export async function createAuditLog(
   action: 'CREATE' | 'UPDATE' | 'DELETE',
@@ -16,13 +15,6 @@ export async function createAuditLog(
     const headersList = await headers();
     const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || '127.0.0.1';
     const userAgent = headersList.get('user-agent') || 'unknown';
-
-    const resolution = await resolveActiveProfile();
-    const profileId = resolution.profile?.id;
-    if (!profileId) {
-      // Aktif profil yoksa audit log atlanır (geçersiz tenant durumu)
-      return;
-    }
 
     // Get current user if available
     const { data: { user } } = await supabase.auth.getUser();
@@ -49,7 +41,6 @@ export async function createAuditLog(
       .from('AuditLog')
       .insert({
         id: crypto.randomUUID(),
-        profileId,
         action,
         entity,
         entityId,

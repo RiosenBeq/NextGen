@@ -1,7 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import ContractsClientUI from '@/components/premium/ContractsClientUI';
 import { FileText, ShieldCheck } from 'lucide-react';
-import { resolveActiveProfile } from '@/lib/profile-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,20 +10,15 @@ export const metadata = {
 
 export default async function SozlesmelerPage() {
   const supabase = await createClient();
-  const profileCtx = await resolveActiveProfile();
-  const profileId = profileCtx.profile?.id ?? null;
 
-  const [{ data: contracts }, { data: locations }] = profileId
-    ? await Promise.all([
-        supabase
-          .from('Document')
-          .select('id, fileName, fileUrl, relatedId, createdAt')
-          .eq('profileId', profileId)
-          .eq('relatedType', 'contract')
-          .order('createdAt', { ascending: false }),
-        supabase.from('Location').select('id, name').eq('profileId', profileId).eq('isActive', true).order('name', { ascending: true }),
-      ])
-    : [{ data: [] }, { data: [] }];
+  const [{ data: contracts }, { data: locations }] = await Promise.all([
+    supabase
+      .from('Document')
+      .select('id, fileName, fileUrl, relatedId, createdAt')
+      .eq('relatedType', 'contract')
+      .order('createdAt', { ascending: false }),
+    supabase.from('Location').select('id, name').eq('isActive', true).order('name', { ascending: true }),
+  ]);
 
   return (
     <div className="page-wrapper space-y-6 animate-fade-in">

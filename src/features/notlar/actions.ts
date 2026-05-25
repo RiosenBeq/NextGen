@@ -2,10 +2,10 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { requireProfileAccess } from '@/lib/auth-guards';
 
 function userIdColumnMissing(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
+  // Supabase PostgrestError'larında message özelliği var ama prototype Error değil.
   const message = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
     ? (error as { message: string }).message
     : '';
@@ -13,19 +13,20 @@ function userIdColumnMissing(error: unknown): boolean {
 }
 
 export async function getNotes() {
-  const guard = await requireProfileAccess();
-  if (guard.error || !guard.user || !guard.profile) return [];
-  const profileId = guard.profile.id;
-
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Oturum yoksa hiçbir şey döndürme — başkasının notlarını sızdırma.
+  if (!user) return [];
 
   const { data, error } = await supabase
     .from('Note')
     .select('*')
-    .eq('profileId', profileId)
-    .eq('userId', guard.user.id)
+    .eq('userId', user.id)
     .order('createdAt', { ascending: false });
 
+  // Eski şemalarda userId kolonu yoksa fallback — yine de yetkisiz okumayı
+  // önlemek için boş döndür (tüm notları leaklemekten iyi).
   if (error && userIdColumnMissing(error)) {
     console.warn('Note.userId kolonu yok — şema migrate edilmeli. Boş liste döndürülüyor.');
     return [];
@@ -39,21 +40,18 @@ export async function getNotes() {
 }
 
 export async function addNote(title: string, content: string = '', color: string = 'blue') {
-  const guard = await requireProfileAccess();
-  if (guard.error || !guard.user || !guard.profile) {
-    return { success: false, error: guard.error ?? 'Oturum bulunamadı.' };
-  }
-  const profileId = guard.profile.id;
-
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
   const id = `note_${crypto.randomUUID()}`;
-
+  
   const { data, error } = await supabase
     .from('Note')
     .insert([{
       id,
-      profileId,
-      userId: guard.user.id,
+      userId: user.id,
       title,
       content,
       color,
@@ -64,6 +62,8 @@ export async function addNote(title: string, content: string = '', color: string
     .single();
 
   if (error && userIdColumnMissing(error)) {
+    // Şema henüz userId taşımıyor — fallback insert kullanıcıyı kaybedeceği için
+    // güvenli değil; reddedip migrasyon zorunluluğunu sinyalliyoruz.
     return { success: false, error: 'Sistem güncellemesi gerekiyor: Note.userId kolonu eksik.' };
   }
 
@@ -78,24 +78,24 @@ export async function addNote(title: string, content: string = '', color: string
 }
 
 export async function updateNote(id: string | number, title: string, content: string = '', color: string = 'blue') {
-  const guard = await requireProfileAccess();
-  if (guard.error || !guard.user || !guard.profile) {
-    return { success: false, error: guard.error ?? 'Oturum bulunamadı.' };
-  }
-  const profileId = guard.profile.id;
-
   const supabase = await createClient();
-
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
+  
+  // Ensure we only update notes that belong to the user
   const { data, error } = await supabase
     .from('Note')
     .update({ title, content, color, updatedAt: new Date().toISOString() })
     .eq('id', id)
-    .eq('profileId', profileId)
-    .eq('userId', guard.user.id)
+    .eq('userId', user.id)
     .select()
     .single();
 
   if (error && userIdColumnMissing(error)) {
+    // Eski şemada userId yok → kullanıcıya ait olduğunu doğrulayamayız.
+    // Başka kullanıcının notunu güncelleme riskine karşı reddet.
     return { success: false, error: 'Sistem güncellemesi gerekiyor: Note.userId kolonu eksik.' };
   }
 
@@ -110,22 +110,20 @@ export async function updateNote(id: string | number, title: string, content: st
 }
 
 export async function deleteNote(id: string | number) {
-  const guard = await requireProfileAccess();
-  if (guard.error || !guard.user || !guard.profile) {
-    return { success: false, error: guard.error ?? 'Oturum bulunamadı.' };
-  }
-  const profileId = guard.profile.id;
-
   const supabase = await createClient();
-
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+  }
+  
   const { error } = await supabase
     .from('Note')
     .delete()
     .eq('id', id)
-    .eq('profileId', profileId)
-    .eq('userId', guard.user.id);
+    .eq('userId', user.id);
 
   if (error && userIdColumnMissing(error)) {
+    // Sahiplik doğrulanamayan silme; başkasının notunu silme riski → reddet.
     return { success: false, error: 'Sistem güncellemesi gerekiyor: Note.userId kolonu eksik.' };
   }
 

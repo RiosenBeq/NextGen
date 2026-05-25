@@ -3,7 +3,6 @@ import { createClient } from '@/utils/supabase/server';
 import { Trophy, Flame, Zap, CheckCircle2, TrendingUp, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLocationInsights } from '@/features/ledger/actions';
-import { resolveActiveProfile } from '@/lib/profile-context';
 
 export const metadata = { title: 'Hedefler — NextGenBox' };
 export const dynamic = 'force-dynamic';
@@ -19,12 +18,8 @@ export default async function TargetsPage() {
   const paybackPercentage = Math.max(0, Math.min(100, paybackProgress));
 
   const supabase = await createClient();
-  const profileCtx = await resolveActiveProfile();
-  const profileId = profileCtx.profile?.id ?? null;
   const currentMonthStr = new Date().toISOString().slice(0, 7);
-  const { data: currentPerformances } = profileId
-    ? await supabase.from('MonthlyPerformance').select('*').eq('profileId', profileId).like('month', `${currentMonthStr}%`)
-    : { data: [] };
+  const { data: currentPerformances } = await supabase.from('MonthlyPerformance').select('*').like('month', `${currentMonthStr}%`);
 
   type PerformanceRow = { sessionCount: number };
   const currentGross = (currentPerformances || []).reduce((acc: number, p: PerformanceRow) => acc + (p.sessionCount * 300), 0);

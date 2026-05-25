@@ -6,7 +6,6 @@ import Link from 'next/link';
 import FlipFinanceCard from '@/components/premium/FlipFinanceCard';
 import ScenarioAnalysisSection from '@/components/premium/ScenarioAnalysisSection';
 import FinanceSummaryCards from '@/components/premium/FinanceSummaryCards';
-import { resolveActiveProfile } from '@/lib/profile-context';
 
 type LocationRow = {
   id: string;
@@ -67,9 +66,6 @@ export default async function FinansalTablo({
   const filterMonth = params.month || 'all';
 
   const supabase = await createClient();
-  const profileCtx = await resolveActiveProfile();
-  const profileId = profileCtx.profile?.id ?? null;
-
   const sysParams = await getSystemParameters();
   const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
 
@@ -77,13 +73,11 @@ export default async function FinansalTablo({
     { data: locations },
     { data: performances },
     { data: expenses }
-  ] = profileId
-    ? await Promise.all([
-        supabase.from('Location').select('*').eq('profileId', profileId).eq('isActive', true),
-        supabase.from('MonthlyPerformance').select('*, location:Location(*)').eq('profileId', profileId).order('month', { ascending: true }),
-        supabase.from('Expense').select('*, location:Location(*)').eq('profileId', profileId).order('createdAt', { ascending: false }),
-      ])
-    : [{ data: [] }, { data: [] }, { data: [] }];
+  ] = await Promise.all([
+    supabase.from('Location').select('*').eq('isActive', true),
+    supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: true }),
+    supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
+  ]);
 
   const activeLocationCount = (locations || []).length || 1;
 

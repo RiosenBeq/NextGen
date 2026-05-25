@@ -1,23 +1,23 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import { requireProfileAccess } from '@/lib/auth-guards';
+import { requireUser } from '@/lib/auth-guards';
 
 /**
- * Audit log'larını listeler. Aktif profilin kayıtlarıyla sınırlıdır.
+ * Audit log'larını listeler. Hassas operasyonel veri içerdiği için
+ * sadece oturum açmış kullanıcılara görünür; superadmin olmayanlara
+ * detayların açılmasını UI tarafı (settings.SETTING_LOG_DETAIL_LEVEL) yönetir.
  */
 export async function getAuditLogs() {
-  const guard = await requireProfileAccess();
-  if (guard.error || !guard.user || !guard.profile) {
+  const guard = await requireUser();
+  if (guard.error || !guard.user) {
     return [];
   }
-  const profileId = guard.profile.id;
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('AuditLog')
     .select('*')
-    .eq('profileId', profileId)
     .order('createdAt', { ascending: false })
     .limit(100);
 

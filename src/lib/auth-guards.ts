@@ -1,5 +1,4 @@
 import { createClient } from '@/utils/supabase/server';
-import { resolveActiveProfile, type ProfileSummary } from '@/lib/profile-context';
 
 /**
  * Sunucu eylemlerinde (Server Actions) kimlik ve yetki doğrulaması için yardımcılar.
@@ -16,13 +15,6 @@ export interface AuthGuardResult {
     role: AuthRole;
     fullName?: string;
   } | null;
-  error?: string;
-}
-
-export interface ProfileGuardResult {
-  user: AuthGuardResult['user'];
-  profile: ProfileSummary | null;
-  profileRole: string | null;
   error?: string;
 }
 
@@ -60,37 +52,4 @@ export async function requireSuperAdmin(): Promise<AuthGuardResult> {
   }
 
   return result;
-}
-
-/**
- * Aktif profili (tenant) çözer ve mevcut kullanıcının buna erişimini doğrular.
- * Cookie tabanlı `active_profile_id`'yi okur, UserProfileAccess ile eşler.
- * Tüm profile-scoped server action / page'ler için zorunlu giriş noktası.
- */
-export async function requireProfileAccess(): Promise<ProfileGuardResult> {
-  const auth = await requireUser();
-  if (auth.error || !auth.user) {
-    return {
-      user: null,
-      profile: null,
-      profileRole: null,
-      error: auth.error ?? 'Oturum bulunamadı.',
-    };
-  }
-
-  const resolution = await resolveActiveProfile();
-  if (resolution.error || !resolution.profile) {
-    return {
-      user: auth.user,
-      profile: null,
-      profileRole: null,
-      error: resolution.error ?? 'Aktif profil çözümlenemedi.',
-    };
-  }
-
-  return {
-    user: auth.user,
-    profile: resolution.profile,
-    profileRole: resolution.role,
-  };
 }

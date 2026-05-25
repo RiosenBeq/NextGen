@@ -24,7 +24,10 @@ import {
   Calendar,
   Target,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Coffee,
+  Sparkles,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/actions/auth";
@@ -33,7 +36,9 @@ import { ProfileSettingsForm } from "@/features/auth/components/ProfileSettingsF
 import { useProfile } from "@/providers/ProfileProvider";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 
-const navLinks = [
+type NavLink = { href: string; label: string; icon: typeof LayoutDashboard; category: string };
+
+const karaokeNavLinks: NavLink[] = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Genel" },
   { href: "/performans", label: "Performans Girişi", icon: PlusCircle, category: "Operasyon" },
   { href: "/raporlar", label: "Nakit Akışı", icon: TrendingUp, category: "Analiz" },
@@ -49,6 +54,24 @@ const navLinks = [
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
 ];
+
+const cafeNavLinks: NavLink[] = [
+  { href: "/cafe", label: "Cafe Paneli", icon: Coffee, category: "Genel" },
+  { href: "/cafe/satislar", label: "Günlük Ciro Girişi", icon: PlusCircle, category: "Operasyon" },
+  { href: "/cafe/raporlar", label: "Aylık Raporlar", icon: BookOpen, category: "Analiz" },
+  { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Analiz" },
+  { href: "/faturalar", label: "Faturalar", icon: Receipt, category: "Analiz" },
+  { href: "/avm-odemeleri", label: "AVM Ödemeleri", icon: Building2, category: "Analiz" },
+  { href: "/sozlesmeler", label: "Sözleşmeler", icon: ScrollText, category: "Analiz" },
+  { href: "/notlar", label: "Notlar", icon: StickyNote, category: "Destek" },
+  { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
+  { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
+];
+
+function useNavLinks(): NavLink[] {
+  const { activeProfile } = useProfile();
+  return activeProfile?.businessType === 'cafe' ? cafeNavLinks : karaokeNavLinks;
+}
 
 function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' }) {
   const [isPending, startTransition] = useTransition();
@@ -160,6 +183,7 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
 
 export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: string, userFullName?: string, userRole?: string }) {
   const pathname = usePathname();
+  const navLinks = useNavLinks();
   const categories = Array.from(new Set(navLinks.map(l => l.category)));
 
   const displayName = userFullName || (userEmail
@@ -254,6 +278,9 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
   const [scrolled, setScrolled] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const pathname = usePathname();
+  const navLinks = useNavLinks();
+  const { activeProfile } = useProfile();
+  const isCafe = activeProfile?.businessType === 'cafe';
 
   const displayName = userFullName || (userEmail
     ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)
@@ -265,15 +292,18 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const homeHref = isCafe ? '/cafe' : '/';
+  const homeLabel = isCafe ? 'Cafe' : 'Panel';
+
   const getBreadcrumbs = () => {
-    if (!pathname || pathname === '/') return [{ label: 'Panel', href: '/' }];
+    if (!pathname || pathname === homeHref) return [{ label: homeLabel, href: homeHref }];
     const segments = pathname.split('/').filter(Boolean);
     const crumbs = segments.map((seg, i) => {
       const href = '/' + segments.slice(0, i + 1).join('/');
       const link = navLinks.find(l => l.href === href);
       return { label: link?.label || seg.charAt(0).toUpperCase() + seg.slice(1), href };
     });
-    return [{ label: 'Panel', href: '/' }, ...crumbs];
+    return [{ label: homeLabel, href: homeHref }, ...crumbs];
   };
 
   const breadcrumbs = getBreadcrumbs();
@@ -449,16 +479,29 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
 
 export function MobileNav({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname();
+  const { activeProfile } = useProfile();
   if (hidden) return null;
 
-  const leftLinks = [
-    { href: "/", label: "Ana", icon: Home },
-    { href: "/gelir-gider", label: "Finans", icon: Wallet },
-  ];
-  const rightLinks = [
-    { href: "/raporlar", label: "Rapor", icon: TrendingUp },
-    { href: "/giderler", label: "Gider", icon: CreditCard },
-  ];
+  const isCafe = activeProfile?.businessType === 'cafe';
+
+  const leftLinks = isCafe
+    ? [
+        { href: "/cafe", label: "Cafe", icon: Coffee },
+        { href: "/cafe/raporlar", label: "Rapor", icon: BookOpen },
+      ]
+    : [
+        { href: "/", label: "Ana", icon: Home },
+        { href: "/gelir-gider", label: "Finans", icon: Wallet },
+      ];
+  const rightLinks = isCafe
+    ? [
+        { href: "/giderler", label: "Gider", icon: CreditCard },
+        { href: "/avm-odemeleri", label: "AVM", icon: Building2 },
+      ]
+    : [
+        { href: "/raporlar", label: "Rapor", icon: TrendingUp },
+        { href: "/giderler", label: "Gider", icon: CreditCard },
+      ];
 
   const renderLink = (link: { href: string; label: string; icon: typeof Home }) => {
     const isActive = pathname === link.href;
@@ -498,8 +541,8 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
         {leftLinks.map(renderLink)}
         <div className="relative flex items-center justify-center w-[60px] shrink-0">
           <Link
-            href="/performans"
-            aria-label="Performans Ekle"
+            href={isCafe ? '/cafe/satislar' : '/performans'}
+            aria-label={isCafe ? 'Günlük ciro gir' : 'Performans Ekle'}
             className="mobile-nav-fab absolute -top-5 left-1/2 -translate-x-1/2 flex items-center justify-center rounded-full text-white"
             style={{
               width: 52,

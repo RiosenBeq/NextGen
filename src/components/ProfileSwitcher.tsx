@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check, Building2 } from "lucide-react";
+import { ChevronDown, Check, Building2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import { useProfile, type ProfileSummary } from "@/providers/ProfileProvider";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +59,7 @@ export function ProfileSwitcher({
 }) {
   const { activeProfile, availableProfiles, switchProfile, isPending } = useProfile();
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingProfileId, setPendingProfileId] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -74,6 +76,17 @@ export function ProfileSwitcher({
 
   if (!activeProfile) return null;
   if (availableProfiles.length < 2) return null;
+
+  const handleSwitch = (profileId: string) => {
+    if (profileId === activeProfile.id) return;
+    setPendingProfileId(profileId);
+    setIsOpen(false);
+    void switchProfile(profileId);
+  };
+
+  const pendingTarget = pendingProfileId
+    ? availableProfiles.find((a) => a.profile.id === pendingProfileId)?.profile
+    : null;
 
   const onDark = variant === "sidebar" || variant === "drawer";
 
@@ -148,10 +161,7 @@ export function ProfileSwitcher({
                   <button
                     key={profile.id}
                     type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      if (!isActive) void switchProfile(profile.id);
-                    }}
+                    onClick={() => handleSwitch(profile.id)}
                     className={cn(
                       "w-full flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors duration-150 text-left",
                       variant === "topbar"
@@ -201,6 +211,54 @@ export function ProfileSwitcher({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {typeof document !== 'undefined' &&
+        pendingTarget &&
+        isPending &&
+        createPortal(
+          <AnimatePresence>
+            <motion.div
+              key="profile-switch-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center"
+              style={{
+                background:
+                  "radial-gradient(120% 60% at 50% 50%, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.85) 100%)",
+                backdropFilter: "blur(8px)",
+              }}
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.92, opacity: 0 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col items-center gap-5 px-10 py-8 rounded-3xl bg-white/95 shadow-2xl"
+              >
+                <div className="relative">
+                  <ProfileSwatch profile={pendingTarget} size={56} />
+                  <Loader2
+                    className="absolute -bottom-1 -right-1 w-6 h-6 animate-spin text-[--text]"
+                    strokeWidth={2.25}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-[11px] uppercase tracking-wider text-[--text-tertiary] font-semibold">
+                    Profil değiştiriliyor
+                  </p>
+                  <p className="text-[18px] font-semibold text-[--text] mt-1.5" style={{ letterSpacing: "-0.015em" }}>
+                    {pendingTarget.brandName}
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 }

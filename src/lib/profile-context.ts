@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/db';
 import { requireUser } from '@/lib/auth-guards';
@@ -51,7 +52,15 @@ function toSummary(p: {
   };
 }
 
-export async function resolveActiveProfile(): Promise<ProfileResolutionResult> {
+/**
+ * Aktif profili (cookie veya en son seçilen) çözer ve kullanıcının
+ * erişebildiği tüm profilleri liste olarak döner.
+ *
+ * React `cache()` ile sarılı: aynı server request içinde kaç kez
+ * çağrılırsa çağrılsın tek bir Prisma sorgusu çalışır. Layout +
+ * page'lerde paralel kullanım için kritik.
+ */
+export const resolveActiveProfile = cache(async (): Promise<ProfileResolutionResult> => {
   const auth = await requireUser();
   if (auth.error || !auth.user) {
     return { profile: null, role: null, availableProfiles: [], error: auth.error ?? 'Oturum yok.' };
@@ -78,6 +87,8 @@ export async function resolveActiveProfile(): Promise<ProfileResolutionResult> {
   const cookieStore = await cookies();
   const requestedId = cookieStore.get(ACTIVE_PROFILE_COOKIE)?.value;
 
+  // Tercih sırası: cookie eşleşmesi → en son seçilen → ilk satır.
+  // accesses zaten lastSelectedAt desc sıralı olduğundan accesses[0] doğrudur.
   const selected =
     accesses.find(a => a.profileId === requestedId) ?? accesses[0];
 
@@ -91,7 +102,7 @@ export async function resolveActiveProfile(): Promise<ProfileResolutionResult> {
     role: selected.role,
     availableProfiles,
   };
-}
+});
 
 export async function setActiveProfileCookie(profileId: string) {
   const cookieStore = await cookies();

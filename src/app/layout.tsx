@@ -38,13 +38,32 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+function hexToRgbTuple(hex: string): [number, number, number] {
+  const cleaned = hex.replace('#', '');
+  const value = cleaned.length === 3 ? cleaned.split('').map(c => c + c).join('') : cleaned;
+  return [
+    parseInt(value.substring(0, 2), 16),
+    parseInt(value.substring(2, 4), 16),
+    parseInt(value.substring(4, 6), 16),
+  ];
+}
+
 function profileThemeVars(profile: ProfileSummary | null): CSSProperties {
   const primary = profile?.primaryColor ?? '#4F46E5';
   const accent = profile?.accentColor ?? '#06B6D4';
+  const [r, g, b] = hexToRgbTuple(primary);
+  const rgba = (alpha: number) => `rgba(${r}, ${g}, ${b}, ${alpha})`;
   return {
     ['--brand-primary' as never]: primary,
     ['--brand-accent' as never]: accent,
+    ['--brand-primary-rgb' as never]: `${r}, ${g}, ${b}`,
     ['--grad-aurora' as never]: `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`,
+    // App-wide accent ladder rebased on the active profile palette so every
+    // chip / focus ring / glow re-skins with the brand without code edits.
+    ['--accent' as never]: primary,
+    ['--accent-soft' as never]: rgba(0.08),
+    ['--accent-tint' as never]: rgba(0.16),
+    ['--accent-glow' as never]: rgba(0.28),
   } as CSSProperties;
 }
 

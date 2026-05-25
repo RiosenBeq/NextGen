@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
 import { getErrorMessage } from '@/lib/errors';
-import { requireUser, requireSuperAdmin } from '@/lib/auth-guards';
+import { requireUser, requireSuperAdmin, requireProfileAccess } from '@/lib/auth-guards';
 import prisma from '@/lib/db';
 import type { z } from 'zod';
 
@@ -37,10 +37,11 @@ function normalizeMonthInput(monthInput: string | Date) {
 
 export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
@@ -51,6 +52,7 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
       .from('MonthlyPerformance')
       .upsert({
         id: deterministicId(validatedData.locationId),
+        profileId,
         locationId: validatedData.locationId,
         month: normalizedMonth,
         sessionCount: validatedData.sessionCount,
@@ -80,10 +82,11 @@ export async function addMonthlyPerformance(data: MonthlyPerformanceInput) {
 
 export async function updateMonthlyPerformance(id: string, data: MonthlyPerformanceInput) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
     const validatedData = monthlyPerformanceSchema.parse(data);
@@ -97,6 +100,7 @@ export async function updateMonthlyPerformance(id: string, data: MonthlyPerforma
         updatedAt: new Date().toISOString(),
       })
       .eq('id', id)
+      .eq('profileId', profileId)
       .select()
       .single();
 
@@ -122,13 +126,18 @@ export async function updateMonthlyPerformance(id: string, data: MonthlyPerforma
 
 export async function deleteMonthlyPerformance(id: string) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
-    const { error } = await supabase.from('MonthlyPerformance').delete().eq('id', id);
+    const { error } = await supabase
+      .from('MonthlyPerformance')
+      .delete()
+      .eq('id', id)
+      .eq('profileId', profileId);
     if (error) throw error;
 
     await createAuditLog('DELETE', 'MonthlyPerformance', id, { deletedBy: guard.user.id });
@@ -146,10 +155,11 @@ export async function deleteMonthlyPerformance(id: string) {
 
 export async function addExpense(data: ExpenseInput) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const validatedData = expenseSchema.parse(data);
     const amountWithoutVat = Math.max(0, validatedData.amount || 0);
@@ -163,6 +173,7 @@ export async function addExpense(data: ExpenseInput) {
       .from('Expense')
       .insert({
         id: `exp_${crypto.randomUUID()}`,
+        profileId,
         locationId: validatedData.locationId || null,
         description: validatedData.description,
         type: validatedData.type,
@@ -183,6 +194,7 @@ export async function addExpense(data: ExpenseInput) {
     let documentWarning: string | undefined;
     if (validatedData.attachmentUrl) {
       const { error: docError } = await supabase.from('Document').insert({
+        profileId,
         fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge',
         relatedType: 'expense',
@@ -215,10 +227,11 @@ export async function addExpense(data: ExpenseInput) {
 
 export async function updateExpense(id: string, data: ExpenseInput) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const validatedData = expenseSchema.parse(data);
     const supabase = await createClient();
@@ -247,6 +260,7 @@ export async function updateExpense(id: string, data: ExpenseInput) {
       .from('Expense')
       .update(updatePayload)
       .eq('id', id)
+      .eq('profileId', profileId)
       .select()
       .single();
 
@@ -255,6 +269,7 @@ export async function updateExpense(id: string, data: ExpenseInput) {
     let documentWarning: string | undefined;
     if (validatedData.attachmentUrl) {
       const { error: docError } = await supabase.from('Document').insert({
+        profileId,
         fileUrl: validatedData.attachmentUrl,
         fileName: 'Fatura / Belge (Grup)',
         relatedType: 'expense',
@@ -366,10 +381,11 @@ export async function uploadExpenseAttachment(formData: FormData) {
 }
 export async function updateExpenseAttachment(id: string, fileUrl: string) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
 
@@ -377,7 +393,8 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
     const { error: updateError } = await supabase
       .from('Expense')
       .update({ attachmentUrl: fileUrl, isOfficial: true })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (updateError) throw updateError;
 
@@ -386,6 +403,7 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
     const { error: docError } = await supabase
       .from('Document')
       .insert({
+        profileId,
         fileUrl: fileUrl,
         fileName: 'Fatura / Belge (Sonradan Eklendi)',
         relatedType: 'expense',
@@ -416,10 +434,11 @@ export async function updateExpenseAttachment(id: string, fileUrl: string) {
 
 export async function deleteExpenseAttachment(id: string) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
 
@@ -427,6 +446,7 @@ export async function deleteExpenseAttachment(id: string) {
       .from('Expense')
       .select('id, attachmentUrl')
       .eq('id', id)
+      .eq('profileId', profileId)
       .single();
 
     if (expenseError) throw expenseError;
@@ -445,7 +465,8 @@ export async function deleteExpenseAttachment(id: string) {
     const { error: updateError } = await supabase
       .from('Expense')
       .update({ attachmentUrl: null, isOfficial: false })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (updateError) throw updateError;
 
@@ -453,7 +474,8 @@ export async function deleteExpenseAttachment(id: string) {
       .from('Document')
       .delete()
       .eq('relatedType', 'expense')
-      .eq('relatedId', id);
+      .eq('relatedId', id)
+      .eq('profileId', profileId);
 
     if (documentDeleteError) throw documentDeleteError;
 
@@ -476,13 +498,18 @@ export async function deleteExpenseAttachment(id: string) {
 
 export async function deleteExpense(id: string) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
-    const { error } = await supabase.from('Expense').delete().eq('id', id);
+    const { error } = await supabase
+      .from('Expense')
+      .delete()
+      .eq('id', id)
+      .eq('profileId', profileId);
     if (error) throw error;
 
     await createAuditLog('DELETE', 'Expense', id, { deletedBy: guard.user.id });
@@ -501,10 +528,11 @@ export async function deleteExpense(id: string) {
 
 export async function addInvestment(data: InvestmentInput) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const validatedData = investmentSchema.parse(data);
     const amount = Math.max(0, validatedData.amount || 0);
@@ -518,6 +546,7 @@ export async function addInvestment(data: InvestmentInput) {
       .from('Investment')
       .insert({
         id: investmentId,
+        profileId,
         locationId: validatedData.locationId,
         description: validatedData.description,
         currency: validatedData.currency,
@@ -546,10 +575,11 @@ export async function addInvestment(data: InvestmentInput) {
 
 export async function updateInvestment(id: string, data: InvestmentInput) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz yatırım ID.' };
@@ -568,7 +598,8 @@ export async function updateInvestment(id: string, data: InvestmentInput) {
         totalAmount: amount,
         notes: validatedData.notes || '',
       })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (error) throw error;
 
@@ -588,13 +619,18 @@ export async function updateInvestment(id: string, data: InvestmentInput) {
 
 export async function deleteInvestment(id: string) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const supabase = await createClient();
-    const { error } = await supabase.from('Investment').delete().eq('id', id);
+    const { error } = await supabase
+      .from('Investment')
+      .delete()
+      .eq('id', id)
+      .eq('profileId', profileId);
     if (error) throw error;
 
     await createAuditLog('DELETE', 'Investment', id, { deletedBy: guard.user.id });
@@ -610,16 +646,21 @@ export async function deleteInvestment(id: string) {
 
 export async function updateLocationParameters(id: string, data: LocationParamsInput) {
   try {
-    const guard = await requireSuperAdmin();
-    if (guard.error || !guard.user) {
-      return { success: false, error: guard.error };
+    const adminGuard = await requireSuperAdmin();
+    if (adminGuard.error || !adminGuard.user) {
+      return { success: false, error: adminGuard.error };
     }
+    const profileGuard = await requireProfileAccess();
+    if (profileGuard.error || !profileGuard.profile) {
+      return { success: false, error: profileGuard.error };
+    }
+    const profileId = profileGuard.profile.id;
 
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Geçersiz lokasyon ID.' };
     }
     const validatedData = locationParamsSchema.parse(data);
-    
+
     const fixedRent = Math.max(0, validatedData.fixedRent);
     const duesAmount = Math.max(0, validatedData.duesAmount);
     const revenueShareRate = Math.max(0, Math.min(100, validatedData.revenueShareRate));
@@ -636,7 +677,8 @@ export async function updateLocationParameters(id: string, data: LocationParamsI
         revenueThreshold,
         rentVatRate,
       })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (error) throw error;
     revalidatePath('/ayarlar');
@@ -654,8 +696,12 @@ import { calculateMonthlyCashFlow } from './calculations';
 
 export async function getLocationInsights() {
   try {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.profile) return [];
+    const profileId = guard.profile.id;
+
     const supabase = await createClient();
-    
+
     const { data: locations, error } = await supabase
       .from('Location')
       .select(`
@@ -663,6 +709,7 @@ export async function getLocationInsights() {
         performances:MonthlyPerformance(*),
         investments:Investment(*)
       `)
+      .eq('profileId', profileId)
       .eq('isActive', true);
 
     if (error) throw error;
@@ -729,8 +776,16 @@ export async function getLocationInsights() {
 
 export async function getActiveLocations() {
   try {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.profile) return [];
+    const profileId = guard.profile.id;
+
     const supabase = await createClient();
-    const { data } = await supabase.from('Location').select('*').eq('isActive', true);
+    const { data } = await supabase
+      .from('Location')
+      .select('*')
+      .eq('profileId', profileId)
+      .eq('isActive', true);
     return data || [];
   } catch (error) {
     console.error("Error fetching locations:", error);
@@ -740,8 +795,15 @@ export async function getActiveLocations() {
 
 export async function getSystemParameters() {
   try {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.profile) return {};
+    const profileId = guard.profile.id;
+
     const supabase = await createClient();
-    const { data } = await supabase.from('SystemParameter').select('*');
+    const { data } = await supabase
+      .from('SystemParameter')
+      .select('*')
+      .eq('profileId', profileId);
     const map: Record<string, number> = {};
     data?.forEach(p => map[p.key] = p.value);
     return map;
@@ -753,14 +815,19 @@ export async function getSystemParameters() {
 
 export async function updateSystemParameter(key: string, value: number) {
   try {
-    const guard = await requireSuperAdmin();
-    if (guard.error || !guard.user) {
-      return { success: false, error: guard.error };
+    const adminGuard = await requireSuperAdmin();
+    if (adminGuard.error || !adminGuard.user) {
+      return { success: false, error: adminGuard.error };
     }
+    const profileGuard = await requireProfileAccess();
+    if (profileGuard.error || !profileGuard.profile) {
+      return { success: false, error: profileGuard.error };
+    }
+    const profileId = profileGuard.profile.id;
 
     const allowedKeys = [
-      'SESSION_PRICE_INCL_VAT', 
-      'VAT_RATE', 
+      'SESSION_PRICE_INCL_VAT',
+      'VAT_RATE',
       'CORP_TAX_RATE',
       'SETTING_POPUP_POSITION',
       'SETTING_LOG_DETAIL_LEVEL',
@@ -774,9 +841,9 @@ export async function updateSystemParameter(key: string, value: number) {
 
     // Use Prisma for reliable ID generation and upsert handling
     await prisma.systemParameter.upsert({
-      where: { key },
+      where: { profileId_key: { profileId, key } },
       update: { value: safeValue },
-      create: { key, value: safeValue },
+      create: { profileId, key, value: safeValue },
     });
 
     await createAuditLog('UPDATE', 'SystemParameter', key, { newValue: safeValue });
@@ -795,10 +862,15 @@ export async function updateSystemParameter(key: string, value: number) {
 
 export async function resetSystemParameters() {
   try {
-    const guard = await requireSuperAdmin();
-    if (guard.error || !guard.user) {
-      return { success: false, error: guard.error };
+    const adminGuard = await requireSuperAdmin();
+    if (adminGuard.error || !adminGuard.user) {
+      return { success: false, error: adminGuard.error };
     }
+    const profileGuard = await requireProfileAccess();
+    if (profileGuard.error || !profileGuard.profile) {
+      return { success: false, error: profileGuard.error };
+    }
+    const profileId = profileGuard.profile.id;
 
     const defaults = {
       'SESSION_PRICE_INCL_VAT': 300,
@@ -812,9 +884,9 @@ export async function resetSystemParameters() {
 
     for (const [key, value] of Object.entries(defaults)) {
       await prisma.systemParameter.upsert({
-        where: { key },
+        where: { profileId_key: { profileId, key } },
         update: { value: (value as number) },
-        create: { key, value: (value as number) },
+        create: { profileId, key, value: (value as number) },
       });
     }
 
@@ -834,10 +906,11 @@ export async function resetSystemParameters() {
 
 export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: boolean; isOfficial?: boolean }) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const payload: Record<string, boolean> = {};
     if (typeof updates.isSettled === 'boolean') payload.isSettled = updates.isSettled;
@@ -848,7 +921,11 @@ export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: 
     }
 
     const supabase = await createClient();
-    const { error } = await supabase.from('Expense').update(payload).eq('id', id);
+    const { error } = await supabase
+      .from('Expense')
+      .update(payload)
+      .eq('id', id)
+      .eq('profileId', profileId);
     if (error) throw error;
 
     revalidatePath('/faturalar');
@@ -862,10 +939,11 @@ export async function updateAvmExpenseStatus(id: string, updates: { isSettled?: 
 
 export async function updateAvmExpenseFinancials(id: string, updates: { amountWithVat?: number; paidBy?: string }) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const payload: Record<string, string | number> = {};
 
@@ -876,6 +954,7 @@ export async function updateAvmExpenseFinancials(id: string, updates: { amountWi
         .from('Expense')
         .select('vatRate')
         .eq('id', id)
+        .eq('profileId', profileId)
         .single();
       if (fetchError) throw fetchError;
 
@@ -894,7 +973,11 @@ export async function updateAvmExpenseFinancials(id: string, updates: { amountWi
     }
 
     const supabase = await createClient();
-    const { error } = await supabase.from('Expense').update(payload).eq('id', id);
+    const { error } = await supabase
+      .from('Expense')
+      .update(payload)
+      .eq('id', id)
+      .eq('profileId', profileId);
     if (error) throw error;
 
     revalidatePath('/faturalar');
@@ -909,10 +992,11 @@ export async function updateAvmExpenseFinancials(id: string, updates: { amountWi
 }
 
 export async function toggleExpenseSettled(id: string, currentDesc: string) {
-  const guard = await requireUser();
-  if (guard.error || !guard.user) {
+  const guard = await requireProfileAccess();
+  if (guard.error || !guard.user || !guard.profile) {
     return { success: false, error: guard.error };
   }
+  const profileId = guard.profile.id;
 
   const isSettled = currentDesc.includes('[MAHSUP]');
   const newDesc = isSettled
@@ -920,7 +1004,11 @@ export async function toggleExpenseSettled(id: string, currentDesc: string) {
     : `[MAHSUP] ${currentDesc}`;
 
   const supabase = await createClient();
-  const { error } = await supabase.from('Expense').update({ description: newDesc }).eq('id', id);
+  const { error } = await supabase
+    .from('Expense')
+    .update({ description: newDesc })
+    .eq('id', id)
+    .eq('profileId', profileId);
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/giderler');
@@ -928,13 +1016,21 @@ export async function toggleExpenseSettled(id: string, currentDesc: string) {
 }
 
 export async function autoSettleOldExpenses() {
-  const guard = await requireSuperAdmin();
-  if (guard.error || !guard.user) {
-    return { success: false, error: guard.error };
+  const adminGuard = await requireSuperAdmin();
+  if (adminGuard.error || !adminGuard.user) {
+    return { success: false, error: adminGuard.error };
   }
+  const profileGuard = await requireProfileAccess();
+  if (profileGuard.error || !profileGuard.profile) {
+    return { success: false, error: profileGuard.error };
+  }
+  const profileId = profileGuard.profile.id;
 
   const supabase = await createClient();
-  const { data: expenses } = await supabase.from('Expense').select('id, description');
+  const { data: expenses } = await supabase
+    .from('Expense')
+    .select('id, description')
+    .eq('profileId', profileId);
 
   if (!expenses) return { success: true, count: 0 };
 
@@ -942,11 +1038,15 @@ export async function autoSettleOldExpenses() {
   for (const exp of expenses) {
     const d = exp.description.toLowerCase();
     if (!d.includes('[mahsup]') && !d.includes('eren') && !d.includes('murat')) {
-      await supabase.from('Expense').update({ description: `[MAHSUP] ${exp.description}` }).eq('id', exp.id);
+      await supabase
+        .from('Expense')
+        .update({ description: `[MAHSUP] ${exp.description}` })
+        .eq('id', exp.id)
+        .eq('profileId', profileId);
       count++;
     }
   }
-  await createAuditLog('UPDATE', 'Expense', 'BULK', { action: 'AUTO_SETTLE', count, by: guard.user.id });
+  await createAuditLog('UPDATE', 'Expense', 'BULK', { action: 'AUTO_SETTLE', count, by: adminGuard.user.id });
   revalidatePath('/giderler');
   return { success: true, count };
 }

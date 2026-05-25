@@ -3,6 +3,7 @@ import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getLocationInsights } from '@/features/ledger/actions';
 import DashboardClientUI from '@/components/premium/DashboardClientUI';
 import { getActiveLocations } from '@/features/ledger/actions';
+import { resolveActiveProfile } from '@/lib/profile-context';
 
 export const metadata = {
   title: 'Panel — NextGenBox',
@@ -51,39 +52,48 @@ function monthIdOf(value: string) {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  
-  // Check for default page setting
-  const { data: defaultPageParam } = await supabase
-    .from('SystemParameter')
-    .select('value')
-    .eq('key', 'SETTING_DEFAULT_PAGE')
-    .single();
+  const profileCtx = await resolveActiveProfile();
+  const profileId = profileCtx.profile?.id ?? null;
 
-  if (defaultPageParam) {
-    const val = parseInt(String(defaultPageParam.value));
-    if (val === 1) redirect('/performans');
-    if (val === 2) redirect('/gelir-gider');
+  // Check for default page setting (profile-scoped)
+  if (profileId) {
+    const { data: defaultPageParam } = await supabase
+      .from('SystemParameter')
+      .select('value')
+      .eq('profileId', profileId)
+      .eq('key', 'SETTING_DEFAULT_PAGE')
+      .single();
+
+    if (defaultPageParam) {
+      const val = parseInt(String(defaultPageParam.value));
+      if (val === 1) redirect('/performans');
+      if (val === 2) redirect('/gelir-gider');
+    }
   }
 
   const insights = await getLocationInsights();
 
-  const { data: performances } = await supabase
+  const { data: performances } = profileId ? await supabase
     .from('MonthlyPerformance')
     .select('*, location:Location(*)')
-    .order('month', { ascending: true });
+    .eq('profileId', profileId)
+    .order('month', { ascending: true }) : { data: [] };
 
-  const { data: expensesData } = await supabase
+  const { data: expensesData } = profileId ? await supabase
     .from('Expense')
     .select('*')
-    .limit(100);
+    .eq('profileId', profileId)
+    .limit(100) : { data: [] };
 
-  const { data: investmentData } = await supabase
+  const { data: investmentData } = profileId ? await supabase
     .from('Investment')
-    .select('id, totalAmount, amountWithoutVat, locationId, location:Location(name)');
+    .select('id, totalAmount, amountWithoutVat, locationId, location:Location(name)')
+    .eq('profileId', profileId) : { data: [] };
 
-  const { data: paramsData } = await supabase
+  const { data: paramsData } = profileId ? await supabase
     .from('SystemParameter')
-    .select('*');
+    .select('*')
+    .eq('profileId', profileId) : { data: [] };
 
   const paramMap = (paramsData || []).reduce((acc: Record<string, unknown>, p: SystemParamRow) => {
     acc[p.key] = p.value;
@@ -245,19 +255,21 @@ export default async function DashboardPage() {
     growth,
   };
 
-  const { data: latestExpenses } = await supabase
+  const { data: latestExpenses } = profileId ? await supabase
     .from('Expense')
     .select('*, location:Location(name)')
+    .eq('profileId', profileId)
     .order('createdAt', { ascending: false })
-    .limit(10);
+    .limit(10) : { data: [] };
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: latestNotes } = await supabase
+  const { data: latestNotes } = profileId ? await supabase
     .from('Note')
     .select('*')
+    .eq('profileId', profileId)
     .eq('userId', user?.id)
     .order('createdAt', { ascending: false })
-    .limit(10);
+    .limit(10) : { data: [] };
 
   return (
     <DashboardClientUI 

@@ -4,15 +4,16 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { avmPaymentSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
-import { requireUser } from '@/lib/auth-guards';
+import { requireProfileAccess } from '@/lib/auth-guards';
 import { getErrorMessage } from '@/lib/errors';
 
 export async function addAvmPayment(data: unknown) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     const validated = avmPaymentSchema.parse(data);
     const amount = Math.max(0, validated.amount || 0);
@@ -25,6 +26,7 @@ export async function addAvmPayment(data: unknown) {
 
     const { error } = await supabase.from('AvmPayment').insert({
       id: `avm_${crypto.randomUUID()}`,
+      profileId,
       locationId: validated.locationId,
       month: validated.month,
       paymentType: validated.paymentType,
@@ -52,10 +54,11 @@ export async function addAvmPayment(data: unknown) {
 
 export async function updateAvmPayment(id: string, data: unknown) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     if (!id) return { success: false, error: 'Geçersiz kayıt ID.' };
 
@@ -73,7 +76,8 @@ export async function updateAvmPayment(id: string, data: unknown) {
         description: validated.description || null,
         amount,
       })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (error) throw error;
 
@@ -93,10 +97,11 @@ export async function updateAvmPayment(id: string, data: unknown) {
 
 export async function toggleAvmPaymentPaid(id: string, currentlyPaid: boolean) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     if (!id) return { success: false, error: 'Geçersiz kayıt ID.' };
 
@@ -109,7 +114,8 @@ export async function toggleAvmPaymentPaid(id: string, currentlyPaid: boolean) {
         isPaid: newPaid,
         paidAt: newPaid ? new Date().toISOString() : null,
       })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (error) throw error;
 
@@ -127,15 +133,20 @@ export async function toggleAvmPaymentPaid(id: string, currentlyPaid: boolean) {
 
 export async function deleteAvmPayment(id: string) {
   try {
-    const guard = await requireUser();
-    if (guard.error || !guard.user) {
+    const guard = await requireProfileAccess();
+    if (guard.error || !guard.user || !guard.profile) {
       return { success: false, error: guard.error };
     }
+    const profileId = guard.profile.id;
 
     if (!id) return { success: false, error: 'Geçersiz kayıt ID.' };
 
     const supabase = await createClient();
-    const { error } = await supabase.from('AvmPayment').delete().eq('id', id);
+    const { error } = await supabase
+      .from('AvmPayment')
+      .delete()
+      .eq('id', id)
+      .eq('profileId', profileId);
 
     if (error) throw error;
 

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAuditLog } from '@/lib/audit';
-import { requireProfileAccess } from '@/lib/auth-guards';
+import { requireUser } from '@/lib/auth-guards';
 import { getErrorMessage } from '@/lib/errors';
 
 async function getAdminSupabase() {
@@ -59,11 +59,10 @@ function extractDocumentsStoragePath(publicUrl: string): string | null {
 
 export async function uploadDocument(formData: FormData) {
   try {
-    const guard = await requireProfileAccess();
-    if (guard.error || !guard.user || !guard.profile) {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
       return { success: false, error: guard.error };
     }
-    const profileId = guard.profile.id;
 
     const supabase = await createClient();
     const adminSupabase = await getAdminSupabase();
@@ -138,7 +137,6 @@ export async function uploadDocument(formData: FormData) {
     const id = `doc_${crypto.randomUUID()}`;
     const fullPayload = {
       id,
-      profileId,
       relatedType,
       relatedId,
       fileName: file.name,
@@ -160,7 +158,6 @@ export async function uploadDocument(formData: FormData) {
         console.warn('Document insert: fileSize/mimeType columns missing, retrying minimal payload', dbError.message);
         const { error: retryError } = await dbClient.from('Document').insert({
           id,
-          profileId,
           relatedType,
           relatedId,
           fileName: file.name,
@@ -191,16 +188,8 @@ export async function uploadDocument(formData: FormData) {
 
 export async function getDocuments(relatedType?: string, relatedId?: string) {
   try {
-    const guard = await requireProfileAccess();
-    if (guard.error || !guard.profile) return [];
-    const profileId = guard.profile.id;
-
     const supabase = await createClient();
-    let query = supabase
-      .from('Document')
-      .select('*')
-      .eq('profileId', profileId)
-      .order('createdAt', { ascending: false });
+    let query = supabase.from('Document').select('*').order('createdAt', { ascending: false });
 
     if (relatedType) query = query.eq('relatedType', relatedType);
     if (relatedId) query = query.eq('relatedId', relatedId);
@@ -216,22 +205,17 @@ export async function getDocuments(relatedType?: string, relatedId?: string) {
 
 export async function deleteDocument(id: string) {
   try {
-    const guard = await requireProfileAccess();
-    if (guard.error || !guard.user || !guard.profile) {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
       return { success: false, error: guard.error };
     }
-    const profileId = guard.profile.id;
 
     const adminSupabase = await getAdminSupabase();
     const supabase = await createClient();
     const dbClient = adminSupabase || supabase;
 
-    const { data: doc } = await dbClient
-      .from('Document')
-      .select('fileUrl')
-      .eq('id', id)
-      .eq('profileId', profileId)
-      .single();
+    // Get file URL from DB first
+    const { data: doc } = await dbClient.from('Document').select('fileUrl').eq('id', id).single();
 
     if (doc?.fileUrl) {
       const storagePath = extractDocumentsStoragePath(doc.fileUrl);
@@ -244,11 +228,8 @@ export async function deleteDocument(id: string) {
       }
     }
 
-    const { error } = await dbClient
-      .from('Document')
-      .delete()
-      .eq('id', id)
-      .eq('profileId', profileId);
+    // Delete from DB
+    const { error } = await dbClient.from('Document').delete().eq('id', id);
     if (error) throw error;
 
     await createAuditLog('DELETE', 'Document', id, { deletedBy: guard.user.id });

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { getErrorMessage } from '@/lib/errors';
-import { requireProfileAccess } from '@/lib/auth-guards';
+import { requireUser } from '@/lib/auth-guards';
 import {
   addMonthlyPerformance,
   deleteMonthlyPerformance as deleteMonthlyPerformanceCore,
@@ -25,11 +25,10 @@ export async function upsertDailyPerformance(data: {
   extraMetrics?: Record<string, unknown>;
 }) {
   try {
-    const guard = await requireProfileAccess();
-    if (guard.error || !guard.user || !guard.profile) {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
       return { success: false, error: guard.error };
     }
-    const profileId = guard.profile.id;
 
     const supabase = await createClient();
 
@@ -37,7 +36,6 @@ export async function upsertDailyPerformance(data: {
       .from('DailyPerformance')
       .upsert({
         id: `daily_${data.locationId}_${data.date.split('T')[0]}`,
-        profileId,
         locationId: data.locationId,
         date: data.date,
         sessionCount: data.sessionCount,
@@ -53,7 +51,7 @@ export async function upsertDailyPerformance(data: {
     if (error) throw error;
 
     // Recalculate monthly aggregate for this location/month
-    await syncMonthlyPerformance(profileId, data.locationId, data.date);
+    await syncMonthlyPerformance(data.locationId, data.date);
 
     revalidatePath('/performans');
     revalidatePath('/');
@@ -72,7 +70,7 @@ export async function upsertDailyPerformance(data: {
  * MonthlyPerformance'a yansıtır. Tarih sınırı UTC üzerinden hesaplanır;
  * sunucu yerel saatinden bağımsızdır.
  */
-async function syncMonthlyPerformance(profileId: string, locationId: string, dateStr: string) {
+async function syncMonthlyPerformance(locationId: string, dateStr: string) {
   const supabase = await createClient();
   const reference = new Date(dateStr);
   if (Number.isNaN(reference.getTime())) {
@@ -90,7 +88,6 @@ async function syncMonthlyPerformance(profileId: string, locationId: string, dat
   const { data: dailies, error } = await supabase
     .from('DailyPerformance')
     .select('sessionCount')
-    .eq('profileId', profileId)
     .eq('locationId', locationId)
     .gte('date', startOfMonth.toISOString())
     .lte('date', endOfMonth.toISOString());
@@ -106,7 +103,6 @@ async function syncMonthlyPerformance(profileId: string, locationId: string, dat
     .from('MonthlyPerformance')
     .upsert({
       id: deterministicMonthlyId(locationId, startOfMonth),
-      profileId,
       locationId,
       month: startOfMonth.toISOString(),
       sessionCount: totalSessions,
@@ -122,15 +118,10 @@ async function syncMonthlyPerformance(profileId: string, locationId: string, dat
 
 export async function getDailyPerformanceHistory(locationId: string, limit = 30) {
   try {
-    const guard = await requireProfileAccess();
-    if (guard.error || !guard.profile) return [];
-    const profileId = guard.profile.id;
-
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('DailyPerformance')
       .select('*, location:Location(id,name)')
-      .eq('profileId', profileId)
       .eq('locationId', locationId)
       .order('date', { ascending: false })
       .limit(limit);
@@ -171,22 +162,17 @@ export async function deleteMonthlyPerformance(id: string) {
 
 export async function deleteDailyPerformance(id: string, locationId: string, dateStr: string) {
   try {
-    const guard = await requireProfileAccess();
-    if (guard.error || !guard.user || !guard.profile) {
+    const guard = await requireUser();
+    if (guard.error || !guard.user) {
       return { success: false, error: guard.error };
     }
-    const profileId = guard.profile.id;
 
     const supabase = await createClient();
-    const { error } = await supabase
-      .from('DailyPerformance')
-      .delete()
-      .eq('id', id)
-      .eq('profileId', profileId);
+    const { error } = await supabase.from('DailyPerformance').delete().eq('id', id);
     if (error) throw error;
 
     // Recalculate month aggregate
-    await syncMonthlyPerformance(profileId, locationId, dateStr);
+    await syncMonthlyPerformance(locationId, dateStr);
 
     revalidatePath('/performans');
     revalidatePath('/raporlar');

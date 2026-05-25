@@ -2,7 +2,6 @@ import { calculateMonthlyCashFlow } from '@/features/ledger/calculations';
 import { getSystemParameters } from '@/features/ledger/actions';
 import { createClient } from '@/utils/supabase/server';
 import GelirGiderClientUI from '@/components/premium/GelirGiderClientUI';
-import { resolveActiveProfile } from '@/lib/profile-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,18 +34,14 @@ export default async function GelirGiderPage(props: {
   const filterCategory = searchParams.category || 'all';
 
   const supabase = await createClient();
-  const profileCtx = await resolveActiveProfile();
-  const profileId = profileCtx.profile?.id ?? null;
   const sysParams = await getSystemParameters();
   const sessionPrice = sysParams['SESSION_PRICE_INCL_VAT'] || 300;
 
-  const [{ data: locations }, { data: performances }, { data: expenses }] = profileId
-    ? await Promise.all([
-        supabase.from('Location').select('*').eq('profileId', profileId).eq('isActive', true),
-        supabase.from('MonthlyPerformance').select('*, location:Location(*)').eq('profileId', profileId).order('month', { ascending: false }),
-        supabase.from('Expense').select('*, location:Location(*)').eq('profileId', profileId).order('createdAt', { ascending: false }),
-      ])
-    : [{ data: [] }, { data: [] }, { data: [] }];
+  const [{ data: locations }, { data: performances }, { data: expenses }] = await Promise.all([
+    supabase.from('Location').select('*').eq('isActive', true),
+    supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false }),
+    supabase.from('Expense').select('*, location:Location(*)').order('createdAt', { ascending: false }),
+  ]);
 
   const activeLocationCount = (locations || []).length || 1;
 

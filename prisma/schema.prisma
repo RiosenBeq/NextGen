@@ -8,128 +8,62 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Profile {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  name         String
-  brandName    String
-  monogram     String
-  businessType String   @default("karaoke") // "karaoke" | "cafe"
-  primaryColor String   @default("#4F46E5")
-  accentColor  String   @default("#06B6D4")
-  logoUrl      String?
-  locale       String   @default("tr-TR")
-  currency     String   @default("TRY")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  locations           Location[]
-  expenses            Expense[]
-  investments         Investment[]
-  monthlyPerformances MonthlyPerformance[]
-  dailyPerformances   DailyPerformance[]
-  avmPayments         AvmPayment[]
-  notes               Note[]
-  documents           Document[]
-  systemParameters    SystemParameter[]
-  auditLogs           AuditLog[]
-  userAccesses        UserProfileAccess[]
-  cafeDailySales      CafeDailySales[]
-}
-
-model UserProfileAccess {
-  id             String    @id @default(cuid())
-  userId         String
-  profileId      String
-  role           String    @default("member") // "owner" | "admin" | "member"
-  lastSelectedAt DateTime?
-  createdAt      DateTime  @default(now())
-
-  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, profileId])
-  @@index([userId])
-  @@index([profileId])
-}
-
 model SystemParameter {
-  id        String  @id @default(cuid())
-  profileId String
-  key       String
-  value     Float
-
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@unique([profileId, key])
-  @@index([profileId])
+  id    String @id @default(cuid())
+  key   String @unique // e.g. SESSION_VAT_PERCENTAGE, COMMISSION_PERCENTAGE, ALP_SHARE_PERCENTAGE
+  value Float
 }
 
 model Location {
   id               String             @id @default(cuid())
-  profileId        String
   name             String
   fixedRent        Float
   duesAmount       Float
   rentVatRate      Float
-  revenueShareRate Float              @default(0)
-  revenueThreshold Float              @default(0)
+  revenueShareRate Float              @default(0) // Ciro Payı %
+  revenueThreshold Float              @default(0) // Ciro Eşiği (TL)
   isActive         Boolean            @default(true)
-
-  profile          Profile            @relation(fields: [profileId], references: [id], onDelete: Restrict)
-
   performances     MonthlyPerformance[]
   dailyPerformances DailyPerformance[]
   expenses         Expense[]
   investments      Investment[]
   avmPayments      AvmPayment[]
-  cafeDailySales   CafeDailySales[]
-
-  @@index([profileId])
 }
 
 model DailyPerformance {
   id           String   @id @default(cuid())
-  profileId    String
   locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
   date         DateTime
   sessionCount Int      @default(0)
   testCount    Int      @default(0)
-  extraMetrics Json?
+  extraMetrics Json?    // To store custom fields dynamically
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location     Location @relation(fields: [locationId], references: [id])
-
   @@unique([locationId, date])
-  @@index([profileId])
 }
 
 model MonthlyPerformance {
   id                 String   @id @default(cuid())
-  profileId          String
   locationId         String
-  month              DateTime
-  sessionCount       Float
+  location           Location @relation(fields: [locationId], references: [id])
+  month              DateTime // First day of the month
+  sessionCount       Float    
   extraExpenseAmount Float    @default(0)
   extraExpenseNotes  String?
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  profile            Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location           Location @relation(fields: [locationId], references: [id])
-
   @@unique([locationId, month])
-  @@index([profileId])
 }
 
 model Expense {
   id               String    @id @default(cuid())
-  profileId        String
-  locationId       String?
+  locationId       String?   // Can be global (null) or local
+  location         Location? @relation(fields: [locationId], references: [id])
   description      String
   type             String    // "RECURRING" or "ONE_TIME"
   amountWithoutVat Float
@@ -143,17 +77,12 @@ model Expense {
   createdAt        DateTime  @default(now())
   attachmentUrl    String?
   isSettled        Boolean   @default(false)
-
-  profile          Profile   @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location         Location? @relation(fields: [locationId], references: [id])
-
-  @@index([profileId])
 }
 
 model Investment {
   id               String   @id @default(cuid())
-  profileId        String
   locationId       String
+  location         Location @relation(fields: [locationId], references: [id])
   description      String
   currency         String   @default("TL")
   amountWithoutVat Float
@@ -161,109 +90,52 @@ model Investment {
   vatAmount        Float    @default(0)
   totalAmount      Float
   shareLogic       String?
-  notes            String?
+  notes            String?  
 
   createdAt        DateTime @default(now())
-
-  profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location         Location @relation(fields: [locationId], references: [id])
-
-  @@index([profileId])
 }
 
 model Note {
   id        String   @id @default(cuid())
-  profileId String
-  userId    String?
+  userId    String?  // The user who owns this note
   title     String
   content   String?
-  color     String   @default("zinc")
+  color     String   @default("zinc") // To store tag/color info
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-
-  @@index([profileId])
 }
 
 model AuditLog {
   id        String   @id @default(cuid())
-  profileId String
-  action    String
-  entity    String
+  action    String   // CREATE, UPDATE, DELETE
+  entity    String   // Expense, Investment, etc.
   entityId  String
-  details   String?
+  details   String?  // JSON string or formatted text
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
-
-  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-
-  @@index([profileId])
 }
 
 model AvmPayment {
   id          String    @id @default(cuid())
-  profileId   String
   locationId  String
-  month       String
-  paymentType String
+  location    Location  @relation(fields: [locationId], references: [id])
+  month       String    // YYYY-MM format
+  paymentType String    // "Kira", "Aidat", "CiroPay", "Diger"
   description String?
   amount      Float
   isPaid      Boolean   @default(false)
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
-
-  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location    Location  @relation(fields: [locationId], references: [id])
-
-  @@index([profileId])
 }
 
 model Document {
   id          String   @id @default(cuid())
-  profileId   String
   fileUrl     String
   fileName    String?
   fileSize    Int?
   mimeType    String?
-  relatedType String
+  relatedType String   // expense, investment
   relatedId   String
   uploadedAt  DateTime @default(now())
-
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-
-  @@index([profileId])
-}
-
-// =============================================================
-// Café-specific daily sales tracking
-// =============================================================
-model CafeDailySales {
-  id                  String   @id @default(cuid())
-  profileId           String
-  locationId          String
-  date                DateTime // day-only (UTC midnight)
-
-  // Toplamlar
-  totalRevenue        Float    @default(0)
-  customerCount       Int      @default(0)
-
-  // Kategori kırılımı (TL)
-  coffeeRevenue       Float    @default(0)
-  coldDrinkRevenue    Float    @default(0)
-  dessertRevenue      Float    @default(0)
-  foodRevenue         Float    @default(0)
-  otherRevenue        Float    @default(0)
-
-  notes               String?
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  profile             Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location            Location @relation(fields: [locationId], references: [id])
-
-  @@unique([locationId, date])
-  @@index([profileId])
 }

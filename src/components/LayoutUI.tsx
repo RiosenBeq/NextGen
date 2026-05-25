@@ -24,21 +24,14 @@ import {
   Calendar,
   Target,
   Building2,
-  ChevronRight,
-  Coffee,
-  Sparkles,
-  BookOpen
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/actions/auth";
 import { PremiumModal } from "./premium/PremiumModal";
 import { ProfileSettingsForm } from "@/features/auth/components/ProfileSettingsForm";
-import { useProfile } from "@/providers/ProfileProvider";
-import { ProfileSwitcher } from "./ProfileSwitcher";
 
-type NavLink = { href: string; label: string; icon: typeof LayoutDashboard; category: string };
-
-const karaokeNavLinks: NavLink[] = [
+const navLinks = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Genel" },
   { href: "/performans", label: "Performans Girişi", icon: PlusCircle, category: "Operasyon" },
   { href: "/raporlar", label: "Nakit Akışı", icon: TrendingUp, category: "Analiz" },
@@ -54,24 +47,6 @@ const karaokeNavLinks: NavLink[] = [
   { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
 ];
-
-const cafeNavLinks: NavLink[] = [
-  { href: "/cafe", label: "Cafe Paneli", icon: Coffee, category: "Genel" },
-  { href: "/cafe/satislar", label: "Günlük Ciro Girişi", icon: PlusCircle, category: "Operasyon" },
-  { href: "/cafe/raporlar", label: "Aylık Raporlar", icon: BookOpen, category: "Analiz" },
-  { href: "/giderler", label: "Gider Yönetimi", icon: CreditCard, category: "Analiz" },
-  { href: "/faturalar", label: "Faturalar", icon: Receipt, category: "Analiz" },
-  { href: "/avm-odemeleri", label: "AVM Ödemeleri", icon: Building2, category: "Analiz" },
-  { href: "/sozlesmeler", label: "Sözleşmeler", icon: ScrollText, category: "Analiz" },
-  { href: "/notlar", label: "Notlar", icon: StickyNote, category: "Destek" },
-  { href: "/gunlukler", label: "Sistem Logları", icon: ShieldCheck, category: "Sistem" },
-  { href: "/ayarlar", label: "Ayarlar", icon: Settings, category: "Sistem" },
-];
-
-function useNavLinks(): NavLink[] {
-  const { activeProfile } = useProfile();
-  return activeProfile?.businessType === 'cafe' ? cafeNavLinks : karaokeNavLinks;
-}
 
 function LogoutButton({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' }) {
   const [isPending, startTransition] = useTransition();
@@ -120,26 +95,8 @@ function navLinkClasses(isActive: boolean, dark = false) {
   );
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const sanitized = hex.replace('#', '');
-  const value = sanitized.length === 3
-    ? sanitized.split('').map(c => c + c).join('')
-    : sanitized;
-  const r = parseInt(value.substring(0, 2), 16);
-  const g = parseInt(value.substring(2, 4), 16);
-  const b = parseInt(value.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 'auto' | 'light' | 'dark' }) {
-  const { activeProfile } = useProfile();
   const isLight = tone === 'light';
-  const monogram = activeProfile?.monogram ?? 'NG';
-  const brandName = activeProfile?.brandName ?? 'NextGenBox';
-  const primary = activeProfile?.primaryColor ?? '#4F46E5';
-  const accent = activeProfile?.accentColor ?? '#06B6D4';
-  const gradient = `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`;
-
   return (
     <div className="flex items-center gap-2.5">
       <span
@@ -147,8 +104,8 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
         style={{
           width: size === 'sm' ? 28 : 32,
           height: size === 'sm' ? 28 : 32,
-          background: gradient,
-          boxShadow: `0 6px 16px ${hexToRgba(primary, 0.45)}`,
+          background: 'var(--grad-aurora)',
+          boxShadow: '0 6px 16px rgba(79, 70, 229, 0.45)',
         }}
         aria-hidden
       >
@@ -163,7 +120,7 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
             className="font-extrabold text-white leading-none"
             style={{ fontSize: size === 'sm' ? 13 : 14, letterSpacing: '-0.04em' }}
           >
-            {monogram}
+            NG
           </span>
         </span>
       </span>
@@ -175,7 +132,8 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
         )}
         style={{ letterSpacing: '-0.022em' }}
       >
-        {brandName}
+        NextGen
+        <span className="text-gradient-aurora">Box</span>
       </span>
     </div>
   );
@@ -183,7 +141,6 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
 
 export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: string, userFullName?: string, userRole?: string }) {
   const pathname = usePathname();
-  const navLinks = useNavLinks();
   const categories = Array.from(new Set(navLinks.map(l => l.category)));
 
   const displayName = userFullName || (userEmail
@@ -202,10 +159,6 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
         <Link href="/" className="flex items-center">
           <BrandMark tone="light" />
         </Link>
-      </div>
-
-      <div className="px-5 relative z-[2] pb-2">
-        <ProfileSwitcher variant="sidebar" />
       </div>
 
       <div className="px-5 relative z-[2]">
@@ -278,9 +231,6 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
   const [scrolled, setScrolled] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const pathname = usePathname();
-  const navLinks = useNavLinks();
-  const { activeProfile } = useProfile();
-  const isCafe = activeProfile?.businessType === 'cafe';
 
   const displayName = userFullName || (userEmail
     ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)
@@ -292,18 +242,15 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const homeHref = isCafe ? '/cafe' : '/';
-  const homeLabel = isCafe ? 'Cafe' : 'Panel';
-
   const getBreadcrumbs = () => {
-    if (!pathname || pathname === homeHref) return [{ label: homeLabel, href: homeHref }];
+    if (!pathname || pathname === '/') return [{ label: 'Panel', href: '/' }];
     const segments = pathname.split('/').filter(Boolean);
     const crumbs = segments.map((seg, i) => {
       const href = '/' + segments.slice(0, i + 1).join('/');
       const link = navLinks.find(l => l.href === href);
       return { label: link?.label || seg.charAt(0).toUpperCase() + seg.slice(1), href };
     });
-    return [{ label: homeLabel, href: homeHref }, ...crumbs];
+    return [{ label: 'Panel', href: '/' }, ...crumbs];
   };
 
   const breadcrumbs = getBreadcrumbs();
@@ -359,9 +306,6 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
         </Link>
 
         <div className="flex items-center gap-1.5">
-          <div className="hidden md:block mr-1">
-            <ProfileSwitcher variant="topbar" />
-          </div>
           <LogoutButton variant="topbar" />
           <button
             onClick={() => setProfileModalOpen(true)}
@@ -434,10 +378,6 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                 </button>
               </div>
 
-              <div className="px-5 relative z-[2] pb-2">
-                <ProfileSwitcher variant="drawer" />
-              </div>
-
               <div className="px-5 relative z-[2]">
                 <div className="divider-gradient" />
               </div>
@@ -479,29 +419,16 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
 
 export function MobileNav({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname();
-  const { activeProfile } = useProfile();
   if (hidden) return null;
 
-  const isCafe = activeProfile?.businessType === 'cafe';
-
-  const leftLinks = isCafe
-    ? [
-        { href: "/cafe", label: "Cafe", icon: Coffee },
-        { href: "/cafe/raporlar", label: "Rapor", icon: BookOpen },
-      ]
-    : [
-        { href: "/", label: "Ana", icon: Home },
-        { href: "/gelir-gider", label: "Finans", icon: Wallet },
-      ];
-  const rightLinks = isCafe
-    ? [
-        { href: "/giderler", label: "Gider", icon: CreditCard },
-        { href: "/avm-odemeleri", label: "AVM", icon: Building2 },
-      ]
-    : [
-        { href: "/raporlar", label: "Rapor", icon: TrendingUp },
-        { href: "/giderler", label: "Gider", icon: CreditCard },
-      ];
+  const leftLinks = [
+    { href: "/", label: "Ana", icon: Home },
+    { href: "/gelir-gider", label: "Finans", icon: Wallet },
+  ];
+  const rightLinks = [
+    { href: "/raporlar", label: "Rapor", icon: TrendingUp },
+    { href: "/giderler", label: "Gider", icon: CreditCard },
+  ];
 
   const renderLink = (link: { href: string; label: string; icon: typeof Home }) => {
     const isActive = pathname === link.href;
@@ -541,8 +468,8 @@ export function MobileNav({ hidden }: { hidden?: boolean }) {
         {leftLinks.map(renderLink)}
         <div className="relative flex items-center justify-center w-[60px] shrink-0">
           <Link
-            href={isCafe ? '/cafe/satislar' : '/performans'}
-            aria-label={isCafe ? 'Günlük ciro gir' : 'Performans Ekle'}
+            href="/performans"
+            aria-label="Performans Ekle"
             className="mobile-nav-fab absolute -top-5 left-1/2 -translate-x-1/2 flex items-center justify-center rounded-full text-white"
             style={{
               width: 52,

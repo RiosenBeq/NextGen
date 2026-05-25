@@ -55,6 +55,11 @@ export default async function DashboardPage() {
   const profileCtx = await resolveActiveProfile();
   const profileId = profileCtx.profile?.id ?? null;
 
+  // Cafe profili karaoke panelini görmesin — kendi paneline yönlendir
+  if (profileCtx.profile?.businessType === 'cafe') {
+    redirect('/cafe');
+  }
+
   // Check for default page setting (profile-scoped)
   if (profileId) {
     const { data: defaultPageParam } = await supabase

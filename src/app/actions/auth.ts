@@ -1,11 +1,13 @@
 'use server';
 
 import { z } from 'zod';
+import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { loginSchema, type LoginFormState } from '@/lib/auth-schemas';
 import { getErrorMessage } from '@/lib/errors';
 import { requireUser } from '@/lib/auth-guards';
+import { ACTIVE_PROFILE_COOKIE } from '@/lib/profile-context';
 
 const updateProfileSchema = z.object({
   fullName: z.string().trim().min(2, 'Ad soyad en az 2 karakter olmalıdır.').max(120, 'Ad soyad çok uzun.'),
@@ -52,13 +54,17 @@ export async function login(
     return { message };
   }
 
-  // 3. Redirect to dashboard on success
-  redirect('/');
+  // 3. Net session: aktif profil cookie'sini temizle, profil seçici ekranına yönlendir
+  const cookieStore = await cookies();
+  cookieStore.delete(ACTIVE_PROFILE_COOKIE);
+  redirect('/profile-select');
 }
 
 export async function logout(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  cookieStore.delete(ACTIVE_PROFILE_COOKIE);
   redirect('/login');
 }
 

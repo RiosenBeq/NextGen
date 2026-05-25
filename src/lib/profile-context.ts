@@ -5,12 +5,15 @@ import { requireUser } from '@/lib/auth-guards';
 
 export const ACTIVE_PROFILE_COOKIE = 'active_profile_id';
 
+export type BusinessType = 'karaoke' | 'cafe';
+
 export interface ProfileSummary {
   id: string;
   slug: string;
   name: string;
   brandName: string;
   monogram: string;
+  businessType: BusinessType;
   primaryColor: string;
   accentColor: string;
   logoUrl: string | null;
@@ -35,6 +38,7 @@ export type ProfileResolutionResult =
 
 function toSummary(p: {
   id: string; slug: string; name: string; brandName: string; monogram: string;
+  businessType?: string;
   primaryColor: string; accentColor: string; logoUrl: string | null;
   locale: string; currency: string;
 }): ProfileSummary {
@@ -44,6 +48,7 @@ function toSummary(p: {
     name: p.name,
     brandName: p.brandName,
     monogram: p.monogram,
+    businessType: p.businessType === 'cafe' ? 'cafe' : 'karaoke',
     primaryColor: p.primaryColor,
     accentColor: p.accentColor,
     logoUrl: p.logoUrl,

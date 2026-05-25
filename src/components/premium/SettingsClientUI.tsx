@@ -22,7 +22,10 @@ import {
   Cloud,
   Server,
   Workflow,
+  Building2,
+  ArrowRight,
 } from 'lucide-react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
@@ -167,6 +170,28 @@ export default function SettingsClientUI({ locations, parameters, users, current
             <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={16} strokeWidth={1.75} />} label="Profil" />
             <TabButton active={activeTab === 'integrations'} onClick={() => setActiveTab('integrations')} icon={<Workflow size={16} strokeWidth={1.75} />} label="Entegrasyon" />
           </div>
+
+          <Link
+            href="/ayarlar/profiller"
+            className="block apple-card p-5 hover:shadow-lg transition-shadow group relative overflow-hidden"
+          >
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-[3px]"
+              style={{ background: 'var(--grad-aurora)' }}
+            />
+            <div className="flex items-center gap-2 text-[--brand-primary]">
+              <Building2 size={14} strokeWidth={1.75} />
+              <span className="text-[12px] font-semibold uppercase tracking-wider">İşletme Profilleri</span>
+            </div>
+            <p className="text-[13px] text-[--text] mt-2.5 font-medium leading-snug">
+              Marka kimliği, üyeler, rol yönetimi
+            </p>
+            <p className="text-[12px] text-[--text-tertiary] mt-1 flex items-center gap-1">
+              Yönetim panelini aç
+              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+            </p>
+          </Link>
 
           <div className="apple-card p-5 bg-[--bg-elevated]">
             <div className="flex items-center gap-2 text-[--accent]">

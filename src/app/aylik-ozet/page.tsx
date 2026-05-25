@@ -4,18 +4,27 @@ import { getSystemParameters } from '@/features/ledger/actions';
 import { Activity, Building2, Receipt, FileText, type LucideIcon } from 'lucide-react';
 import MonthSelector from '@/features/ledger/components/MonthSelector';
 import { cn } from '@/lib/utils';
+import { resolveActiveProfile } from '@/lib/profile-context';
 
 export const metadata = { title: 'Aylık Özet — NextGenBox' };
 export const dynamic = 'force-dynamic';
 
 export default async function MonthlySummaryPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const supabase = await createClient();
+  const profileCtx = await resolveActiveProfile();
+  const profileId = profileCtx.profile?.id ?? null;
   const params = await getSystemParameters();
   const sp = await searchParams;
 
-  const { data: performances } = await supabase.from('MonthlyPerformance').select('*, location:Location(*)').order('month', { ascending: false });
-  const { data: allExpenses } = await supabase.from('Expense').select('*');
-  const { data: investments } = await supabase.from('Investment').select('*');
+  const { data: performances } = profileId
+    ? await supabase.from('MonthlyPerformance').select('*, location:Location(*)').eq('profileId', profileId).order('month', { ascending: false })
+    : { data: [] };
+  const { data: allExpenses } = profileId
+    ? await supabase.from('Expense').select('*').eq('profileId', profileId)
+    : { data: [] };
+  const { data: investments } = profileId
+    ? await supabase.from('Investment').select('*').eq('profileId', profileId)
+    : { data: [] };
 
   type InvestmentRow = { totalAmount?: number | null };
   const totalInv = (investments || []).reduce((acc: number, i: InvestmentRow) => acc + (i.totalAmount || 0), 0);

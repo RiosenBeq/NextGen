@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import AvmPaymentsClientUI from '@/components/premium/AvmPaymentsClientUI';
+import { resolveActiveProfile } from '@/lib/profile-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,18 +10,24 @@ export const metadata = {
 
 export default async function AvmPaymentsPage() {
   const supabase = await createClient();
+  const profileCtx = await resolveActiveProfile();
+  const profileId = profileCtx.profile?.id ?? null;
 
-  const [{ data: payments }, { data: locations }] = await Promise.all([
-    supabase
-      .from('AvmPayment')
-      .select('*, location:Location(id, name)')
-      .order('month', { ascending: false }),
-    supabase
-      .from('Location')
-      .select('id, name')
-      .eq('isActive', true)
-      .order('name', { ascending: true }),
-  ]);
+  const [{ data: payments }, { data: locations }] = profileId
+    ? await Promise.all([
+        supabase
+          .from('AvmPayment')
+          .select('*, location:Location(id, name)')
+          .eq('profileId', profileId)
+          .order('month', { ascending: false }),
+        supabase
+          .from('Location')
+          .select('id, name')
+          .eq('profileId', profileId)
+          .eq('isActive', true)
+          .order('name', { ascending: true }),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   return (
     <div className="page-wrapper animate-fade-in">

@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { logout } from "@/app/actions/auth";
 import { PremiumModal } from "./premium/PremiumModal";
 import { ProfileSettingsForm } from "@/features/auth/components/ProfileSettingsForm";
+import { useProfile } from "@/providers/ProfileProvider";
+import { ProfileSwitcher } from "./ProfileSwitcher";
 
 const navLinks = [
   { href: "/", label: "Panel", icon: LayoutDashboard, category: "Genel" },
@@ -95,8 +97,26 @@ function navLinkClasses(isActive: boolean, dark = false) {
   );
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const sanitized = hex.replace('#', '');
+  const value = sanitized.length === 3
+    ? sanitized.split('').map(c => c + c).join('')
+    : sanitized;
+  const r = parseInt(value.substring(0, 2), 16);
+  const g = parseInt(value.substring(2, 4), 16);
+  const b = parseInt(value.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 'auto' | 'light' | 'dark' }) {
+  const { activeProfile } = useProfile();
   const isLight = tone === 'light';
+  const monogram = activeProfile?.monogram ?? 'NG';
+  const brandName = activeProfile?.brandName ?? 'NextGenBox';
+  const primary = activeProfile?.primaryColor ?? '#4F46E5';
+  const accent = activeProfile?.accentColor ?? '#06B6D4';
+  const gradient = `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`;
+
   return (
     <div className="flex items-center gap-2.5">
       <span
@@ -104,8 +124,8 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
         style={{
           width: size === 'sm' ? 28 : 32,
           height: size === 'sm' ? 28 : 32,
-          background: 'var(--grad-aurora)',
-          boxShadow: '0 6px 16px rgba(79, 70, 229, 0.45)',
+          background: gradient,
+          boxShadow: `0 6px 16px ${hexToRgba(primary, 0.45)}`,
         }}
         aria-hidden
       >
@@ -120,7 +140,7 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
             className="font-extrabold text-white leading-none"
             style={{ fontSize: size === 'sm' ? 13 : 14, letterSpacing: '-0.04em' }}
           >
-            NG
+            {monogram}
           </span>
         </span>
       </span>
@@ -132,8 +152,7 @@ function BrandMark({ size = 'md', tone = 'auto' }: { size?: 'sm' | 'md', tone?: 
         )}
         style={{ letterSpacing: '-0.022em' }}
       >
-        NextGen
-        <span className="text-gradient-aurora">Box</span>
+        {brandName}
       </span>
     </div>
   );
@@ -159,6 +178,10 @@ export function Sidebar({ userEmail, userFullName, userRole }: { userEmail?: str
         <Link href="/" className="flex items-center">
           <BrandMark tone="light" />
         </Link>
+      </div>
+
+      <div className="px-5 relative z-[2] pb-2">
+        <ProfileSwitcher variant="sidebar" />
       </div>
 
       <div className="px-5 relative z-[2]">
@@ -306,6 +329,9 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
         </Link>
 
         <div className="flex items-center gap-1.5">
+          <div className="hidden md:block mr-1">
+            <ProfileSwitcher variant="topbar" />
+          </div>
           <LogoutButton variant="topbar" />
           <button
             onClick={() => setProfileModalOpen(true)}
@@ -376,6 +402,10 @@ export function Topbar({ onToggleMenu, isOpen, userEmail, userFullName, userRole
                 >
                   <X className="w-5 h-5" strokeWidth={1.75} />
                 </button>
+              </div>
+
+              <div className="px-5 relative z-[2] pb-2">
+                <ProfileSwitcher variant="drawer" />
               </div>
 
               <div className="px-5 relative z-[2]">

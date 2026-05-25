@@ -14,7 +14,6 @@ model Profile {
   name         String
   brandName    String
   monogram     String
-  businessType String   @default("karaoke") // "karaoke" | "cafe"
   primaryColor String   @default("#4F46E5")
   accentColor  String   @default("#06B6D4")
   logoUrl      String?
@@ -35,7 +34,6 @@ model Profile {
   systemParameters    SystemParameter[]
   auditLogs           AuditLog[]
   userAccesses        UserProfileAccess[]
-  cafeDailySales      CafeDailySales[]
 }
 
 model UserProfileAccess {
@@ -83,7 +81,6 @@ model Location {
   expenses         Expense[]
   investments      Investment[]
   avmPayments      AvmPayment[]
-  cafeDailySales   CafeDailySales[]
 
   @@index([profileId])
 }
@@ -233,37 +230,5 @@ model Document {
 
   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
 
-  @@index([profileId])
-}
-
-// =============================================================
-// Café-specific daily sales tracking
-// =============================================================
-model CafeDailySales {
-  id                  String   @id @default(cuid())
-  profileId           String
-  locationId          String
-  date                DateTime // day-only (UTC midnight)
-
-  // Toplamlar
-  totalRevenue        Float    @default(0)
-  customerCount       Int      @default(0)
-
-  // Kategori kırılımı (TL)
-  coffeeRevenue       Float    @default(0)
-  coldDrinkRevenue    Float    @default(0)
-  dessertRevenue      Float    @default(0)
-  foodRevenue         Float    @default(0)
-  otherRevenue        Float    @default(0)
-
-  notes               String?
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  profile             Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
-  location            Location @relation(fields: [locationId], references: [id])
-
-  @@unique([locationId, date])
   @@index([profileId])
 }

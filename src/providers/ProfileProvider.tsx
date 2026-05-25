@@ -3,15 +3,12 @@
 import React, { createContext, useCallback, useContext, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
-export type BusinessType = 'karaoke' | 'cafe';
-
 export interface ProfileSummary {
   id: string;
   slug: string;
   name: string;
   brandName: string;
   monogram: string;
-  businessType: BusinessType;
   primaryColor: string;
   accentColor: string;
   logoUrl: string | null;

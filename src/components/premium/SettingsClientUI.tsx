@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SystemParametersForm } from '@/features/ledger/components/SystemParametersForm';
 import { LocationSettingsForm } from '@/features/ledger/components/LocationSettingsForm';
+import { CreateLocationForm } from '@/features/ledger/components/CreateLocationForm';
 import { ProfileSettingsForm } from '@/features/auth/components/ProfileSettingsForm';
 import { createSystemUser, deleteSystemUser, updateSystemUserAccess } from '@/features/auth/admin-actions';
 import { PremiumModal } from './PremiumModal';
@@ -40,6 +41,7 @@ type SettingsLocation = {
   revenueShareRate?: number;
   revenueThreshold?: number;
   rentVatRate?: number;
+  sessionPrice?: number;
 };
 
 type SettingsUser = {

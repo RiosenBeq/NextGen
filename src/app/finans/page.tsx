@@ -191,7 +191,7 @@ export default async function FinansalTablo({
 
     for (const loc of locs) {
       const mockCalc = calculateMonthlyCashFlow(sessionsPerLoc, 0, {
-        sessionPrice,
+        sessionPrice: perf.location?.sessionPrice ?? sessionPrice,
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 40000,

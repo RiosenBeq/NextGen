@@ -163,7 +163,7 @@ export default async function DashboardPage() {
     const totalExtraExpense = Number(perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
     const calc = calculateMonthlyCashFlow(perf.sessionCount, totalExtraExpense, {
-      sessionPrice: paramMap['SESSION_PRICE_INCL_VAT'] || 300,
+      sessionPrice: loc.sessionPrice ?? (paramMap['SESSION_PRICE_INCL_VAT'] || 300),
       iyzicoCommissionRate: 2,
       nayaxCommissionRate: 2,
       fixedRent: loc.fixedRent,

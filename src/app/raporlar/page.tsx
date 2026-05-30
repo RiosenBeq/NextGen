@@ -66,6 +66,7 @@ export default async function ReportsPage({
     fixedRent: number;
     duesAmount: number;
     revenueShareRate?: number | null;
+    sessionPrice?: number | null;
   };
   type ConsolidatedPerf = {
     id: string;
@@ -105,7 +106,7 @@ export default async function ReportsPage({
     const totalExtraExpense = Number(perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
     const calc = calculateMonthlyCashFlow(sessions, totalExtraExpense, {
-      sessionPrice,
+      sessionPrice: perf.location.sessionPrice ?? sessionPrice,
       iyzicoCommissionRate: 2,
       nayaxCommissionRate: 2,
       fixedRent: perf.location.fixedRent,

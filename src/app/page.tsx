@@ -19,6 +19,7 @@ type LocationLite = {
   fixedRent: number;
   duesAmount: number;
   revenueShareRate?: number | null;
+  sessionPrice?: number | null;
 };
 type ExpenseRow = {
   id: string;

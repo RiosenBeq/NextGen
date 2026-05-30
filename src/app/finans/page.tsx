@@ -13,6 +13,7 @@ type LocationRow = {
   fixedRent: number;
   duesAmount: number;
   revenueShareRate?: number | null;
+  sessionPrice?: number | null;
   isActive?: boolean | null;
 };
 
@@ -137,7 +138,7 @@ export default async function FinansalTablo({
       const totalExtraExpense = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
       const calc = calculateMonthlyCashFlow(sessions, totalExtraExpense, {
-        sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
+        sessionPrice: loc.sessionPrice ?? sessionPrice, iyzicoCommissionRate: 2, nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent, duesAmount: loc.duesAmount,
         revenueShareRate: loc.revenueShareRate || 15,
         month: perfMonthStr,
@@ -191,7 +192,7 @@ export default async function FinansalTablo({
 
     for (const loc of locs) {
       const mockCalc = calculateMonthlyCashFlow(sessionsPerLoc, 0, {
-        sessionPrice: perf.location?.sessionPrice ?? sessionPrice,
+        sessionPrice: loc.sessionPrice ?? sessionPrice,
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent || 40000,

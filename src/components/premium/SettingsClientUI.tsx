@@ -139,6 +139,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
 
   const selectedProfile = users.find((u) => u.id === selectedProfileId);
   const superAdminCount = users.filter((user) => user.role === 'superadmin').length;
+  const isSuperAdmin = currentUser?.role === 'superadmin';
 
   return (
     <div className="space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
@@ -194,6 +195,7 @@ export default function SettingsClientUI({ locations, parameters, users, current
               <motion.div key="locations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
                 <SectionHeader title="Şube Konfigürasyonu" eyebrow="Lokasyonlar" icon={<MapPin size={18} strokeWidth={1.75} />} />
                 <div className="grid grid-cols-1 gap-5">
+                  {isSuperAdmin && <CreateLocationForm />}
                   {locations.map((loc) => (
                     <LocationSettingsForm key={loc.id} location={loc} />
                   ))}

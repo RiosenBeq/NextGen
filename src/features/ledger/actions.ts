@@ -2,16 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema } from './schema';
+import { monthlyPerformanceSchema, MonthlyPerformanceInput, expenseSchema, investmentSchema, locationParamsSchema, createLocationSchema } from './schema';
 import { createAuditLog } from '@/lib/audit';
 import { getErrorMessage } from '@/lib/errors';
 import { requireUser, requireSuperAdmin } from '@/lib/auth-guards';
 import prisma from '@/lib/db';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 type ExpenseInput = z.input<typeof expenseSchema>;
 type InvestmentInput = z.input<typeof investmentSchema>;
 type LocationParamsInput = z.input<typeof locationParamsSchema>;
+type CreateLocationInput = z.input<typeof createLocationSchema>;
 type InvestmentRow = { totalAmount?: number | null };
 type PerformanceRow = {
   sessionCount: number;
@@ -625,6 +626,7 @@ export async function updateLocationParameters(id: string, data: LocationParamsI
     const revenueShareRate = Math.max(0, Math.min(100, validatedData.revenueShareRate));
     const revenueThreshold = Math.max(0, validatedData.revenueThreshold);
     const rentVatRate = Math.max(0, Math.min(100, validatedData.rentVatRate));
+    const sessionPrice = Math.max(0, validatedData.sessionPrice);
 
     const supabase = await createClient();
     const { error } = await supabase
@@ -635,6 +637,7 @@ export async function updateLocationParameters(id: string, data: LocationParamsI
         revenueShareRate,
         revenueThreshold,
         rentVatRate,
+        sessionPrice,
       })
       .eq('id', id);
 
@@ -647,6 +650,68 @@ export async function updateLocationParameters(id: string, data: LocationParamsI
     return { success: true };
   } catch (error) {
     return { success: false, error: getErrorMessage(error) };
+  }
+}
+
+/**
+ * Yeni bir AVM (lokasyon) oluşturur. Sadece superadmin. Oturum başı ücret dahil
+ * tüm finansal parametreler girilebilir; deterministik bir id slug'dan üretilir.
+ */
+export async function createLocation(data: CreateLocationInput) {
+  try {
+    const guard = await requireSuperAdmin();
+    if (guard.error || !guard.user) {
+      return { success: false, error: guard.error };
+    }
+
+    const validatedData = createLocationSchema.parse(data);
+
+    const name = validatedData.name.trim();
+    const slug = name
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^\w]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .toLowerCase();
+    const id = `loc_${slug || crypto.randomUUID().slice(0, 8)}_${Date.now().toString(36)}`;
+
+    const fixedRent = Math.max(0, validatedData.fixedRent || 0);
+    const duesAmount = Math.max(0, validatedData.duesAmount || 0);
+    const revenueShareRate = Math.max(0, Math.min(100, validatedData.revenueShareRate || 0));
+    const revenueThreshold = Math.max(0, validatedData.revenueThreshold || 0);
+    const rentVatRate = Math.max(0, Math.min(100, validatedData.rentVatRate || 0));
+    const sessionPrice = Math.max(0, validatedData.sessionPrice || 0);
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from('Location')
+      .insert({
+        id,
+        name,
+        fixedRent,
+        duesAmount,
+        revenueShareRate,
+        revenueThreshold,
+        rentVatRate,
+        sessionPrice,
+        isActive: true,
+      });
+
+    if (error) throw error;
+
+    await createAuditLog('CREATE', 'Location', id, { name, sessionPrice });
+
+    revalidatePath('/ayarlar');
+    revalidatePath('/');
+    revalidatePath('/raporlar');
+    revalidatePath('/gelir-gider');
+    revalidatePath('/finans');
+    return { success: true };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
+    }
+    return { success: false, error: getErrorMessage(error, 'AVM oluşturulamadı.') };
   }
 }
 
@@ -678,7 +743,7 @@ export async function getLocationInsights() {
       const avgExtraExpense = loc.performances.length > 0 ? totalExtraExpense / loc.performances.length : 0;
 
       const calc = calculateMonthlyCashFlow(avgSessions, avgExtraExpense, {
-        sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
+        sessionPrice: loc.sessionPrice ?? (params['SESSION_PRICE_INCL_VAT'] || 300),
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent,
@@ -690,7 +755,7 @@ export async function getLocationInsights() {
       let cumulativeNetCash = 0;
       loc.performances.forEach((perf: PerformanceRow) => {
         const pCalc = calculateMonthlyCashFlow(perf.sessionCount, perf.extraExpenseAmount, {
-           sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
+           sessionPrice: loc.sessionPrice ?? (params['SESSION_PRICE_INCL_VAT'] || 300),
            iyzicoCommissionRate: 2,
            nayaxCommissionRate: 2,
            fixedRent: loc.fixedRent,

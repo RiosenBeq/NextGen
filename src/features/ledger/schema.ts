@@ -47,4 +47,10 @@ export const locationParamsSchema = z.object({
   revenueShareRate: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
   revenueThreshold: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
   rentVatRate: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
+  sessionPrice: z.union([z.string(), z.number()]).transform((val) => parseFloat(String(val))),
+});
+
+// Yeni AVM oluştururken kullanılır: isim + tüm finansal parametreler.
+export const createLocationSchema = locationParamsSchema.extend({
+  name: z.string().trim().min(2, "AVM adı en az 2 karakter olmalıdır.").max(120, "AVM adı çok uzun."),
 });

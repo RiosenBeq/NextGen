@@ -81,7 +81,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
     const extra = (perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
     const calc = calculateMonthlyCashFlow(perf.sessionCount, extra, {
-        sessionPrice: params['SESSION_PRICE_INCL_VAT'] || 300,
+        sessionPrice: perf.location?.sessionPrice ?? (params['SESSION_PRICE_INCL_VAT'] || 300),
         iyzicoCommissionRate: 2,
         nayaxCommissionRate: 2,
         fixedRent: loc.fixedRent,

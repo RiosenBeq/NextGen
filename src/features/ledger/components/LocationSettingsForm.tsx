@@ -13,6 +13,7 @@ interface LocationSettingsLocation {
   revenueShareRate?: number;
   revenueThreshold?: number;
   rentVatRate?: number;
+  sessionPrice?: number;
 }
 
 interface Props {
@@ -37,6 +38,7 @@ export function LocationSettingsForm({ location }: Props) {
       revenueShareRate: Number(formData.get('revenueShareRate')),
       revenueThreshold: Number(formData.get('revenueThreshold')),
       rentVatRate: Number(formData.get('rentVatRate')),
+      sessionPrice: Number(formData.get('sessionPrice')),
     };
 
     const result = await updateLocationParameters(location.id, data);
@@ -82,6 +84,19 @@ export function LocationSettingsForm({ location }: Props) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="space-y-2">
+            <label className="text-[13px] font-medium text-[--text]">Oturum Başı Ücret (₺)</label>
+            <input
+              name="sessionPrice"
+              type="number"
+              step="any"
+              defaultValue={location.sessionPrice ?? 300}
+              className={inputBase}
+              placeholder="300"
+            />
+            <p className="text-[12px] text-[--text-tertiary]">Bu AVM için oturum başı ücret (KDV dahil)</p>
+          </div>
+
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-[--text]">Sabit Kira (₺)</label>
             <input

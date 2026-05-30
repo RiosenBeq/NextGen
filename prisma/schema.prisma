@@ -22,6 +22,7 @@ model Location {
   rentVatRate      Float
   revenueShareRate Float              @default(0) // Ciro Payı %
   revenueThreshold Float              @default(0) // Ciro Eşiği (TL)
+  sessionPrice     Float              @default(300) // Oturum başı ücret (KDV dahil)
   isActive         Boolean            @default(true)
   performances     MonthlyPerformance[]
   dailyPerformances DailyPerformance[]

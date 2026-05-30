@@ -18,6 +18,7 @@ type PerfRow = {
     fixedRent: number;
     duesAmount: number;
     revenueShareRate?: number | null;
+    sessionPrice?: number | null;
   } | null;
 };
 
@@ -147,7 +148,7 @@ export default async function GelirGiderPage(props: {
     const totalExtraExpense = Number(perf.extraExpenseAmount || 0) + recurringTotal + oneTimeTotal;
 
     const calc = calculateMonthlyCashFlow(perf.sessionCount, totalExtraExpense, {
-      sessionPrice,
+      sessionPrice: loc.sessionPrice ?? sessionPrice,
       iyzicoCommissionRate: 2,
       nayaxCommissionRate: 2,
       fixedRent: loc.fixedRent,
